@@ -12,12 +12,12 @@
 
 | Bus | Start Time | From (IITJ) | End Time | To | Route |
 |---|---|---|---|---|---|
-| B1 | 6:30 AM | Main Gate Parking | 7:40 AM | GPRA | Paota – Railway Station – GPRA |
-| B2 | 9:15 AM | Old Mess | 10:20 AM | AIIMS Jodhpur* | Paota – MBM – AIIMS |
-| B1 | 10:30 AM | Old Mess | 11:30 AM | MBM | Paota – Railway Station – MBM |
-| B2 | 4:15 PM | Old Mess | 5:15 PM | AIIMS Jodhpur | Paota – Railway Station |
-| B1 | 5:45 PM | Shamiyana | 6:45 PM | GPRA | Paota – MBM – Riktiya Bheruji Circle |
-| B2 | 6:45 PM | Old Mess | 7:45 PM | Jaljog Circle | Paota – MBM – Riktiya Bheruji Circle – MBM |
+| B1 | 6:30 AM | Main Gate Parking | 7:40 AM | GPRA | Paota → Railway Station → GPRA |
+| B2 | 9:15 AM | Old Mess | 10:20 AM | AIIMS Jodhpur* | Paota → MBM → AIIMS |
+| B1 | 10:30 AM | Old Mess | 11:30 AM | MBM | Paota → Railway Station → MBM |
+| B2 | 4:15 PM | Old Mess | 5:15 PM | AIIMS Jodhpur | Paota → Railway Station |
+| B1 | 5:45 PM | Shamiyana | 6:45 PM | GPRA | Paota → MBM → Riktiya Bheruji Circle |
+| B2 | 6:45 PM | Old Mess | 7:45 PM | Jaljog Circle | Paota → MBM → Riktiya Bheruji Circle → MBM |
 
 *\*See Thursday revision below — this timing changes on Thursdays.*
 
@@ -25,12 +25,12 @@
 
 | Bus | Start Time | From | End Time | To | Route |
 |---|---|---|---|---|---|
-| B1 | 7:50 AM | GPRA | 8:50 AM | IITJ | MBM – Paota – Mandore – IITJ |
-| B2 | 1:30 PM | Gate 4: AIIMS Jodhpur | 2:30 PM | IITJ | — |
-| B1 | 2:30 PM | Gate 1: MBM | 3:30 PM | IITJ | MBM College – Paota – IITJ |
-| B2 | 5:20 PM | Gate 4: AIIMS Jodhpur | 6:20 PM | IITJ | Riktiya Bheruji Circle – MBM – Paota |
-| B1 | 9:00 PM | Gate 1: MBM | 10:00 PM | IITJ | MBM – Paota |
-| B2 | 9:00 PM | Gate 1: MBM | 10:00 PM | IITJ | MBM – Railway Station – Paota |
+| B1 | 7:50 AM | GPRA | 8:50 AM | IITJ | MBM → Paota → Mandore → IITJ |
+| B2 | 1:30 PM | Gate 4: AIIMS Jodhpur | 2:30 PM | IITJ | AIIMS → IITJ |
+| B1 | 2:30 PM | Gate 1: MBM | 3:30 PM | IITJ | MBM College → Paota → IITJ |
+| B2 | 5:20 PM | Gate 4: AIIMS Jodhpur | 6:20 PM | IITJ | Riktiya Bheruji Circle → MBM → Paota |
+| B1 | 9:00 PM | Gate 1: MBM | 10:00 PM | IITJ | MBM → Paota |
+| B2 | 9:00 PM | Gate 1: MBM | 10:00 PM | IITJ | MBM → Railway Station → Paota |
 
 ---
 
@@ -40,19 +40,19 @@
 
 | Bus | Start Time | From (IITJ) | End Time | To | Route |
 |---|---|---|---|---|---|
-| B1 | 10:00 AM | Old Mess | 11:00 AM | MBM | Paota – Riktiya Bheruji Circle – MBM |
-| B2 | 11:30 AM | Old Mess | 12:30 PM | MBM | Paota – MBM |
-| B1 | 4:45 PM | Old Mess | 5:45 PM | MBM | Paota – MBM – Riktiya Bheruji Circle |
-| B2 | 5:45 PM | Old Mess | 6:45 PM | MBM | Paota – MBM – Riktiya Bheruji Circle |
+| B1 | 10:00 AM | Old Mess | 11:00 AM | MBM | Paota → Riktiya Bheruji Circle → MBM |
+| B2 | 11:30 AM | Old Mess | 12:30 PM | MBM | Paota → MBM |
+| B1 | 4:45 PM | Old Mess | 5:45 PM | MBM | Paota → MBM → Riktiya Bheruji Circle |
+| B2 | 5:45 PM | Old Mess | 6:45 PM | MBM | Paota → MBM → Riktiya Bheruji Circle |
 
 ### Arrival at Campus
 
 | Bus | Start Time | From | End Time | To | Route |
 |---|---|---|---|---|---|
-| B1 | 1:00 PM | Gate 1: MBM | 2:00 PM | IITJ | MBM College – Paota – IITJ |
-| B2 | 4:00 PM | Gate 1: MBM | 5:00 PM | IITJ | MBM – Paota – Mandore – IITJ |
-| B1 | 9:00 PM | Gate 1: MBM | 10:00 PM | IITJ | MBM – Railway Station – Paota |
-| B2 | 9:00 PM | Gate 1: MBM | 10:00 PM | IITJ | — |
+| B1 | 1:00 PM | Gate 1: MBM | 2:00 PM | IITJ | MBM College → Paota → IITJ |
+| B2 | 4:00 PM | Gate 1: MBM | 5:00 PM | IITJ | MBM → Paota → Mandore → IITJ |
+| B1 | 9:00 PM | Gate 1: MBM | 10:00 PM | IITJ | MBM → Railway Station → Paota |
+| B2 | 9:00 PM | Gate 1: MBM | 10:00 PM | IITJ | MBM → IITJ |
 
 ---
 
@@ -64,8 +64,8 @@
 
 | Direction | Bus | Start Time | From | End Time | To | Route |
 |---|---|---|---|---|---|---|
-| Departure | B2 | 8:00 AM | Old Mess | 9:00 AM | AIIMS | Paota – AIIMS |
-| Arrival | B2 | 1:30 PM | AIIMS – MBM | 2:30 PM | IITJ | AIIMS – Paota – Mandore – IITJ |
+| Departure | B2 | 8:00 AM | Old Mess | 9:00 AM | AIIMS | Paota → AIIMS |
+| Arrival | B2 | 1:30 PM | AIIMS → MBM | 2:30 PM | IITJ | AIIMS → Paota → Mandore → IITJ |
 
 ---
 

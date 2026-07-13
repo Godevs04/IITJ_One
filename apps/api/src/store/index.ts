@@ -38,7 +38,7 @@ import type {
 const defaultVersions = (): MetaVersions => ({
   menu: 1,
   notices: 1,
-  transport: 1,
+  transport: 5,
   calendar: 1,
   portals: 1,
   apps: 1,
