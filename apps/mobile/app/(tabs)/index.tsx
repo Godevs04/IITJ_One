@@ -224,7 +224,6 @@ export default function HomeScreen() {
   const { syncing, sync } = useCampusSync();
   const [busSeconds, setBusSeconds] = useState(0);
   const [nextClass, setNextClass] = useState<NextClass | null>(null);
-  const [timetableCount, setTimetableCount] = useState(0);
 
   const menu = readCachedModule<MenuDoc>('menu');
   const transport = readCachedModule<TransportDoc>('transport');
@@ -273,7 +272,6 @@ export default function HomeScreen() {
   const loadLocal = useCallback(async () => {
     const entries = await listTimetableEntries();
     const homeEntries = entries.filter((e) => e.showOnHome);
-    setTimetableCount(entries.length);
     setShowClassWidget(homeEntries.length > 0);
     setNextClass(getNextClass(homeEntries));
   }, []);
@@ -346,17 +344,6 @@ export default function HomeScreen() {
           }
           valueColor={theme.primary}
           onPress={() => router.push('/timetable')}
-        />
-      ) : showClassWidget ? null : timetableCount === 0 ? (
-        <StatusCard
-          label="Next Class"
-          headline="No classes yet"
-          icon="school-outline"
-          iconColor={theme.primary}
-          value="--:--"
-          unit="tap to add your timetable"
-          valueColor={theme.textMuted}
-          onPress={() => router.push('/timetable/add')}
         />
       ) : null}
 
