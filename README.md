@@ -20,10 +20,13 @@ scripts/         Stitch screen fetch utility
 cd apps/api
 cp .env.example .env
 npm install
-npm run dev
+bash ../../scripts/set-lan-ip.sh   # sets API_BASE_URL + CORS for LAN IP
+npm run dev                        # also runs set-lan-ip.sh via predev
 ```
 
-Health: http://localhost:6002/api/v1/health
+Health: `http://<your-lan-ip>:6002/api/v1/health` (or `bash scripts/set-lan-ip.sh` to print yours)
+
+Listens on `0.0.0.0:6002` so phones on the same Wi-Fi can connect. CORS allows Expo (`:6001`) and admin (`:3000`) on localhost + LAN IP.
 
 Works without MongoDB using in-memory fallback seeded from `docs/FinalDoc/`.
 
@@ -33,10 +36,13 @@ Works without MongoDB using in-memory fallback seeded from `docs/FinalDoc/`.
 cd apps/mobile
 cp .env.example .env
 npm install
-npm start
+bash ../../scripts/set-lan-ip.sh   # auto-detects Wi-Fi IP → updates .env
+npm start                          # also runs set-lan-ip.sh via prestart
 ```
 
-Set `EXPO_PUBLIC_API_URL=http://localhost:6002/api/v1` (or your LAN IP for physical devices).
+`EXPO_PUBLIC_API_URL` is set to `http://<your-lan-ip>:6002/api/v1` automatically (not localhost), so physical devices on the same Wi-Fi can reach the API.
+
+Manual refresh anytime: `npm run env:lan` or `bash scripts/set-lan-ip.sh` from repo root.
 
 ### Stitch design assets
 

@@ -1,10 +1,20 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { initCache } from '@/services/cache';
 import { AppColors } from '@/theme/tokens';
 import { ThemeProvider, useAppColorScheme } from '@/theme/ThemeProvider';
 
 export default function RootLayout() {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    void initCache().finally(() => setReady(true));
+  }, []);
+
+  if (!ready) return null;
+
   return (
     <ThemeProvider>
       <RootNavigator />

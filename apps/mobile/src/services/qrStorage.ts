@@ -1,9 +1,9 @@
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { getSetting, setSetting } from './cache';
 
 /**
  * Mess QR storage — local only, never synced.
- * Image file lives in app documents; metadata in MMKV.
+ * Image file lives in app documents; metadata in local cache.
  */
 
 export interface MessQR {

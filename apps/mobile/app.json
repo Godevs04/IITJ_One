@@ -7,7 +7,6 @@
     "icon": "./assets/icon.png",
     "scheme": "iitj1",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -38,7 +37,8 @@
           "color": "#1D3F5E"
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true

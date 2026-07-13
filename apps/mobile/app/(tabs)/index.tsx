@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
-import { router } from 'expo-router';
+import { useCallback, useEffect, useState, type ComponentProps } from 'react';
+import { router, type Href } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 import { ContentCard } from '@/components/ContentCard';
 import { DepartureBoard } from '@/components/DepartureBoard';
@@ -15,17 +16,22 @@ import { getNextDeparture } from '@/utils/transport';
 import { getNextClass } from '@/utils/timetable';
 import { AppColors, AppSpacing, AppTypography } from '@/theme/tokens';
 
-const QUICK_LINKS = [
-  { title: 'My Mess QR', icon: 'qr-code-outline' as const, route: '/mess-qr', prominent: true },
-  { title: 'Timetable', icon: 'calendar-outline' as const, route: '/timetable' },
-  { title: 'Notes', icon: 'document-text-outline' as const, route: '/notes' },
-  { title: 'Mess', icon: 'restaurant-outline' as const, route: '/menu' },
-  { title: 'Transport', icon: 'bus-outline' as const, route: '/transport' },
-  { title: 'Notices', icon: 'megaphone-outline' as const, route: '/notices' },
-  { title: 'Map', icon: 'map-outline' as const, route: '/map' },
-  { title: 'Portals', icon: 'link-outline' as const, route: '/portals' },
-  { title: 'Services', icon: 'business-outline' as const, route: '/services' },
-  { title: 'Emergency', icon: 'call-outline' as const, route: '/emergency' },
+const QUICK_LINKS: Array<{
+  title: string;
+  icon: ComponentProps<typeof Ionicons>['name'];
+  route: Href;
+  prominent?: boolean;
+}> = [
+  { title: 'My Mess QR', icon: 'qr-code-outline', route: '/mess-qr', prominent: true },
+  { title: 'Timetable', icon: 'calendar-outline', route: '/timetable' },
+  { title: 'Notes', icon: 'document-text-outline', route: '/notes' },
+  { title: 'Mess', icon: 'restaurant-outline' as const, route: '/(tabs)/menu' as Href },
+  { title: 'Transport', icon: 'bus-outline' as const, route: '/(tabs)/transport' as Href },
+  { title: 'Notices', icon: 'megaphone-outline' as const, route: '/(tabs)/notices' as Href },
+  { title: 'Map', icon: 'map-outline', route: '/map' },
+  { title: 'Portals', icon: 'link-outline', route: '/portals' },
+  { title: 'Services', icon: 'business-outline', route: '/services' },
+  { title: 'Emergency', icon: 'call-outline', route: '/emergency' },
 ];
 
 export default function HomeScreen() {
@@ -108,7 +114,7 @@ export default function HomeScreen() {
         <ContentCard
           title="Today's menu"
           subtitle={`${mealKey} · ${todayMenu.dayName}`}
-          onPress={() => router.push('/menu')}
+          onPress={() => router.push('/(tabs)/menu')}
         >
           <Text style={styles.mealText}>Veg: {meal.veg}</Text>
           <Text style={styles.mealText}>Non-veg: {meal.nonVeg}</Text>
@@ -126,7 +132,7 @@ export default function HomeScreen() {
               category={(n.category as 'mess') || 'general'}
               isImportant={n.isImportant}
               expiryLabel={formatExpiryLabel(expirySeconds(n.expiryDate))}
-              onPress={() => router.push('/notices')}
+              onPress={() => router.push('/(tabs)/notices')}
             />
           ))}
         </View>
@@ -137,7 +143,7 @@ export default function HomeScreen() {
         <View style={styles.grid}>
           {QUICK_LINKS.map((item) => (
             <QuickAccessTile
-              key={item.route}
+              key={item.title}
               title={item.title}
               icon={item.icon}
               prominent={item.prominent}

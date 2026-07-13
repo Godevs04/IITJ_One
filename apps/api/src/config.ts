@@ -4,6 +4,7 @@ import path from 'path';
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 export const config = {
+  host: process.env.HOST ?? '0.0.0.0',
   port: parseInt(process.env.PORT ?? '6002', 10),
   nodeEnv: process.env.NODE_ENV ?? 'development',
   apiBaseUrl: process.env.API_BASE_URL ?? 'http://localhost:6002',

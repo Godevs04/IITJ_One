@@ -27,9 +27,12 @@ async function bootstrap(): Promise<void> {
   app.use(notFoundHandler);
   app.use(errorHandler);
 
-  app.listen(config.port, () => {
-    console.log(`[api] IITJ1 API listening on http://localhost:${config.port}/api/v1`);
-    console.log(`[api] Health: http://localhost:${config.port}/api/v1/health`);
+  app.listen(config.port, config.host, () => {
+    const lanHint = config.apiBaseUrl.replace('localhost', config.host === '0.0.0.0' ? '<your-lan-ip>' : config.host);
+    console.log(`[api] IITJ1 API listening on http://${config.host}:${config.port}/api/v1`);
+    console.log(`[api] Health: ${config.apiBaseUrl}/api/v1/health`);
+    console.log(`[api] LAN:    ${lanHint}/api/v1/health (use IP from set-lan-ip.sh)`);
+    console.log(`[api] CORS origins (admin): ${config.corsOrigin.join(', ')}`);
     console.log(`[api] Storage: ${dbConnected ? 'mongodb' : 'fallback'}`);
   });
 }
