@@ -245,39 +245,40 @@ export default function MenuScreen() {
                     <View key={idx} style={styles.dishGridItem}>
                       <View style={styles.dishRow}>
                         <View style={[styles.dishDot, { backgroundColor: '#3B8E4C' }]} />
-                        <Text
-                          style={[
-                            styles.dishText,
-                            { color: theme.text },
-                            isSpecial && styles.specialDishText,
-                          ]}
-                          numberOfLines={2}
-                        >
-                          {dish}
-                        </Text>
-                        {isSpecial && (
-                          <View
+                        <View style={styles.dishTextContainer}>
+                          <Text
                             style={[
-                              styles.miniSpecialBadge,
-                              {
-                                backgroundColor:
-                                  dietPreference === 'veg' ? theme.vegTint : theme.errorTint,
-                              },
+                              styles.dishText,
+                              { color: theme.text },
+                              isSpecial && styles.specialDishText,
                             ]}
                           >
-                            <Text
+                            {dish}
+                          </Text>
+                          {isSpecial && (
+                            <View
                               style={[
-                                styles.miniSpecialBadgeText,
+                                styles.miniSpecialBadge,
                                 {
-                                  color:
-                                    dietPreference === 'veg' ? theme.veg : theme.nonVeg,
+                                  backgroundColor:
+                                    dietPreference === 'veg' ? theme.vegTint : theme.errorTint,
                                 },
                               ]}
                             >
-                              {dietPreference === 'veg' ? 'Veg' : 'Non-Veg'}
-                            </Text>
-                          </View>
-                        )}
+                              <Text
+                                style={[
+                                  styles.miniSpecialBadgeText,
+                                  {
+                                    color:
+                                      dietPreference === 'veg' ? theme.veg : theme.nonVeg,
+                                  },
+                                ]}
+                              >
+                                {dietPreference === 'veg' ? 'Veg' : 'Non-Veg'}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
                       </View>
                     </View>
                   );
@@ -430,18 +431,26 @@ const styles = StyleSheet.create({
   },
   dishRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: AppSpacing.xs,
+  },
+  dishTextContainer: {
+    flex: 1,
+    flexDirection: 'row',
     flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 4,
   },
   dishDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
+    marginTop: 6,
   },
   dishText: {
     ...AppTypography.bodySmall,
     fontSize: 13,
+    lineHeight: 18,
   },
   specialDishText: {
     fontWeight: '600',
@@ -450,6 +459,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: AppRadius.sm,
+    marginLeft: 2,
   },
   miniSpecialBadgeText: {
     ...AppTypography.caption,
