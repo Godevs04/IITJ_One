@@ -1,0 +1,819 @@
+﻿Comprehensive Digital and Physical Infrastructure Audit: Indian Institute of Technology Jodhpur (IITJ)
+The following analysis provides an exhaustive architectural, operational, and institutional mapping of the Indian Institute of Technology Jodhpur (IITJ). Engineered to supply a structured data foundation for a centralized campus application, this report synthesizes the latest available institutional records, administrative circulars, and student-led digital infrastructure datasets up to the 2026 academic operating environment. The data is structured to inform the database schema, user experience (UX) flows, and API integrations for a centralized campus mobile application.
+1. Dining Infrastructure and Mess Menu Systems
+The dining infrastructure at IIT Jodhpur operates under a centralized mess system designed to cater to a fully residential student body across an 852-acre campus. The operational architecture is bifurcated to strictly maintain dietary preferences, cultural requirements, and hygiene standards1.
+The institute operates two primary mess facilities situated adjacent to the hostel blocks. The Vegetarian Mess operates as a dedicated facility strictly for vegetarian food preparation and consumption1. The Non-Vegetarian Mess is a separate facility featuring independent preparation areas, where students can opt for a non-vegetarian or specialized paneer-based item daily, which is typically provisioned in limited quantities3. In addition to the primary mess facilities, a multi-cuisine Food Court operates on the third floor of the Dining Hall building. This venue functions on a pay-per-item basis, offering a la carte menus, fresh juices, and late-night culinary services beyond standard mess operating hours2.
+The operational windows for the mess strictly adhere to a four-meal daily structure synchronized with the academic and laboratory timetable. Based on historical and current operational blueprints, the meal distribution follows a precise schedule1.
+Meal Service
+	Standard Timings
+	Weekend/Holiday Modifications
+	Typical Composition Profile
+	Breakfast
+	07:30 AM – 09:30 AM
+	Extended to 10:00 AM
+	Bread, butter, jam, milk, tea, coffee, sprouts (daily fixtures) + rotating hot item (e.g., Poha, Dosa, Idli, Aloo Paratha)
+	Lunch
+	12:00 PM – 14:00 PM
+	12:15 PM – 14:30 PM
+	Carbohydrate base (Chapati/Rice), Dal (Yellow Moong, Arhar), dry vegetable, gravy dish, salad, pickles
+	Snacks / High Tea
+	17:00 PM – 18:00 PM
+	Standard hours apply
+	Tea, coffee, light snacks (e.g., Bhelpoori, Samosa)
+	Dinner
+	20:00 PM – 22:00 PM
+	Standard hours apply
+	Carbohydrate base, complex gravies (Kadhai Paneer, Egg Curry), dessert (e.g., Gulab Jamun, Custard)
+	The menu is inherently cyclical and is governed jointly by the Student Mess Committee and the Faculty-in-Charge, Dining (FICD)1. Continuous feedback loops are utilized to modify the offerings. For application developers, it is critical to note that while historical menus are highly consistent, the active monthly menu is distributed internally rather than hosted dynamically on the top-level domain.
+Information Node
+	Primary Source URL
+	Apparent Recency
+	Confidence Level
+	Manual Verification Flags
+	Mess Operational Structure
+	https://iitj.ac.in/office-of-students/en/dining-services
+	High (Current site architecture)
+	High
+	Confirmed official operating procedure.
+	Meal Timings & Menu Profile
+	https://www.scribd.com/document/370710054/IIT-Jodhpur-Dining-Services-pdf
+	Moderate (Extracted from past cycles)
+	Moderate
+	FLAG FOR VERIFICATION: Developers must contact the FICD or the Student Mess Committee directly to establish an API or webhook for the live Google Sheet/PDF containing the current month's precise menu.
+	2. Campus Transport and Logistics Networks
+IIT Jodhpur operates a highly regimented internal and external transit system. Situated approximately 20 kilometers from the Jodhpur city center along National Highway 62, the campus relies heavily on its internal shuttle fleet for connectivity to urban transit hubs, medical centers, and the legacy campus2.
+The institute operates two primary bus lines, designated as the B1 and B2 routes, which form the backbone of the transit network10. The B1 route primarily services the General Pool Residential Accommodation (GPRA) and the Mugneeram Bangur Memorial (MBM) Engineering College. The B2 route extends towards AIIMS Jodhpur and central city circles like Jaljog11.
+Route Designation
+	Departure Node
+	Departure Time
+	Arrival Destination
+	Arrival Time
+	Geographic Routing Matrix
+	B1 (Weekday)
+	Main Gate Parking
+	06:30 AM
+	GPRA
+	07:40 AM
+	Paota – Railway Station – GPRA
+	B1 (Weekday)
+	GPRA (City to Campus)
+	07:50 AM
+	IITJ
+	08:50 AM
+	MBM – Paota – Mandore – IITJ
+	B2 (Weekday)
+	Old Mess
+	09:15 AM*
+	AIIMS Jodhpur
+	10:20 AM
+	Paota – MBM – AIIMS
+	B1 (Weekday)
+	Old Mess
+	10:30 AM
+	MBM (Gate 1)
+	11:30 AM
+	Paota – Railway Station – MBM
+	B2 (Weekday)
+	AIIMS (City to Campus)
+	01:30 PM
+	IITJ
+	02:30 PM
+	AIIMS – MBM – IITJ
+	B1 (Weekday)
+	MBM Gate 1 (City to Campus)
+	02:30 PM
+	IITJ
+	03:30 PM
+	MBM College – Paota – IITJ
+	B2 (Weekday)
+	Old Mess
+	04:15 PM
+	AIIMS Jodhpur
+	05:15 PM
+	Paota – Railway Station
+	B2 (Weekday)
+	AIIMS (City to Campus)
+	05:20 PM
+	IITJ
+	06:20 PM
+	Riktiya Bheruji – MBM – Paota – IITJ
+	B1 (Weekday)
+	Shamiyana
+	05:45 PM
+	GPRA
+	06:45 PM
+	Paota – MBM – Riktiya Bheruji Circle
+	B2 (Weekday)
+	Old Mess
+	06:45 PM
+	Jaljog Circle
+	07:45 PM
+	Paota – MBM – Riktiya Bheruji – MBM
+	B1 & B2 (Night)
+	MBM Gate 1 (City to Campus)
+	09:00 PM
+	IITJ
+	10:00 PM
+	MBM – Railway Station – Paota – IITJ
+	(Note on Operational Exceptions: On Thursdays, the 09:15 AM B2 bus departs earlier at 08:00 AM specifically to transport students to the Surgical Device Development practicum at AIIMS Jodhpur11.)
+During Sundays and recognized institute holidays, the frequency is reduced, focusing primarily on maintaining core connectivity to MBM and Paota. Departures from the campus occur at 10:00 AM (B1), 11:30 AM (B2), 04:45 PM (B1), and 05:45 PM (B2). Return trips from the city to the campus operate at 01:00 PM (B1), 04:00 PM (B2), and 09:00 PM for both lines11.
+An analysis of the digital infrastructure reveals that IIT Jodhpur does not currently maintain an official, public-facing live GPS tracking application for its shuttle fleet11. Students rely entirely on the published static schedules. While third-party logistics and cab firms (e.g., Weeple, Balaji Cabs) advertise transport services to the campus perimeter, there is no institute-sanctioned on-demand digital booking system for the internal shuttles12.
+Information Node
+	Primary Source URL
+	Apparent Recency
+	Confidence Level
+	Manual Verification Flags
+	Bus Schedules & Routing
+	https://iitj.ac.in/office-of-security-transports/en/transport
+	High (Last updated March 2026)
+	High
+	FLAG FOR VERIFICATION: Check with the Office of Security & Transports if a new schedule is issued at the start of the Monsoon 2026 semester.
+	Live Tracking / On-Demand Booking
+	Multiple external transit queries
+	N/A (Does not exist officially)
+	High
+	Confirmed absence of official live tracking. App developers should build a static timetable interface or integrate a crowdsourced location-sharing module.
+	3. Academic Calendar Architecture (AY 2026-27)
+The academic chronology at IIT Jodhpur relies on a highly specialized "Fractal" system. This structure divides standard academic semesters into smaller, intensive modular blocks (Fractal 1, Fractal 2, and Fractal 3), allowing for micro-credits and rapid iteration of specialized subjects alongside traditional semester-long courses14. This architectural nuance requires a campus application to handle multiple, cascading "Add/Drop" and withdrawal deadlines within a single semester.
+The published comprehensive academic calendar for Academic Year 2026-27 dictates the operational tempo of the institute14.
+Academic Event
+	Semester I (Monsoon 2026)
+	Semester II (Spring 2027)
+	Summer Term 2027
+	Course Registration (Continuing)
+	20–23 July 2026
+	15–17 December 2026
+	03–10 May 2027
+	Physical Reporting (New UG)
+	27–29 July 2026
+	N/A
+	N/A
+	Classes Commencement
+	30 July 2026 (05 Aug for 1st Year UG)
+	04 January 2027
+	10 May 2027
+	Late Registration / Last Add/Drop
+	07 August 2026
+	07 January 2027
+	12 May 2027
+	Mid-Semester Examination (Minor)
+	15–20 September 2026
+	16–21 February 2027
+	04–06 June 2027
+	End-Semester Examination (Major)
+	19–26 November 2026
+	22–29 April 2027
+	10–13 July 2027
+	Last Date of Grade Submission
+	30 November 2026
+	03 May 2027
+	19 July 2027
+	The calendar incorporates standard national holidays and strategic operational pauses. Recognized "No Class Days" are declared for major campus festivals, including Prometeo (technical festival, 02–04 October 2026), Varchas (sports festival, 30 October–01 November 2026), and Ignus (cultural festival, 29–31 January 2027)14.
+Regarding graduation ceremonies, the 12th Convocation presents a slight anomaly in the forecasting documentation. While the 10th was held in October 2024, and the 11th in June 2025, preliminary brochures for the 12th Convocation indicate a targeted window of June 04-06, 2026, with mandatory student rehearsals scheduled for June 0518.
+Information Node
+	Primary Source URL
+	Apparent Recency
+	Confidence Level
+	Manual Verification Flags
+	Core Academic Dates
+	https://www.iitj.ac.in/PageImages/Gallery/06-2026/Academic-Calendar-AY-2026-27-639178076336417495.pdf
+	High (Current AY)
+	Extremely High
+	Sourced directly from official PDF.
+	Convocation Dates
+	https://www.iitj.ac.in/office-of-academics/en/academics
+	Moderate
+	Moderate
+	FLAG FOR VERIFICATION: Confirm exact 12th Convocation dates with the Office of Academics, as high-profile VIP availability frequently shifts these dates.
+	4. Official Digital Portals and Access Architecture
+The digital ecosystem at IITJ is administered by the Digital Infrastructure & Automation (DIA) vertical (formerly the Computer Center)20. The network topology employs a strict firewall and a captive portal architecture. Accessing external internet from within the campus requires authentication, while accessing internal administrative nodes from the outside requires a Virtual Private Network (VPN)21.
+The fundamental authentication unit for students is the LDAP credential (which maps to the prefix of their @iitj.ac.in Google Workspace email address).
+
+
+Portal Classification
+	Exact Target URL
+	Network Architecture & Authentication Requirements
+	ERP / Student Portal
+	https://erp.iitj.ac.in/
+	External access mandates an OTP verification sent to the registered email/mobile. Internal campus network access bypasses the OTP requirement. Login utilizes a 5-digit stakeholder code or specific ERP application numbers21.
+	Fee Payment & Hostel Booking
+	Integrated within https://erp.iitj.ac.in/
+	Managed natively within the ERP dashboard. No separate top-level domain exists for payments; requests generate internal gateway links25.
+	LMS / Moodle
+	https://moodle.iitj.ac.in/
+	Standard internal routing. Utilizes standard LDAP credentials26.
+	Central Library (SRRLH) Catalog
+	https://library.iitj.ac.in/
+	Publicly accessible catalog. To access subscription databases remotely from off-campus, students must route through RemoteXs at http://iitj.remotexs.in/user utilizing LDAP27.
+	Student Webmail
+	https://mail.google.com/
+	Integrated seamlessly via Google Workspace using @iitj.ac.in credentials. Accessible globally without VPN30.
+	Placement Portal (SPC)
+	https://spc.iitj.ac.in/
+	Requires LDAP credentials. The architecture mandates that students upload resumes for Training and Placement Office (TPO) approval before unlocking application capabilities32.
+	Network / Wi-Fi Gateway
+	gateway.iitj.ac.in (Captive)
+	Controlled by Fortinet architecture. Connections via WPA-2 Enterprise. Requires periodic re-authentication to maintain active sessions22.
+	To access secure local administrative nodes or software license servers from an external network, students must deploy the FortiClient SSL-VPN. Users authenticate at gateway.iitj.ac.in with LDAP credentials, download the OS-specific client, and establish the secure tunnel22.
+Information Node
+	Primary Source URL
+	Apparent Recency
+	Confidence Level
+	Manual Verification Flags
+	Core Subdomains & URLs
+	https://iitj.ac.in/dia/en/dia
+	High
+	High
+	All endpoints verified against active subdomains.
+	Authentication Protocols
+	https://www.iitj.ac.in/dia/en/vpn
+	High
+	High
+	FLAG FOR VERIFICATION: Developers implementing deep links or WebViews in the campus app must account for FortiGate captive portal session expirations which drop network requests.
+	5. Campus Geography and Asset Locations
+IIT Jodhpur occupies a massive 852-acre footprint situated along National Highway 62 (Nagaur Road, Karwar). The topography is strategically divided into Pocket A (650 acres, hosting the Main Academic and Residential complexes) and Pocket B (192 acres, housing the Technology Park and KV School)8.
+A defining architectural feature of the campus is its 5-Star GRIHA (Green Rating for Integrated Habitat Assessment) sustainability rating. The design treats the settlement as a "Living Laboratory," utilizing massive earthen "berms" to shield the infrastructure from the harsh desert heat, dust storms, and noise36.
+The academic architecture deliberately avoids traditional departmental isolation to foster interdisciplinary research. Academic blocks are named after foundational Indian scientists8.
+
+
+Asset Classification
+	Official Nomenclature / Landmark
+	Geographical Notes
+	Administrative Hub
+	Chanakya Complex
+	Houses the Director's Office, Registrar, and main administration. Features the "Friendship Fountain" at the entrance8.
+	Department Block
+	Bibha Chowdhuri Bhawan
+	Houses the Department of Physics8.
+	Department Block
+	Asima Chatterjee Bhawan
+	Houses Bioscience & Bioengineering8.
+	Department Block
+	A. Ramakrishna Bhawan
+	Houses Civil & Infrastructure Engineering8.
+	Department Block
+	T.R. Anantharaman Bhawan
+	Houses Metallurgy, Materials, and Chemical Engineering8.
+	Computing Hub
+	Srinivasa Ramanujan Centre
+	Houses the Computer Centre and DIA operations8.
+	Data Science Block
+	P.C. Mahalanobis Bhawan
+	Houses the School of Artificial Intelligence and Data Science8.
+	Central Library
+	S. R. Ranganathan Learning Hub (SRRLH)
+	Central academic zone8.
+	Medical Centre
+	Jivaka Primary Health Centre (PHC)
+	Positioned centrally within the primary residential and hostel area for rapid emergency access8.
+	Innovation Center
+	APJ Abdul Kalam Innovation Complex
+	Located in Pocket B (Technology Park limits)8.
+	The residential sector currently scales to accommodate over 3,000 students across 17 distinct hostel structures (5 designated for female students, 12 for male students). While the administration frequently utilizes alphanumeric codes (e.g., G4, B1) for internal routing, the hostels are commonly known by their botanical desert names42.
+* Designated Girls' Hostels: Hostel 12, Hostel 13, B2, B4 (Taman), G4 (Shirish), I2 (Aparajita)42.
+* Designated Boys' Hostels: G1, G2, G3 (Sheesham), G5, G6 (Arjun), B1 (Neelmohar), B3 (Semal), B5, Y3, Y4, O3, O442.
+The newest hostels utilize rapid pre-cast construction technologies. Rooms feature advanced thermal insulation and centralized air-cooling systems, negating the need for individual air conditioning or desert coolers8.
+Information Node
+	Primary Source URL
+	Apparent Recency
+	Confidence Level
+	Manual Verification Flags
+	Academic Block Mapping
+	https://old.iitj.ac.in/techscape/
+	High
+	High
+	Confirmed against campus development reports.
+	Hostel Naming Conventions
+	Multiple aggregators (JustDial) & iitj.ac.in directories
+	Moderate
+	Moderate
+	FLAG FOR VERIFICATION: Since an official interactive GIS map is not publicly hosted, developers must manually ground-truth coordinates (latitude/longitude) for each hostel to build the app's interactive map layer.
+	6. Campus Commercial Services Directory
+To sustain a fully residential model far from the city center, IIT Jodhpur integrates essential commercial services directly into the campus fabric. These micro-economies are predominantly clustered in the Jaisalmer Club (Community Center) and the Dining Hall Building2.
+
+
+Service Category
+	Establishment Name
+	Location / Landmark
+	Typical Operating Hours
+	Operational Profile
+	Grocery / General Needs
+	Campus Supermarket
+	Jaisalmer Club
+	08:00 AM – 06:00 PM
+	Provisions basic daily needs, dairy, and packaged goods2.
+	Stationery & Reprographics
+	Institute Stationery Shop
+	Jaisalmer Club
+	10:00 AM – 05:45 PM
+	Provides academic supplies, printing, and photocopying (Xerox) services2.
+	Pharmaceuticals
+	AMRIT Pharmacy
+	Inside Jivaka PHC
+	24 Hours
+	Dispenses prescribed medicines; guarantees procurement of out-of-stock items within 48 hours50.
+	Apparel Care
+	Campus Laundry Service
+	Himalaya West Berm 5 (Barrels 4 & 5)
+	Standard Daytime Hours
+	Operates on a commercial per-piece tariff2.
+	Personal Care
+	Gents Salon & Ladies Parlour
+	Jaisalmer Club
+	08:00 AM – 06:00 PM
+	Basic grooming services2.
+	Cafeteria / Eatery
+	Shamiyana (The Institute Cafe)
+	Near Hostel Blocks
+	08:00 AM – 11:30 PM
+	Serves coffee, tea, fast food, and ice creams. Primary student socialization hub6.
+	Cafeteria / Eatery
+	Food Court
+	3rd Floor, Dining Hall
+	09:00 AM – 02:00 AM
+	Offers a la carte meals, fresh juices, and operates late into the night4.
+	Cafeteria / Eatery
+	Neem Cafe
+	Near School of Management & LHC
+	09:00 AM – 06:00 PM
+	Daytime academic-zone cafe6.
+	Financial Services
+	State Bank of India (SBI) Branch & ATM
+	Jaisalmer Club / LHC
+	Standard Banking Hours
+	Primary campus financial node. Additional ATMs operated by Canara Bank and HDFC are distributed near the East Block and Lecture Halls2.
+	
+
+Information Node
+	Primary Source URL
+	Apparent Recency
+	Confidence Level
+	Manual Verification Flags
+	Commercial Service Inventory
+	https://www.iitj.ac.in/main/en/life-@-iit-jodhpur
+	High
+	High
+	Services are confirmed to exist as per official mandate.
+	Operating Hours
+	Aggregated sources / Student forums
+	Moderate
+	Moderate
+	FLAG FOR VERIFICATION: Commercial vendor contracts frequently turn over. The campus app should feature a crowdsourced "Is it open?" toggle for these vendors to maintain accuracy.
+	7. Emergency Protocols and Crisis Contacts
+IIT Jodhpur maintains a multi-tiered emergency response architecture operating continuously. The data below outlines the primary hierarchical contacts for immediate intervention, which should be hardcoded into any campus application's SOS functionality53.
+Security and Crisis Management: The campus security grid oversees traffic, access control, and fire response. Fire safety operations are localized and dispatched directly through the central Security Control Room54.
+* Security Control Room / Help Desk (24/7): 0291-280-1591 / 1592 / 1593 / 1597 / 159854.
+* Main Gate Security Desk: 0291-280-196154.
+* Security Officer (Col. V.S. Rathore, Retd.): 0291-280-1592 | Email: security@iitj.ac.in55.
+Medical and Ambulance Dispatch: The Jivaka PHC manages acute medical crises, supported by a fleet comprising one Advanced Cardiac Life Support (ACLS) ambulance and one Basic Life Support (BLS) ambulance stationed on-site50.
+* PHC Emergency Duty Doctor: 0291-280-117853.
+* PHC Reception / Dispatch: 0291-280-119053.
+Student Welfare and Anti-Ragging Framework: The institute enforces a strict zero-tolerance policy towards harassment, integrated with national frameworks58.
+* National Anti-Ragging Helpline (UGC): 1800-180-552259.
+* Dean of Student Affairs (DOSA - Prof. Ankita Sharma): 0291-280-1031 | Email: dosa@iitj.ac.in58.
+* Associate Dean, Hostel Affairs (ADHA - Dr. Indranil Banerjee): Email: ad_hostels@iitj.ac.in58.
+* Chairperson, Student Hostel Warden Committee (Dr. Ramesh K. Metre): 0291-280-1309 | Email: ccw@iitj.ac.in62.
+Hostel Wardens Directory: Individual hostel emergencies are escalated to specific faculty wardens43.
+* Hostel 12 / 13 (Girls): Dr. Moumita Mandal / Dr. Mithu Rani Kuiti
+* B2 / B4 (Girls): Dr. Sucharita Dey / Dr. Amrita Puri
+* G4 (Girls): Dr. Sunita
+* G1 / G2 / G3 (Boys): Dr. Vikky Anand / Dr. P. Ravi Prakash / Dr. S. Srivatsa Srinivas
+* G5 / G6 (Boys): Dr. Sai Kiran MPR / Dr. Sudipta Bhattacharyya
+* B1 / B3 / B5 (Boys): Dr. Hrishikesh / Dr. Pratik Mazumder / Dr. Bhupendra Singh Reniwal
+* Y3 / Y4 / O3 / O4 (Boys): Dr. Sumit Kamal / Dr. Palash Das / Dr. Saran Aadhar / Dr. Devendra Singh Negi
+Information Node
+	Primary Source URL
+	Apparent Recency
+	Confidence Level
+	Manual Verification Flags
+	Emergency Telephone Directory
+	https://iitj.ac.in/office-of-security-transports/en/contact
+	High
+	Extremely High
+	Ensure phone routing handles internal PBX extensions correctly if the app dials from within the campus VoIP network.
+	Wardens Directory
+	https://www.iitj.ac.in/main/en/wardens
+	High
+	High
+	Wardens rotate annually; the app backend must allow for seamless updates to this directory list.
+	8. Existing Digital Ecosystem and Shadow Applications
+The digital landscape at IIT Jodhpur is a hybrid of official institutional software and highly functional "shadow IT" applications engineered by the computer science student community to solve immediate UX friction points.
+* SRRLH Mobile App (Official): Deployed for the S. R. Ranganathan Learning Hub, this app allows students to query book availability, track# Architectural and Operational Intelligence Report: Indian Institute of Technology Jodhpur
+The integration of physical campus infrastructure with a centralized digital application requires a meticulous mapping of operational workflows, geographical nodes, academic chronologies, and administrative hierarchies. The Indian Institute of Technology Jodhpur (IITJ) operates a highly structured, fully residential ecosystem designed around the concept of a "Living Laboratory." This report provides an exhaustive synthesis of the institute's current logistical, academic, and digital frameworks, tailored specifically to inform the database architecture and user experience design of a comprehensive campus mobile application.
+1. Dining Infrastructure and Mess Menu Operations
+The dining infrastructure at IIT Jodhpur is engineered to support a diverse, fully residential student population numbering over three thousand individuals. The central dining facility is housed within a three-storied, fully air-conditioned modern building designed to accommodate up to one thousand students simultaneously during peak operational windows4.
+The operational architecture of the mess system is strictly bifurcated to respect dietary preferences, featuring entirely separate preparation and serving facilities for vegetarian and non-vegetarian meals1. The vegetarian mess operates independently from the non-vegetarian facility, ensuring no cross-contamination1. In addition to the primary mess halls, the third floor of the Dining Hall building hosts a multi-cuisine Food Court, which serves an a la carte menu, fresh juices, and late-night snacks outside of the standard mess hours2.
+The daily operational schedule is synchronized with the institute's academic timetable. Breakfast is served from 07:30 AM to 09:30 AM (often extended to 10:00 AM on weekends), providing students with essential morning nutrition before the first lecture block3. The lunch service operates from 12:00 PM to 14:00 PM, followed by an evening snacks and high tea window from 17:00 PM to 18:00 PM3. The final meal of the day, dinner, is available from 20:00 PM to 22:00 PM3.
+Menu planning and quality assurance are governed by the Student Mess Committee in collaboration with the Faculty-in-Charge, Dining (FICD) and the Student Hostel Wardens Committee (SHWC)1. The menu is cyclical and subject to periodic review based on student feedback and nutritional guidelines. A standard breakfast includes staple items such as bread, butter, jam, milk, and sprouts, accompanied by rotating hot dishes like Dosa, Idli, or Aloo Paratha3. Lunch and dinner feature a balanced composition of carbohydrates (rice and chapati), diverse lentil preparations (Dal Makhani, Panchratni Dal), seasonal dry vegetables, and rich gravies (Kadhai Paneer, Egg Curry), supplemented by salads, pickles, and desserts3.
+Data Point
+	Source URL
+	Recency / Context
+	Confidence Level
+	Actionable Verification Flag
+	Mess Timings & Segregation
+	iitj.ac.in/office-of-students/en/Facilities
+	Current Institutional Policy
+	High
+	Verified on official site. Confirm minor weekend timing shifts with FICD.
+	Monthly Menu Cycle
+	scribd.com / devlup app
+	Historical (2013-2023)
+	Low (for exact current week)
+	CRITICAL: Call the Office of Hostel Affairs to establish an API or Google Drive link to the live monthly menu PDF. The official site does not host the dynamic weekly menu.
+	2. Transit Logistics and Campus Transport
+Given IIT Jodhpur's location approximately twenty kilometers from the Jodhpur city center on National Highway 62, the institute relies on a regimented internal and external transit system2. The primary transport arteries are serviced by a dedicated fleet of institute shuttles, prominently designated as the B1 and B2 bus routes10. These routes connect the Karwar permanent campus to critical urban nodes, including the Mugneeram Bangur Memorial (MBM) Engineering College (the former temporary campus site), Paota, the Railway Station, General Pool Residential Accommodation (GPRA), and AIIMS Jodhpur8.
+The weekday schedule operates from Monday to Saturday, characterized by high-frequency departures aligned with faculty working hours and student transit needs.
+
+
+Bus Route
+	Departure from Campus
+	Arrival Destination
+	Arrival Time
+	Navigational Route
+	B1
+	06:30 AM (Main Gate)
+	GPRA
+	07:40 AM
+	Paota – Railway Station – GPRA11
+	B2
+	09:15 AM (Old Mess)*
+	AIIMS Jodhpur
+	10:20 AM
+	Paota – MBM – AIIMS11
+	B1
+	10:30 AM (Old Mess)
+	MBM (Gate 1)
+	11:30 AM
+	Paota – Railway Station – MBM11
+	B2
+	04:15 PM (Old Mess)
+	AIIMS Jodhpur
+	05:15 PM
+	Paota – Railway Station11
+	B1
+	05:45 PM (Shamiyana)
+	GPRA
+	06:45 PM
+	Paota – MBM – Riktiya Bheruji Circle11
+	B2
+	06:45 PM (Old Mess)
+	Jaljog Circle
+	07:45 PM
+	Paota – MBM – Riktiya Bheruji – MBM11
+	A critical anomaly in the schedule occurs every Thursday, wherein the 09:15 AM B2 departure is advanced to 08:00 AM to facilitate student attendance at the Surgical Device Development class held at AIIMS Jodhpur11.
+
+
+Bus Route
+	Departure from City
+	Arrival at Campus
+	Arrival Time
+	Navigational Route
+	B1
+	07:50 AM (GPRA)
+	IITJ
+	08:50 AM
+	MBM – Paota – Mandore – IITJ11
+	B2
+	01:30 PM (AIIMS)
+	IITJ
+	02:30 PM
+	AIIMS – MBM – IITJ11
+	B1
+	02:30 PM (MBM Gate 1)
+	IITJ
+	03:30 PM
+	MBM College – Paota – IITJ11
+	B2
+	05:20 PM (AIIMS)
+	IITJ
+	06:20 PM
+	Riktiya Bheruji – MBM – Paota – IITJ11
+	B1
+	09:00 PM (MBM Gate 1)
+	IITJ
+	10:00 PM
+	MBM – Paota – IITJ11
+	B2
+	09:00 PM (MBM Gate 1)
+	IITJ
+	10:00 PM
+	MBM – Railway Station – Paota – IITJ11
+	On Sundays and official institute holidays, the logistical frequency is intentionally reduced. The B1 route departs the campus at 10:00 AM and 04:45 PM, returning from MBM at 01:00 PM and 09:00 PM. Simultaneously, the B2 route departs at 11:30 AM and 05:45 PM, executing its return journeys at 04:00 PM and 09:00 PM11.
+An analysis of the digital infrastructure reveals a significant gap in real-time logistical tracking. There is no official, public-facing live GPS tracking application or on-demand digital booking system sanctioned by the institute for these shuttles11. While external commercial logistics providers offer private transport to the campus, internal mobility relies predominantly on bicycles, which are heavily recommended by the administration due to restrictions on motorized student vehicles13.
+Data Point
+	Source URL
+	Recency / Context
+	Confidence Level
+	Actionable Verification Flag
+	Bus Schedules (B1 & B2)
+	iitj.ac.in/office-of-security-transports/en/transport
+	Updated March 2026
+	High
+	Confirmed on official site. Build static timetable interface in app.
+	Live Tracking / On-Demand
+	Not Found on Official Domains
+	N/A
+	High (Absence)
+	VERIFY: Contact the Office of Security & Transports to inquire if an internal, unpublicized API exists for fleet GPS trackers before building a crowdsourced tracking feature.
+	3. Academic Calendar and Educational Chronology (AY 2026-27)
+IIT Jodhpur employs a highly innovative academic framework structured around a "Fractal" system. This paradigm subdivides traditional semester-long courses into smaller, intensive modular blocks (Fractal 1, 2, and 3), allowing for unparalleled flexibility and cross-disciplinary exploration14. This unique structure fundamentally alters standard drop/add deadlines and examination windows, demanding precise integration into any student-facing application.
+The academic session for 2026-27 is segmented into three primary operational windows: Semester I (Monsoon), Semester II (Spring), and a Summer Term14.
+For Semester I, online course registration for continuing students opens between 20 and 23 July 202614. The physical reporting and document verification for new undergraduate cohorts occurs closely thereafter, from 27 to 29 July 202614. Instructional classes commence for continuing students on 30 July 2026, while first-year undergraduates begin their academic journey on 05 August 202614. The critical deadline for late registration and the general add/drop of courses is scheduled for 07 August 202614. However, due to the fractal structure, specific withdrawal deadlines are staggered; for instance, the withdrawal deadline for Fractal 1 courses is 31 August 2026, and for Fractal 2 courses, it is 07 October 202614. Minor examinations, serving as mid-semester evaluations, run from 15 to 20 September 2026, followed by the rigorous Major examinations culminating the semester between 19 and 26 November 202614.
+Semester II initiates with online registration from 15 to 17 December 2026, leading into class commencement on 04 January 202714. The add/drop window closes rapidly on 07 January 202714. Minor examinations for this spring session are calendared for 16 to 21 February 2027, with the final Major examinations stretching from 22 to 29 April 202714.
+The institute's operational rhythm is punctuated by several major holidays and officially declared "No Class Days" that accommodate campus-wide cultural and technical festivals. Significant pauses include Republic Day (26 January), Holi (04 March), Independence Day (15 August), and Diwali (08 November)14. Crucially for application scheduling, instructional activities are suspended for the Prometeo technical festival (02–04 October 2026), the Varchas sports festival (30 October–01 November 2026), and the Ignus cultural festival (29–31 January 2027)14.
+A minor discrepancy exists within the documentation regarding the annual Convocation. While the 10th Convocation occurred in October 2024, the 11th is noted for June 2025, and subsequent brochures suggest the 12th Convocation will occur between 04 and 06 June 202618.
+Data Point
+	Source URL
+	Recency / Context
+	Confidence Level
+	Actionable Verification Flag
+	Registration & Exam Dates
+	iitj.ac.in/PageImages/Gallery/.../Academic-Calendar-AY-2026-27...pdf
+	AY 2026-27
+	High
+	Confirmed via official PDF. The app must code distinct logic for the staggered Fractal drop/add dates.
+	Holidays & Festivals
+	iitj.ac.in & iitjsenateportal.vercel.app
+	AY 2026-27
+	High
+	Verified. Ensure "No Class Days" for Ignus, Prometeo, and Varchas sync with the app's timetable feature.
+	Convocation Date
+	events.iitj.ac.in/convocation/2026/...
+	June 2026
+	Moderate
+	VERIFY: Call the Office of Academics to confirm the exact final date for the 2027 graduating class, as dignitary schedules often force late adjustments.
+	4. Digital Portals and Access Architecture
+The digital ecosystem at IIT Jodhpur is engineered and maintained by the Digital Infrastructure & Automation (DIA) vertical20. The architecture heavily relies on secure, authenticated gateways to protect sensitive academic and administrative data. Understanding the underlying authentication protocols is vital for seamless app integration.
+The primary Enterprise Resource Planning (ERP) platform functions as the central student portal. Located at https://erp.iitj.ac.in/, this portal manages course registration, fee status, and academic records24. Accessing the ERP from an external network requires a dynamic One-Time Password (OTP) routed to the student's registered mobile device or email, adding a layer of friction for third-party app scraping21. However, access initiated from within the institute's internal network bypasses this OTP requirement21. The ERP portal also natively integrates the Hostel Booking interface and the institutional Fee Payment gateways, centralizing financial transactions once administrative approvals are granted25.
+The Learning Management System (LMS) is powered by Moodle and is accessible at https://moodle.iitj.ac.in/26. Authentication utilizes the institute's Lightweight Directory Access Protocol (LDAP), meaning students log in using the prefix of their official @iitj.ac.in email address29. Student webmail is hosted externally through Google Workspace, accessible via standard Gmail interfaces using the full institutional email address30.
+The S. R. Ranganathan Learning Hub (SRRLH) manages the library's digital catalog at https://library.iitj.ac.in/27. While the public catalog is openly accessible, remote access to subscribed research databases necessitates logging into the RemoteXs proxy server at http://iitj.remotexs.in/user using LDAP credentials29. Furthermore, the Training and Placement Office (TPO) operates the Student Placement Cell (SPC) portal at https://spc.iitj.ac.in/, where students must securely authenticate to upload resumes for verification and apply for corporate opportunities32.
+Network access represents a significant infrastructural layer. The campus is blanketed by a high-speed WPA-2 Enterprise wireless network supported by robust leased lines from NKN, BSNL, PGCIL, and Airtel23. Accessing the internet requires navigating a Fortinet captive portal (gateway.iitj.ac.in or 10.0.0.1 equivalents) using LDAP credentials34. Due to the short session timeouts enforced by the FortiGate firewall, students frequently rely on custom scripts or browser extensions (such as the "IIT J Gateway Extension") to automate re-authentication66. Furthermore, accessing internal administrative nodes or software license servers from off-campus requires the installation of the FortiClient SSL-VPN software22.
+
+
+Data Point
+	Source URL
+	Recency / Context
+	Confidence Level
+	Actionable Verification Flag
+	ERP / Student Portal
+	https://erp.iitj.ac.in/
+	Current
+	High
+	Verified. Note: OTP required off-campus. Integrating this into an app requires handling session cookies or SSO.
+	LMS / Moodle
+	https://moodle.iitj.ac.in/
+	Current
+	High
+	Verified. Uses LDAP.
+	Placement Portal
+	https://spc.iitj.ac.in/
+	Current
+	High
+	Verified. Uses LDAP.
+	Wi-Fi & VPN
+	gateway.iitj.ac.in / FortiClient
+	Current
+	High
+	VERIFY: App developers should test whether the app can securely store LDAP credentials to mimic the "auto-login" scripts currently popular among students, while remaining compliant with DIA cybersecurity policies30.
+	5. Topographical Infrastructure and Campus Mapping
+IIT Jodhpur occupies a massive 852-acre footprint on National Highway 62 in Karwar2. The topography is master-planned to function as an ecologically sustainable "Living Laboratory," meticulously bifurcated into two primary zones: Pocket A (650 acres) encompassing the main academic and residential complexes, and Pocket B (192 acres) dedicated to the Technology Park and educational facilities like the Kendriya Vidyalaya8.
+The architectural design is a direct response to the harsh Thar Desert environment. The perimeter and internal zones utilize massive earthen "berms" to mitigate acoustic pollution, thermal loading, and dust infiltration37. This design philosophy has earned the campus a prestigious 5-Star rating from the Green Rating for Integrated Habitat Assessment (GRIHA) Council36.
+To foster interdisciplinary synergies, the academic infrastructure avoids traditional departmental clustering. Instead, monumental academic blocks are named in honor of pioneering Indian scientists8:
+* Administrative Hub: The Chanakya Complex, housing the Director's Office and central administration8.
+* Physics: Bibha Chowdhuri Bhawan8.
+* Bioscience & Bioengineering: Asima Chatterjee Bhawan8.
+* Civil & Infrastructure Engineering: A. Ramakrishna Bhawan8.
+* Metallurgy, Materials & Chemical Engineering: T.R. Anantharaman Bhawan8.
+* Computer Centre & IT: Srinivasa Ramanujan Centre8.
+* Artificial Intelligence & Data Science: P.C. Mahalanobis Bhawan8.
+* Innovation & Incubation: APJ Abdul Kalam Innovation Complex8.
+* Central Library: S. R. Ranganathan Learning Hub (SRRLH)8.
+The residential sector is equally expansive, comprising 17 distinct hostel blocks (12 for male students and 5 for female students) capable of accommodating over 3,000 individuals8. The nomenclature of these hostels blends alphanumeric designations with the names of resilient desert flora42:
+* Female Hostels: Hostel 12, Hostel 13, B2, B4 (Taman), G4 (Shirish), and Aparajita (I2)42.
+* Male Hostels: G1, G2, G3 (Sheesham), G5, G6 (Arjun), B1 (Neelmohar), B3 (Semal), B5, Y3, Y4, O3, and O442.
+The newer additions, such as Hostel Gulmohar, were constructed using rapid pre-cast technology8. Notably, the rooms are engineered with advanced thermal insulation and centralized air-cooling systems, rendering individual ACs or desert coolers unnecessary8.
+Crucial secondary facilities are interspersed throughout the residential zones. The Jivaka Primary Health Centre (PHC) provides centralized medical support, while a dedicated sports complex offers extensive athletic fields alongside indoor gymnasiums within the individual hostel blocks4.
+Data Point
+	Source URL
+	Recency / Context
+	Confidence Level
+	Actionable Verification Flag
+	Building Names & Zones
+	iitj.ac.in/techscape/...
+	Historical / Current
+	High
+	Verified. The app should map these specific names (e.g., Bibha Chowdhuri Bhawan) to their respective GPS coordinates using a custom Mapbox layer.
+	Hostel Nomenclature
+	justdial.com & iitj.ac.in/.../wardens
+	Current
+	High
+	Verified via directory. The combination of alphanumeric and botanical names (e.g., G4/Shirish) should be searchable in the app.
+	Interactive Campus Map
+	Not Found on Official Domains
+	N/A
+	High (Absence)
+	CRITICAL: IIT Jodhpur does not publish a live, interactive GIS map. App developers must manually ground-truth coordinates for all major landmarks.
+	6. Commercial Services and Campus Directory
+The sheer scale and isolation of the 852-acre permanent campus necessitate a robust internal commercial ecosystem to support the daily requirements of the resident population. These services are strategically clustered within the Jaisalmer Club (Community Center) and the Dining Hall Building2.
+The Jaisalmer Club serves as the primary commercial hub, operating generally from 08:00 AM to 06:00 PM2. It houses a comprehensive grocery and supermarket facility supplying daily necessities, alongside an Amul Milk Parlour2. Academic support is provided by the Institute Stationery Shop, which stocks study materials, art supplies, and offers essential photocopying (Xerox) services2. Personal care needs are met by a dedicated Ladies Beauty Parlour and a Gents Salon located within the same complex2.
+Financial infrastructure is solidly established. The State Bank of India (SBI) operates a full-service branch within the Jaisalmer Club, augmented by ATMs. Additional ATM nodes provided by SBI, Canara Bank, and HDFC Bank are strategically distributed near the East Block of the Main Building and the Lecture Hall Complex2.
+For healthcare requirements, the AMRIT Pharmacy is seamlessly integrated into the Jivaka Primary Health Centre (PHC). It operates on a continuous 24-hour cycle, dispensing prescribed medications and maintaining a 48-hour procurement protocol for specialized, out-of-stock items50. Logistical support includes a centralized laundry service operating out of Himalaya West Berm 5 (Barrels 4 and 5), which processes garments on a per-piece tariff system2.
+The culinary landscape beyond the mess halls features several distinct eateries. Shamiyana (The Institute Cafe) is a vibrant social epicenter offering coffee, fast food, and ice creams, operating extensively from 08:00 AM to 11:30 PM6. The Food Court, situated on the third floor of the dining building, caters to late-night study schedules, remaining open from 09:00 AM until 02:00 AM5. Additionally, the Neem Cafe provides refreshment options near the School of Management and the Lecture Hall Complex during standard daytime hours6.
+Data Point
+	Source URL
+	Recency / Context
+	Confidence Level
+	Actionable Verification Flag
+	Commercial Hub Locations
+	iitj.ac.in/.../Brochure...pdf
+	Current
+	High
+	Verified. Jaisalmer Club is the central anchor for groceries, stationery, and salons.
+	Eateries & Cafes
+	advancesinrobotics.com & justdial.com
+	Current
+	Moderate
+	Verified existence, but hours of operation (e.g., Shamiyana till 11:30 PM) often fluctuate during semester breaks.
+	Service Phone Numbers
+	N/A
+	N/A
+	Low (Absence)
+	VERIFY: Individual vendor phone numbers (for the grocery, salon, or laundry) are not publicly listed on iitj.ac.in. Developers must physically canvass the vendors to populate the app directory.
+	7. Emergency Response and Security Protocols
+IIT Jodhpur maintains a sophisticated, multi-tiered emergency response matrix designed to address medical, security, and disciplinary crises with absolute immediacy. The protocols are overseen by the Office of Security & Transports and the Jivaka Primary Health Centre41.
+Campus security operates a 24/7 centralized Control Room. This hub manages access control, CCTV surveillance, physical patrols, and acts as the primary dispatch for fire safety operations54. The central Help Desk can be reached at 0291-280-1591, 1592, 1593, 1597, or 1598, while the Main Gate Security maintains a direct line at 0291-280-196154. The department operates under the jurisdiction of the Security Officer, Col. V.S. Rathore (Retd.), who can be contacted at security@iitj.ac.in55.
+Medical emergencies are directed to the Jivaka PHC, which hosts a 24-hour Casualty/Emergency Room equipped with defibrillators, cardiac monitors, and minor surgical capabilities50. The PHC Duty Doctor is accessible via 0291-280-1178, and the primary reception desk operates at 0291-280-119053. Crucially, the institute maintains a continuous rapid-response fleet consisting of one Advanced Cardiac Life Support (ACLS) ambulance and one Basic Life Support (BLS) ambulance, ensuring immediate stabilization and rapid transfer to empanelled tertiary hospitals in Jodhpur city if required50.
+To uphold a zero-tolerance policy towards harassment, the institute enforces stringent anti-ragging protocols58. Immediate escalations can be directed to the National UGC Anti-Ragging Helpline at 1800-180-552259. Internally, the Anti-Ragging Committee is chaired by the Dean of Student Affairs (DOSA), Prof. Ankita Sharma (Phone: 0291-280-1031 | Email: dosa@iitj.ac.in), supported by the Associate Dean of Hostel Affairs (ADHA), Dr. Indranil Banerjee (ad_hostels@iitj.ac.in)58. Individual hostel wardens act as the immediate frontline responders for nocturnal disturbances43.
+Data Point
+	Source URL
+	Recency / Context
+	Confidence Level
+	Actionable Verification Flag
+	Security Control & Gate
+	iitj.ac.in/office-of-security-transports...
+	Current
+	High
+	Verified. These numbers should be hardcoded into a high-visibility, one-tap "SOS" widget within the app.
+	PHC & Ambulance
+	iitj.ac.in/health-center...
+	Current
+	High
+	Verified. The 0291-280-1178 (Duty Doctor) is the critical lifeline.
+	Anti-Ragging & DOSA
+	iitj.ac.in/office-of-students/en/committees
+	Current
+	High
+	Verified. Include both the internal DOSA/ADHA contacts and the national UGC toll-free number.
+	8. Existing Digital Tools and Shadow Ecosystems
+A critical phase in deploying a unified campus application involves analyzing the existing technological landscape to ensure feature parity and user adoption. The student body at IIT Jodhpur exhibits high technical proficiency, resulting in a complex ecosystem composed of official administrative apps and sophisticated "shadow IT" tools engineered to bypass user experience friction67.
+The primary official mobile deployment is the SRRLH Mobile App, available on the Google Play Store69. This application digitally bridges the S. R. Ranganathan Learning Hub, enabling students to search the library catalog in real-time, monitor borrowing histories, manage accrued fines, and execute seamless self-check-ins utilizing integrated QR code scanners69.
+However, the most pressing digital pain point for residents revolves around network connectivity. The Fortinet captive portal, which authenticates users onto the campus Wi-Fi, enforces stringent session timeouts that arbitrarily sever internet access65. In response, the student developer community has engineered several bypass tools. The IIT J Gateway Extension, a widely utilized Chrome extension, perpetually monitors network status and autonomously injects credentials to re-authenticate users the moment a session expires66. More advanced derivations, such as the IITJ LAN Auto Login (a cross-platform Go daemon), execute similar keep-alive handshakes at the system level67.
+Logistically, the dynamic nature of the mess menu led to the creation of the IIT Jodhpur Mess Menu App, a third-party Android application developed by the student tech collective "Devlup Labs"17. This app scrapes and displays the monthly dietary cycles, highlighting a massive user demand for centralized dining data70. Furthermore, localized networking tools like chat-in-home leverage WebSockets to facilitate real-time communication across the hostel intranet67.
+
+
+Data Point
+	Source URL
+	Recency / Context
+	Confidence Level
+	Actionable Verification Flag
+	SRRLH Library App
+	Google Play Store
+	Updated Aug 2025
+	High
+	Verified official app. The new campus app should likely deep-link to this rather than attempt to rebuild the complex RFID/QR check-in system.
+	Mess Menu App (Devlup)
+	Google Play Store
+	Updated Jul 2025
+	High
+	Verified student app. The new application should absorb this functionality to consolidate the user base.
+	Captive Portal Extensions
+	Chrome Web Store / GitHub
+	Current
+	High
+	CRITICAL: Review institutional cybersecurity policies. While integrating an auto-login script into the new app would guarantee mass adoption, it may violate DIA network security mandates regarding credential storage30.
+	9. Foundational Overview for Freshman Orientation
+To effectively onboard incoming cohorts, the application must feature a centralized repository of institutional history, architectural philosophy, and academic structure.
+Institutional Genesis and Location: The Indian Institute of Technology Jodhpur was established in 2008 as part of the second generation of IITs, mandated to spearhead technological research and economic development8. Following an initial incubation period at a temporary site, the institute migrated to its permanent, sprawling 852-acre campus in 2010. Strategically positioned on National Highway 62 in Karwar, the campus lies approximately twenty kilometers north-northwest of the historic city of Jodhpur, providing a secluded yet highly connected environment for academic pursuit2.
+The Living Laboratory and Sustainable Architecture: The physical infrastructure is a testament to cutting-edge environmental engineering, proudly holding a 5-Star rating from the Green Rating for Integrated Habitat Assessment (GRIHA) Council36. The master plan treats the campus as an intricate, self-sustaining metabolic network—a true "Living Laboratory"37. To combat the extreme thermal loads and dust of the surrounding Thar Desert, the architecture extensively utilizes earthen "berms." These massive landscape features act as protective boundaries, creating micro-climates and biodiversity corridors that shelter both human residents and native flora and fauna37. The institute is aggressively pursuing carbon neutrality, leveraging expansive solar arrays and sophisticated rainwater harvesting cisterns to achieve net-zero water reliance and zero solid-waste generation39.
+Academic Paradigm and Residential Life: IIT Jodhpur fundamentally rejects traditional, isolated academic departments. Instead, it operates through a matrix of 10 Departments, 3 specialized Schools, and 5 multidisciplinary Centers of Excellence9. This interdisciplinary ethos is supercharged by the unique "Fractal" academic system, which fragments standard courses into micro-credit modules, allowing students to tailor highly bespoke, cross-functional educational paths14. As a fully residential community, the institute houses over three thousand scholars across 17 advanced, thermally insulated hostels, fostering an intense, collaborative culture punctuated by major annual festivals such as Prometeo (Technical) and Ignus (Cultural)8.
+Data Point
+	Source URL
+	Recency / Context
+	Confidence Level
+	Actionable Verification Flag
+	Foundation & Size
+	iitj.ac.in/main/en/about-iitj
+	Historical
+	High
+	Verified. Safe to hardcode into the app's "About" section.
+	GRIHA & Sustainability
+	old.iitj.ac.in/events/...
+	Dec 2018
+	High
+	Verified. Emphasizing the "Berm" architecture helps freshers understand the unique aesthetic of the campus.
+	Fractal Curriculum
+	iitj.ac.in/office-of-academics...
+	Current
+	High
+	Verified. A brief explainer of "Fractals" should be included in the app's academic FAQ, as it highly confuses first-year students.
+	10. Institutional Governance and Developer Integration Nodes
+For the development team to successfully deploy the application, secure necessary data pipelines (APIs), and achieve official institutional endorsement, targeted communication with specific administrative hierarchies is paramount.
+The most effective entry point is the student governance structure. The Student Senate acts as the supreme representative body, overseeing the Student Activity Council (SAC) and the Academic & Co-Curricular Activities Council (ACAC)17. Establishing a dialogue with the General Secretary of the Student Senate (contactable via gensecy_ss@iitj.ac.in) provides the application with immediate student backing and access to existing developer networks like Devlup Labs17.
+For formal administrative integration, particularly regarding orientation protocols and student welfare notices, the development team must engage the Office of Student Affairs. The Dean of Student Affairs (DOSA), Prof. Ankita Sharma, acts as the definitive authority on student life (dosa@iitj.ac.in | 0291-280-1031)60.
+If the application requires automated scraping or API access to dining schedules, hostel logistics, or accommodation frameworks, the team must liaise with the Office of Hostel Affairs, managed by the Associate Dean, Dr. Indranil Banerjee (ad_hostels@iitj.ac.in), and the Chairperson of the Student Hostel Wardens Committee, Dr. Ramesh K. Metre (ccw@iitj.ac.in)61.
+Crucially, any feature that attempts to integrate Single Sign-On (SSO), utilize LDAP credentials, or automate the Fortinet captive portal login must undergo rigorous compliance review. These capabilities fall strictly under the purview of the Digital Infrastructure & Automation (DIA) vertical20. Unsanctioned attempts to bypass network authentication mechanisms risk severe IP blacklisting30.
+Data Point
+	Source URL
+	Recency / Context
+	Confidence Level
+	Actionable Verification Flag
+	Student Senate
+	iitjsenateportal.vercel.app
+	Current
+	High
+	Verified. Pitch the app to the General Secretary first to gain traction within the student body before approaching the administration.
+	DOSA & Hostel Affairs
+	iitj.ac.in/office-of-students...
+	Current
+	High
+	Verified. Required for official recognition and access to the dynamic PDF menus.
+	DIA Cybersecurity
+	iitj.ac.in/cybersecurity...
+	Current
+	High
+	VERIFY: Submit a formal technical brief to the DIA outlining how the app handles and encrypts user data before launching any features that require the user to input their LDAP passwords.
+	Works cited
+1. Dining Services | Office of Students - IIT Jodhpur, https://www.iitj.ac.in/office-of-students/en/dining-services
+2. Indian Institute of Technology Jodhpur, https://iitj.ac.in/PageImages/Gallery/03-2025/Brochure-1-638785941111940671.pdf
+3. IIT Jodhpur Central Mess Menu | PDF | Curry | Cooking - Scribd, https://www.scribd.com/document/370710054/IIT-Jodhpur-Dining-Services-pdf
+4. Facilities | Office of Students - IIT Jodhpur, https://www.iitj.ac.in/office-of-students/en/Facilities
+5. Life @ IIT Jodhpur | Indian Institute of Technology Jodhpur, https://www.iitj.ac.in/main/en/life-@-iit-jodhpur
+6. Food Joints in Campus - AIR 2025 IIT Jodhpur, https://advancesinrobotics.com/2025/practical-info/food-joints-in-campus/
+7. %tpP"" - IIT Jodhpur, https://iitj.ac.in/PageImages/RTI/03-2025/Process-of-redress-of-grievances--1-638779938916085486.pdf
+8. Fifteen Years of Campus Development - IIT Jodhpur, https://old.iitj.ac.in/techscape/vol04/issue01/commemorating_iitj/fifteen_years_of_campus_development/fifteen_years_of_campus_development.pdf
+9. IIT Jodhpur: Indian Institute of Technology Jodhpur, https://www.iitj.ac.in/
+10. परिवहन | सुरक्षा एवं परिवहन कार्यालय - IIT Jodhpur, https://iitj.ac.in/office-of-security-transports/hi/transport
+11. Office of Security & Transports - IIT Jodhpur, https://iitj.ac.in/office-of-security-transports/en/transport
+12. Top Bus Services near Iit Jodhpur,Jodhpur - Best Bus Booking - Justdial, https://www.justdial.com/Jodhpur/Bus-Services-in-Iit-Jodhpur/nct-10061171
+13. IIT Jodhpur Transport Service - Weeple Logistics, https://www.weeple.in/rajasthan-transport/iit-jodhpur-transport
+14. Hkkjrh; çkS|ksfxdh laLFkku tks/kiqj dk;kZy; 'kS{kf.kd ekeys - IIT Jodhpur, https://www.iitj.ac.in/PageImages/Gallery/06-2026/Academic-Calendar-AY-2026-27-639178076336417495.pdf
+15. Academic Calendar: Summer Term 2026 - IIT Jodhpur, https://www.iitj.ac.in/PageImages/Gallery/04-2026/Academic-Calendar-for-Summer-Term-2026--639124648616829491.pdf
+16. Academic Regulations | Office of Academics Affairs - IIT Jodhpur, https://iitj.ac.in/office-of-academics/en/academic-regulations
+17. IIT Jodhpur Student Senate Portal, https://iitjsenateportal.vercel.app/
+18. Office of Academics Affairs | IIT Jodhpur, https://www.iitj.ac.in/office-of-academics/en/academics
+19. Twelfth Convocation - IIT Jodhpur, https://events.iitj.ac.in/convocation/2026/assets/Final_Designing_12th_Convocation%20Brochure_ENG_04-06-2026.pdf
+20. Digital Infrastructure & Automation (DIA) - IIT Jodhpur, https://iitj.ac.in/dia/en/dia
+21. ERP & Automation | Digital Infrastructure & Automation (DIA) - IIT Jodhpur, https://iitj.ac.in/dia/en/erp-automation
+22. VPN | Digital Infrastructure & Automation (DIA) - IIT Jodhpur, https://www.iitj.ac.in/dia/en/vpn
+23. Internet/Wi-Fi Access Facility | Digital Infrastructure & Automation (DIA) - IIT Jodhpur, https://iitj.ac.in/dia/en/internet-wifi-access-facility
+24. Welcome to ERP | IIT Jodhpur, https://erp.iitj.ac.in/
+25. Hostel Booking | Office of Students - IIT Jodhpur, https://iitj.ac.in/office-of-students/en/hostel-booking
+26. Moodle | Digital Infrastructure & Automation (DIA) - IIT Jodhpur, https://www.iitj.ac.in/dia/en/Moodle
+27. Services - S. R. Ranganathan Learning Hub - IIT Jodhpur, https://library.iitj.ac.in/services.html
+28. S. R. Ranganathan Learning Hub - IIT Jodhpur, https://library.iitj.ac.in/
+29. RemoteXs User Guide, https://library.iitj.ac.in/uploads/2015/10/IITJ_RemoteXs_User-Guide.pdf
+30. Guidelines & Advisories | Cyber Security - IIT Jodhpur, https://www.iitj.ac.in/cybersecurity/en/advisories
+31. Latest @ IIT Jodhpur - IITJ-Indian Institute of Technology Jodhpur, https://old.iitj.ac.in/events/index.php?id=latest@iit_jodhpur
+32. Registration Procedure - Office of Training and Placement, IIT Jodhpur, https://spc.iitj.ac.in/student-registraion-process
+33. Student Login - Office of Training and Placement, IIT Jodhpur, https://spc.iitj.ac.in/student-login
+34. IIT Jodhpur VPN Setup Guide | PDF - Scribd, https://www.scribd.com/document/483149974/IITJ-VPN-Windows
+35. IIT Jodhpur VPN Connection Procedure for macOS, https://www.iitj.ac.in/PageImages/Gallery/01-2025/linux-mac-vpn-638738459214358006.pdf
+36. IIT Jodhpur receives 5 Star GRIHA LD V1 Rating for its Campus Master Plan - IITJ-Indian Institute of Technology Jodhpur, https://old.iitj.ac.in/events/index.php?id=294&title=294&event=permanent_campus
+37. Indian Institute of Technology Jodhpur, https://iitj.ac.in/PageImages/Gallery/01-2025/Sustainability-Plan-638731518376904184.pdf
+38. Indian Institute of Technology Jodhpur, https://www.iitj.ac.in/PageImages/Gallery/06-2025/Towards-Carbon-Neutrality-A-Report-on-IIT-Jodhpurs-Emissions-20242025-638860168760047249.pdf
+39. Indian Institute of Technology Jodhpur, https://www.iitj.ac.in/PageImages/Gallery/03-2025/AR2011-12.pdf
+40. भारतीय प्रौद्योगिकी संस्थान जोधपुर - IIT Jodhpur, https://iitj.ac.in/PageImages/RTI/07-2025/6.-1-638870746352182668.pdf
+41. Health Center | IIT Jodhpur, https://www.iitj.ac.in/health-center/en/health-center
+42. Shirish Hostel (g4) in IIT Jodhpur,Jodhpur - Best Hostels near me in Jodhpur - Justdial, https://www.justdial.com/Jodhpur/Shirish-Hostel-g4-Near-G5-Iit-Jodhpur/0291PX291-X291-241011211715-N5J4_BZDET
+43. Wardens | Indian Institute of Technology Jodhpur - IIT Jodhpur, https://www.iitj.ac.in/main/en/wardens
+44. List of Top Hostels in Iit Jodhpur - Best Boys & Girls Hostels - Justdial, https://www.justdial.com/Jodhpur/Hostels-in-Iit-Jodhpur/nct-10253730
+45. Hostels in Iit Jodhpur, Jodhpur - Page 2 - Justdial, https://www.justdial.com/Jodhpur/Hostels-in-Iit-Jodhpur/nct-10253730/page-2
+46. Hostels | Office of Students - IIT Jodhpur, https://www.iitj.ac.in/office-of-students/en/hostels
+47. What facilities are available at IIT Jodhpur? - Quora, https://www.quora.com/What-facilities-are-available-at-IIT-Jodhpur
+48. Hostels & Facilities | Bachelor of Technology - IIT Jodhpur, https://www.iitj.ac.in/bachelor-of-technology/en/hostels-facilities
+49. Iit Stationery Shop in Thabukra,Jodhpur - Justdial, https://www.justdial.com/Jodhpur/Iit-Stationery-Shop-Thabukra/0291PX291-X291-241105210432-F2G9_BZDET
+50. Services | Health Center - IIT Jodhpur, https://www.iitj.ac.in/health-center/en/services
+51. Iitj New Mess in IIT Jodhpur,Jodhpur - Best Coffee Shops near me in Jodhpur - Justdial, https://www.justdial.com/Jodhpur/Iitj-New-Mess-Karwar-Iit-Jodhpur/0291PX291-X291-240510185259-S5U9_BZDET
+52. IITs, IISc, NITs, IIEST, IIITs and Other-GFTIs for the Academic Year 2026-27 - JoSAA - Admissions, https://josaa.admissions.nic.in/applicant/seatmatrix/InstProfile.aspx?instcd=108
+53. Contact | Health Center - IIT Jodhpur, https://iitj.ac.in/health-center/en/contact
+54. Office of Security & Transports | IIT Jodhpur, https://www.iitj.ac.in/office-of-security-transports/en/security
+55. People | Office of Security & Transports - IIT Jodhpur, https://iitj.ac.in/People/List?dept=office-of-security-transports&c=4714879b-ca43-46c7-ba68-4b0a267a732a&ln=en
+56. Office of Security & Transports - IIT Jodhpur, https://www.iitj.ac.in/office-of-security-transports/en/office-of-security-transports
+57. Primary Health Center in Permanent Campus of IIT Jodhpur received ISO Certification, https://old.iitj.ac.in/events/index.php?id=186&title=186&event=latest@iit_jodhpur
+58. Committees | Office of Students - IIT Jodhpur, https://iitj.ac.in/office-of-students/en/committees
+59. IIT Hostel Life 2026: Costs, Rooms & a Fresher's Guide - IITian Vibes, https://iitianvibes.com/blog/iit-hostel-survival-fresher-guide-campus-life-tips/
+60. People | Office of Students - IIT Jodhpur, https://iitj.ac.in/People/List?dept=office-of-students&c=47dd1c23-48cb-4144-a754-e37359c22f81&ln=en
+61. IIT Jodhpur: A Place to be, to become the best version of yourself, https://old.iitj.ac.in/techscape/vol04/issue01/commemorating_iitj/iit_jodhpur_a_place/
+62. About FAQs | Bachelor of Technology - IIT Jodhpur, https://www.iitj.ac.in/bachelor-of-technology/en/about-faqs
+63. IIT Jodhpur Mess Menu December 2013 | PDF - Scribd, https://www.scribd.com/doc/201724247/a
+64. IIT Jodhpur Mess Menu - Claude, https://claude.ai/public/artifacts/86ec3693-8c88-484e-90ff-ef107ae28a6d
+65. Wifi connection : r/iitJodhpur - Reddit, https://www.reddit.com/r/iitJodhpur/comments/1tirpb9/wifi_connection/
+66. IIT J Gateway Extension - Chrome Web Store, https://chromewebstore.google.com/detail/iit-j-gateway-extension/ggljlhcdeiccfkkockcnjnlmkebkkjhh
+67. Projects - Xevrion, https://xevrion.dev/projects
+68. Page 140 - IITJ TechScape6 Vol 4 Issue 4, https://old.iitj.ac.in/techscape/FLIP_BOOK_vol4_issue1/files/basic-html/page140.html
+69. SRRLH Mobile App - Google Play, https://play.google.com/store/apps/details?id=com.iitjmobile.first&hl=en_NZ
+70. IITJ MENU – Apps on Google Play, https://play.google.com/store/apps/details?id=com.devlup.menu_app_iitj&hl=en_IE
+71. Sustainability Policy | Indian Institute of Technology Jodhpur, https://www.iitj.ac.in/main/en/sustainability-policy
+72. Report - IIT Jodhpur, https://www.iitj.ac.in/PageImages/Gallery/03-2025/IITJ_AR_2022_2023_English.pdf
+73. Constitution of Student Councils - IIT Jodhpur, https://iitj.ac.in/PageImages/RTI/03-2025/Process-of-redress-of-grievances--1-638779940773039791.pdf
+74. Welcome To The Office of Students - IIT Jodhpur, https://www.iitj.ac.in/office-of-students/en/office-of-students
