@@ -18,32 +18,36 @@ const INSTITUTE_DETAILS = [
     body: 'IITJ One is a student-developed application for the IIT Jodhpur community. Not affiliated with or officially endorsed by IIT Jodhpur.',
   },
   {
-    title: 'IIT Jodhpur',
-    body: 'Indian Institute of Technology Jodhpur is a public technical university and an Institute of National Importance by the Government of India. Located in Jodhpur, Rajasthan, IITJ is committed to excellence in education, research, and innovation.',
+    title: 'Indian Institute of Technology Jodhpur',
+    body: 'A premier, autonomous public technical university located in Jodhpur, Rajasthan. Established in 2008 by the Ministry of Education, Government of India, IITJ is officially recognized as an Institute of National Importance. The university operates from a state-of-the-art, fully residential, 852-acre permanent campus situated on National Highway 62 (Nagaur Road) at Karwar, meticulously planned to support a sustainable and smart township ecosystem.',
   },
   {
-    title: 'Institute Details',
-    body: 'Founded in 2008, IITJ is a fully residential campus spanning 852 acres. The current director is Prof. Avinash Kumar Agarwal. With a total enrollment of 2,574 students (2026), the institute maintains a strong academic environment.',
+    title: 'Campus & Infrastructure',
+    body: 'The campus integrates green technologies with advanced educational architecture. Features include fully air-conditioned student hostels, modern recreational and wellness centers, sports facilities, the S. R. Ranganathan Learning Hub (digital and physical archives), and specialized research infrastructure.',
   },
   {
-    title: 'Campus Location',
-    body: 'NH 62, Nagaur Road, Karwar, Jodhpur, Rajasthan - 342030, India',
+    title: 'Academic Profile',
+    body: 'IITJ offers flexible, deeply multidisciplinary curriculum spanning undergraduate, postgraduate, and doctoral levels. Programs include B.Tech, M.Tech, M.Sc, MBA, Ph.D., B.Sc. (Physics, Chemistry, Mathematics & Computing, Management & Technology), and the 4-year Integrated Teacher Education Programme (ITEP - BSc-BEd).',
   },
   {
-    title: 'Academic Excellence',
-    body: 'IITJ ranks 27th in NIRF Engineering Rankings (2025) and 66th in NIRF Overall Rankings (2025). QS World University Ranking: 661-680 (2026). The institute offers 16 academic departments including Aerospace Engineering, Computer Science, Mechanical Engineering, and many others.',
+    title: 'Cutting-Edge Focus Areas',
+    body: 'The academic curriculum emphasizes 21st-century technological transformations including Artificial Intelligence (AI), Computer Vision, Cyber-Physical Systems, Augmented & Virtual Reality (AR/VR), Robotics, Drone Technologies, Smart Healthcare, and Battery Materials Technology.',
   },
   {
-    title: 'Academic Programs',
-    body: 'Undergraduate: B.Tech programs in 10 specializations (CS, AI & Data Science, Electrical, Mechanical, Bioengineering, Materials, Chemical, Civil, Electronics, Aerospace), B.Sc in 4 specializations, and Integrated Teacher Education Programme (ITEP).\n\nPostgraduate: M.Tech with specializations in AR/VR, Robotics, Microelectronics & VLSI, Drone Technologies, and Battery Materials; M.Sc programs in Chemistry, Mathematics, Physics, Digital Humanities, and Computational Social Science; MBA; and Ph.D. with interdisciplinary focus in Smart Healthcare, Space Science, and Quantum Information.',
+    title: 'Academic Departments',
+    body: 'Engineering: Computer Science, AI & Data Science, Electrical, Electronics, Mechanical, Aerospace, Bioengineering, Chemical, Materials, Civil & Infrastructure Engineering.\n\nSupporting Sciences: Fundamental sciences, Humanities, and Social Sciences.',
   },
   {
-    title: 'Innovation & Facilities',
-    body: 'Technology Innovation and Start-up Center (IITJ-TISC) for entrepreneurship support, S. R. Ranganathan Learning Hub, AIOT Fab Facility, Central Research Facility (CRF), and Digital Infrastructure & Automation (DIA) center.',
+    title: 'Research & Innovation',
+    body: 'Designed to foster innovative culture bridging academic research and commercial entrepreneurship. Key facilities:\n\n• Technology Innovation and Start-up Center (IITJ-TISC): Regional hub for entrepreneurship with incubation space, seed funding, prototyping tools, and mentorship.\n\n• Central Research Facility (CRF): Cutting-edge analytical instruments.\n\n• Digital Infrastructure & Automation (DIA): Advanced automation cell.\n\n• AIOT Fab Facility: Advanced prototyping capabilities.',
   },
   {
-    title: 'Contact Information',
-    body: 'General Inquiries: +91-291-2801079, +91-291-2801138\n\nJEE Admission: office_jee@iitj.ac.in\n\nLibrary: office_library@iitj.ac.in\n\nOfficial Website: https://www.iitj.ac.in/',
+    title: 'Rankings & Recognition',
+    body: 'NIRF Engineering Rank 2025: 27\n\nNIRF Overall Rank 2025: 66\n\nQS World University Ranking 2026: 661-680\n\nCurrent Director: Prof. Avinash Kumar Agarwal\n\nStudent Enrollment: 2,574 (2026)',
+  },
+  {
+    title: 'Contact & Resources',
+    body: 'General Inquiries: +91-291-2801079, +91-291-2801138\n\nJEE Admission: office_jee@iitj.ac.in\n\nLibrary Services: office_library@iitj.ac.in\n\nLocation: NH 62, Nagaur Road, Karwar, Jodhpur, Rajasthan - 342030, India\n\nOfficial Website: https://www.iitj.ac.in/',
   },
 ];
 
