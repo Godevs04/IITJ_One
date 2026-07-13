@@ -1,0 +1,378 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+<title>IITJ one - Campus Companion</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@100..900&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-dot::after {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 4px;
+            background-color: #885210; /* Accent color logic */
+            border-radius: 50%;
+            margin-top: 2px;
+        }
+        .live-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        body {
+            background-color: #F6F0E4;
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#faf9fc",
+                        "on-secondary-fixed-variant": "#693c00",
+                        "on-surface": "#1a1c1e",
+                        "error": "#ba1a1a",
+                        "inverse-surface": "#2f3033",
+                        "error-container": "#ffdad6",
+                        "on-secondary-container": "#774401",
+                        "surface": "#faf9fc",
+                        "primary-fixed-dim": "#a9c9ef",
+                        "on-tertiary-fixed-variant": "#5d420d",
+                        "on-background": "#1a1c1e",
+                        "primary-fixed": "#d0e4ff",
+                        "surface-container-low": "#f4f3f6",
+                        "surface-container-highest": "#e3e2e5",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed-dim": "#e9c080",
+                        "on-error": "#ffffff",
+                        "surface-tint": "#416182",
+                        "background": "#faf9fc",
+                        "surface-dim": "#dadadd",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#a9c9ef",
+                        "on-secondary-fixed": "#2c1600",
+                        "surface-variant": "#e3e2e5",
+                        "outline-variant": "#c3c7ce",
+                        "surface-container": "#eeedf0",
+                        "inverse-on-surface": "#f1f0f3",
+                        "secondary-fixed-dim": "#ffb870",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#8baacf",
+                        "on-surface-variant": "#43474d",
+                        "secondary-fixed": "#ffdcbe",
+                        "secondary": "#885210",
+                        "primary": "#002947",
+                        "on-primary-fixed": "#001d34",
+                        "primary-container": "#1d3f5e",
+                        "on-tertiary-fixed": "#281900",
+                        "tertiary-container": "#523803",
+                        "tertiary": "#372300",
+                        "tertiary-fixed": "#ffdeac",
+                        "secondary-container": "#fdb56c",
+                        "outline": "#73777e",
+                        "surface-container-high": "#e8e8eb",
+                        "on-primary-fixed-variant": "#284969",
+                        "on-tertiary-container": "#c8a264"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "32px",
+                        "margin-mobile": "16px",
+                        "sm": "12px",
+                        "lg": "24px",
+                        "gutter": "16px",
+                        "base": "4px",
+                        "xs": "8px",
+                        "md": "16px",
+                        "xl": "32px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["IBM Plex Sans"],
+                        "data-mono": ["IBM Plex Mono"],
+                        "headline-md": ["IBM Plex Sans"],
+                        "headline-lg-mobile": ["IBM Plex Sans"],
+                        "body-md": ["IBM Plex Sans"],
+                        "label-sm": ["IBM Plex Sans"],
+                        "headline-lg": ["IBM Plex Sans"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "data-mono": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="font-body-md text-on-background min-h-screen pb-24" data-mode="connect">
+<!-- Top App Bar -->
+<header class="bg-primary text-on-primary w-full top-0 sticky z-50 transition-colors duration-200">
+<div class="flex items-center justify-between px-md h-16 w-full">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-primary hover:bg-primary-container/20 p-2 rounded-full">menu</button>
+<h1 class="font-headline-md text-headline-md font-bold text-on-primary">IITJ one</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="material-symbols-outlined text-on-primary hover:bg-primary-container/20 p-2 rounded-full">search</button>
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional studio portrait of a student wearing a dark tech-minimalist hoodie, captured in clean high-key lighting with a soft sandstone background that matches the IIT Jodhpur aesthetic. The style is sharp, focused, and integrates seamlessly with a modern engineering university dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDou0rqMSuck9ZHJlnuwyZWwg9yHDZuIQX2xCvjKVqBKMUX9O933PgVk2eY-0XKgMZ3mg1tctsntQ3ZW8ZMMWPIdJxx53eSX1Lb2dC80OdHkdG3G0Tg-9to0BeO0Oe_yvD86PzW9BC6-WHRNjs7jf7DxXgxHCRygjcrA5F-bRWkJypBU3GNflIRg7O_julDb7EmHn8n391sqkCLQnxnHeSFeP4ol4fyX8XgGHy53QTWm2TJrN4vl6Ka">
+</div>
+</div>
+</div>
+</header>
+<main class="px-margin-mobile md:px-margin-desktop py-md max-w-7xl mx-auto space-y-md">
+<!-- Quick Status Grid (Bento Style) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Next Bus Tile -->
+<div class="md:col-span-4 bg-white border border-outline-variant p-md flex flex-col justify-between min-h-[140px] rounded-lg">
+<div class="flex justify-between items-start">
+<div>
+<p class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Next Bus</p>
+<p class="font-headline-md text-headline-md text-primary mt-1">Main Gate</p>
+</div>
+<span class="material-symbols-outlined text-secondary live-pulse">directions_bus</span>
+</div>
+<div class="flex items-baseline gap-2 mt-auto">
+<span class="font-data-mono text-3xl text-secondary">06:32</span>
+<span class="font-label-sm text-label-sm text-outline">mins left</span>
+</div>
+</div>
+<!-- Next Class Tile -->
+<div class="md:col-span-4 bg-white border border-outline-variant p-md flex flex-col justify-between min-h-[140px] rounded-lg">
+<div class="flex justify-between items-start">
+<div>
+<p class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Next Class</p>
+<p class="font-headline-md text-headline-md text-primary mt-1">CSL202: OS</p>
+</div>
+<span class="material-symbols-outlined text-primary">school</span>
+</div>
+<div class="flex items-baseline gap-2 mt-auto">
+<span class="font-data-mono text-3xl text-primary">10:00</span>
+<span class="font-label-sm text-label-sm text-outline">AM @ LHB-102</span>
+</div>
+</div>
+<!-- Today's Menu Highlight (Featured) -->
+<div class="md:col-span-4 bg-white border border-outline-variant rounded-lg overflow-hidden flex flex-col">
+<div class="p-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<p class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Today's Menu</p>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-[10px] font-bold">LUNCH</span>
+</div>
+<div class="p-md space-y-2 flex-grow">
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary"></div>
+<p class="font-body-md text-body-md text-on-surface">Paneer Butter Masala</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary"></div>
+<p class="font-body-md text-body-md text-on-surface">Dal Tadka &amp; Steamed Rice</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary"></div>
+<p class="font-body-md text-body-md text-on-surface">Tandoori Roti</p>
+</div>
+<div class="flex items-center gap-3 opacity-50">
+<div class="w-1.5 h-1.5 rounded-full bg-outline"></div>
+<p class="font-body-md text-body-md text-on-surface italic">Fruit Custard (Tonight)</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Access Icon Grid -->
+<section class="">
+<h2 class="font-label-sm text-label-sm text-outline uppercase tracking-widest mb-4">University Services</h2>
+<div class="grid grid-cols-4 md:grid-cols-6 gap-4">
+<!-- Mess QR (Primary Action) -->
+<button class="flex flex-col items-center gap-2 group">
+<div class="w-14 h-14 md:w-16 md:h-16 rounded-xl bg-primary flex items-center justify-center text-on-primary transition-transform group-active:scale-95">
+<span class="material-symbols-outlined text-2xl">qr_code_2</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">My Mess QR</span>
+</button>
+<!-- Other Icons -->
+<button class="flex flex-col items-center gap-2 group">
+<div class="w-14 h-14 md:w-16 md:h-16 rounded-xl bg-white border border-outline-variant flex items-center justify-center text-primary transition-transform group-active:scale-95 group-hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-2xl">calendar_today</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">Timetable</span>
+</button>
+<button class="flex flex-col items-center gap-2 group">
+<div class="w-14 h-14 md:w-16 md:h-16 rounded-xl bg-white border border-outline-variant flex items-center justify-center text-primary transition-transform group-active:scale-95 group-hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-2xl">description</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">Notes</span>
+</button>
+<button class="flex flex-col items-center gap-2 group">
+<div class="w-14 h-14 md:w-16 md:h-16 rounded-xl bg-white border border-outline-variant flex items-center justify-center text-primary transition-transform group-active:scale-95 group-hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-2xl">restaurant</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">Mess</span>
+</button>
+<button class="flex flex-col items-center gap-2 group">
+<div class="w-14 h-14 md:w-16 md:h-16 rounded-xl bg-white border border-outline-variant flex items-center justify-center text-primary transition-transform group-active:scale-95 group-hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-2xl">directions_bus</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">Transport</span>
+</button>
+<button class="flex flex-col items-center gap-2 group">
+<div class="w-14 h-14 md:w-16 md:h-16 rounded-xl bg-white border border-outline-variant flex items-center justify-center text-primary transition-transform group-active:scale-95 group-hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-2xl">campaign</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">Notices</span>
+</button>
+<button class="flex flex-col items-center gap-2 group">
+<div class="w-14 h-14 md:w-16 md:h-16 rounded-xl bg-white border border-outline-variant flex items-center justify-center text-primary transition-transform group-active:scale-95 group-hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-2xl">event</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">Calendar</span>
+</button>
+<button class="flex flex-col items-center gap-2 group">
+<div class="w-14 h-14 md:w-16 md:h-16 rounded-xl bg-white border border-outline-variant flex items-center justify-center text-primary transition-transform group-active:scale-95 group-hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-2xl">map</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">Map</span>
+</button>
+<button class="flex flex-col items-center gap-2 group">
+<div class="w-14 h-14 md:w-16 md:h-16 rounded-xl bg-white border border-outline-variant flex items-center justify-center text-primary transition-transform group-active:scale-95 group-hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-2xl">apps</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">Portals</span>
+</button>
+<button class="flex flex-col items-center gap-2 group">
+<div class="w-14 h-14 md:w-16 md:h-16 rounded-xl bg-white border border-outline-variant flex items-center justify-center text-primary transition-transform group-active:scale-95 group-hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-2xl">construction</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface">Services</span>
+</button>
+<button class="flex flex-col items-center gap-2 group">
+<div class="w-14 h-14 md:w-16 md:h-16 rounded-xl bg-error-container border border-error/20 flex items-center justify-center text-error transition-transform group-active:scale-95">
+<span class="material-symbols-outlined text-2xl">emergency</span>
+</div>
+<span class="font-label-sm text-label-sm text-error font-bold">Emergency</span>
+</button>
+</div>
+</section>
+<!-- Important Notices Section -->
+<section class="space-y-4">
+<div class="flex justify-between items-end">
+<h2 class="font-label-sm text-label-sm text-outline uppercase tracking-widest">Important Notices</h2>
+<button class="text-primary font-label-sm text-label-sm hover:underline">View All</button>
+</div>
+<div class="space-y-3">
+<!-- Notice Item -->
+<div class="bg-white border border-outline-variant flex items-stretch rounded-lg overflow-hidden">
+<div class="w-1.5 bg-secondary"></div>
+<div class="p-4 flex-grow flex justify-between items-center">
+<div>
+<span class="font-label-sm text-[10px] text-secondary font-bold uppercase">#Academic</span>
+<h3 class="font-body-lg text-body-lg text-on-surface font-semibold">Mid-Semester Exam Schedule Released</h3>
+<p class="font-body-md text-body-md text-outline mt-1">2 hours ago • Registrar Office</p>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+</div>
+<!-- Notice Item -->
+<div class="bg-white border border-outline-variant flex items-stretch rounded-lg overflow-hidden">
+<div class="w-1.5 bg-secondary"></div>
+<div class="p-4 flex-grow flex justify-between items-center">
+<div>
+<span class="font-label-sm text-[10px] text-secondary font-bold uppercase">#Hostel</span>
+<h3 class="font-body-lg text-body-lg text-on-surface font-semibold">Water Supply Maintenance - Pukhraj Hostel</h3>
+<p class="font-body-md text-body-md text-outline mt-1">5 hours ago • Hall Management</p>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+</div>
+<!-- Notice Item -->
+<div class="bg-white border border-outline-variant flex items-stretch rounded-lg overflow-hidden">
+<div class="w-1.5 bg-secondary"></div>
+<div class="p-4 flex-grow flex justify-between items-center">
+<div>
+<span class="font-label-sm text-[10px] text-secondary font-bold uppercase">#Cultural</span>
+<h3 class="font-body-lg text-body-lg text-on-surface font-semibold">Ignus 2024 - Core Committee Recruitment</h3>
+<p class="font-body-md text-body-md text-outline mt-1">Yesterday • SAC</p>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 bg-surface border-t border-outline-variant transition-transform duration-150">
+<div class="flex justify-around items-center h-16 px-mobile pb-safe max-w-2xl mx-auto">
+<!-- Home (Active) -->
+<a class="flex flex-col items-center justify-center text-primary font-bold active-dot active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<!-- Menu -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low active:scale-95 transition-transform p-1 rounded-lg" href="#">
+<span class="material-symbols-outlined">restaurant_menu</span>
+<span class="font-label-sm text-label-sm">Menu</span>
+</a>
+<!-- Notices -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low active:scale-95 transition-transform p-1 rounded-lg" href="#">
+<span class="material-symbols-outlined">notifications</span>
+<span class="font-label-sm text-label-sm">Notices</span>
+</a>
+<!-- Transport -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low active:scale-95 transition-transform p-1 rounded-lg" href="#">
+<span class="material-symbols-outlined">directions_bus</span>
+<span class="font-label-sm text-label-sm">Transport</span>
+</a>
+<!-- More -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low active:scale-95 transition-transform p-1 rounded-lg" href="#">
+<span class="material-symbols-outlined">more_horiz</span>
+<span class="font-label-sm text-label-sm">More</span>
+</a>
+</div>
+</nav>
+<script>
+        // Simple micro-interaction for active states
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                document.querySelectorAll('nav a').forEach(l => {
+                    l.classList.remove('text-primary', 'font-bold', 'active-dot');
+                    l.classList.add('text-on-surface-variant');
+                });
+                this.classList.add('text-primary', 'font-bold', 'active-dot');
+                this.classList.remove('text-on-surface-variant');
+            });
+        });
+
+        // Countdown logic for the bus (visual demo)
+        let busTime = 462; // seconds
+        const countdownEl = document.querySelector('.font-data-mono');
+        setInterval(() => {
+            if (busTime > 0) {
+                busTime--;
+                const mins = Math.floor(busTime / 60);
+                const secs = busTime % 60;
+                countdownEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+        }, 1000);
+    </script>
+
+
+</body></html>

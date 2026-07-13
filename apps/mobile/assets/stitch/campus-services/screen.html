@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Campus Services Directory - IITJ1</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<!-- Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-bright": "#faf9fc",
+                    "on-secondary-fixed-variant": "#693c00",
+                    "on-surface": "#1a1c1e",
+                    "error": "#ba1a1a",
+                    "inverse-surface": "#2f3033",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#774401",
+                    "surface": "#faf9fc",
+                    "primary-fixed-dim": "#a9c9ef",
+                    "on-tertiary-fixed-variant": "#5d420d",
+                    "on-background": "#1a1c1e",
+                    "primary-fixed": "#d0e4ff",
+                    "surface-container-low": "#f4f3f6",
+                    "surface-container-highest": "#e3e2e5",
+                    "on-primary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed-dim": "#e9c080",
+                    "on-error": "#ffffff",
+                    "surface-tint": "#416182",
+                    "background": "#faf9fc",
+                    "surface-dim": "#dadadd",
+                    "on-error-container": "#93000a",
+                    "on-secondary": "#ffffff",
+                    "inverse-primary": "#a9c9ef",
+                    "on-secondary-fixed": "#2c1600",
+                    "surface-variant": "#e3e2e5",
+                    "outline-variant": "#c3c7ce",
+                    "surface-container": "#eeedf0",
+                    "inverse-on-surface": "#f1f0f3",
+                    "secondary-fixed-dim": "#ffb870",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-container": "#8baacf",
+                    "on-surface-variant": "#43474d",
+                    "secondary-fixed": "#ffdcbe",
+                    "secondary": "#885210",
+                    "primary": "#002947",
+                    "on-primary-fixed": "#001d34",
+                    "primary-container": "#1d3f5e",
+                    "on-tertiary-fixed": "#281900",
+                    "tertiary-container": "#523803",
+                    "tertiary": "#372300",
+                    "tertiary-fixed": "#ffdeac",
+                    "secondary-container": "#fdb56c",
+                    "outline": "#73777e",
+                    "surface-container-high": "#e8e8eb",
+                    "on-primary-fixed-variant": "#284969",
+                    "on-tertiary-container": "#c8a264"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-desktop": "32px",
+                    "margin-mobile": "16px",
+                    "sm": "12px",
+                    "lg": "24px",
+                    "gutter": "16px",
+                    "base": "4px",
+                    "xs": "8px",
+                    "md": "16px",
+                    "xl": "32px"
+            },
+            "fontFamily": {
+                    "body-lg": ["IBM Plex Sans"],
+                    "data-mono": ["IBM Plex Mono"],
+                    "headline-md": ["IBM Plex Sans"],
+                    "headline-lg-mobile": ["IBM Plex Sans"],
+                    "body-md": ["IBM Plex Sans"],
+                    "label-sm": ["IBM Plex Sans"],
+                    "headline-lg": ["IBM Plex Sans"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #F6F0E4; /* Sandstone base from Brand Guidance */
+            font-family: 'IBM Plex Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .active-dot::after {
+            content: '';
+            width: 4px;
+            height: 4px;
+            background-color: #002947;
+            border-radius: 50%;
+            margin-top: 2px;
+        }
+        /* Custom scrollbar for filter chips */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .technical-module {
+            border: 1px solid #DED8CC;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .technical-module:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-color: #002947;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface min-h-screen pb-20">
+<!-- Top App Bar -->
+<header class="bg-primary text-on-primary w-full top-0 sticky z-50 flex items-center justify-between px-md h-16 transition-colors duration-200">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined cursor-pointer hover:bg-primary-container/20 p-2 rounded-full transition-colors">menu</span>
+<h1 class="font-headline-md text-headline-md font-bold text-on-primary tracking-tight">Services</h1>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined cursor-pointer hover:bg-primary-container/20 p-2 rounded-full transition-colors">account_circle</span>
+</div>
+</header>
+<main class="max-w-4xl mx-auto px-mobile md:px-margin-desktop py-md">
+<!-- Search Bar Section -->
+<div class="mb-lg">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-4 text-outline">search</span>
+<input class="w-full h-12 pl-12 pr-4 bg-white border border-outline-variant rounded-xl focus:border-primary focus:ring-1 focus:ring-primary outline-none font-body-md transition-all" placeholder="Search campus services..." type="text"/>
+</div>
+</div>
+<!-- Filter Chips -->
+<div class="flex overflow-x-auto gap-xs pb-md hide-scrollbar mb-lg">
+<button class="flex-none px-4 py-2 bg-primary text-on-primary rounded-full font-label-sm whitespace-nowrap">All Services</button>
+<button class="flex-none px-4 py-2 bg-white border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary rounded-full font-label-sm whitespace-nowrap transition-colors">Xerox</button>
+<button class="flex-none px-4 py-2 bg-white border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary rounded-full font-label-sm whitespace-nowrap transition-colors">Grocery</button>
+<button class="flex-none px-4 py-2 bg-white border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary rounded-full font-label-sm whitespace-nowrap transition-colors">Pharmacy</button>
+<button class="flex-none px-4 py-2 bg-white border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary rounded-full font-label-sm whitespace-nowrap transition-colors">ATM</button>
+<button class="flex-none px-4 py-2 bg-white border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary rounded-full font-label-sm whitespace-nowrap transition-colors">Café</button>
+<button class="flex-none px-4 py-2 bg-white border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary rounded-full font-label-sm whitespace-nowrap transition-colors">Restaurant</button>
+<button class="flex-none px-4 py-2 bg-white border border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary rounded-full font-label-sm whitespace-nowrap transition-colors">Laundry</button>
+</div>
+<!-- Services List -->
+<div class="space-y-sm">
+<!-- Xerox Service -->
+<div class="technical-module bg-white p-md rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-[#f2e7d5] flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">print</span>
+</div>
+<div>
+<h3 class="font-headline-md text-body-lg text-primary">Print &amp; Xerox Hub</h3>
+<p class="font-body-md text-on-surface-variant">LHC Ground Floor • 08:00 - 22:00</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-2 text-primary hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">call</span>
+</button>
+<button class="p-2 text-primary hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">push_pin</span>
+</button>
+</div>
+</div>
+<!-- Pharmacy Service -->
+<div class="technical-module bg-white p-md rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-[#f2e7d5] flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">medical_services</span>
+</div>
+<div>
+<h3 class="font-headline-md text-body-lg text-primary">Health Centre Pharmacy</h3>
+<p class="font-body-md text-on-surface-variant">Main Campus • Open 24/7</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-2 text-primary hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">call</span>
+</button>
+<button class="p-2 text-primary hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">push_pin</span>
+</button>
+</div>
+</div>
+<!-- Grocery Service -->
+<div class="technical-module bg-white p-md rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-[#f2e7d5] flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">shopping_basket</span>
+</div>
+<div>
+<h3 class="font-headline-md text-body-lg text-primary">Daily Needs Store</h3>
+<p class="font-body-md text-on-surface-variant">Shopping Complex • 09:00 - 21:00</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-2 text-primary hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">call</span>
+</button>
+<button class="p-2 text-primary hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">push_pin</span>
+</button>
+</div>
+</div>
+<!-- Cafe Service -->
+<div class="technical-module bg-white p-md rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-[#f2e7d5] flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">coffee</span>
+</div>
+<div>
+<h3 class="font-headline-md text-body-lg text-primary">Thar Breeze Café</h3>
+<p class="font-body-md text-on-surface-variant">Student Union Bldg • 10:00 - 23:00</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-2 text-primary hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">call</span>
+</button>
+<button class="p-2 text-primary hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">push_pin</span>
+</button>
+</div>
+</div>
+<!-- ATM Service -->
+<div class="technical-module bg-white p-md rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-[#f2e7d5] flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">atm</span>
+</div>
+<div>
+<h3 class="font-headline-md text-body-lg text-primary">SBI ATM</h3>
+<p class="font-body-md text-on-surface-variant">Near Gate 1 • 24 Hours</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-2 text-primary hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">call</span>
+</button>
+<button class="p-2 text-primary hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">push_pin</span>
+</button>
+</div>
+</div>
+<!-- Laundry Service -->
+<div class="technical-module bg-white p-md rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-[#f2e7d5] flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">local_laundry_service</span>
+</div>
+<div>
+<h3 class="font-headline-md text-body-lg text-primary">CleanWash Express</h3>
+<p class="font-body-md text-on-surface-variant">Hostel Block H1 • 09:00 - 20:00</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-2 text-primary hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">call</span>
+</button>
+<button class="p-2 text-primary hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">push_pin</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Dynamic Content Example (Bento Style) -->
+<div class="mt-xl grid grid-cols-1 md:grid-cols-2 gap-md">
+<div class="technical-module bg-primary-container/10 p-lg rounded-xl flex flex-col justify-between">
+<div>
+<span class="font-label-sm text-secondary uppercase tracking-widest block mb-2">Featured</span>
+<h4 class="font-headline-md text-primary mb-2">Campus Transport Live</h4>
+<p class="font-body-md text-on-surface-variant mb-4">Track the next shuttle in real-time. Direct link to transport dashboard.</p>
+</div>
+<button class="w-fit px-6 py-2 bg-primary text-on-primary rounded-lg font-label-sm hover:opacity-90 transition-opacity">Track Now</button>
+</div>
+<div class="technical-module bg-white p-lg rounded-xl relative overflow-hidden">
+<div class="relative z-10">
+<span class="font-label-sm text-on-surface-variant block mb-2">Emergency Services</span>
+<div class="flex items-center gap-4 text-error">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">emergency</span>
+<span class="font-data-mono text-lg">EXT: 1008</span>
+</div>
+</div>
+<!-- Subtle pattern -->
+<div class="absolute right-[-10px] bottom-[-10px] text-error/5 opacity-20">
+<span class="material-symbols-outlined" style="font-size: 120px;">health_and_safety</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 bg-surface border-t border-outline-variant flex justify-around items-center h-16 px-mobile pb-safe">
+<!-- Home -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant transition-transform duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<!-- Menu -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant transition-transform duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined">restaurant_menu</span>
+<span class="font-label-sm text-label-sm">Menu</span>
+</a>
+<!-- Notices -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant transition-transform duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined">notifications</span>
+<span class="font-label-sm text-label-sm">Notices</span>
+</a>
+<!-- Transport -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant transition-transform duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined">directions_bus</span>
+<span class="font-label-sm text-label-sm">Transport</span>
+</a>
+<!-- More (Active) -->
+<a class="flex flex-col items-center justify-center text-primary font-bold active-dot transition-transform duration-150 active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">more_horiz</span>
+<span class="font-label-sm text-label-sm">More</span>
+</a>
+</nav>
+<script>
+        // Micro-interaction for search focus
+        const searchInput = document.querySelector('input[type="text"]');
+        const searchIcon = document.querySelector('.relative.flex.items-center span');
+
+        searchInput.addEventListener('focus', () => {
+            searchIcon.classList.add('text-primary');
+            searchIcon.classList.remove('text-outline');
+        });
+
+        searchInput.addEventListener('blur', () => {
+            searchIcon.classList.remove('text-primary');
+            searchIcon.classList.add('text-outline');
+        });
+
+        // Simple filtering logic simulation
+        const filterButtons = document.querySelectorAll('.flex.overflow-x-auto button');
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterButtons.forEach(b => {
+                    b.classList.remove('bg-primary', 'text-on-primary');
+                    b.classList.add('bg-white', 'border-outline-variant', 'text-on-surface-variant');
+                });
+                btn.classList.add('bg-primary', 'text-on-primary');
+                btn.classList.remove('bg-white', 'border-outline-variant', 'text-on-surface-variant');
+            });
+        });
+    </script>
+</body></html>

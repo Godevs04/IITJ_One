@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>IITJ1 - Settings</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: IBM Plex Sans & Mono -->
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-bright": "#faf9fc",
+                    "on-secondary-fixed-variant": "#693c00",
+                    "on-surface": "#1a1c1e",
+                    "error": "#ba1a1a",
+                    "inverse-surface": "#2f3033",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#774401",
+                    "surface": "#faf9fc",
+                    "primary-fixed-dim": "#a9c9ef",
+                    "on-tertiary-fixed-variant": "#5d420d",
+                    "on-background": "#1a1c1e",
+                    "primary-fixed": "#d0e4ff",
+                    "surface-container-low": "#f4f3f6",
+                    "surface-container-highest": "#e3e2e5",
+                    "on-primary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed-dim": "#e9c080",
+                    "on-error": "#ffffff",
+                    "surface-tint": "#416182",
+                    "background": "#faf9fc",
+                    "surface-dim": "#dadadd",
+                    "on-error-container": "#93000a",
+                    "on-secondary": "#ffffff",
+                    "inverse-primary": "#a9c9ef",
+                    "on-secondary-fixed": "#2c1600",
+                    "surface-variant": "#e3e2e5",
+                    "outline-variant": "#c3c7ce",
+                    "surface-container": "#eeedf0",
+                    "inverse-on-surface": "#f1f0f3",
+                    "secondary-fixed-dim": "#ffb870",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-container": "#8baacf",
+                    "on-surface-variant": "#43474d",
+                    "secondary-fixed": "#ffdcbe",
+                    "secondary": "#885210",
+                    "primary": "#002947",
+                    "on-primary-fixed": "#001d34",
+                    "primary-container": "#1d3f5e",
+                    "on-tertiary-fixed": "#281900",
+                    "tertiary-container": "#523803",
+                    "tertiary": "#372300",
+                    "tertiary-fixed": "#ffdeac",
+                    "secondary-container": "#fdb56c",
+                    "outline": "#73777e",
+                    "surface-container-high": "#e8e8eb",
+                    "on-primary-fixed-variant": "#284969",
+                    "on-tertiary-container": "#c8a264"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-desktop": "32px",
+                    "margin-mobile": "16px",
+                    "sm": "12px",
+                    "lg": "24px",
+                    "gutter": "16px",
+                    "base": "4px",
+                    "xs": "8px",
+                    "md": "16px",
+                    "xl": "32px"
+            },
+            "fontFamily": {
+                    "body-lg": ["IBM Plex Sans"],
+                    "data-mono": ["IBM Plex Mono"],
+                    "headline-md": ["IBM Plex Sans"],
+                    "headline-lg-mobile": ["IBM Plex Sans"],
+                    "body-md": ["IBM Plex Sans"],
+                    "label-sm": ["IBM Plex Sans"],
+                    "headline-lg": ["IBM Plex Sans"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        body {
+            background-color: #F6F0E4; /* Brand Sandstone Base */
+            -webkit-tap-highlight-color: transparent;
+        }
+        .technical-card {
+            border: 1px solid #DED8CC;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .technical-card:active {
+            transform: scale(0.98);
+        }
+        /* Custom Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #DED8CC;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #002947; }
+        input:checked + .slider:before { transform: translateX(20px); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky z-50 bg-primary flex items-center justify-between px-md h-16 w-full">
+<div class="flex items-center gap-md">
+<button class="text-on-primary hover:bg-primary-container/20 p-2 rounded-full transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-on-primary">Settings</h1>
+</div>
+<div class="flex items-center gap-xs">
+<button class="text-on-primary hover:bg-primary-container/20 p-2 rounded-full transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+</div>
+</header>
+<main class="max-w-2xl mx-auto pb-32 pt-md px-margin-mobile md:px-0">
+<!-- User Profile Header -->
+<section class="mb-xl bg-white technical-card p-md rounded-xl flex items-center gap-md">
+<div class="w-16 h-16 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined" data-icon="account_circle" style="font-size: 40px;">account_circle</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-primary">Abhishek Sharma</h2>
+<p class="font-body-md text-on-surface-variant">B.Tech Mechanical Engineering · 2021 batch</p>
+</div>
+</section>
+<!-- Technical Modules (Settings Rows) -->
+<div class="space-y-base">
+<h3 class="font-label-sm text-label-sm text-outline px-base py-xs uppercase tracking-wider">General</h3>
+<!-- Dark Mode Toggle -->
+<div class="bg-white technical-card p-md flex items-center justify-between rounded-lg">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary" data-icon="dark_mode">dark_mode</span>
+<span class="font-body-lg text-body-lg">Dark Mode</span>
+</div>
+<label class="switch">
+<input id="darkModeToggle" type="checkbox"/>
+<span class="slider"></span>
+</label>
+</div>
+<!-- Notification Preferences -->
+<button class="w-full bg-white technical-card p-md flex items-center justify-between rounded-lg group">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary" data-icon="notifications">notifications</span>
+<span class="font-body-lg text-body-lg">Notification Preferences</span>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:translate-x-1 transition-transform" data-icon="chevron_right">chevron_right</span>
+</button>
+<h3 class="font-label-sm text-label-sm text-outline px-base py-xs mt-lg uppercase tracking-wider">Campus Utilities</h3>
+<!-- My Mess QR -->
+<button class="w-full bg-white technical-card p-md flex items-center justify-between rounded-lg group">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary" data-icon="qr_code_2">qr_code_2</span>
+<span class="font-body-lg text-body-lg">My Mess QR</span>
+</div>
+<div class="flex items-center gap-xs">
+<span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container font-label-sm text-label-sm rounded-full">Quick Access</span>
+<span class="material-symbols-outlined text-outline group-hover:translate-x-1 transition-transform" data-icon="chevron_right">chevron_right</span>
+</div>
+</button>
+<!-- Timetable -->
+<button class="w-full bg-white technical-card p-md flex items-center justify-between rounded-lg group">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary" data-icon="calendar_month">calendar_month</span>
+<span class="font-body-lg text-body-lg">Timetable</span>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:translate-x-1 transition-transform" data-icon="chevron_right">chevron_right</span>
+</button>
+<!-- Notes -->
+<button class="w-full bg-white technical-card p-md flex items-center justify-between rounded-lg group">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary" data-icon="sticky_note_2">sticky_note_2</span>
+<span class="font-body-lg text-body-lg">Notes</span>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:translate-x-1 transition-transform" data-icon="chevron_right">chevron_right</span>
+</button>
+<h3 class="font-label-sm text-label-sm text-outline px-base py-xs mt-lg uppercase tracking-wider">Support &amp; Info</h3>
+<!-- Suggest Something -->
+<button class="w-full bg-white technical-card p-md flex items-center justify-between rounded-lg group">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary" data-icon="lightbulb">lightbulb</span>
+<span class="font-body-lg text-body-lg">Suggest Something</span>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:translate-x-1 transition-transform" data-icon="chevron_right">chevron_right</span>
+</button>
+<!-- About -->
+<button class="w-full bg-white technical-card p-md flex items-center justify-between rounded-lg group">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary" data-icon="info">info</span>
+<span class="font-body-lg text-body-lg">About</span>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:translate-x-1 transition-transform" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+<!-- Logout Action -->
+<div class="mt-xl text-center">
+<button class="px-xl py-md border-2 border-primary text-primary font-headline-md rounded-xl hover:bg-primary hover:text-white transition-colors duration-200 w-full">
+                Logout
+            </button>
+<p class="mt-md font-label-sm text-label-sm text-outline">App version 2.4.1 (Stable Build)</p>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 bg-surface border-t border-outline-variant flex justify-around items-center h-16 px-mobile pb-safe">
+<!-- Home -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors px-4 py-1 rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<!-- Menu -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors px-4 py-1 rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="restaurant_menu">restaurant_menu</span>
+<span class="font-label-sm text-label-sm">Menu</span>
+</a>
+<!-- Notices -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors px-4 py-1 rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="font-label-sm text-label-sm">Notices</span>
+</a>
+<!-- Transport -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors px-4 py-1 rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="directions_bus">directions_bus</span>
+<span class="font-label-sm text-label-sm">Transport</span>
+</a>
+<!-- More (ACTIVE) -->
+<a class="flex flex-col items-center justify-center text-primary font-bold active:scale-95 transition-transform duration-150 px-4 py-1 rounded-xl relative" href="#">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+<span class="font-label-sm text-label-sm">More</span>
+<!-- Active Indicator Dot -->
+<div class="absolute -bottom-1 w-1 h-1 bg-primary rounded-full"></div>
+</a>
+</nav>
+<script>
+        // Dark Mode Toggle Logic
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const htmlElement = document.documentElement;
+
+        darkModeToggle.addEventListener('change', () => {
+            if (darkModeToggle.checked) {
+                htmlElement.classList.add('dark');
+                // Temporary manual override for the demo since the background color is inline
+                document.body.style.backgroundColor = '#1a1c1e';
+            } else {
+                htmlElement.classList.remove('dark');
+                document.body.style.backgroundColor = '#F6F0E4';
+            }
+        });
+
+        // Add micro-interaction for list items
+        document.querySelectorAll('button.technical-card').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Haptic feedback simulation
+                if (window.navigator.vibrate) {
+                    window.navigator.vibrate(5);
+                }
+            });
+        });
+    </script>
+</body></html>

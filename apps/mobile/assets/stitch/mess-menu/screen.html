@@ -1,0 +1,367 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>IITJ1 - Mess Menu</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@100..900&amp;display=swap" rel="stylesheet">
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "surface-bright": "#faf9fc",
+                "on-secondary-fixed-variant": "#693c00",
+                "on-surface": "#1a1c1e",
+                "error": "#ba1a1a",
+                "inverse-surface": "#2f3033",
+                "error-container": "#ffdad6",
+                "on-secondary-container": "#774401",
+                "surface": "#faf9fc",
+                "primary-fixed-dim": "#a9c9ef",
+                "on-tertiary-fixed-variant": "#5d420d",
+                "on-background": "#1a1c1e",
+                "primary-fixed": "#d0e4ff",
+                "surface-container-low": "#f4f3f6",
+                "surface-container-highest": "#e3e2e5",
+                "on-primary": "#ffffff",
+                "surface-container-lowest": "#ffffff",
+                "tertiary-fixed-dim": "#e9c080",
+                "on-error": "#ffffff",
+                "surface-tint": "#416182",
+                "background": "#F6F0E4",
+                "surface-dim": "#dadadd",
+                "on-error-container": "#93000a",
+                "on-secondary": "#ffffff",
+                "inverse-primary": "#a9c9ef",
+                "on-secondary-fixed": "#2c1600",
+                "surface-variant": "#e3e2e5",
+                "outline-variant": "#DED8CC",
+                "surface-container": "#eeedf0",
+                "inverse-on-surface": "#f1f0f3",
+                "secondary-fixed-dim": "#ffb870",
+                "on-tertiary": "#ffffff",
+                "on-primary-container": "#8baacf",
+                "on-surface-variant": "#43474d",
+                "secondary-fixed": "#ffdcbe",
+                "secondary": "#885210",
+                "primary": "#002947",
+                "on-primary-fixed": "#001d34",
+                "primary-container": "#1d3f5e",
+                "on-tertiary-fixed": "#281900",
+                "tertiary-container": "#523803",
+                "tertiary": "#372300",
+                "tertiary-fixed": "#ffdeac",
+                "secondary-container": "#fdb56c",
+                "outline": "#73777e",
+                "surface-container-high": "#e8e8eb",
+                "on-primary-fixed-variant": "#284969",
+                "on-tertiary-container": "#c8a264"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+            },
+            "spacing": {
+                "margin-desktop": "32px",
+                "margin-mobile": "16px",
+                "sm": "12px",
+                "lg": "24px",
+                "gutter": "16px",
+                "base": "4px",
+                "xs": "8px",
+                "md": "16px",
+                "xl": "32px"
+            },
+            "fontFamily": {
+                "body-lg": ["IBM Plex Sans"],
+                "data-mono": ["IBM Plex Mono"],
+                "headline-md": ["IBM Plex Sans"],
+                "headline-lg-mobile": ["IBM Plex Sans"],
+                "body-md": ["IBM Plex Sans"],
+                "label-sm": ["IBM Plex Sans"],
+                "headline-lg": ["IBM Plex Sans"]
+            },
+            "fontSize": {
+                "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                "data-mono": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body {
+            background-color: #F6F0E4;
+            font-family: 'IBM Plex Sans', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .day-selector-hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .day-selector-hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .meal-card {
+            background: white;
+            border: 1px solid #DED8CC;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .meal-card:active {
+            transform: scale(0.98);
+        }
+        .status-dot-veg {
+            width: 8px;
+            height: 8px;
+            background-color: #2e7d32;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status-dot-nonveg {
+            width: 8px;
+            height: 8px;
+            background-color: #c62828;
+            border-radius: 50%;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-24">
+<!-- Top App Bar -->
+<header class="w-full top-0 sticky z-40 bg-primary flex items-center justify-between px-md h-16 w-full">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-primary hover:bg-primary-container/20 p-2 rounded-full transition-colors">menu</button>
+<h1 class="font-headline-md text-headline-md font-bold text-on-primary">IITJ one</h1>
+</div>
+<div class="flex gap-2">
+<button class="material-symbols-outlined text-on-primary hover:bg-primary-container/20 p-2 rounded-full transition-colors">search</button>
+<button class="material-symbols-outlined text-on-primary hover:bg-primary-container/20 p-2 rounded-full transition-colors">calendar_month</button>
+</div>
+</header>
+<!-- Main Content Container -->
+<main class="max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop py-md">
+<!-- Day Selector -->
+<div class="day-selector-hide-scrollbar flex overflow-x-auto gap-xs pb-md mb-md border-b border-outline-variant">
+<button class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors">
+<span class="text-label-sm font-label-sm uppercase tracking-wider">Mon</span>
+<span class="text-headline-md font-headline-md">15</span>
+</button>
+<button class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors">
+<span class="text-label-sm font-label-sm uppercase tracking-wider">Tue</span>
+<span class="text-headline-md font-headline-md">16</span>
+</button>
+<button class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-xl bg-primary text-on-primary shadow-md ring-2 ring-primary ring-offset-2 ring-offset-background transition-all">
+<span class="text-label-sm font-label-sm uppercase tracking-wider">Wed</span>
+<span class="text-headline-md font-headline-md">17</span>
+</button>
+<button class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors">
+<span class="text-label-sm font-label-sm uppercase tracking-wider">Thu</span>
+<span class="text-headline-md font-headline-md">18</span>
+</button>
+<button class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors">
+<span class="text-label-sm font-label-sm uppercase tracking-wider">Fri</span>
+<span class="text-headline-md font-headline-md">19</span>
+</button>
+<button class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors">
+<span class="text-label-sm font-label-sm uppercase tracking-wider">Sat</span>
+<span class="text-headline-md font-headline-md">20</span>
+</button>
+<button class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors">
+<span class="text-label-sm font-label-sm uppercase tracking-wider">Sun</span>
+<span class="text-headline-md font-headline-md">21</span>
+</button>
+</div>
+<!-- Meal Sections (Technical Modules) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Breakfast Card -->
+<section class="md:col-span-12 meal-card p-md rounded-xl">
+<div class="flex justify-between items-start mb-sm">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary">breakfast_dining</span>
+<h2 class="text-headline-md font-headline-md text-primary">Breakfast</h2>
+</div>
+<span class="font-data-mono text-data-mono text-on-surface-variant bg-surface-container-low px-2 py-1 rounded">07:30 - 09:15</span>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-xs border-t border-outline-variant pt-sm">
+<div class="flex items-center gap-2">
+<span class="status-dot-veg"></span>
+<span class="text-body-md font-body-md">Aloo Paratha</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="status-dot-veg"></span>
+<span class="text-body-md font-body-md">Curd</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="status-dot-veg"></span>
+<span class="text-body-md font-body-md">Tea/Coffee</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="status-dot-veg"></span>
+<span class="text-body-md font-body-md">Banana</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="status-dot-veg"></span>
+<span class="text-body-md font-body-md">Sprouts</span>
+</div>
+</div>
+</section>
+<!-- Lunch Card -->
+<section class="md:col-span-12 meal-card p-md rounded-xl">
+<div class="flex justify-between items-start mb-sm">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary">lunch_dining</span>
+<h2 class="text-headline-md font-headline-md text-primary">Lunch</h2>
+</div>
+<span class="font-data-mono text-data-mono text-on-surface-variant bg-surface-container-low px-2 py-1 rounded">12:30 - 14:15</span>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-xs border-t border-outline-variant pt-sm">
+<div class="flex items-center gap-2">
+<span class="status-dot-veg"></span>
+<span class="text-body-md font-body-md">Paneer Butter Masala</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="status-dot-veg"></span>
+<span class="text-body-md font-body-md">Dal Makhani</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="status-dot-veg"></span>
+<span class="text-body-md font-body-md">Jeera Rice</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="status-dot-veg"></span>
+<span class="text-body-md font-body-md">Tandoori Roti</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="status-dot-veg"></span>
+<span class="text-body-md font-body-md">Boondi Raita</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="status-dot-veg"></span>
+<span class="text-body-md font-body-md">Salad/Pickle</span>
+</div>
+</div>
+</section>
+<!-- Snacks Card -->
+<section class="md:col-span-6 meal-card p-md rounded-xl">
+<div class="flex justify-between items-start mb-sm">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary">bakery_dining</span>
+<h2 class="text-headline-md font-headline-md text-primary">Snacks</h2>
+</div>
+<span class="font-data-mono text-data-mono text-on-surface-variant bg-surface-container-low px-2 py-1 rounded">17:00 - 18:00</span>
+</div>
+<div class="flex flex-col gap-xs border-t border-outline-variant pt-sm">
+<div class="flex items-center gap-2">
+<span class="status-dot-veg"></span>
+<span class="text-body-md font-body-md">Bread Pakora</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="status-dot-veg"></span>
+<span class="text-body-md font-body-md">Chutney</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="status-dot-veg"></span>
+<span class="text-body-md font-body-md">Tea</span>
+</div>
+</div>
+</section>
+<!-- Dinner Card -->
+<section class="md:col-span-6 meal-card p-md rounded-xl">
+<div class="flex justify-between items-start mb-sm">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary">dinner_dining</span>
+<h2 class="text-headline-md font-headline-md text-primary">Dinner</h2>
+</div>
+<span class="font-data-mono text-data-mono text-on-surface-variant bg-surface-container-low px-2 py-1 rounded">19:30 - 21:15</span>
+</div>
+<div class="flex flex-col gap-xs border-t border-outline-variant pt-sm">
+<div class="flex items-center gap-2">
+<span class="status-dot-nonveg"></span>
+<span class="text-body-md font-body-md">Chicken Curry</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="status-dot-veg"></span>
+<span class="text-body-md font-body-md">Soya Matar</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="status-dot-veg"></span>
+<span class="text-body-md font-body-md">Mix Veg</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="status-dot-veg"></span>
+<span class="text-body-md font-body-md">Rice / Chapati</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="status-dot-veg"></span>
+<span class="text-body-md font-body-md">Gulab Jamun</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Special Notice (Optional UI Flare) -->
+<div class="mt-lg p-md border-l-4 border-secondary bg-secondary-fixed/30 rounded-r-lg">
+<h3 class="text-label-sm font-label-sm text-on-secondary-fixed-variant uppercase tracking-widest mb-1">Feedback</h3>
+<p class="text-body-md text-secondary">Rate today's lunch to help improve mess quality.</p>
+<div class="flex gap-2 mt-sm">
+<button class="material-symbols-outlined text-secondary hover:bg-secondary/10 p-1 rounded transition-colors">sentiment_very_satisfied</button>
+<button class="material-symbols-outlined text-secondary hover:bg-secondary/10 p-1 rounded transition-colors">sentiment_satisfied</button>
+<button class="material-symbols-outlined text-secondary hover:bg-secondary/10 p-1 rounded transition-colors">sentiment_neutral</button>
+<button class="material-symbols-outlined text-secondary hover:bg-secondary/10 p-1 rounded transition-colors">sentiment_dissatisfied</button>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 bg-surface dark:bg-surface-dim flex justify-around items-center h-16 px-mobile pb-safe border-t border-outline-variant">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low p-2 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim font-bold active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">restaurant_menu</span>
+<span class="font-label-sm text-label-sm">Menu</span>
+<!-- Active Indicator Dot -->
+<div class="w-1 h-1 bg-primary rounded-full mt-0.5"></div>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low p-2 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">notifications</span>
+<span class="font-label-sm text-label-sm">Notices</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low p-2 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">directions_bus</span>
+<span class="font-label-sm text-label-sm">Transport</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low p-2 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">more_horiz</span>
+<span class="font-label-sm text-label-sm">More</span>
+</a>
+</nav>
+<script>
+        // Micro-interaction for Day Selector
+        const dayButtons = document.querySelectorAll('.day-selector-hide-scrollbar button');
+        dayButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                dayButtons.forEach(b => {
+                    b.classList.remove('bg-primary', 'text-on-primary', 'shadow-md', 'ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-background');
+                    b.classList.add('bg-surface-container', 'text-on-surface-variant');
+                });
+                btn.classList.remove('bg-surface-container', 'text-on-surface-variant');
+                btn.classList.add('bg-primary', 'text-on-primary', 'shadow-md', 'ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-background');
+            });
+        });
+    </script>
+
+
+</body></html>

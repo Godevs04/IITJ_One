@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>IITJ1 - Transport Schedule</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-dot::after {
+            content: '';
+            width: 4px;
+            height: 4px;
+            background-color: #002947;
+            border-radius: 50%;
+            margin-top: 2px;
+        }
+        body {
+            background-color: #F6F0E4; /* Sandstone base */
+        }
+        .technical-card {
+            border: 1px solid #DED8CC;
+            transition: all 0.2s ease;
+        }
+        .technical-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#faf9fc",
+                        "on-secondary-fixed-variant": "#693c00",
+                        "on-surface": "#1a1c1e",
+                        "error": "#ba1a1a",
+                        "inverse-surface": "#2f3033",
+                        "error-container": "#ffdad6",
+                        "on-secondary-container": "#774401",
+                        "surface": "#faf9fc",
+                        "primary-fixed-dim": "#a9c9ef",
+                        "on-tertiary-fixed-variant": "#5d420d",
+                        "on-background": "#1a1c1e",
+                        "primary-fixed": "#d0e4ff",
+                        "surface-container-low": "#f4f3f6",
+                        "surface-container-highest": "#e3e2e5",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed-dim": "#e9c080",
+                        "on-error": "#ffffff",
+                        "surface-tint": "#416182",
+                        "background": "#faf9fc",
+                        "surface-dim": "#dadadd",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "inverse-primary": "#a9c9ef",
+                        "on-secondary-fixed": "#2c1600",
+                        "surface-variant": "#e3e2e5",
+                        "outline-variant": "#c3c7ce",
+                        "surface-container": "#eeedf0",
+                        "inverse-on-surface": "#f1f0f3",
+                        "secondary-fixed-dim": "#ffb870",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#8baacf",
+                        "on-surface-variant": "#43474d",
+                        "secondary-fixed": "#ffdcbe",
+                        "secondary": "#885210",
+                        "primary": "#002947",
+                        "on-primary-fixed": "#001d34",
+                        "primary-container": "#1d3f5e",
+                        "on-tertiary-fixed": "#281900",
+                        "tertiary-container": "#523803",
+                        "tertiary": "#372300",
+                        "tertiary-fixed": "#ffdeac",
+                        "secondary-container": "#fdb56c",
+                        "outline": "#73777e",
+                        "surface-container-high": "#e8e8eb",
+                        "on-primary-fixed-variant": "#284969",
+                        "on-tertiary-container": "#c8a264"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "32px",
+                        "margin-mobile": "16px",
+                        "sm": "12px",
+                        "lg": "24px",
+                        "gutter": "16px",
+                        "base": "4px",
+                        "xs": "8px",
+                        "md": "16px",
+                        "xl": "32px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["IBM Plex Sans"],
+                        "data-mono": ["IBM Plex Mono"],
+                        "headline-md": ["IBM Plex Sans"],
+                        "headline-lg-mobile": ["IBM Plex Sans"],
+                        "body-md": ["IBM Plex Sans"],
+                        "label-sm": ["IBM Plex Sans"],
+                        "headline-lg": ["IBM Plex Sans"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "data-mono": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface">
+<!-- Top App Bar -->
+<header class="bg-primary text-on-primary font-headline-md text-headline-md w-full top-0 sticky flex items-center justify-between px-md h-16 w-full z-40 transition-colors duration-200">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined cursor-pointer hover:bg-primary-container/20 p-xs rounded-full">menu</span>
+<span class="font-bold">Transport</span>
+</div>
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined cursor-pointer hover:bg-primary-container/20 p-xs rounded-full">search</span>
+<span class="material-symbols-outlined cursor-pointer hover:bg-primary-container/20 p-xs rounded-full">account_circle</span>
+</div>
+</header>
+<main class="max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop py-md pb-48">
+<!-- Live Tracking Banner -->
+<button class="w-full mb-lg bg-primary text-on-primary p-md rounded-xl flex items-center justify-between shadow-md active:scale-[0.98] transition-transform">
+<div class="flex items-center gap-md">
+<div class="bg-secondary p-sm rounded-lg">
+<span class="material-symbols-outlined text-white">map</span>
+</div>
+<div class="text-left">
+<p class="font-headline-md text-headline-md leading-none">View Live Bus Tracking</p>
+<p class="text-label-sm font-label-sm opacity-80 mt-base uppercase tracking-wider">Real-time GPS Location</p>
+</div>
+</div>
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+<!-- Segmented Controls Group -->
+<div class="space-y-md mb-xl">
+<!-- Direction Toggle -->
+<div class="bg-surface-container-high p-base rounded-lg flex w-full">
+<button class="flex-1 py-xs text-label-sm font-label-sm rounded-md bg-primary text-on-primary shadow-sm">Departure from Campus</button>
+<button class="flex-1 py-xs text-label-sm font-label-sm text-on-surface-variant">Arrival at Campus</button>
+</div>
+<!-- Day Type Toggle -->
+<div class="bg-surface-container-high p-base rounded-lg flex w-full">
+<button class="flex-1 py-xs text-label-sm font-label-sm rounded-md bg-white text-primary technical-card">Mon–Sat</button>
+<button class="flex-1 py-xs text-label-sm font-label-sm text-on-surface-variant">Sunday &amp; Holidays</button>
+</div>
+</div>
+<!-- Schedule Section -->
+<div class="space-y-sm">
+<h2 class="text-label-sm font-label-sm text-outline uppercase tracking-widest mb-xs flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">schedule</span> Upcoming Trips
+            </h2>
+<!-- Bus Row 1 -->
+<div class="bg-white technical-card p-md rounded-lg flex items-center justify-between group">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold">B1</div>
+<div>
+<div class="flex items-center gap-xs">
+<span class="font-data-mono text-data-mono text-headline-md">08:00</span>
+<span class="text-label-sm font-label-sm text-secondary bg-secondary-container/20 px-xs rounded-full">IN 12 MIN</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant">via Gate 1, Academic Block</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors">info</span>
+</div>
+<!-- Bus Row 2 -->
+<div class="bg-white technical-card p-md rounded-lg flex items-center justify-between group">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold">B2</div>
+<div>
+<span class="font-data-mono text-data-mono text-headline-md">08:30</span>
+<p class="text-body-md font-body-md text-on-surface-variant">via Hostel Cluster, Admin</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant">info</span>
+</div>
+<!-- Bus Row 3 -->
+<div class="bg-white technical-card p-md rounded-lg flex items-center justify-between group">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">B1</div>
+<div>
+<span class="font-data-mono text-data-mono text-headline-md text-on-surface-variant">09:15</span>
+<p class="text-body-md font-body-md text-outline">via Gate 1, Academic Block</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant">info</span>
+</div>
+<!-- Bus Row 4 -->
+<div class="bg-white technical-card p-md rounded-lg flex items-center justify-between group">
+<div class="flex items-center gap-md">
+<div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">B3</div>
+<div>
+<span class="font-data-mono text-data-mono text-headline-md text-on-surface-variant">10:00</span>
+<p class="text-body-md font-body-md text-outline">Direct Express to Clock Tower</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant">info</span>
+</div>
+</div>
+<!-- Map Illustration / Placeholder -->
+<div class="mt-xl rounded-xl overflow-hidden border border-outline-variant relative h-48 bg-surface-dim">
+<div class="w-full h-full bg-cover bg-center opacity-60" data-alt="A clean, minimalist map illustration of a campus layout with transit routes highlighted in deep indigo lines. Small orange pulsing dots represent live bus positions. The style is technical and cartographic, using a neutral sandstone and light gray color palette to match the desert campus aesthetic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDCMh3HpSzOr2fPN360zubA0WaErmEjztrCVvNdfEF2qz2GghsmVH6nseogM-0Duee9rfDdfc8TB_t5npQYbd65QobhRmD7h3rm-iA_PJmHL1ig1LYvJ5f_aFnYPx8R9iH4mbuZ-D3mdI1u0Nnlx-Di5H2YOeMMT1rVktdNxuifZ4FSN-zRfjbTj9vTgKDXDqgFsaRFia_q7Br-OqpOKhV7TPQsK4opwW_mqlJHz0O8mhGIh5SCVxvi')"></div>
+<div class="absolute inset-0 flex items-center justify-center bg-primary/10">
+<div class="bg-white/90 backdrop-blur-sm px-lg py-sm rounded-full border border-primary/20 shadow-lg flex items-center gap-xs">
+<span class="w-2 h-2 bg-secondary rounded-full animate-pulse"></span>
+<span class="text-label-sm font-bold text-primary">Live Tracking Service Active</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Update Banner -->
+<div class="fixed bottom-20 left-0 right-0 px-margin-mobile z-40" id="updateBanner">
+<div class="bg-secondary-container border border-on-secondary-container/20 text-on-secondary-container p-md rounded-lg flex items-center justify-between shadow-lg">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined">campaign</span>
+<div>
+<p class="font-bold text-label-sm">Schedule Updated</p>
+<p class="text-body-md text-on-secondary-container/80">New Sunday trips added for the winter semester.</p>
+</div>
+</div>
+<button class="bg-primary text-on-primary px-lg py-xs rounded-md text-label-sm font-bold" onclick="document.getElementById('updateBanner').style.display='none'">Got it</button>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 bg-surface dark:bg-surface-dim border-t border-outline-variant flex justify-around items-center h-16 px-mobile pb-safe">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low transition-colors px-md rounded-lg py-xs" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low transition-colors px-md rounded-lg py-xs" href="#">
+<span class="material-symbols-outlined">restaurant_menu</span>
+<span class="font-label-sm text-label-sm">Menu</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low transition-colors px-md rounded-lg py-xs" href="#">
+<span class="material-symbols-outlined">notifications</span>
+<span class="font-label-sm text-label-sm">Notices</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim font-bold active-dot px-md rounded-lg py-xs" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">directions_bus</span>
+<span class="font-label-sm text-label-sm">Transport</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low transition-colors px-md rounded-lg py-xs" href="#">
+<span class="material-symbols-outlined">more_horiz</span>
+<span class="font-label-sm text-label-sm">More</span>
+</a>
+</nav>
+<script>
+        // Micro-interaction for feedback
+        document.querySelectorAll('.technical-card').forEach(card => {
+            card.addEventListener('mousedown', () => {
+                card.style.transform = 'scale(0.98)';
+            });
+            card.addEventListener('mouseup', () => {
+                card.style.transform = 'scale(1)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body></html>

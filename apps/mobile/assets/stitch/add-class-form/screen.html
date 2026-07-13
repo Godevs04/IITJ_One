@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>IITJ1 - Add Class</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-bright": "#faf9fc",
+                    "on-secondary-fixed-variant": "#693c00",
+                    "on-surface": "#1a1c1e",
+                    "error": "#ba1a1a",
+                    "inverse-surface": "#2f3033",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#774401",
+                    "surface": "#faf9fc",
+                    "primary-fixed-dim": "#a9c9ef",
+                    "on-tertiary-fixed-variant": "#5d420d",
+                    "on-background": "#1a1c1e",
+                    "primary-fixed": "#d0e4ff",
+                    "surface-container-low": "#f4f3f6",
+                    "surface-container-highest": "#e3e2e5",
+                    "on-primary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed-dim": "#e9c080",
+                    "on-error": "#ffffff",
+                    "surface-tint": "#416182",
+                    "background": "#faf9fc",
+                    "surface-dim": "#dadadd",
+                    "on-error-container": "#93000a",
+                    "on-secondary": "#ffffff",
+                    "inverse-primary": "#a9c9ef",
+                    "on-secondary-fixed": "#2c1600",
+                    "surface-variant": "#e3e2e5",
+                    "outline-variant": "#c3c7ce",
+                    "surface-container": "#eeedf0",
+                    "inverse-on-surface": "#f1f0f3",
+                    "secondary-fixed-dim": "#ffb870",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-container": "#8baacf",
+                    "on-surface-variant": "#43474d",
+                    "secondary-fixed": "#ffdcbe",
+                    "secondary": "#885210",
+                    "primary": "#002947",
+                    "on-primary-fixed": "#001d34",
+                    "primary-container": "#1d3f5e",
+                    "on-tertiary-fixed": "#281900",
+                    "tertiary-container": "#523803",
+                    "tertiary": "#372300",
+                    "tertiary-fixed": "#ffdeac",
+                    "secondary-container": "#fdb56c",
+                    "outline": "#73777e",
+                    "surface-container-high": "#e8e8eb",
+                    "on-primary-fixed-variant": "#284969",
+                    "on-tertiary-container": "#c8a264"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-desktop": "32px",
+                    "margin-mobile": "16px",
+                    "sm": "12px",
+                    "lg": "24px",
+                    "gutter": "16px",
+                    "base": "4px",
+                    "xs": "8px",
+                    "md": "16px",
+                    "xl": "32px"
+            },
+            "fontFamily": {
+                    "body-lg": ["IBM Plex Sans"],
+                    "data-mono": ["IBM Plex Mono"],
+                    "headline-md": ["IBM Plex Sans"],
+                    "headline-lg-mobile": ["IBM Plex Sans"],
+                    "body-md": ["IBM Plex Sans"],
+                    "label-sm": ["IBM Plex Sans"],
+                    "headline-lg": ["IBM Plex Sans"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.2);
+        }
+        .day-checkbox:checked + label {
+            background-color: #002947;
+            color: #ffffff;
+            border-color: #002947;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-bright text-on-surface font-body-lg min-h-screen">
+<!-- Top App Bar -->
+<header class="w-full top-0 sticky z-50 bg-primary text-on-primary flex items-center justify-between px-md h-16 transition-colors duration-200">
+<div class="flex items-center gap-4">
+<button aria-label="Go back" class="p-2 -ml-2 rounded-full hover:bg-primary-container/20 transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-on-primary">Add Class</h1>
+</div>
+<button class="px-4 py-2 font-label-sm text-label-sm font-bold text-on-primary hover:bg-primary-container/20 rounded-lg transition-colors">
+            Save
+        </button>
+</header>
+<!-- Main Content Canvas -->
+<main class="max-w-2xl mx-auto p-margin-mobile md:p-margin-desktop mb-12">
+<form class="space-y-lg">
+<!-- Class Name Section -->
+<div class="bg-white p-md border border-outline-variant rounded-xl shadow-sm">
+<label class="block font-label-sm text-label-sm text-outline mb-xs" for="class_name">Class name</label>
+<input class="w-full bg-transparent border-b border-outline-variant focus:border-primary focus:ring-0 px-0 py-2 font-headline-md text-headline-md outline-none transition-all" id="class_name" name="class_name" placeholder="e.g. CS302 Theory of Computation" required="" type="text"/>
+</div>
+<!-- Time and Type Layout -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Time Pickers -->
+<div class="bg-white p-md border border-outline-variant rounded-xl space-y-md">
+<h3 class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Schedule</h3>
+<div class="flex items-center justify-between gap-4">
+<div class="flex-1">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Start time</label>
+<input class="w-full font-data-mono bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary transition-all" name="start_time" type="time"/>
+</div>
+<div class="flex-1">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">End time</label>
+<input class="w-full font-data-mono bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 focus:border-primary focus:ring-1 focus:ring-primary transition-all" name="end_time" type="time"/>
+</div>
+</div>
+</div>
+<!-- Class Type (Radio Buttons) -->
+<div class="bg-white p-md border border-outline-variant rounded-xl space-y-md">
+<h3 class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Class Type</h3>
+<div class="flex flex-wrap gap-xs">
+<label class="relative flex items-center cursor-pointer group">
+<input checked="" class="peer sr-only" name="class_type" type="radio" value="Lecture"/>
+<div class="px-4 py-2 border border-outline-variant rounded-full text-body-md peer-checked:bg-primary-container peer-checked:text-on-primary-container peer-checked:border-primary-container transition-all hover:bg-surface-container-high">
+                                Lecture
+                            </div>
+</label>
+<label class="relative flex items-center cursor-pointer group">
+<input class="peer sr-only" name="class_type" type="radio" value="Lab"/>
+<div class="px-4 py-2 border border-outline-variant rounded-full text-body-md peer-checked:bg-primary-container peer-checked:text-on-primary-container peer-checked:border-primary-container transition-all hover:bg-surface-container-high">
+                                Lab
+                            </div>
+</label>
+<label class="relative flex items-center cursor-pointer group">
+<input class="peer sr-only" name="class_type" type="radio" value="Tutorial"/>
+<div class="px-4 py-2 border border-outline-variant rounded-full text-body-md peer-checked:bg-primary-container peer-checked:text-on-primary-container peer-checked:border-primary-container transition-all hover:bg-surface-container-high">
+                                Tutorial
+                            </div>
+</label>
+</div>
+</div>
+</div>
+<!-- Repeating Days -->
+<div class="bg-white p-md border border-outline-variant rounded-xl space-y-md">
+<h3 class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Repeats on</h3>
+<div class="flex justify-between md:justify-start md:gap-4 overflow-x-auto pb-1">
+<div class="flex-shrink-0">
+<input class="day-checkbox sr-only" id="mon" type="checkbox"/>
+<label class="w-10 h-10 flex items-center justify-center rounded-full border border-outline-variant text-label-sm cursor-pointer hover:bg-surface-container-low transition-colors" for="mon">M</label>
+</div>
+<div class="flex-shrink-0">
+<input class="day-checkbox sr-only" id="tue" type="checkbox"/>
+<label class="w-10 h-10 flex items-center justify-center rounded-full border border-outline-variant text-label-sm cursor-pointer hover:bg-surface-container-low transition-colors" for="tue">T</label>
+</div>
+<div class="flex-shrink-0">
+<input class="day-checkbox sr-only" id="wed" type="checkbox"/>
+<label class="w-10 h-10 flex items-center justify-center rounded-full border border-outline-variant text-label-sm cursor-pointer hover:bg-surface-container-low transition-colors" for="wed">W</label>
+</div>
+<div class="flex-shrink-0">
+<input class="day-checkbox sr-only" id="thu" type="checkbox"/>
+<label class="w-10 h-10 flex items-center justify-center rounded-full border border-outline-variant text-label-sm cursor-pointer hover:bg-surface-container-low transition-colors" for="thu">T</label>
+</div>
+<div class="flex-shrink-0">
+<input class="day-checkbox sr-only" id="fri" type="checkbox"/>
+<label class="w-10 h-10 flex items-center justify-center rounded-full border border-outline-variant text-label-sm cursor-pointer hover:bg-surface-container-low transition-colors" for="fri">F</label>
+</div>
+<div class="flex-shrink-0">
+<input class="day-checkbox sr-only" id="sat" type="checkbox"/>
+<label class="w-10 h-10 flex items-center justify-center rounded-full border border-outline-variant text-label-sm cursor-pointer hover:bg-surface-container-low transition-colors" for="sat">S</label>
+</div>
+<div class="flex-shrink-0">
+<input class="day-checkbox sr-only" id="sun" type="checkbox"/>
+<label class="w-10 h-10 flex items-center justify-center rounded-full border border-outline-variant text-label-sm cursor-pointer hover:bg-surface-container-low transition-colors" for="sun">S</label>
+</div>
+</div>
+</div>
+<!-- Location Section -->
+<div class="bg-white p-md border border-outline-variant rounded-xl flex items-center gap-4">
+<span class="material-symbols-outlined text-primary">location_on</span>
+<div class="flex-1">
+<label class="block font-label-sm text-label-sm text-outline" for="location">Room / location</label>
+<input class="w-full bg-transparent border-0 focus:ring-0 p-0 font-body-lg text-on-surface placeholder:text-outline-variant outline-none" id="location" name="location" placeholder="e.g. L-102 Lecture Hall" type="text"/>
+</div>
+</div>
+<!-- Reminder Toggle -->
+<div class="bg-white p-md border border-outline-variant rounded-xl flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary">notifications_active</span>
+<div>
+<h4 class="font-body-lg">Remind me</h4>
+<p class="text-label-sm text-on-surface-variant">10 mins before class starts</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Save Button -->
+<div class="pt-lg">
+<button class="w-full h-14 bg-primary text-on-primary font-bold text-body-lg rounded-xl flex items-center justify-center gap-2 hover:bg-primary-container transition-all active:scale-[0.98]" type="submit">
+<span class="material-symbols-outlined">save</span>
+                    Save Class
+                </button>
+<p class="text-center text-label-sm text-outline mt-4">
+                    This class will be added to your weekly timetable.
+                </p>
+</div>
+</form>
+<!-- Decorative Subtle Map Backdrop (Abstract) -->
+<div class="mt-12 rounded-xl overflow-hidden border border-outline-variant h-40 relative">
+<div class="absolute inset-0 bg-surface-container"></div>
+<div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(circle at 2px 2px, #002947 1px, transparent 0); background-size: 24px 24px;"></div>
+<div class="relative z-10 p-md flex flex-col justify-end h-full">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-[18px]">info</span>
+<span class="font-label-sm">IIT Jodhpur Campus Navigation</span>
+</div>
+<p class="font-body-md text-on-surface-variant max-w-xs mt-1">Automatic room detection is enabled for Lecture Hall Building and Department clusters.</p>
+</div>
+<!-- Mock Map Visual -->
+<div class="absolute right-0 top-0 bottom-0 w-1/2 overflow-hidden pointer-events-none">
+<div class="w-full h-full bg-cover bg-center grayscale contrast-75 brightness-110" data-alt="A clean, minimalist architectural floor plan or schematic map of a modern university building. The style is technical and modular with crisp lines and subtle sandstone and indigo accents. The map shows various lecture halls and labs labeled with scientific precision, reflecting a high-tech engineering campus aesthetic. Soft overhead lighting gives it a bright, professional light-mode feel." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAKGt2nThXNs4ADjE_-4zQhchoNJ5Y8dyt6c_XpkyiAaXP86zNIuCYddn24M3a0Hjzvc1PQXUyXrBzo245LwXJu9KQDJn0MBtehE6Y8bpu19aK-HD1sbF-Rdzq_39nE9wC5doQMuySI3vQrGX2FvjtVJps4pzbm61Ur_k54SUp4P_zh2TYG0oS1VbKnEccQkwe4mgW6aB6Uk0K8aTTH7SxTrzljAvXAwqheeyObV34jjvH4-AWMQe0J')">
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Micro-interactions
+        document.querySelectorAll('.day-checkbox').forEach(cb => {
+            cb.addEventListener('change', function() {
+                const label = this.nextElementSibling;
+                if(this.checked) {
+                    label.classList.add('bg-primary', 'text-on-primary', 'border-primary');
+                    label.classList.remove('border-outline-variant', 'hover:bg-surface-container-low');
+                } else {
+                    label.classList.remove('bg-primary', 'text-on-primary', 'border-primary');
+                    label.classList.add('border-outline-variant', 'hover:bg-surface-container-low');
+                }
+            });
+        });
+
+        // Form Submission Logic (Visual Feedback)
+        const form = document.querySelector('form');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalContent = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> Saving...`;
+            
+            setTimeout(() => {
+                btn.classList.replace('bg-primary', 'bg-tertiary-container');
+                btn.classList.add('text-on-tertiary-container');
+                btn.innerHTML = `<span class="material-symbols-outlined">check_circle</span> Class Added!`;
+                
+                setTimeout(() => {
+                    // Reset or Redirect
+                    btn.classList.replace('bg-tertiary-container', 'bg-primary');
+                    btn.classList.remove('text-on-tertiary-container');
+                    btn.innerHTML = originalContent;
+                    btn.disabled = false;
+                }, 2000);
+            }, 1000);
+        });
+    </script>
+</body></html>

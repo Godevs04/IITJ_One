@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>IITJ1 - My Timetable</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-bright": "#faf9fc",
+                    "on-secondary-fixed-variant": "#693c00",
+                    "on-surface": "#1a1c1e",
+                    "error": "#ba1a1a",
+                    "inverse-surface": "#2f3033",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#774401",
+                    "surface": "#faf9fc",
+                    "primary-fixed-dim": "#a9c9ef",
+                    "on-tertiary-fixed-variant": "#5d420d",
+                    "on-background": "#1a1c1e",
+                    "primary-fixed": "#d0e4ff",
+                    "surface-container-low": "#f4f3f6",
+                    "surface-container-highest": "#e3e2e5",
+                    "on-primary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed-dim": "#e9c080",
+                    "on-error": "#ffffff",
+                    "surface-tint": "#416182",
+                    "background": "#faf9fc",
+                    "surface-dim": "#dadadd",
+                    "on-error-container": "#93000a",
+                    "on-secondary": "#ffffff",
+                    "inverse-primary": "#a9c9ef",
+                    "on-secondary-fixed": "#2c1600",
+                    "surface-variant": "#e3e2e5",
+                    "outline-variant": "#c3c7ce",
+                    "surface-container": "#eeedf0",
+                    "inverse-on-surface": "#f1f0f3",
+                    "secondary-fixed-dim": "#ffb870",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-container": "#8baacf",
+                    "on-surface-variant": "#43474d",
+                    "secondary-fixed": "#ffdcbe",
+                    "secondary": "#885210",
+                    "primary": "#002947",
+                    "on-primary-fixed": "#001d34",
+                    "primary-container": "#1d3f5e",
+                    "on-tertiary-fixed": "#281900",
+                    "tertiary-container": "#523803",
+                    "tertiary": "#372300",
+                    "tertiary-fixed": "#ffdeac",
+                    "secondary-container": "#fdb56c",
+                    "outline": "#73777e",
+                    "surface-container-high": "#e8e8eb",
+                    "on-primary-fixed-variant": "#284969",
+                    "on-tertiary-container": "#c8a264"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-desktop": "32px",
+                    "margin-mobile": "16px",
+                    "sm": "12px",
+                    "lg": "24px",
+                    "gutter": "16px",
+                    "base": "4px",
+                    "xs": "8px",
+                    "md": "16px",
+                    "xl": "32px"
+            },
+            "fontFamily": {
+                    "body-lg": ["IBM Plex Sans"],
+                    "data-mono": ["IBM Plex Mono"],
+                    "headline-md": ["IBM Plex Sans"],
+                    "headline-lg-mobile": ["IBM Plex Sans"],
+                    "body-md": ["IBM Plex Sans"],
+                    "label-sm": ["IBM Plex Sans"],
+                    "headline-lg": ["IBM Plex Sans"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "data-mono": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #F6F0E4; /* Sandstone base from Style Guidance */
+            font-family: 'IBM Plex Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .card-border {
+            border: 1px solid #DED8CC;
+        }
+        /* Custom scrollbar for day selector */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex flex-col">
+<!-- Top App Bar -->
+<header class="bg-primary text-on-primary w-full top-0 sticky z-40 transition-colors duration-200">
+<div class="flex items-center justify-between px-md h-16 w-full">
+<div class="flex items-center gap-md">
+<button class="p-base hover:bg-primary-container/20 rounded-full transition-colors">
+<span class="material-symbols-outlined text-on-primary">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tight">Timetable</h1>
+</div>
+<button class="p-base hover:bg-primary-container/20 rounded-full transition-colors">
+<span class="material-symbols-outlined text-on-primary">add</span>
+</button>
+</div>
+</header>
+<!-- Day Selector Strip -->
+<nav class="bg-surface-bright sticky top-16 z-30 card-border border-x-0 border-t-0 py-xs px-margin-mobile">
+<div class="flex gap-xs overflow-x-auto hide-scrollbar">
+<!-- Day Pills -->
+<button class="flex-shrink-0 flex flex-col items-center justify-center w-12 h-16 rounded-xl bg-primary text-on-primary font-bold transition-all transform active:scale-95 shadow-sm">
+<span class="font-label-sm text-label-sm uppercase opacity-80">Mon</span>
+<span class="font-headline-md text-headline-md">14</span>
+</button>
+<button class="flex-shrink-0 flex flex-col items-center justify-center w-12 h-16 rounded-xl bg-surface-container-low text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all">
+<span class="font-label-sm text-label-sm uppercase">Tue</span>
+<span class="font-headline-md text-headline-md">15</span>
+</button>
+<button class="flex-shrink-0 flex flex-col items-center justify-center w-12 h-16 rounded-xl bg-surface-container-low text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all">
+<span class="font-label-sm text-label-sm uppercase">Wed</span>
+<span class="font-headline-md text-headline-md">16</span>
+</button>
+<button class="flex-shrink-0 flex flex-col items-center justify-center w-12 h-16 rounded-xl bg-surface-container-low text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all">
+<span class="font-label-sm text-label-sm uppercase">Thu</span>
+<span class="font-headline-md text-headline-md">17</span>
+</button>
+<button class="flex-shrink-0 flex flex-col items-center justify-center w-12 h-16 rounded-xl bg-surface-container-low text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all">
+<span class="font-label-sm text-label-sm uppercase">Fri</span>
+<span class="font-headline-md text-headline-md">18</span>
+</button>
+<button class="flex-shrink-0 flex flex-col items-center justify-center w-12 h-16 rounded-xl bg-surface-container-low text-on-surface-variant font-medium hover:bg-surface-container-highest transition-all">
+<span class="font-label-sm text-label-sm uppercase">Sat</span>
+<span class="font-headline-md text-headline-md">19</span>
+</button>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-margin-mobile py-lg max-w-2xl mx-auto w-full">
+<div class="flex flex-col gap-md">
+<!-- Class Card 1: Live Indicator -->
+<div class="bg-surface-bright p-md rounded-xl card-border flex gap-md relative overflow-hidden group hover:shadow-md transition-shadow">
+<!-- Vertical Status Bar -->
+<div class="w-1.5 bg-secondary rounded-full"></div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-xs">
+<span class="font-data-mono text-data-mono text-secondary flex items-center gap-xs">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+                            09:00 — 10:20
+                        </span>
+<span class="bg-secondary-container text-on-secondary-container px-xs py-base rounded-full font-label-sm text-label-sm uppercase tracking-wider">Lecture</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-xs">Advanced Algorithms</h2>
+<div class="flex items-center text-outline gap-xs">
+<span class="material-symbols-outlined text-[18px]">location_on</span>
+<span class="font-body-md text-body-md">Lecture Hall Complex, Room 102</span>
+</div>
+</div>
+</div>
+<!-- Class Card 2 -->
+<div class="bg-surface-bright p-md rounded-xl card-border flex gap-md group hover:shadow-md transition-shadow">
+<div class="w-1.5 bg-outline-variant rounded-full group-hover:bg-primary transition-colors"></div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-xs">
+<span class="font-data-mono text-data-mono text-on-surface-variant">10:30 — 11:50</span>
+<span class="bg-surface-container-highest text-on-surface-variant px-xs py-base rounded-full font-label-sm text-label-sm uppercase tracking-wider">Lecture</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-xs">Operating Systems</h2>
+<div class="flex items-center text-outline gap-xs">
+<span class="material-symbols-outlined text-[18px]">location_on</span>
+<span class="font-body-md text-body-md">Department Block B, B-204</span>
+</div>
+</div>
+</div>
+<!-- Visual Separator with Time Gap -->
+<div class="flex items-center gap-md px-md py-xs">
+<div class="h-px flex-1 bg-outline-variant opacity-30"></div>
+<span class="font-data-mono text-xs text-outline uppercase tracking-widest">Lunch Break (1hr)</span>
+<div class="h-px flex-1 bg-outline-variant opacity-30"></div>
+</div>
+<!-- Class Card 3 -->
+<div class="bg-surface-bright p-md rounded-xl card-border flex gap-md group hover:shadow-md transition-shadow">
+<div class="w-1.5 bg-outline-variant rounded-full group-hover:bg-primary transition-colors"></div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-xs">
+<span class="font-data-mono text-data-mono text-on-surface-variant">13:00 — 16:00</span>
+<span class="bg-primary-container text-on-primary-container px-xs py-base rounded-full font-label-sm text-label-sm uppercase tracking-wider">Lab</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-xs">Embedded Systems Lab</h2>
+<div class="flex items-center text-outline gap-xs">
+<span class="material-symbols-outlined text-[18px]">location_on</span>
+<span class="font-body-md text-body-md">Electronics Lab, Level 1</span>
+</div>
+</div>
+</div>
+<!-- Empty Slot State (Optional for context) -->
+<div class="border-2 border-dashed border-outline-variant rounded-xl p-lg flex flex-col items-center justify-center opacity-60">
+<span class="material-symbols-outlined text-outline text-3xl mb-xs">event_available</span>
+<p class="font-body-md text-body-md text-outline">No more classes today</p>
+</div>
+</div>
+</main>
+<!-- FAB: Bottom-right -->
+<button class="fixed bottom-lg right-lg w-14 h-14 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-xl hover:bg-primary-container active:scale-95 transition-all z-50">
+<span class="material-symbols-outlined text-[28px]">add</span>
+</button>
+<!-- Inline Interaction Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Day selector interaction
+            const dayButtons = document.querySelectorAll('nav button');
+            dayButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    dayButtons.forEach(b => {
+                        b.classList.remove('bg-primary', 'text-on-primary', 'font-bold');
+                        b.classList.add('bg-surface-container-low', 'text-on-surface-variant', 'font-medium');
+                    });
+                    btn.classList.add('bg-primary', 'text-on-primary', 'font-bold');
+                    btn.classList.remove('bg-surface-container-low', 'text-on-surface-variant', 'font-medium');
+                });
+            });
+
+            // Card hover effects - already handled by Tailwind
+        });
+    </script>
+</body></html>

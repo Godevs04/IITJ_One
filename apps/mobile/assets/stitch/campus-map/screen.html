@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>IITJ Campus Map</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "surface-bright": "#faf9fc",
+                "on-secondary-fixed-variant": "#693c00",
+                "on-surface": "#1a1c1e",
+                "error": "#ba1a1a",
+                "inverse-surface": "#2f3033",
+                "error-container": "#ffdad6",
+                "on-secondary-container": "#774401",
+                "surface": "#faf9fc",
+                "primary-fixed-dim": "#a9c9ef",
+                "on-tertiary-fixed-variant": "#5d420d",
+                "on-background": "#1a1c1e",
+                "primary-fixed": "#d0e4ff",
+                "surface-container-low": "#f4f3f6",
+                "surface-container-highest": "#e3e2e5",
+                "on-primary": "#ffffff",
+                "surface-container-lowest": "#ffffff",
+                "tertiary-fixed-dim": "#e9c080",
+                "on-error": "#ffffff",
+                "surface-tint": "#416182",
+                "background": "#faf9fc",
+                "surface-dim": "#dadadd",
+                "on-error-container": "#93000a",
+                "on-secondary": "#ffffff",
+                "inverse-primary": "#a9c9ef",
+                "on-secondary-fixed": "#2c1600",
+                "surface-variant": "#e3e2e5",
+                "outline-variant": "#c3c7ce",
+                "surface-container": "#eeedf0",
+                "inverse-on-surface": "#f1f0f3",
+                "secondary-fixed-dim": "#ffb870",
+                "on-tertiary": "#ffffff",
+                "on-primary-container": "#8baacf",
+                "on-surface-variant": "#43474d",
+                "secondary-fixed": "#ffdcbe",
+                "secondary": "#885210",
+                "primary": "#002947",
+                "on-primary-fixed": "#001d34",
+                "primary-container": "#1d3f5e",
+                "on-tertiary-fixed": "#281900",
+                "tertiary-container": "#523803",
+                "tertiary": "#372300",
+                "tertiary-fixed": "#ffdeac",
+                "secondary-container": "#fdb56c",
+                "outline": "#73777e",
+                "surface-container-high": "#e8e8eb",
+                "on-primary-fixed-variant": "#284969",
+                "on-tertiary-container": "#c8a264",
+                "sandstone": "#DED8CC",
+                "sage": "#8FA998"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "12px",
+                "xl": "0.75rem",
+                "full": "9999px"
+            },
+            "spacing": {
+                "margin-desktop": "32px",
+                "margin-mobile": "16px",
+                "sm": "12px",
+                "lg": "24px",
+                "gutter": "16px",
+                "base": "4px",
+                "xs": "8px",
+                "md": "16px",
+                "xl": "32px"
+            },
+            "fontFamily": {
+                "body-lg": ["IBM Plex Sans"],
+                "data-mono": ["IBM Plex Mono"],
+                "headline-md": ["IBM Plex Sans"],
+                "headline-lg-mobile": ["IBM Plex Sans"],
+                "body-md": ["IBM Plex Sans"],
+                "label-sm": ["IBM Plex Sans"],
+                "headline-lg": ["IBM Plex Sans"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-chip {
+            background-color: #002947;
+            color: white;
+        }
+        #bottom-sheet {
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #bottom-sheet.open {
+            transform: translateY(0);
+        }
+        .map-container {
+            height: calc(100vh - 128px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-body-md text-on-background overflow-hidden">
+<!-- Top App Bar -->
+<header class="bg-primary text-on-primary font-headline-md text-headline-md w-full top-0 sticky z-50 transition-colors duration-200">
+<div class="flex items-center justify-between px-md h-16 w-full">
+<div class="flex items-center gap-4">
+<button class="hover:bg-primary-container/20 p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-bold tracking-tight">Campus Map</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="hover:bg-primary-container/20 p-2 rounded-full">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Map Viewport -->
+<main class="relative w-full map-container overflow-hidden bg-surface-dim">
+<!-- Full Screen Map Background -->
+<div class="absolute inset-0 z-0" data-alt="A highly detailed architectural site plan of IIT Jodhpur campus viewed from above. The map features minimalist technical lines showing roads, building footprints in sandstone shades, and greenery in soft sage colors. The desert landscape surrounding the campus is rendered in warm, light beige tones. Professional cartography style with subtle topographic details and high contrast." data-location="IIT Jodhpur Campus" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC8mkZ-POGLn4hxySdf6Z-jId2MoMZFKtqJwSAfhhRFRZi-4UO7l40GaX_SIlMGkuFWKVikVphpZXn6hBJnauWCxhD4Lx2D0DxTLbJBIx0qz_pabXSjMhrDMvyX0lU-rkxT8YPM5Pgx-0NUp2BsEAyuogy_jpA8ZheDXdwovwLkSUU2MkwRvpMPWu937HyDTIebcLlvbdBTgkgCUeu6_HADwAaph3ZW-B5KYSO4YgFFsxibdLhrwyS9')">
+</div>
+<!-- Floating Filter Chips -->
+<div class="absolute top-4 left-0 right-0 z-10 px-md flex gap-2 overflow-x-auto no-scrollbar">
+<button class="flex-shrink-0 bg-white border border-outline-variant px-4 py-2 rounded-full flex items-center gap-2 shadow-sm active:scale-95 transition-transform" onclick="selectCategory('Hostels')">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">bed</span>
+<span class="font-label-sm text-label-sm">Hostels</span>
+</button>
+<button class="flex-shrink-0 bg-white border border-outline-variant px-4 py-2 rounded-full flex items-center gap-2 shadow-sm active:scale-95 transition-transform" onclick="selectCategory('Academics')">
+<span class="material-symbols-outlined text-secondary text-sm" style="font-variation-settings: 'FILL' 1;">school</span>
+<span class="font-label-sm text-label-sm">Academics</span>
+</button>
+<button class="flex-shrink-0 bg-white border border-outline-variant px-4 py-2 rounded-full flex items-center gap-2 shadow-sm active:scale-95 transition-transform" onclick="selectCategory('Food')">
+<span class="material-symbols-outlined text-on-secondary-fixed-variant text-sm" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+<span class="font-label-sm text-label-sm">Food</span>
+</button>
+<button class="flex-shrink-0 bg-white border border-outline-variant px-4 py-2 rounded-full flex items-center gap-2 shadow-sm active:scale-95 transition-transform" onclick="selectCategory('Services')">
+<span class="material-symbols-outlined text-sage text-sm" style="font-variation-settings: 'FILL' 1;">medical_services</span>
+<span class="font-label-sm text-label-sm">Services</span>
+</button>
+</div>
+<!-- Interactive Map Pins -->
+<!-- Indigo Pins (Hostels) -->
+<div class="absolute cursor-pointer transform -translate-x-1/2 -translate-y-full animate-bounce" onclick="selectLocation('Aishwaryam Hostel', 'Hostels')" style="top: 35%; left: 45%;">
+<span class="material-symbols-outlined text-primary text-4xl" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+<!-- Sandstone Pins (Academic) -->
+<div class="absolute cursor-pointer transform -translate-x-1/2 -translate-y-full hover:scale-110 transition-transform" onclick="selectLocation('Lecture Hall Complex', 'Academics')" style="top: 55%; left: 30%;">
+<span class="material-symbols-outlined text-secondary text-4xl" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+<!-- Sage Green Pins (Services) -->
+<div class="absolute cursor-pointer transform -translate-x-1/2 -translate-y-full hover:scale-110 transition-transform" onclick="selectLocation('Health Centre', 'Services')" style="top: 48%; left: 65%;">
+<span class="material-symbols-outlined text-sage text-4xl" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+<!-- Selected Location UI (Bottom Sheet) -->
+<div class="absolute bottom-0 left-0 right-0 z-30 bg-white rounded-t-xl border-t border-outline-variant p-lg shadow-lg" id="bottom-sheet">
+<div class="w-12 h-1.5 bg-outline-variant rounded-full mx-auto mb-6"></div>
+<div class="flex justify-between items-start mb-6">
+<div>
+<h2 class="font-headline-md text-headline-md text-primary mb-1" id="location-name">Select a location</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" id="location-category">Category</p>
+</div>
+<div class="flex gap-4">
+<button class="bg-surface-container h-12 w-12 rounded-full flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">share</span>
+</button>
+<button class="bg-surface-container h-12 w-12 rounded-full flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">star</span>
+</button>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary font-bold py-4 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all">
+<span class="material-symbols-outlined">directions</span>
+                Navigate
+            </button>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="bg-surface fixed bottom-0 w-full z-50 border-t border-outline-variant flex justify-around items-center h-16 px-mobile pb-safe">
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">restaurant_menu</span>
+<span class="font-label-sm text-label-sm">Menu</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">notifications</span>
+<span class="font-label-sm text-label-sm">Notices</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">directions_bus</span>
+<span class="font-label-sm text-label-sm">Transport</span>
+</div>
+<!-- Active Tab: More (as map is usually under more/utilities) -->
+<div class="flex flex-col items-center justify-center text-primary font-bold Active: scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">more_horiz</span>
+<span class="font-label-sm text-label-sm">More</span>
+</div>
+</nav>
+<script>
+        function selectLocation(name, category) {
+            const sheet = document.getElementById('bottom-sheet');
+            const nameEl = document.getElementById('location-name');
+            const catEl = document.getElementById('location-category');
+            
+            nameEl.innerText = name;
+            catEl.innerText = category;
+            
+            sheet.classList.add('open');
+        }
+
+        function selectCategory(category) {
+            // Simulated filtering logic
+            console.log("Filtering by: " + category);
+        }
+
+        // Close bottom sheet when clicking elsewhere on map
+        document.querySelector('main').addEventListener('click', function(e) {
+            if (e.target.tagName === 'DIV' && !e.target.closest('#bottom-sheet') && !e.target.closest('.cursor-pointer')) {
+                document.getElementById('bottom-sheet').classList.remove('open');
+            }
+        });
+    </script>
+</body></html>

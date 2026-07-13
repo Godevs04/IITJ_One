@@ -1,0 +1,45 @@
+import dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+export const config = {
+  port: parseInt(process.env.PORT ?? '6002', 10),
+  nodeEnv: process.env.NODE_ENV ?? 'development',
+  apiBaseUrl: process.env.API_BASE_URL ?? 'http://localhost:6002',
+  mongodbUri: process.env.MONGODB_URI ?? 'mongodb://localhost:27017/iitj1',
+  campusId: process.env.CAMPUS_ID ?? 'iitj',
+  jwt: {
+    secret: process.env.JWT_SECRET ?? 'dev-secret-change-me-min-32-characters-long',
+    expiresIn: process.env.JWT_EXPIRES_IN ?? '12h',
+    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
+  },
+  corsOrigin: (process.env.CORS_ORIGIN ?? 'http://localhost:3000')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean),
+  rateLimit: {
+    publicPerMin: parseInt(process.env.RATE_LIMIT_PUBLIC_PER_MIN ?? '120', 10),
+    adminLoginMax: parseInt(process.env.RATE_LIMIT_ADMIN_LOGIN_MAX ?? '5', 10),
+    adminLoginWindowMs: parseInt(process.env.RATE_LIMIT_ADMIN_LOGIN_WINDOW_MS ?? '900000', 10),
+  },
+  cacheTtlSeconds: parseInt(process.env.CACHE_TTL_SECONDS ?? '60', 10),
+  bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS ?? '12', 10),
+  enableEtag: process.env.ENABLE_ETAG !== 'false',
+  logLevel: process.env.LOG_LEVEL ?? 'info',
+  fcm: {
+    projectId: process.env.FCM_PROJECT_ID,
+    clientEmail: process.env.FCM_CLIENT_EMAIL,
+    privateKey: process.env.FCM_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    serviceAccountPath: process.env.FCM_SERVICE_ACCOUNT_PATH,
+    topicPrefix: process.env.FCM_TOPIC_PREFIX ?? 'iitj',
+  },
+  adminBootstrap: {
+    email: process.env.ADMIN_BOOTSTRAP_EMAIL ?? 'admin@iitjone.in',
+    password: process.env.ADMIN_BOOTSTRAP_PASSWORD ?? 'change-me-on-first-login',
+    name: process.env.ADMIN_BOOTSTRAP_NAME ?? 'IITJ1 Admin',
+  },
+  docsRoot: path.resolve(__dirname, '../../../docs/FinalDoc'),
+} as const;
+
+export const isProduction = config.nodeEnv === 'production';
