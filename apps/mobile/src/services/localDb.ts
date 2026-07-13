@@ -17,6 +17,8 @@ export interface TimetableEntry {
   room: string | null;
   reminderEnabled: boolean;
   reminderMinutesBefore: number;
+  /** Whether this class appears in the Home Screen Next Class widget */
+  showOnHome: boolean;
   createdAt: string;
 }
 
@@ -60,6 +62,15 @@ export async function getLocalDb(): Promise<SQLite.SQLiteDatabase> {
     );
   `);
 
+  // Migration: add show_on_home column for existing databases (no-op if already present)
+  try {
+    await db.execAsync(
+      'ALTER TABLE timetable ADD COLUMN show_on_home INTEGER NOT NULL DEFAULT 0;',
+    );
+  } catch {
+    // Column already exists — ignore
+  }
+
   return db;
 }
 
@@ -83,6 +94,7 @@ export async function listTimetableEntries(): Promise<TimetableEntry[]> {
     room: string | null;
     reminder_enabled: number;
     reminder_minutes_before: number;
+    show_on_home: number;
     created_at: string;
   }>('SELECT * FROM timetable ORDER BY start_time ASC');
 
@@ -96,6 +108,7 @@ export async function listTimetableEntries(): Promise<TimetableEntry[]> {
     room: row.room,
     reminderEnabled: row.reminder_enabled === 1,
     reminderMinutesBefore: row.reminder_minutes_before,
+    showOnHome: row.show_on_home === 1,
     createdAt: row.created_at,
   }));
 }
@@ -123,8 +136,8 @@ export async function saveTimetableEntry(entry: TimetableEntry): Promise<void> {
   const database = await getLocalDb();
   await database.runAsync(
     `INSERT OR REPLACE INTO timetable
-      (id, class_name, start_time, end_time, class_type, days_of_week, room, reminder_enabled, reminder_minutes_before, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, class_name, start_time, end_time, class_type, days_of_week, room, reminder_enabled, reminder_minutes_before, show_on_home, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     entry.id,
     entry.className,
     entry.startTime,
@@ -134,6 +147,7 @@ export async function saveTimetableEntry(entry: TimetableEntry): Promise<void> {
     entry.room,
     entry.reminderEnabled ? 1 : 0,
     entry.reminderMinutesBefore,
+    entry.showOnHome ? 1 : 0,
     entry.createdAt,
   );
 }
@@ -155,6 +169,7 @@ export async function getTimetableEntry(id: string): Promise<TimetableEntry | nu
     room: string | null;
     reminder_enabled: number;
     reminder_minutes_before: number;
+    show_on_home: number;
     created_at: string;
   }>('SELECT * FROM timetable WHERE id = ?', id);
 
@@ -169,6 +184,7 @@ export async function getTimetableEntry(id: string): Promise<TimetableEntry | nu
     room: row.room,
     reminderEnabled: row.reminder_enabled === 1,
     reminderMinutesBefore: row.reminder_minutes_before,
+    showOnHome: row.show_on_home === 1,
     createdAt: row.created_at,
   };
 }

@@ -45,6 +45,7 @@ export default function AddClassScreen() {
   const [daysOfWeek, setDaysOfWeek] = useState<string[]>(['mon']);
   const [room, setRoom] = useState('');
   const [reminderEnabled, setReminderEnabled] = useState(true);
+  const [showOnHome, setShowOnHome] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -57,6 +58,7 @@ export default function AddClassScreen() {
       setDaysOfWeek(entry.daysOfWeek);
       setRoom(entry.room ?? '');
       setReminderEnabled(entry.reminderEnabled);
+      setShowOnHome(entry.showOnHome);
     });
   }, [id]);
 
@@ -81,6 +83,7 @@ export default function AddClassScreen() {
       daysOfWeek,
       room: room.trim() || null,
       reminderEnabled,
+      showOnHome,
       reminderMinutesBefore: 10,
       createdAt: new Date().toISOString(),
     };
@@ -93,7 +96,7 @@ export default function AddClassScreen() {
     await saveTimetableEntry(entry);
     if (reminderEnabled) await rescheduleClassNotifications(entry);
     router.back();
-  }, [className, startTime, endTime, classType, daysOfWeek, room, reminderEnabled, id]);
+  }, [className, startTime, endTime, classType, daysOfWeek, room, reminderEnabled, showOnHome, id]);
 
   const remove = useCallback(async () => {
     if (!id) return;
@@ -221,6 +224,22 @@ export default function AddClassScreen() {
         />
       </View>
 
+      <View style={[styles.toggleRow, styles.toggleRowBordered, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={[styles.toggleLabel, { color: theme.text }]}>
+            Show on Home Screen
+          </Text>
+          <Text style={[styles.toggleSub, { color: theme.textMuted }]}>
+            Display this class in the Next Class widget
+          </Text>
+        </View>
+        <Switch
+          value={showOnHome}
+          onValueChange={setShowOnHome}
+          trackColor={{ false: theme.border, true: theme.primary }}
+        />
+      </View>
+
       <PrimaryButton label="Save" onPress={() => void save()} />
       {isEdit ? (
         <SecondaryButton label="Delete class" onPress={() => void remove()} />
@@ -290,4 +309,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   toggleLabel: { ...AppTypography.body, flex: 1 },
+  toggleRowBordered: {
+    borderRadius: AppRadius.md,
+    borderWidth: 1,
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: AppSpacing.md,
+  },
+  toggleSub: { ...AppTypography.caption },
 });

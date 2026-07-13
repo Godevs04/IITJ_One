@@ -268,10 +268,14 @@ export default function HomeScreen() {
   const meal = activeMenu?.[mealKey];
   const nextBus = getNextDeparture(transport, calendar);
 
+  const [showClassWidget, setShowClassWidget] = useState(false);
+
   const loadLocal = useCallback(async () => {
     const entries = await listTimetableEntries();
+    const homeEntries = entries.filter((e) => e.showOnHome);
     setTimetableCount(entries.length);
-    setNextClass(getNextClass(entries));
+    setShowClassWidget(homeEntries.length > 0);
+    setNextClass(getNextClass(homeEntries));
   }, []);
 
   useEffect(() => {
@@ -328,7 +332,7 @@ export default function HomeScreen() {
         />
       ) : null}
 
-      {nextClass && classTime ? (
+      {showClassWidget && nextClass && classTime ? (
         <StatusCard
           label="Next Class"
           headline={nextClass.entry.className}
@@ -343,7 +347,7 @@ export default function HomeScreen() {
           valueColor={theme.primary}
           onPress={() => router.push('/timetable')}
         />
-      ) : timetableCount === 0 ? (
+      ) : showClassWidget ? null : timetableCount === 0 ? (
         <StatusCard
           label="Next Class"
           headline="No classes yet"
