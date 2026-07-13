@@ -19,7 +19,7 @@ export default function EmergencyScreen() {
 
   return (
     <ScreenShell
-      title="Emergency Contacts"
+      hideTitle
       subtitle="Tap to call immediately"
       onRefresh={onRefresh}
       refreshing={syncing}

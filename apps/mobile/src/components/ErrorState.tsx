@@ -1,11 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  AppColors,
-  AppRadius,
-  AppSpacing,
-  AppTypography,
-} from '@/theme/tokens';
+import { useThemeColors } from '@/theme/ThemeProvider';
+import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 interface ErrorStateProps {
   title?: string;
@@ -18,14 +14,21 @@ export function ErrorState({
   message,
   onRetry,
 }: ErrorStateProps) {
+  const theme = useThemeColors();
+
   return (
     <View style={styles.container}>
-      <Ionicons name="alert-circle-outline" size={40} color={AppColors.nonVegRed} />
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.message}>{message}</Text>
+      <Ionicons name="alert-circle-outline" size={40} color={theme.error} />
+      <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
+      <Text style={[styles.message, { color: theme.textMuted }]}>{message}</Text>
       {onRetry ? (
-        <Pressable onPress={onRetry} style={styles.button}>
-          <Text style={styles.buttonText}>Try again</Text>
+        <Pressable
+          onPress={onRetry}
+          style={[styles.button, { backgroundColor: theme.primary }]}
+        >
+          <Text style={[styles.buttonText, { color: theme.onPrimary }]}>
+            Try again
+          </Text>
         </Pressable>
       ) : null}
     </View>
@@ -41,23 +44,19 @@ const styles = StyleSheet.create({
   },
   title: {
     ...AppTypography.h2,
-    color: AppColors.inkSlate,
     textAlign: 'center',
   },
   message: {
     ...AppTypography.bodySmall,
-    color: AppColors.mutedText,
     textAlign: 'center',
   },
   button: {
     marginTop: AppSpacing.sm,
-    backgroundColor: AppColors.jodhpurIndigo,
     borderRadius: AppRadius.md,
     paddingHorizontal: AppSpacing.lg,
     paddingVertical: AppSpacing.md,
   },
   buttonText: {
     ...AppTypography.button,
-    color: AppColors.desertSand,
   },
 });

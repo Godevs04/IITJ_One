@@ -3,8 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { initCache } from '@/services/cache';
-import { AppColors } from '@/theme/tokens';
-import { ThemeProvider, useAppColorScheme } from '@/theme/ThemeProvider';
+import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
@@ -23,7 +22,7 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const scheme = useAppColorScheme();
+  const { scheme, colors } = useTheme();
   const isDark = scheme === 'dark';
 
   return (
@@ -31,14 +30,11 @@ function RootNavigator() {
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
-          headerStyle: {
-            backgroundColor: isDark ? AppColors.surfaceNight : AppColors.jodhpurIndigo,
-          },
-          headerTintColor: AppColors.desertSand,
+          headerStyle: { backgroundColor: colors.headerBackground },
+          headerTintColor: colors.headerTint,
           headerTitleStyle: { fontWeight: '600' },
-          contentStyle: {
-            backgroundColor: isDark ? AppColors.indigoNight : AppColors.desertSand,
-          },
+          headerBackTitle: 'Back',
+          contentStyle: { backgroundColor: colors.background },
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -51,6 +47,7 @@ function RootNavigator() {
         <Stack.Screen name="mess-qr" options={{ title: 'My Mess QR' }} />
         <Stack.Screen name="timetable" options={{ headerShown: false }} />
         <Stack.Screen name="notes" options={{ title: 'Notes' }} />
+        <Stack.Screen name="notes/edit" options={{ title: 'Edit Note' }} />
         <Stack.Screen name="suggest" options={{ title: 'Suggest Something' }} />
       </Stack>
     </GestureHandlerRootView>

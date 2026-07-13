@@ -155,14 +155,14 @@ export interface HomeBundle {
     liveTrackingUrl: string | null;
     thursdayOverride: boolean;
   } | null;
-  topNotices: Array<{
+  topNotices: {
     id?: string;
     title: string;
     body: string;
     category: string;
     isImportant: boolean;
     expiryDate: string;
-  }>;
+  }[];
   upcomingEvents: CalendarEvent[];
   generatedAt: string;
 }

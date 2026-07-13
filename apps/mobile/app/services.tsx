@@ -1,15 +1,17 @@
 import { useCallback, useMemo, useState } from 'react';
 import * as Linking from 'expo-linking';
-import { TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 import { DirectoryRow } from '@/components/DirectoryRow';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { readCachedModule } from '@/services/sync';
 import type { ServicesDoc } from '@/types/campus';
-import { AppColors, AppRadius, AppSpacing } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/ThemeProvider';
+import { AppRadius, AppSpacing } from '@/theme/tokens';
 
 export default function ServicesScreen() {
+  const theme = useThemeColors();
   const { syncing, sync } = useCampusSync(false);
   const services = readCachedModule<ServicesDoc>('services');
   const [query, setQuery] = useState('');
@@ -32,23 +34,24 @@ export default function ServicesScreen() {
 
   return (
     <ScreenShell
-      title="Campus Services"
+      hideTitle
       subtitle="Directory of useful services"
       onRefresh={onRefresh}
       refreshing={syncing}
     >
       <TextInput
         placeholder="Search services..."
-        placeholderTextColor={AppColors.mutedText}
+        placeholderTextColor={theme.textMuted}
         value={query}
         onChangeText={setQuery}
-        style={{
-          backgroundColor: AppColors.white,
-          borderRadius: AppRadius.md,
-          borderWidth: 1,
-          borderColor: AppColors.borderNeutral,
-          padding: AppSpacing.md,
-        }}
+        style={[
+          styles.search,
+          {
+            backgroundColor: theme.inputBackground,
+            borderColor: theme.border,
+            color: theme.text,
+          },
+        ]}
       />
 
       {entries.length > 0 ? (
@@ -82,3 +85,11 @@ export default function ServicesScreen() {
     </ScreenShell>
   );
 }
+
+const styles = StyleSheet.create({
+  search: {
+    borderRadius: AppRadius.md,
+    borderWidth: 1,
+    padding: AppSpacing.md,
+  },
+});

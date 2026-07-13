@@ -7,7 +7,8 @@ import { useCampusSync } from '@/hooks/useCampusSync';
 import { readCachedModule } from '@/services/sync';
 import type { MenuDoc } from '@/types/campus';
 import { todayDayName } from '@/utils/date';
-import { AppColors, AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/ThemeProvider';
+import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 const MEALS = ['breakfast', 'lunch', 'snacks', 'dinner'] as const;
 const MEAL_LABELS: Record<string, string> = {
@@ -18,6 +19,7 @@ const MEAL_LABELS: Record<string, string> = {
 };
 
 export default function MenuScreen() {
+  const theme = useThemeColors();
   const { syncing, sync } = useCampusSync(false);
   const menu = readCachedModule<MenuDoc>('menu');
   const [selectedDay, setSelectedDay] = useState(todayDayName());
@@ -42,18 +44,27 @@ export default function MenuScreen() {
     >
       {days.length > 0 ? (
         <View style={styles.dayStrip}>
-          {days.map((d) => (
-            <Text
-              key={d.dayName}
-              onPress={() => setSelectedDay(d.dayName)}
-              style={[
-                styles.dayChip,
-                selectedDay === d.dayName && styles.dayChipActive,
-              ]}
-            >
-              {d.dayName.slice(0, 3)}
-            </Text>
-          ))}
+          {days.map((d) => {
+            const active = selectedDay === d.dayName;
+            return (
+              <Text
+                key={d.dayName}
+                onPress={() => setSelectedDay(d.dayName)}
+                style={[
+                  styles.dayChip,
+                  {
+                    color: active ? theme.chipActiveText : theme.chipText,
+                    borderColor: active ? theme.primary : theme.border,
+                    backgroundColor: active
+                      ? theme.chipActiveBackground
+                      : theme.chipBackground,
+                  },
+                ]}
+              >
+                {d.dayName.slice(0, 3)}
+              </Text>
+            );
+          })}
         </View>
       ) : null}
 
@@ -62,14 +73,20 @@ export default function MenuScreen() {
           const items = dayMenu[meal];
           return (
             <ContentCard key={meal} title={MEAL_LABELS[meal]} subtitle={dayMenu.date}>
-              <Text style={styles.items}>Veg: {items.veg}</Text>
-              <Text style={styles.items}>Non-veg: {items.nonVeg}</Text>
+              <Text style={[styles.items, { color: theme.text }]}>
+                Veg: {items.veg}
+              </Text>
+              <Text style={[styles.items, { color: theme.text }]}>
+                Non-veg: {items.nonVeg}
+              </Text>
               <View style={styles.tagRow}>
-                <View style={[styles.tag, styles.vegTag]}>
-                  <Text style={styles.vegText}>Veg</Text>
+                <View style={[styles.tag, { backgroundColor: theme.vegTint }]}>
+                  <Text style={[styles.vegText, { color: theme.veg }]}>Veg</Text>
                 </View>
-                <View style={styles.nonVegTag}>
-                  <Text style={styles.nonVegText}>Non-veg</Text>
+                <View style={styles.tag}>
+                  <Text style={[styles.nonVegText, { color: theme.nonVeg }]}>
+                    Non-veg
+                  </Text>
                 </View>
               </View>
             </ContentCard>
@@ -94,22 +111,14 @@ const styles = StyleSheet.create({
   },
   dayChip: {
     ...AppTypography.caption,
-    color: AppColors.mutedText,
     paddingHorizontal: AppSpacing.md,
     paddingVertical: AppSpacing.xs,
     borderRadius: AppRadius.full,
     borderWidth: 1,
-    borderColor: AppColors.borderNeutral,
     overflow: 'hidden',
-  },
-  dayChipActive: {
-    backgroundColor: AppColors.indigoTint,
-    color: AppColors.jodhpurIndigo,
-    borderColor: AppColors.jodhpurIndigo,
   },
   items: {
     ...AppTypography.body,
-    color: AppColors.inkSlate,
   },
   tagRow: {
     flexDirection: 'row',
@@ -121,20 +130,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: AppSpacing.sm,
     paddingVertical: AppSpacing.xs,
   },
-  vegTag: {
-    backgroundColor: AppColors.sageTint,
-  },
   vegText: {
     ...AppTypography.caption,
-    color: AppColors.sageWell,
-  },
-  nonVegTag: {
-    borderRadius: AppRadius.full,
-    paddingHorizontal: AppSpacing.sm,
-    paddingVertical: AppSpacing.xs,
   },
   nonVegText: {
     ...AppTypography.caption,
-    color: AppColors.nonVegRed,
   },
 });

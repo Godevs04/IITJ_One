@@ -1,11 +1,7 @@
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  AppColors,
-  AppRadius,
-  AppSpacing,
-  AppTypography,
-} from '@/theme/tokens';
+import { useThemeColors } from '@/theme/ThemeProvider';
+import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 interface DirectoryRowProps {
   title: string;
@@ -20,25 +16,38 @@ export function DirectoryRow({
   phone,
   onPress,
 }: DirectoryRowProps) {
+  const theme = useThemeColors();
+
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.row,
+        {
+          backgroundColor: theme.surface,
+          borderColor: theme.border,
+        },
+        pressed && styles.pressed,
+      ]}
     >
       <View style={styles.textBlock}>
-        <Text style={styles.title}>{title}</Text>
-        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
+        {subtitle ? (
+          <Text style={[styles.subtitle, { color: theme.textMuted }]}>
+            {subtitle}
+          </Text>
+        ) : null}
       </View>
       {phone ? (
         <Pressable
           onPress={() => Linking.openURL(`tel:${phone}`)}
-          style={styles.iconButton}
+          style={[styles.iconButton, { backgroundColor: theme.primaryTint }]}
           hitSlop={8}
         >
-          <Ionicons name="call-outline" size={20} color={AppColors.jodhpurIndigo} />
+          <Ionicons name="call-outline" size={20} color={theme.primary} />
         </Pressable>
       ) : (
-        <Ionicons name="chevron-forward" size={18} color={AppColors.mutedText} />
+        <Ionicons name="chevron-forward" size={18} color={theme.iconMuted} />
       )}
     </Pressable>
   );
@@ -49,10 +58,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: AppColors.white,
     borderRadius: AppRadius.md,
     borderWidth: 1,
-    borderColor: AppColors.borderNeutral,
     paddingHorizontal: AppSpacing.lg,
     paddingVertical: AppSpacing.md,
     gap: AppSpacing.md,
@@ -63,12 +70,10 @@ const styles = StyleSheet.create({
   },
   title: {
     ...AppTypography.body,
-    color: AppColors.inkSlate,
     fontWeight: '500',
   },
   subtitle: {
     ...AppTypography.caption,
-    color: AppColors.mutedText,
   },
   iconButton: {
     width: 40,
@@ -76,7 +81,6 @@ const styles = StyleSheet.create({
     borderRadius: AppRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: AppColors.indigoTint,
   },
   pressed: {
     opacity: 0.92,

@@ -22,7 +22,9 @@ import {
   cancelClassNotifications,
   rescheduleClassNotifications,
 } from '@/services/notifications';
-import { AppColors, AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/ThemeProvider';
+import type { ThemeColors } from '@/theme/tokens';
+import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 const CLASS_TYPES: ClassType[] = ['lecture', 'lab', 'tutorial'];
@@ -32,6 +34,7 @@ function uuid(): string {
 }
 
 export default function AddClassScreen() {
+  const theme = useThemeColors();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const isEdit = Boolean(id);
 
@@ -100,78 +103,121 @@ export default function AddClassScreen() {
     router.back();
   }, [id]);
 
+  const inputStyle = [
+    styles.input,
+    {
+      backgroundColor: theme.inputBackground,
+      borderColor: theme.border,
+      color: theme.text,
+    },
+  ];
+
   return (
-    <ScreenShell title={isEdit ? 'Edit class' : 'Add class'} subtitle="Personal timetable">
-      <Field label="Class name">
+    <ScreenShell hideTitle subtitle="Personal timetable">
+      <Field label="Class name" theme={theme}>
         <TextInput
           value={className}
           onChangeText={setClassName}
           placeholder="e.g. Operating Systems"
-          style={styles.input}
+          placeholderTextColor={theme.textMuted}
+          style={inputStyle}
         />
       </Field>
 
       <View style={styles.row}>
-        <Field label="Start">
-          <TextInput value={startTime} onChangeText={setStartTime} style={styles.inputMono} />
+        <Field label="Start" theme={theme}>
+          <TextInput
+            value={startTime}
+            onChangeText={setStartTime}
+            style={[...inputStyle, styles.inputMono]}
+          />
         </Field>
-        <Field label="End">
-          <TextInput value={endTime} onChangeText={setEndTime} style={styles.inputMono} />
+        <Field label="End" theme={theme}>
+          <TextInput
+            value={endTime}
+            onChangeText={setEndTime}
+            style={[...inputStyle, styles.inputMono]}
+          />
         </Field>
       </View>
 
-      <Field label="Class type">
+      <Field label="Class type" theme={theme}>
         <View style={styles.segmentRow}>
-          {CLASS_TYPES.map((type) => (
-            <Pressable
-              key={type}
-              onPress={() => setClassType(type)}
-              style={[styles.segment, classType === type && styles.segmentActive]}
-            >
-              <Text
+          {CLASS_TYPES.map((type) => {
+            const active = classType === type;
+            return (
+              <Pressable
+                key={type}
+                onPress={() => setClassType(type)}
                 style={[
-                  styles.segmentText,
-                  classType === type && styles.segmentTextActive,
+                  styles.segment,
+                  {
+                    borderColor: active ? theme.primary : theme.border,
+                    backgroundColor: active ? theme.primary : theme.chipBackground,
+                  },
                 ]}
               >
-                {type}
-              </Text>
-            </Pressable>
-          ))}
+                <Text
+                  style={[
+                    styles.segmentText,
+                    { color: active ? theme.onPrimary : theme.text },
+                  ]}
+                >
+                  {type}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
       </Field>
 
-      <Field label="Repeats on">
+      <Field label="Repeats on" theme={theme}>
         <View style={styles.dayRow}>
-          {DAYS.map((d) => (
-            <Pressable
-              key={d}
-              onPress={() => toggleDay(d)}
-              style={[styles.dayBox, daysOfWeek.includes(d) && styles.dayBoxActive]}
-            >
-              <Text
+          {DAYS.map((d) => {
+            const active = daysOfWeek.includes(d);
+            return (
+              <Pressable
+                key={d}
+                onPress={() => toggleDay(d)}
                 style={[
-                  styles.dayBoxText,
-                  daysOfWeek.includes(d) && styles.dayBoxTextActive,
+                  styles.dayBox,
+                  {
+                    borderColor: active ? theme.primary : theme.border,
+                    backgroundColor: active ? theme.primary : theme.chipBackground,
+                  },
                 ]}
               >
-                {d[0].toUpperCase()}
-              </Text>
-            </Pressable>
-          ))}
+                <Text
+                  style={[
+                    styles.dayBoxText,
+                    { color: active ? theme.onPrimary : theme.chipText },
+                  ]}
+                >
+                  {d[0].toUpperCase()}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
       </Field>
 
-      <Field label="Room (optional)">
-        <TextInput value={room} onChangeText={setRoom} style={styles.input} />
+      <Field label="Room (optional)" theme={theme}>
+        <TextInput
+          value={room}
+          onChangeText={setRoom}
+          placeholderTextColor={theme.textMuted}
+          style={inputStyle}
+        />
       </Field>
 
       <View style={styles.toggleRow}>
-        <Text style={styles.toggleLabel}>Remind me 10 minutes before</Text>
+        <Text style={[styles.toggleLabel, { color: theme.text }]}>
+          Remind me 10 minutes before
+        </Text>
         <Switch
           value={reminderEnabled}
           onValueChange={setReminderEnabled}
-          trackColor={{ false: AppColors.borderNeutral, true: AppColors.jodhpurIndigo }}
+          trackColor={{ false: theme.border, true: theme.primary }}
         />
       </View>
 
@@ -183,10 +229,18 @@ export default function AddClassScreen() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+  theme,
+}: {
+  label: string;
+  children: React.ReactNode;
+  theme: ThemeColors;
+}) {
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, { color: theme.textMuted }]}>{label}</Text>
       {children}
     </View>
   );
@@ -196,22 +250,14 @@ const styles = StyleSheet.create({
   field: { gap: AppSpacing.xs },
   label: {
     ...AppTypography.caption,
-    color: AppColors.mutedText,
   },
   input: {
-    backgroundColor: AppColors.white,
     borderRadius: AppRadius.md,
     borderWidth: 1,
-    borderColor: AppColors.borderNeutral,
     padding: AppSpacing.md,
     ...AppTypography.body,
   },
   inputMono: {
-    backgroundColor: AppColors.white,
-    borderRadius: AppRadius.md,
-    borderWidth: 1,
-    borderColor: AppColors.borderNeutral,
-    padding: AppSpacing.md,
     ...AppTypography.dataMono,
     fontFamily: 'monospace',
   },
@@ -222,39 +268,26 @@ const styles = StyleSheet.create({
     padding: AppSpacing.sm,
     borderRadius: AppRadius.md,
     borderWidth: 1,
-    borderColor: AppColors.borderNeutral,
     alignItems: 'center',
-  },
-  segmentActive: {
-    backgroundColor: AppColors.jodhpurIndigo,
-    borderColor: AppColors.jodhpurIndigo,
   },
   segmentText: {
     ...AppTypography.bodySmall,
-    color: AppColors.inkSlate,
     textTransform: 'capitalize',
   },
-  segmentTextActive: { color: AppColors.desertSand },
   dayRow: { flexDirection: 'row', gap: AppSpacing.xs },
   dayBox: {
     width: 36,
     height: 36,
     borderRadius: AppRadius.sm,
     borderWidth: 1,
-    borderColor: AppColors.borderNeutral,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayBoxActive: {
-    backgroundColor: AppColors.jodhpurIndigo,
-    borderColor: AppColors.jodhpurIndigo,
-  },
-  dayBoxText: { ...AppTypography.caption, color: AppColors.mutedText },
-  dayBoxTextActive: { color: AppColors.desertSand },
+  dayBoxText: { ...AppTypography.caption },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  toggleLabel: { ...AppTypography.body, color: AppColors.inkSlate, flex: 1 },
+  toggleLabel: { ...AppTypography.body, flex: 1 },
 });

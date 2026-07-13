@@ -16,7 +16,7 @@ const NOTIFICATION_TOPICS = [
 ] as const;
 
 export default function SettingsScreen() {
-  const { darkMode, setDarkMode } = useTheme();
+  const { darkMode, setDarkMode, colors } = useTheme();
   const [topicPrefs, setTopicPrefs] = useState(getSetting<Record<string, boolean>>('topicPrefs', {}));
 
   const toggleDark = (value: boolean) => {
@@ -24,12 +24,13 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScreenShell title="Settings" subtitle="Preferences and personal tools">
+    <ScreenShell title="Settings" subtitle="Preferences and personal tools" hideTitle>
       <View style={{ gap: AppSpacing.sm }}>
         <DirectoryRow title="Dark mode" subtitle={darkMode ? 'On' : 'Off'} />
         <Switch
           value={darkMode}
           onValueChange={toggleDark}
+          trackColor={{ false: colors.border, true: colors.primary }}
           style={{ alignSelf: 'flex-end', marginTop: -48, marginRight: 16 }}
         />
       </View>

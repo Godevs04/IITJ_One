@@ -1,11 +1,7 @@
 import { type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import {
-  AppColors,
-  AppRadius,
-  AppSpacing,
-  AppTypography,
-} from '@/theme/tokens';
+import { useThemeColors } from '@/theme/ThemeProvider';
+import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 interface ContentCardProps {
   title: string;
@@ -20,14 +16,27 @@ export function ContentCard({
   children,
   onPress,
 }: ContentCardProps) {
+  const theme = useThemeColors();
+
   return (
     <Pressable
       onPress={onPress}
       disabled={!onPress}
-      style={({ pressed }) => [styles.card, pressed && onPress && styles.pressed]}
+      style={({ pressed }) => [
+        styles.card,
+        {
+          backgroundColor: theme.surface,
+          borderColor: theme.border,
+        },
+        pressed && onPress && styles.pressed,
+      ]}
     >
-      <Text style={styles.title}>{title}</Text>
-      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
+      {subtitle ? (
+        <Text style={[styles.subtitle, { color: theme.textMuted }]}>
+          {subtitle}
+        </Text>
+      ) : null}
       {children ? <View style={styles.body}>{children}</View> : null}
     </Pressable>
   );
@@ -35,20 +44,17 @@ export function ContentCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: AppColors.white,
     borderRadius: AppRadius.md,
     borderWidth: 1,
-    borderColor: AppColors.borderNeutral,
     padding: AppSpacing.lg,
     gap: AppSpacing.sm,
   },
   title: {
     ...AppTypography.h2,
-    color: AppColors.inkSlate,
+    fontWeight: '600',
   },
   subtitle: {
     ...AppTypography.bodySmall,
-    color: AppColors.mutedText,
   },
   body: {
     marginTop: AppSpacing.xs,

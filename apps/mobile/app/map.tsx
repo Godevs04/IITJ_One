@@ -25,7 +25,7 @@ export default function MapScreen() {
 
   return (
     <ScreenShell
-      title="Campus Map"
+      hideTitle
       subtitle="Key locations on campus"
       onRefresh={onRefresh}
       refreshing={syncing}

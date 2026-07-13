@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { AppColors, AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/ThemeProvider';
+import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 interface QuickAccessTileProps {
   title: string;
@@ -15,6 +16,8 @@ export function QuickAccessTile({
   onPress,
   prominent,
 }: QuickAccessTileProps) {
+  const theme = useThemeColors();
+
   return (
     <Pressable
       onPress={onPress}
@@ -24,10 +27,27 @@ export function QuickAccessTile({
         pressed && styles.pressed,
       ]}
     >
-      <View style={styles.iconCircle}>
-        <Ionicons name={icon} size={24} color={AppColors.mehrangarhSandstone} />
+      <View
+        style={[
+          styles.iconCircle,
+          prominent
+            ? { backgroundColor: theme.quickAccessProminentBg }
+            : {
+                backgroundColor: theme.quickAccessBg,
+                borderWidth: 1,
+                borderColor: theme.quickAccessBorder,
+              },
+        ]}
+      >
+        <Ionicons
+          name={icon}
+          size={24}
+          color={
+            prominent ? theme.quickAccessProminentIcon : theme.quickAccessIcon
+          }
+        />
       </View>
-      <Text style={styles.label} numberOfLines={2}>
+      <Text style={[styles.label, { color: theme.text }]} numberOfLines={2}>
         {title}
       </Text>
     </Pressable>
@@ -47,18 +67,17 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.85,
+    transform: [{ scale: 0.97 }],
   },
   iconCircle: {
     width: 56,
     height: 56,
-    borderRadius: AppRadius.full,
-    backgroundColor: AppColors.sandstoneTint,
+    borderRadius: AppRadius.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   label: {
     ...AppTypography.bodySmall,
-    color: AppColors.inkSlate,
     textAlign: 'center',
     fontWeight: '500',
   },

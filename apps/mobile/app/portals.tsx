@@ -20,7 +20,7 @@ export default function PortalsScreen() {
 
   return (
     <ScreenShell
-      title="Essential Portals"
+      hideTitle
       subtitle="Official IITJ links"
       onRefresh={onRefresh}
       refreshing={syncing}

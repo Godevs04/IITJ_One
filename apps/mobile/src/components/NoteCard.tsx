@@ -1,7 +1,8 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 import type { Note } from '@/services/localDb';
 import { formatRelativeTime } from '@/utils/date';
-import { AppColors, AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/ThemeProvider';
+import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 interface NoteCardProps {
   note: Note;
@@ -10,26 +11,33 @@ interface NoteCardProps {
 }
 
 export function NoteCard({ note, onPress, onLongPress }: NoteCardProps) {
+  const theme = useThemeColors();
+
   return (
     <Pressable
       onPress={onPress}
       onLongPress={onLongPress}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.card,
+        { backgroundColor: theme.noteCardBg },
+        pressed && styles.pressed,
+      ]}
     >
-      <Text style={styles.title} numberOfLines={1}>
+      <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
         {note.title || 'Untitled'}
       </Text>
-      <Text style={styles.preview} numberOfLines={2}>
+      <Text style={[styles.preview, { color: theme.textMuted }]} numberOfLines={2}>
         {note.body || 'No content'}
       </Text>
-      <Text style={styles.timestamp}>Edited {formatRelativeTime(note.updatedAt)}</Text>
+      <Text style={[styles.timestamp, { color: theme.textMuted }]}>
+        Edited {formatRelativeTime(note.updatedAt)}
+      </Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: AppColors.desertSand,
     borderRadius: AppRadius.lg,
     padding: AppSpacing.lg,
     gap: AppSpacing.xs,
@@ -44,15 +52,13 @@ const styles = StyleSheet.create({
   },
   title: {
     ...AppTypography.h2,
-    color: AppColors.inkSlate,
+    fontWeight: '600',
   },
   preview: {
     ...AppTypography.bodySmall,
-    color: AppColors.mutedText,
   },
   timestamp: {
     ...AppTypography.caption,
-    color: AppColors.mutedText,
     alignSelf: 'flex-end',
   },
 });

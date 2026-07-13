@@ -7,20 +7,17 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  AppColors,
-  AppSpacing,
-  AppTypography,
-  getThemeColors,
-} from '@/theme/tokens';
-import { useAppColorScheme } from '@/theme/ThemeProvider';
+import { useThemeColors } from '@/theme/ThemeProvider';
+import { AppSpacing, AppTypography } from '@/theme/tokens';
 
 interface ScreenShellProps {
-  title: string;
+  title?: string;
   subtitle?: string;
   children?: ReactNode;
   onRefresh?: () => void;
   refreshing?: boolean;
+  /** Hide in-content title when stack header already shows it */
+  hideTitle?: boolean;
 }
 
 export function ScreenShell({
@@ -29,9 +26,9 @@ export function ScreenShell({
   children,
   onRefresh,
   refreshing = false,
+  hideTitle = false,
 }: ScreenShellProps) {
-  const scheme = useAppColorScheme();
-  const theme = getThemeColors(scheme);
+  const theme = useThemeColors();
 
   return (
     <SafeAreaView
@@ -43,18 +40,28 @@ export function ScreenShell({
         showsVerticalScrollIndicator={false}
         refreshControl={
           onRefresh ? (
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={theme.primary}
+            />
           ) : undefined
         }
       >
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
-          {subtitle ? (
-            <Text style={[styles.subtitle, { color: theme.textMuted }]}>
-              {subtitle}
-            </Text>
-          ) : null}
-        </View>
+        {!hideTitle && title ? (
+          <View style={styles.header}>
+            <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
+            {subtitle ? (
+              <Text style={[styles.subtitle, { color: theme.textMuted }]}>
+                {subtitle}
+              </Text>
+            ) : null}
+          </View>
+        ) : subtitle ? (
+          <Text style={[styles.subtitleOnly, { color: theme.textMuted }]}>
+            {subtitle}
+          </Text>
+        ) : null}
         {children}
       </ScrollView>
     </SafeAreaView>
@@ -64,7 +71,6 @@ export function ScreenShell({
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: AppColors.desertSand,
   },
   content: {
     padding: AppSpacing.lg,
@@ -76,10 +82,12 @@ const styles = StyleSheet.create({
   },
   title: {
     ...AppTypography.display,
-    color: AppColors.inkSlate,
   },
   subtitle: {
     ...AppTypography.body,
-    color: AppColors.mutedText,
+  },
+  subtitleOnly: {
+    ...AppTypography.body,
+    marginBottom: AppSpacing.xs,
   },
 });

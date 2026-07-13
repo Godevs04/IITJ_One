@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput } from 'react-native';
 import { PrimaryButton } from '@/components/Buttons';
 import { ScreenShell } from '@/components/ScreenShell';
 import { getNote, saveNote } from '@/services/localDb';
-import { AppColors, AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/ThemeProvider';
+import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 function uuid(): string {
   return `note-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 export default function NoteEditScreen() {
+  const theme = useThemeColors();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -37,21 +39,27 @@ export default function NoteEditScreen() {
     router.back();
   }, [id, title, body]);
 
+  const fieldStyle = {
+    backgroundColor: theme.inputBackground,
+    borderColor: theme.border,
+    color: theme.text,
+  };
+
   return (
-    <ScreenShell title={id ? 'Edit note' : 'New note'} subtitle="Private — never synced">
+    <ScreenShell hideTitle subtitle="Private — never synced">
       <TextInput
         value={title}
         onChangeText={setTitle}
         placeholder="Title"
-        placeholderTextColor={AppColors.mutedText}
-        style={styles.input}
+        placeholderTextColor={theme.textMuted}
+        style={[styles.input, fieldStyle]}
       />
       <TextInput
         value={body}
         onChangeText={setBody}
         placeholder="Write your note..."
-        placeholderTextColor={AppColors.mutedText}
-        style={styles.body}
+        placeholderTextColor={theme.textMuted}
+        style={[styles.body, fieldStyle]}
         multiline
         textAlignVertical="top"
       />
@@ -62,19 +70,15 @@ export default function NoteEditScreen() {
 
 const styles = StyleSheet.create({
   input: {
-    backgroundColor: AppColors.white,
     borderRadius: AppRadius.md,
     borderWidth: 1,
-    borderColor: AppColors.borderNeutral,
     padding: AppSpacing.md,
     ...AppTypography.h2,
   },
   body: {
     minHeight: 200,
-    backgroundColor: AppColors.white,
     borderRadius: AppRadius.md,
     borderWidth: 1,
-    borderColor: AppColors.borderNeutral,
     padding: AppSpacing.md,
     ...AppTypography.body,
   },

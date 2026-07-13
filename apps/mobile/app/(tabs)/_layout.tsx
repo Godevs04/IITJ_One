@@ -1,7 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useColorScheme } from 'react-native';
-import { AppColors, getThemeColors } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 type TabIconName = keyof typeof Ionicons.glyphMap;
 
@@ -10,26 +9,20 @@ function TabIcon({ name, color }: { name: TabIconName; color: string }) {
 }
 
 export default function TabLayout() {
-  const scheme = useColorScheme() ?? 'light';
-  const theme = getThemeColors(scheme);
+  const { colors } = useTheme();
 
   return (
     <Tabs
       screenOptions={{
-        headerStyle: {
-          backgroundColor:
-            scheme === 'dark' ? AppColors.surfaceNight : AppColors.jodhpurIndigo,
-        },
-        headerTintColor: AppColors.desertSand,
-        headerTitleStyle: { fontWeight: '600' },
-        tabBarActiveTintColor: theme.tabActive,
-        tabBarInactiveTintColor: theme.tabInactive,
+        headerShown: false,
+        tabBarActiveTintColor: colors.tabActive,
+        tabBarInactiveTintColor: colors.tabInactive,
         tabBarStyle: {
-          backgroundColor: theme.tabBar,
-          borderTopColor: theme.border,
+          backgroundColor: colors.tabBar,
+          borderTopColor: colors.border,
         },
         sceneStyle: {
-          backgroundColor: theme.background,
+          backgroundColor: colors.background,
         },
       }}
     >

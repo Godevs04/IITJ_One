@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { TimetableEntry } from '@/services/localDb';
-import { AppColors, AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/ThemeProvider';
+import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 interface ClassCardProps {
   entry: TimetableEntry;
@@ -14,21 +15,35 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export function ClassCard({ entry, onPress }: ClassCardProps) {
+  const theme = useThemeColors();
+
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.card,
+        {
+          backgroundColor: theme.surface,
+          borderColor: theme.border,
+        },
+        pressed && styles.pressed,
+      ]}
+    >
       <View style={styles.header}>
         <View style={styles.titleBlock}>
-          <Text style={styles.title}>{entry.className}</Text>
-          <View style={styles.typeTag}>
-            <Text style={styles.typeText}>{TYPE_LABELS[entry.classType] ?? entry.classType}</Text>
+          <Text style={[styles.title, { color: theme.text }]}>{entry.className}</Text>
+          <View style={[styles.typeTag, { backgroundColor: theme.secondaryTint }]}>
+            <Text style={[styles.typeText, { color: theme.secondary }]}>
+              {TYPE_LABELS[entry.classType] ?? entry.classType}
+            </Text>
           </View>
         </View>
-        <Text style={styles.time}>
+        <Text style={[styles.time, { color: theme.text }]}>
           {entry.startTime} – {entry.endTime}
         </Text>
       </View>
       {entry.room ? (
-        <Text style={styles.room}>{entry.room}</Text>
+        <Text style={[styles.room, { color: theme.textMuted }]}>{entry.room}</Text>
       ) : null}
     </Pressable>
   );
@@ -36,10 +51,8 @@ export function ClassCard({ entry, onPress }: ClassCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: AppColors.white,
     borderRadius: AppRadius.lg,
     borderWidth: 1,
-    borderColor: AppColors.borderNeutral,
     padding: AppSpacing.lg,
     gap: AppSpacing.xs,
   },
@@ -58,26 +71,23 @@ const styles = StyleSheet.create({
   },
   title: {
     ...AppTypography.h2,
-    color: AppColors.inkSlate,
+    fontWeight: '600',
   },
   typeTag: {
     alignSelf: 'flex-start',
-    backgroundColor: AppColors.sandstoneTint,
     borderRadius: AppRadius.full,
     paddingHorizontal: AppSpacing.sm,
     paddingVertical: 2,
   },
   typeText: {
     ...AppTypography.caption,
-    color: AppColors.mehrangarhSandstone,
+    fontWeight: '500',
   },
   time: {
     ...AppTypography.dataMono,
-    color: AppColors.inkSlate,
     fontFamily: 'monospace',
   },
   room: {
     ...AppTypography.bodySmall,
-    color: AppColors.mutedText,
   },
 });

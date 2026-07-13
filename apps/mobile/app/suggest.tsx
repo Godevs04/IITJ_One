@@ -1,12 +1,14 @@
 import { useCallback, useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput } from 'react-native';
 import { PrimaryButton } from '@/components/Buttons';
 import { ErrorState } from '@/components/ErrorState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { submitSuggestion } from '@/services/api';
-import { AppColors, AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/ThemeProvider';
+import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 export default function SuggestScreen() {
+  const theme = useThemeColors();
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,8 +32,8 @@ export default function SuggestScreen() {
   }, [canSend, trimmed]);
 
   return (
-    <ScreenShell title="Suggest Something" subtitle="Anonymous feedback for admins">
-      <Text style={styles.intro}>
+    <ScreenShell hideTitle subtitle="Anonymous feedback for admins">
+      <Text style={[styles.intro, { color: theme.text }]}>
         Got an idea to improve campus life? Drop it here — no login needed.
       </Text>
 
@@ -39,8 +41,15 @@ export default function SuggestScreen() {
         value={message}
         onChangeText={setMessage}
         placeholder="e.g. Add my hostel's laundry slot booking..."
-        placeholderTextColor={AppColors.mutedText}
-        style={styles.input}
+        placeholderTextColor={theme.textMuted}
+        style={[
+          styles.input,
+          {
+            backgroundColor: theme.inputBackground,
+            borderColor: theme.border,
+            color: theme.text,
+          },
+        ]}
         multiline
         textAlignVertical="top"
       />
@@ -61,14 +70,11 @@ export default function SuggestScreen() {
 const styles = StyleSheet.create({
   intro: {
     ...AppTypography.body,
-    color: AppColors.inkSlate,
   },
   input: {
     minHeight: 200,
-    backgroundColor: AppColors.white,
     borderRadius: AppRadius.md,
     borderWidth: 1,
-    borderColor: AppColors.borderNeutral,
     padding: AppSpacing.md,
     ...AppTypography.body,
   },

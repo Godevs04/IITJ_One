@@ -10,7 +10,8 @@ import { readCachedModule } from '@/services/sync';
 import type { CalendarDoc, TransportDoc, TransportTrip } from '@/types/campus';
 import { getNextDeparture } from '@/utils/transport';
 import { parseTimeToMinutes, nowMinutes } from '@/utils/date';
-import { AppColors, AppSpacing, AppTypography } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/ThemeProvider';
+import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 function tripSecondsUntil(trip: TransportTrip): number {
   const diff = parseTimeToMinutes(trip.startTime) - nowMinutes();
@@ -18,6 +19,7 @@ function tripSecondsUntil(trip: TransportTrip): number {
 }
 
 export default function TransportScreen() {
+  const theme = useThemeColors();
   const { syncing, sync } = useCampusSync(false);
   const transport = readCachedModule<TransportDoc>('transport');
   const calendar = readCachedModule<CalendarDoc>('calendar');
@@ -25,6 +27,7 @@ export default function TransportScreen() {
 
   const nextBus = useMemo(
     () => getNextDeparture(transport, calendar),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tick forces recalculation each second
     [transport, calendar, tick],
   );
 
@@ -41,6 +44,7 @@ export default function TransportScreen() {
       .filter((t) => t.seconds > 0)
       .sort((a, b) => a.seconds - b.seconds)
       .slice(0, 8);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tick forces recalculation each second
   }, [transport, tick]);
 
   const onRefresh = useCallback(async () => {
@@ -65,22 +69,28 @@ export default function TransportScreen() {
             blink
             large
           />
-          <Text style={styles.route}>{nextBus.trip.route}</Text>
+          <Text style={[styles.route, { color: theme.textMuted }]}>
+            {nextBus.trip.route}
+          </Text>
         </ContentCard>
       ) : null}
 
       {transport?.liveTrackingUrl ? (
         <Pressable
           onPress={() => Linking.openURL(transport.liveTrackingUrl!)}
-          style={styles.trackButton}
+          style={[styles.trackButton, { backgroundColor: theme.primaryTint }]}
         >
-          <Text style={styles.trackText}>Live tracking</Text>
+          <Text style={[styles.trackText, { color: theme.primary }]}>
+            Live tracking
+          </Text>
         </Pressable>
       ) : null}
 
       {trips.length > 0 ? (
         <View style={{ gap: AppSpacing.md }}>
-          <Text style={styles.sectionTitle}>Upcoming trips</Text>
+          <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
+            Upcoming trips
+          </Text>
           {trips.map(({ trip, seconds }) => (
             <ContentCard
               key={`${trip.bus}-${trip.startTime}-${trip.from}`}
@@ -88,7 +98,9 @@ export default function TransportScreen() {
               subtitle={`${trip.from} → ${trip.to}`}
             >
               <DepartureBoard label="Departs in" totalSeconds={seconds} />
-              <Text style={styles.route}>{trip.route}</Text>
+              <Text style={[styles.route, { color: theme.textMuted }]}>
+                {trip.route}
+              </Text>
             </ContentCard>
           ))}
         </View>
@@ -105,22 +117,18 @@ export default function TransportScreen() {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    ...AppTypography.h1,
-    color: AppColors.inkSlate,
+    ...AppTypography.sectionLabel,
   },
   route: {
     ...AppTypography.bodySmall,
-    color: AppColors.mutedText,
     marginTop: AppSpacing.xs,
   },
   trackButton: {
-    backgroundColor: AppColors.indigoTint,
-    borderRadius: 12,
+    borderRadius: AppRadius.md,
     padding: AppSpacing.md,
     alignItems: 'center',
   },
   trackText: {
     ...AppTypography.button,
-    color: AppColors.jodhpurIndigo,
   },
 });

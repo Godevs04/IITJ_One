@@ -14,14 +14,15 @@ import type { CalendarDoc, MenuDoc, TransportDoc } from '@/types/campus';
 import { currentMealKey, expirySeconds, formatExpiryLabel, todayDayName } from '@/utils/date';
 import { getNextDeparture } from '@/utils/transport';
 import { getNextClass } from '@/utils/timetable';
-import { AppColors, AppSpacing, AppTypography } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/ThemeProvider';
+import { AppSpacing, AppTypography } from '@/theme/tokens';
 
-const QUICK_LINKS: Array<{
+const QUICK_LINKS: {
   title: string;
   icon: ComponentProps<typeof Ionicons>['name'];
   route: Href;
   prominent?: boolean;
-}> = [
+}[] = [
   { title: 'My Mess QR', icon: 'qr-code-outline', route: '/mess-qr', prominent: true },
   { title: 'Timetable', icon: 'calendar-outline', route: '/timetable' },
   { title: 'Notes', icon: 'document-text-outline', route: '/notes' },
@@ -35,6 +36,7 @@ const QUICK_LINKS: Array<{
 ];
 
 export default function HomeScreen() {
+  const theme = useThemeColors();
   const { syncing, sync } = useCampusSync();
   const [busSeconds, setBusSeconds] = useState(0);
   const [classSeconds, setClassSeconds] = useState(0);
@@ -43,13 +45,13 @@ export default function HomeScreen() {
   const menu = readCachedModule<MenuDoc>('menu');
   const transport = readCachedModule<TransportDoc>('transport');
   const calendar = readCachedModule<CalendarDoc>('calendar');
-  const notices = readCachedModule<Array<{
+  const notices = readCachedModule<{
     title: string;
     body: string;
     category: string;
     isImportant: boolean;
     expiryDate: string;
-  }>>('notices');
+  }[]>('notices');
 
   const todayMenu = menu?.days.find((d) => d.dayName === todayDayName());
   const mealKey = currentMealKey();
@@ -116,14 +118,16 @@ export default function HomeScreen() {
           subtitle={`${mealKey} · ${todayMenu.dayName}`}
           onPress={() => router.push('/(tabs)/menu')}
         >
-          <Text style={styles.mealText}>Veg: {meal.veg}</Text>
-          <Text style={styles.mealText}>Non-veg: {meal.nonVeg}</Text>
+          <Text style={[styles.mealText, { color: theme.text }]}>Veg: {meal.veg}</Text>
+          <Text style={[styles.mealText, { color: theme.text }]}>Non-veg: {meal.nonVeg}</Text>
         </ContentCard>
       ) : null}
 
       {topNotices.length > 0 ? (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Top notices</Text>
+          <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
+            Top notices
+          </Text>
           {topNotices.map((n, i) => (
             <NoticeCard
               key={`${n.title}-${i}`}
@@ -139,7 +143,9 @@ export default function HomeScreen() {
       ) : null}
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Quick access</Text>
+        <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
+          University services
+        </Text>
         <View style={styles.grid}>
           {QUICK_LINKS.map((item) => (
             <QuickAccessTile
@@ -164,12 +170,10 @@ const styles = StyleSheet.create({
     gap: AppSpacing.md,
   },
   sectionTitle: {
-    ...AppTypography.h1,
-    color: AppColors.inkSlate,
+    ...AppTypography.sectionLabel,
   },
   mealText: {
     ...AppTypography.body,
-    color: AppColors.inkSlate,
   },
   grid: {
     flexDirection: 'row',

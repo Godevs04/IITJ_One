@@ -1,6 +1,6 @@
 /**
- * IITJ1 design tokens — sourced from docs/FinalDoc/Designplan_Final.md
- * Never hardcode hex in screens; import from here.
+ * IITJ1 design tokens — sourced from Stitch / Designplan_Final.md
+ * Never hardcode hex in screens; use useThemeColors() or getThemeColors().
  */
 
 export const AppColors = {
@@ -19,7 +19,6 @@ export const AppColors = {
   mutedText: '#5C6570',
   nonVegRed: '#B23A34',
   white: '#FFFFFF',
-  // Dark mode
   indigoNight: '#0F1B2B',
   surfaceNight: '#182A3D',
   surfaceNightRaised: '#213851',
@@ -28,6 +27,10 @@ export const AppColors = {
   sandstoneDark: '#D9A05F',
   duskDark: '#F0895A',
   sageDark: '#8CB093',
+  stitchPrimary: '#002947',
+  stitchSecondary: '#885210',
+  stitchBackground: '#FAF9FC',
+  stitchOnSurface: '#1A1C1E',
 } as const;
 
 export const AppSpacing = {
@@ -43,6 +46,7 @@ export const AppRadius = {
   sm: 8,
   md: 12,
   lg: 16,
+  xl: 20,
   full: 999,
 } as const;
 
@@ -56,6 +60,13 @@ export const AppTypography = {
   button: { fontSize: 15, fontWeight: '500' as const, letterSpacing: 0.2 },
   dataMono: { fontSize: 16, lineHeight: 22, fontWeight: '500' as const },
   dataLargeMono: { fontSize: 24, lineHeight: 30, fontWeight: '500' as const },
+  sectionLabel: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500' as const,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase' as const,
+  },
 } as const;
 
 export const CategoryColors = {
@@ -68,20 +79,88 @@ export const CategoryColors = {
 
 export type ColorScheme = 'light' | 'dark';
 
-export function getThemeColors(scheme: ColorScheme) {
+export interface ThemeColors {
+  background: string;
+  surface: string;
+  surfaceRaised: string;
+  surfaceMuted: string;
+  text: string;
+  textMuted: string;
+  border: string;
+  primary: string;
+  onPrimary: string;
+  accent: string;
+  primaryTint: string;
+  secondary: string;
+  secondaryTint: string;
+  tabBar: string;
+  tabActive: string;
+  tabInactive: string;
+  headerBackground: string;
+  headerTint: string;
+  inputBackground: string;
+  chipBackground: string;
+  chipActiveBackground: string;
+  chipActiveText: string;
+  chipText: string;
+  iconMuted: string;
+  quickAccessProminentBg: string;
+  quickAccessProminentIcon: string;
+  quickAccessBg: string;
+  quickAccessBorder: string;
+  quickAccessIcon: string;
+  importantCardBg: string;
+  importantCardBorder: string;
+  noteCardBg: string;
+  error: string;
+  veg: string;
+  vegTint: string;
+  nonVeg: string;
+  countdown: string;
+  countdownUrgent: string;
+}
+
+export function getThemeColors(scheme: ColorScheme): ThemeColors {
   if (scheme === 'dark') {
     return {
       background: AppColors.indigoNight,
       surface: AppColors.surfaceNight,
       surfaceRaised: AppColors.surfaceNightRaised,
+      surfaceMuted: AppColors.surfaceNight,
       text: AppColors.textPrimaryDark,
       textMuted: AppColors.textMutedDark,
       border: AppColors.surfaceNightRaised,
       primary: AppColors.jodhpurIndigo,
+      onPrimary: AppColors.desertSand,
       accent: AppColors.duskDark,
+      primaryTint: AppColors.surfaceNightRaised,
+      secondary: AppColors.sandstoneDark,
+      secondaryTint: '#3D2A14',
       tabBar: AppColors.surfaceNight,
       tabActive: AppColors.textPrimaryDark,
       tabInactive: AppColors.textMutedDark,
+      headerBackground: AppColors.surfaceNight,
+      headerTint: AppColors.textPrimaryDark,
+      inputBackground: AppColors.surfaceNightRaised,
+      chipBackground: AppColors.surfaceNightRaised,
+      chipActiveBackground: AppColors.jodhpurIndigo,
+      chipActiveText: AppColors.desertSand,
+      chipText: AppColors.textMutedDark,
+      iconMuted: AppColors.textMutedDark,
+      quickAccessProminentBg: AppColors.jodhpurIndigo,
+      quickAccessProminentIcon: AppColors.desertSand,
+      quickAccessBg: AppColors.surfaceNightRaised,
+      quickAccessBorder: AppColors.surfaceNightRaised,
+      quickAccessIcon: AppColors.sandstoneDark,
+      importantCardBg: '#2A1F18',
+      importantCardBorder: AppColors.duskDark,
+      noteCardBg: AppColors.surfaceNightRaised,
+      error: AppColors.nonVegRed,
+      veg: AppColors.sageDark,
+      vegTint: '#1E2A22',
+      nonVeg: '#E07A75',
+      countdown: AppColors.textPrimaryDark,
+      countdownUrgent: AppColors.duskDark,
     };
   }
 
@@ -89,13 +168,40 @@ export function getThemeColors(scheme: ColorScheme) {
     background: AppColors.desertSand,
     surface: AppColors.white,
     surfaceRaised: AppColors.white,
+    surfaceMuted: AppColors.stitchBackground,
     text: AppColors.inkSlate,
     textMuted: AppColors.mutedText,
     border: AppColors.borderNeutral,
-    primary: AppColors.jodhpurIndigo,
+    primary: AppColors.stitchPrimary,
+    onPrimary: AppColors.white,
     accent: AppColors.tharDusk,
+    primaryTint: AppColors.indigoTint,
+    secondary: AppColors.stitchSecondary,
+    secondaryTint: AppColors.sandstoneTint,
     tabBar: AppColors.white,
-    tabActive: AppColors.jodhpurIndigo,
+    tabActive: AppColors.stitchPrimary,
     tabInactive: AppColors.mutedText,
+    headerBackground: AppColors.stitchPrimary,
+    headerTint: AppColors.white,
+    inputBackground: AppColors.white,
+    chipBackground: AppColors.white,
+    chipActiveBackground: AppColors.indigoTint,
+    chipActiveText: AppColors.stitchPrimary,
+    chipText: AppColors.mutedText,
+    iconMuted: AppColors.mutedText,
+    quickAccessProminentBg: AppColors.stitchPrimary,
+    quickAccessProminentIcon: AppColors.white,
+    quickAccessBg: AppColors.white,
+    quickAccessBorder: AppColors.borderNeutral,
+    quickAccessIcon: AppColors.stitchPrimary,
+    importantCardBg: AppColors.duskTint,
+    importantCardBorder: AppColors.tharDusk,
+    noteCardBg: AppColors.desertSand,
+    error: AppColors.nonVegRed,
+    veg: AppColors.sageWell,
+    vegTint: AppColors.sageTint,
+    nonVeg: AppColors.nonVegRed,
+    countdown: AppColors.inkSlate,
+    countdownUrgent: AppColors.tharDusk,
   };
 }

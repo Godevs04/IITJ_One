@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useThemeColors } from '@/theme/ThemeProvider';
 import {
-  AppColors,
   AppRadius,
   AppSpacing,
   AppTypography,
@@ -24,6 +24,7 @@ export function NoticeCard({
   expiryLabel,
   onPress,
 }: NoticeCardProps) {
+  const theme = useThemeColors();
   const categoryColor = CategoryColors[category] ?? CategoryColors.general;
 
   return (
@@ -31,11 +32,18 @@ export function NoticeCard({
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
-        isImportant && styles.importantCard,
+        {
+          backgroundColor: isImportant
+            ? theme.importantCardBg
+            : theme.surface,
+          borderColor: isImportant ? theme.importantCardBorder : theme.border,
+        },
         pressed && styles.pressed,
       ]}
     >
-      {isImportant && <View style={styles.importantBar} />}
+      {isImportant && (
+        <View style={[styles.importantBar, { backgroundColor: theme.accent }]} />
+      )}
       <View style={styles.content}>
         <View style={styles.headerRow}>
           <View style={[styles.badge, { backgroundColor: `${categoryColor}22` }]}>
@@ -44,17 +52,21 @@ export function NoticeCard({
             </Text>
           </View>
           {isImportant && (
-            <View style={styles.importantBadge}>
-              <Text style={styles.importantBadgeText}>Important</Text>
+            <View style={[styles.importantBadge, { backgroundColor: theme.accent }]}>
+              <Text style={[styles.importantBadgeText, { color: theme.onPrimary }]}>
+                Important
+              </Text>
             </View>
           )}
         </View>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.body} numberOfLines={3}>
+        <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
+        <Text style={[styles.body, { color: theme.textMuted }]} numberOfLines={3}>
           {body}
         </Text>
         {expiryLabel ? (
-          <Text style={styles.expiry}>{expiryLabel}</Text>
+          <Text style={[styles.expiry, { color: theme.textMuted }]}>
+            {expiryLabel}
+          </Text>
         ) : null}
       </View>
     </Pressable>
@@ -63,15 +75,9 @@ export function NoticeCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: AppColors.white,
     borderRadius: AppRadius.md,
     borderWidth: 1,
-    borderColor: AppColors.borderNeutral,
     overflow: 'hidden',
-  },
-  importantCard: {
-    backgroundColor: AppColors.duskTint,
-    borderColor: AppColors.tharDusk,
   },
   importantBar: {
     position: 'absolute',
@@ -79,7 +85,6 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 4,
-    backgroundColor: AppColors.tharDusk,
   },
   content: {
     padding: AppSpacing.lg,
@@ -100,26 +105,22 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   importantBadge: {
-    backgroundColor: AppColors.tharDusk,
     borderRadius: AppRadius.sm,
     paddingHorizontal: AppSpacing.sm,
     paddingVertical: AppSpacing.xs,
   },
   importantBadgeText: {
     ...AppTypography.caption,
-    color: AppColors.white,
   },
   title: {
     ...AppTypography.h2,
-    color: AppColors.inkSlate,
+    fontWeight: '600',
   },
   body: {
     ...AppTypography.body,
-    color: AppColors.mutedText,
   },
   expiry: {
     ...AppTypography.caption,
-    color: AppColors.mutedText,
     fontFamily: 'monospace',
   },
   pressed: {

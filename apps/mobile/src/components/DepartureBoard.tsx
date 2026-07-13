@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
-import { AppColors, AppTypography } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/ThemeProvider';
+import { AppTypography } from '@/theme/tokens';
 
 interface DepartureBoardProps {
   label: string;
@@ -28,6 +29,7 @@ export function DepartureBoard({
   blink = false,
   large = false,
 }: DepartureBoardProps) {
+  const theme = useThemeColors();
   const [colonVisible, setColonVisible] = useState(true);
   const [reduceMotion, setReduceMotion] = useState(false);
 
@@ -49,17 +51,18 @@ export function DepartureBoard({
   const display = formatCountdown(totalSeconds);
   const showColon = display.includes(':');
   const [minutes, seconds] = showColon ? display.split(':') : [display, ''];
+  const timeColor = urgent ? theme.countdownUrgent : theme.countdown;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, { color: theme.textMuted }]}>{label}</Text>
       <View style={styles.timeRow}>
         {showColon ? (
           <>
             <Text
               style={[
                 large ? styles.timeLarge : styles.time,
-                urgent && styles.urgent,
+                { color: timeColor },
               ]}
             >
               {minutes}
@@ -67,7 +70,7 @@ export function DepartureBoard({
             <Text
               style={[
                 large ? styles.timeLarge : styles.time,
-                urgent && styles.urgent,
+                { color: timeColor },
                 blink && !reduceMotion && !colonVisible && styles.hidden,
               ]}
             >
@@ -76,7 +79,7 @@ export function DepartureBoard({
             <Text
               style={[
                 large ? styles.timeLarge : styles.time,
-                urgent && styles.urgent,
+                { color: timeColor },
               ]}
             >
               {seconds}
@@ -86,7 +89,7 @@ export function DepartureBoard({
           <Text
             style={[
               large ? styles.timeLarge : styles.time,
-              urgent && styles.urgent,
+              { color: timeColor },
             ]}
           >
             {display}
@@ -103,7 +106,8 @@ const styles = StyleSheet.create({
   },
   label: {
     ...AppTypography.caption,
-    color: AppColors.mutedText,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   timeRow: {
     flexDirection: 'row',
@@ -111,18 +115,13 @@ const styles = StyleSheet.create({
   },
   time: {
     ...AppTypography.dataMono,
-    color: AppColors.inkSlate,
     fontFamily: 'monospace',
     fontVariant: ['tabular-nums'],
   },
   timeLarge: {
     ...AppTypography.dataLargeMono,
-    color: AppColors.inkSlate,
     fontFamily: 'monospace',
     fontVariant: ['tabular-nums'],
-  },
-  urgent: {
-    color: AppColors.tharDusk,
   },
   hidden: {
     opacity: 0,

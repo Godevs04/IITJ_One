@@ -1,10 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  AppColors,
-  AppSpacing,
-  AppTypography,
-} from '@/theme/tokens';
+import { useThemeColors } from '@/theme/ThemeProvider';
+import { AppSpacing, AppTypography } from '@/theme/tokens';
 
 interface EmptyStateProps {
   icon?: keyof typeof Ionicons.glyphMap;
@@ -17,11 +14,17 @@ export function EmptyState({
   title,
   message,
 }: EmptyStateProps) {
+  const theme = useThemeColors();
+
   return (
     <View style={styles.container}>
-      <Ionicons name={icon} size={40} color={AppColors.mutedText} />
-      <Text style={styles.title}>{title}</Text>
-      {message ? <Text style={styles.message}>{message}</Text> : null}
+      <Ionicons name={icon} size={40} color={theme.iconMuted} />
+      <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
+      {message ? (
+        <Text style={[styles.message, { color: theme.textMuted }]}>
+          {message}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -35,12 +38,10 @@ const styles = StyleSheet.create({
   },
   title: {
     ...AppTypography.h2,
-    color: AppColors.inkSlate,
     textAlign: 'center',
   },
   message: {
     ...AppTypography.bodySmall,
-    color: AppColors.mutedText,
     textAlign: 'center',
   },
 });

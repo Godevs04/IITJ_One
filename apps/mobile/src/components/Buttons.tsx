@@ -1,5 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { AppColors, AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { Pressable, StyleSheet, Text } from 'react-native';
+import { useThemeColors } from '@/theme/ThemeProvider';
+import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 interface ButtonProps {
   label: string;
@@ -8,40 +9,45 @@ interface ButtonProps {
 }
 
 export function PrimaryButton({ label, onPress, disabled }: ButtonProps) {
+  const theme = useThemeColors();
+
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       style={({ pressed }) => [
         styles.primary,
+        { backgroundColor: theme.primary },
         disabled && styles.disabled,
         pressed && !disabled && styles.pressed,
       ]}
     >
-      <Text style={styles.primaryText}>{label}</Text>
+      <Text style={[styles.primaryText, { color: theme.onPrimary }]}>{label}</Text>
     </Pressable>
   );
 }
 
 export function SecondaryButton({ label, onPress, disabled }: ButtonProps) {
+  const theme = useThemeColors();
+
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       style={({ pressed }) => [
         styles.secondary,
+        { borderColor: theme.primary },
         disabled && styles.disabled,
         pressed && !disabled && styles.pressed,
       ]}
     >
-      <Text style={styles.secondaryText}>{label}</Text>
+      <Text style={[styles.secondaryText, { color: theme.primary }]}>{label}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   primary: {
-    backgroundColor: AppColors.jodhpurIndigo,
     borderRadius: AppRadius.md,
     paddingVertical: AppSpacing.md,
     alignItems: 'center',
@@ -50,12 +56,10 @@ const styles = StyleSheet.create({
   },
   primaryText: {
     ...AppTypography.button,
-    color: AppColors.desertSand,
   },
   secondary: {
     borderRadius: AppRadius.md,
     borderWidth: 1.5,
-    borderColor: AppColors.indigoLight,
     paddingVertical: AppSpacing.md,
     alignItems: 'center',
     minHeight: 48,
@@ -63,7 +67,6 @@ const styles = StyleSheet.create({
   },
   secondaryText: {
     ...AppTypography.button,
-    color: AppColors.jodhpurIndigo,
   },
   disabled: {
     opacity: 0.5,

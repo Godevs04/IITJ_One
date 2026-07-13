@@ -6,12 +6,14 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { EmptyState } from '@/components/EmptyState';
 import { PrimaryButton, SecondaryButton } from '@/components/Buttons';
 import { getMessQR, saveMessQRFromUri, clearMessQR } from '@/services/qrStorage';
-import { AppColors, AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/ThemeProvider';
+import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 /**
  * Mess QR — local only, never synced to any server.
  */
 export default function MessQrScreen() {
+  const theme = useThemeColors();
   const [qr, setQr] = useState(getMessQR());
   const [displayMode, setDisplayMode] = useState(false);
 
@@ -49,28 +51,41 @@ export default function MessQrScreen() {
 
   if (displayMode && qr) {
     return (
-      <View style={styles.fullScreen}>
+      <View style={[styles.fullScreen, { backgroundColor: theme.surface }]}>
         <View style={styles.fullHeader}>
           <Pressable onPress={() => setDisplayMode(false)} hitSlop={12}>
-            <Text style={styles.closeText}>✕</Text>
+            <Text style={[styles.closeText, { color: theme.primary }]}>✕</Text>
           </Pressable>
           <Pressable onPress={() => void importImage(false)}>
-            <Text style={styles.editText}>Edit</Text>
+            <Text style={[styles.editText, { color: theme.primary }]}>Edit</Text>
           </Pressable>
         </View>
-        <Image source={{ uri: qr.imagePath }} style={styles.qrImage} resizeMode="contain" />
-        <Text style={styles.caption}>Mess QR</Text>
+        <Image
+          source={{ uri: qr.imagePath }}
+          style={[styles.qrImage, { borderColor: theme.primary }]}
+          resizeMode="contain"
+        />
+        <Text style={[styles.caption, { color: theme.textMuted }]}>Mess QR</Text>
       </View>
     );
   }
 
   if (qr) {
     return (
-      <View style={styles.container}>
-        <Pressable onPress={() => setDisplayMode(true)} style={styles.qrPreview}>
-          <Image source={{ uri: qr.imagePath }} style={styles.previewImage} resizeMode="contain" />
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <Pressable
+          onPress={() => setDisplayMode(true)}
+          style={[styles.qrPreview, { backgroundColor: theme.surface }]}
+        >
+          <Image
+            source={{ uri: qr.imagePath }}
+            style={styles.previewImage}
+            resizeMode="contain"
+          />
         </Pressable>
-        <Text style={styles.hint}>Tap to open full-screen display for scanning</Text>
+        <Text style={[styles.hint, { color: theme.textMuted }]}>
+          Tap to open full-screen display for scanning
+        </Text>
         <PrimaryButton label="Open display" onPress={() => setDisplayMode(true)} />
         <SecondaryButton label="Replace image" onPress={() => void importImage(false)} />
         <SecondaryButton
@@ -85,8 +100,16 @@ export default function MessQrScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.qrFrame}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <View
+        style={[
+          styles.qrFrame,
+          {
+            backgroundColor: theme.surface,
+            borderColor: theme.border,
+          },
+        ]}
+      >
         <EmptyState
           icon="qr-code-outline"
           title="No QR saved yet"
@@ -102,7 +125,6 @@ export default function MessQrScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: AppColors.desertSand,
     padding: AppSpacing.lg,
     gap: AppSpacing.md,
   },
@@ -111,14 +133,11 @@ const styles = StyleSheet.create({
     borderRadius: AppRadius.md,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: AppColors.borderNeutral,
-    backgroundColor: AppColors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
   qrPreview: {
     minHeight: 240,
-    backgroundColor: AppColors.white,
     borderRadius: AppRadius.md,
     padding: AppSpacing.lg,
     alignItems: 'center',
@@ -129,12 +148,10 @@ const styles = StyleSheet.create({
   },
   hint: {
     ...AppTypography.caption,
-    color: AppColors.mutedText,
     textAlign: 'center',
   },
   fullScreen: {
     flex: 1,
-    backgroundColor: AppColors.white,
     alignItems: 'center',
     justifyContent: 'center',
     padding: AppSpacing.lg,
@@ -149,21 +166,17 @@ const styles = StyleSheet.create({
   },
   closeText: {
     fontSize: 24,
-    color: AppColors.jodhpurIndigo,
   },
   editText: {
     ...AppTypography.button,
-    color: AppColors.jodhpurIndigo,
   },
   qrImage: {
     width: '70%',
     aspectRatio: 1,
     borderWidth: 2,
-    borderColor: AppColors.jodhpurIndigo,
   },
   caption: {
     ...AppTypography.caption,
-    color: AppColors.mutedText,
     marginTop: AppSpacing.md,
   },
 });

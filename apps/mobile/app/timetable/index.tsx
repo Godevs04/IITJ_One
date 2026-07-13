@@ -8,11 +8,13 @@ import { ScreenShell } from '@/components/ScreenShell';
 import { listTimetableEntries, type TimetableEntry } from '@/services/localDb';
 import { getClassesForDay } from '@/utils/timetable';
 import { todayDayShort } from '@/utils/date';
-import { AppColors, AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/ThemeProvider';
+import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 
 export default function TimetableScreen() {
+  const theme = useThemeColors();
   const [entries, setEntries] = useState<TimetableEntry[]>([]);
   const [selectedDay, setSelectedDay] = useState(todayDayShort());
 
@@ -27,24 +29,36 @@ export default function TimetableScreen() {
   const dayClasses = getClassesForDay(entries, selectedDay);
 
   return (
-    <ScreenShell title="My Timetable" subtitle="Stored only on this device">
+    <ScreenShell hideTitle subtitle="Stored only on this device">
       <View style={styles.dayStrip}>
-        {DAYS.map((d) => (
-          <Pressable
-            key={d}
-            onPress={() => setSelectedDay(d)}
-            style={[styles.dayChip, selectedDay === d && styles.dayChipActive]}
-          >
-            <Text
+        {DAYS.map((d) => {
+          const active = selectedDay === d;
+          return (
+            <Pressable
+              key={d}
+              onPress={() => setSelectedDay(d)}
               style={[
-                styles.dayChipText,
-                selectedDay === d && styles.dayChipTextActive,
+                styles.dayChip,
+                {
+                  borderColor: active ? theme.primary : theme.border,
+                  backgroundColor: active
+                    ? theme.chipActiveBackground
+                    : theme.chipBackground,
+                },
               ]}
             >
-              {d.toUpperCase()}
-            </Text>
-          </Pressable>
-        ))}
+              <Text
+                style={[
+                  styles.dayChipText,
+                  { color: active ? theme.chipActiveText : theme.chipText },
+                  active && styles.dayChipTextActive,
+                ]}
+              >
+                {d.toUpperCase()}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
 
       <PrimaryButton label="Add class" onPress={() => router.push('/timetable/add')} />
@@ -81,18 +95,11 @@ const styles = StyleSheet.create({
     paddingVertical: AppSpacing.xs,
     borderRadius: AppRadius.full,
     borderWidth: 1,
-    borderColor: AppColors.borderNeutral,
-  },
-  dayChipActive: {
-    backgroundColor: AppColors.indigoTint,
-    borderColor: AppColors.jodhpurIndigo,
   },
   dayChipText: {
     ...AppTypography.caption,
-    color: AppColors.mutedText,
   },
   dayChipTextActive: {
-    color: AppColors.jodhpurIndigo,
     fontWeight: '600',
   },
 });
