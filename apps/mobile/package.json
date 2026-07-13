@@ -4,12 +4,12 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
-    "prestart": "bash ../../scripts/set-lan-ip.sh",
+    "prestart": "node ../../scripts/set-lan-ip.js",
     "start": "expo start --port 6001 --lan",
     "android": "expo start --android --port 6001 --lan",
     "ios": "expo start --ios --port 6001 --lan",
     "web": "expo start --web --port 6001",
-    "env:lan": "bash ../../scripts/set-lan-ip.sh",
+    "env:lan": "node ../../scripts/set-lan-ip.js",
     "lint": "expo lint"
   },
   "dependencies": {

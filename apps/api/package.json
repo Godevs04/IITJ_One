@@ -5,7 +5,7 @@
   "description": "IITJ1 Express API — campus data for IIT Jodhpur",
   "main": "dist/index.js",
   "scripts": {
-    "predev": "bash ../../scripts/set-lan-ip.sh",
+    "predev": "node ../../scripts/set-lan-ip.js",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
