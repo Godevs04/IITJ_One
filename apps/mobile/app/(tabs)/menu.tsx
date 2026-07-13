@@ -240,6 +240,7 @@ export default function MenuScreen() {
               <View style={styles.dishesGrid}>
                 {dishes.map((dish, idx) => {
                   const isSpecial = !otherDishes.has(dish);
+                  const isHighlight = dietPreference === 'nonVeg' && isSpecial;
 
                   return (
                     <View key={idx} style={styles.dishGridItem}>
@@ -250,18 +251,17 @@ export default function MenuScreen() {
                             style={[
                               styles.dishText,
                               { color: theme.text },
-                              isSpecial && styles.specialDishText,
+                              isHighlight && styles.specialDishText,
                             ]}
                           >
                             {dish}
                           </Text>
-                          {isSpecial && (
+                          {isHighlight && (
                             <View
                               style={[
                                 styles.miniSpecialBadge,
                                 {
-                                  backgroundColor:
-                                    dietPreference === 'veg' ? theme.vegTint : theme.errorTint,
+                                  backgroundColor: theme.errorTint,
                                 },
                               ]}
                             >
@@ -269,12 +269,11 @@ export default function MenuScreen() {
                                 style={[
                                   styles.miniSpecialBadgeText,
                                   {
-                                    color:
-                                      dietPreference === 'veg' ? theme.veg : theme.nonVeg,
+                                    color: theme.nonVeg,
                                   },
                                 ]}
                               >
-                                {dietPreference === 'veg' ? 'Veg' : 'Non-Veg'}
+                                Non-Veg
                               </Text>
                             </View>
                           )}
