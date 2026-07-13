@@ -73,7 +73,7 @@ function buildDefaultState(): FallbackState {
       {
         _id: nextId(),
         campusId,
-        title: 'Welcome to IITJ1',
+        title: 'Welcome to IITJ One',
         body: 'Your campus companion app is live. Check transport, mess menu, and notices here.',
         category: 'orientation',
         isImportant: true,
@@ -190,8 +190,8 @@ function buildDefaultState(): FallbackState {
       campusId,
       sections: [
         {
-          title: 'About IITJ1',
-          body: 'IITJ1 is a student-developed application for the IIT Jodhpur community. Not affiliated with or officially endorsed by IIT Jodhpur.',
+          title: 'About IITJ One',
+          body: 'IITJ One is a student-developed application for the IIT Jodhpur community. Not affiliated with or officially endorsed by IIT Jodhpur.',
         },
         {
           title: 'IIT Jodhpur',

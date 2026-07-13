@@ -113,7 +113,7 @@ export default function LaundryScreen() {
         if (!granted) {
           Alert.alert(
             'Notifications disabled',
-            'Enable notifications for IITJ1 in your device settings to get laundry reminders.',
+            'Enable notifications for IITJ One in your device settings to get laundry reminders.',
             [
               { text: 'Cancel', style: 'cancel' },
               { text: 'Open Settings', onPress: () => Linking.openSettings() },

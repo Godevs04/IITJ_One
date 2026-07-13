@@ -103,7 +103,7 @@ async function seedFallback(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  console.log('[seed] Starting IITJ1 database seed...');
+  console.log('[seed] Starting IITJ One database seed...');
   initFallbackStore();
 
   const connected = await connectDb();

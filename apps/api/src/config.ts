@@ -38,7 +38,7 @@ export const config = {
   adminBootstrap: {
     email: process.env.ADMIN_BOOTSTRAP_EMAIL ?? 'admin@iitjone.in',
     password: process.env.ADMIN_BOOTSTRAP_PASSWORD ?? 'change-me-on-first-login',
-    name: process.env.ADMIN_BOOTSTRAP_NAME ?? 'IITJ1 Admin',
+    name: process.env.ADMIN_BOOTSTRAP_NAME ?? 'IITJ One Admin',
   },
   docsRoot: path.resolve(__dirname, '../../../docs/FinalDoc'),
 } as const;

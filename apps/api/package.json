@@ -2,7 +2,7 @@
   "name": "@iitj1/api",
   "version": "1.0.0",
   "private": true,
-  "description": "IITJ1 Express API — campus data for IIT Jodhpur",
+  "description": "IITJ One Express API — campus data for IIT Jodhpur",
   "main": "dist/index.js",
   "scripts": {
     "predev": "node ../../scripts/set-lan-ip.js",

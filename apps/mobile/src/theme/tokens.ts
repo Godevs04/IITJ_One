@@ -1,5 +1,5 @@
 /**
- * IITJ1 design tokens — sourced from Stitch / Designplan_Final.md
+ * IITJ One design tokens — sourced from Stitch / Designplan_Final.md
  * Never hardcode hex in screens; use useThemeColors() or getThemeColors().
  */
 
