@@ -14,38 +14,42 @@ function isHolidayToday(calendar: CalendarDoc | null): boolean {
   );
 }
 
-function getScheduleKey(calendar: CalendarDoc | null): 'mon-sat' | 'sun-holiday' {
+export function getScheduleKey(calendar: CalendarDoc | null): 'mon-sat' | 'sun-holiday' {
   const day = new Date().getDay();
   if (day === 0 || isHolidayToday(calendar)) return 'sun-holiday';
   return 'mon-sat';
 }
 
-export function getTripsForToday(transport: TransportDoc, calendar: CalendarDoc | null): TransportTrip[] {
-  const key = getScheduleKey(calendar);
-  const groups = transport.routes.filter((r) => r.weekday === key);
+export function getTripsForDayType(
+  transport: TransportDoc,
+  calendar: CalendarDoc | null,
+  dayType: 'mon-sat' | 'sun-holiday'
+): TransportTrip[] {
+  const groups = transport.routes.filter((r) => r.weekday === dayType);
   let trips = groups.flatMap((g) => g.trips);
 
   const day = todayDayName();
-  const override = transport.scheduleOverrides.find(
-    (o) => o.dayOfWeek.toLowerCase() === day,
-  );
-
-  if (override?.trips.length) {
-    if (day === 'thursday') {
-      // Replaces B2 9:15 AM departure and B2 1:30 PM arrival on Thursdays
+  if (dayType === 'mon-sat' && day === 'thursday') {
+    const override = transport.scheduleOverrides.find(
+      (o) => o.dayOfWeek.toLowerCase() === 'thursday',
+    );
+    if (override?.trips.length) {
       trips = trips.filter(
         (t) =>
           !(t.bus === 'B2' && t.startTime === '9:15 AM') &&
           !(t.bus === 'B2' && t.startTime === '1:30 PM')
       );
       trips = [...trips, ...override.trips];
-    } else {
-      return override.trips;
     }
   }
 
   // Sort trips by start time
   return trips.sort((a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime));
+}
+
+export function getTripsForToday(transport: TransportDoc, calendar: CalendarDoc | null): TransportTrip[] {
+  const key = getScheduleKey(calendar);
+  return getTripsForDayType(transport, calendar, key);
 }
 
 export function evaluateTripStatus(trip: TransportTrip): {

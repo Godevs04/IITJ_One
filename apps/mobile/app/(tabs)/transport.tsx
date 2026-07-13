@@ -40,7 +40,9 @@ export default function TransportScreen() {
 
   return (
     <TransportScreenView
-      tripsWithStatus={tripsWithStatus}
+      transport={transport}
+      calendar={calendar}
+      tick={tick}
       onOpenMap={() => setShowMap(true)}
       onRefresh={onRefresh}
       refreshing={syncing}

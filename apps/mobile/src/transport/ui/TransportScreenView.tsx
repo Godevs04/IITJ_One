@@ -2,15 +2,20 @@ import { useEffect, useState, useMemo } from 'react';
 import { StyleSheet, Text, View, TextInput, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as WebBrowser from 'expo-web-browser';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
-import type { TripWithStatus } from '../models/BusTypes';
+import type { CalendarDoc, TransportDoc } from '@/types/campus';
+import { getScheduleKey, getTripsForDayType, evaluateTripStatus } from '../services/ScheduleEngine';
+import { parseRouteStops } from '../utils/coordinates';
 import { TripCard } from '../widgets/TripCard';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 
 interface TransportScreenViewProps {
-  tripsWithStatus: TripWithStatus[];
+  transport: TransportDoc | null;
+  calendar: CalendarDoc | null;
+  tick: number;
   onOpenMap: () => void;
   onRefresh: () => Promise<void>;
   refreshing: boolean;
@@ -19,7 +24,9 @@ interface TransportScreenViewProps {
 const FAVORITES_KEY = '@iitj1/favorite_stops';
 
 export function TransportScreenView({
-  tripsWithStatus,
+  transport,
+  calendar,
+  tick,
   onOpenMap,
   onRefresh,
   refreshing,
@@ -29,6 +36,15 @@ export function TransportScreenView({
   const [favorites, setFavorites] = useState<string[]>([]);
   const [selectedFavoriteFilter, setSelectedFavoriteFilter] = useState<string | null>(null);
   const [showCompleted, setShowCompleted] = useState(false);
+
+  const defaultDayType = useMemo(() => getScheduleKey(calendar), [calendar]);
+  const [dayTypeFilter, setDayTypeFilter] = useState<'mon-sat' | 'sun-holiday'>(defaultDayType);
+  const [directionFilter, setDirectionFilter] = useState<'departure' | 'arrival'>('departure');
+
+  // Sync state when default day type loads
+  useEffect(() => {
+    setDayTypeFilter(defaultDayType);
+  }, [defaultDayType]);
 
   // Time details for header display
   const [nowStr, setNowStr] = useState('');
@@ -81,11 +97,39 @@ export function TransportScreenView({
 
   const isFavorited = (stopName: string) => favorites.includes(stopName);
 
-  // Filter trips based on search query and selected favorite stop filter
+  // Dynamic trips list evaluation based on dayTypeFilter
+  const tripsWithStatus = useMemo(() => {
+    if (!transport) return [];
+
+    const trips = getTripsForDayType(transport, calendar, dayTypeFilter);
+    return trips.map((trip) => {
+      const evalResult = evaluateTripStatus(trip);
+      const stops = parseRouteStops(trip.route, trip.from, trip.to);
+
+      return {
+        trip,
+        stops,
+        ...evalResult,
+      };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transport, calendar, dayTypeFilter, tick]);
+
+  const isDepartureFromCampus = (trip: any) => {
+    const from = trip.from.toLowerCase();
+    return from.includes('campus') || from.includes('residential') || from.includes('hostel') || from.includes('admin') || from.includes('iitj');
+  };
+
+  // Filter trips based on direction, search query and selected favorite stop filter
   const filteredTrips = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     return tripsWithStatus.filter((t) => {
-      // 1. Search Query Filter
+      // 1. Direction Filter
+      const isDep = isDepartureFromCampus(t.trip);
+      if (directionFilter === 'departure' && !isDep) return false;
+      if (directionFilter === 'arrival' && isDep) return false;
+
+      // 2. Search Query Filter
       if (q) {
         const matchName =
           t.trip.bus.toLowerCase().includes(q) ||
@@ -97,7 +141,7 @@ export function TransportScreenView({
         if (!matchName) return false;
       }
 
-      // 2. Favorite Star Filter
+      // 3. Favorite Star Filter
       if (selectedFavoriteFilter) {
         const matchFav = t.stops.some(
           (s) => s.toLowerCase() === selectedFavoriteFilter.toLowerCase()
@@ -107,7 +151,7 @@ export function TransportScreenView({
 
       return true;
     });
-  }, [tripsWithStatus, searchQuery, selectedFavoriteFilter]);
+  }, [tripsWithStatus, searchQuery, selectedFavoriteFilter, directionFilter]);
 
   // Segment trips into Active (Upcoming, Boarding, Transit) vs Completed
   const { activeTrips, completedTrips } = useMemo(() => {
@@ -139,6 +183,112 @@ export function TransportScreenView({
         >
           <Ionicons name="map" size={16} color={theme.onPrimary} />
           <Text style={[styles.mapBtnText, { color: theme.onPrimary }]}>View Map</Text>
+        </Pressable>
+      </View>
+
+      {/* Dynamic Schedule Filter Tabs & Updates Banner */}
+      <View style={styles.filterSection}>
+        {/* Row 1: Direction Filter */}
+        <View style={styles.filterRow}>
+          <Pressable
+            onPress={() => setDirectionFilter('departure')}
+            style={[
+              styles.filterTab,
+              directionFilter === 'departure'
+                ? [styles.activeTab, { backgroundColor: theme.primary, borderColor: theme.primary }]
+                : [styles.inactiveTab, { backgroundColor: theme.chipBackground, borderColor: theme.border }],
+            ]}
+          >
+            <Text
+              style={[
+                styles.filterTabText,
+                directionFilter === 'departure'
+                  ? { color: theme.onPrimary, fontWeight: '700' }
+                  : { color: theme.textMuted },
+              ]}
+            >
+              Departure from Campus
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setDirectionFilter('arrival')}
+            style={[
+              styles.filterTab,
+              directionFilter === 'arrival'
+                ? [styles.activeTab, { backgroundColor: theme.primary, borderColor: theme.primary }]
+                : [styles.inactiveTab, { backgroundColor: theme.chipBackground, borderColor: theme.border }],
+            ]}
+          >
+            <Text
+              style={[
+                styles.filterTabText,
+                directionFilter === 'arrival'
+                  ? { color: theme.onPrimary, fontWeight: '700' }
+                  : { color: theme.textMuted },
+              ]}
+            >
+              Arrival at Campus
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* Row 2: Day Type Filter */}
+        <View style={styles.filterRow}>
+          <Pressable
+            onPress={() => setDayTypeFilter('mon-sat')}
+            style={[
+              styles.filterTab,
+              dayTypeFilter === 'mon-sat'
+                ? [styles.activeTab, { backgroundColor: theme.primary, borderColor: theme.primary }]
+                : [styles.inactiveTab, { backgroundColor: theme.chipBackground, borderColor: theme.border }],
+            ]}
+          >
+            <Text
+              style={[
+                styles.filterTabText,
+                dayTypeFilter === 'mon-sat'
+                  ? { color: theme.onPrimary, fontWeight: '700' }
+                  : { color: theme.textMuted },
+              ]}
+            >
+              Mon-Sat
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setDayTypeFilter('sun-holiday')}
+            style={[
+              styles.filterTab,
+              dayTypeFilter === 'sun-holiday'
+                ? [styles.activeTab, { backgroundColor: theme.primary, borderColor: theme.primary }]
+                : [styles.inactiveTab, { backgroundColor: theme.chipBackground, borderColor: theme.border }],
+            ]}
+          >
+            <Text
+              style={[
+                styles.filterTabText,
+                dayTypeFilter === 'sun-holiday'
+                  ? { color: theme.onPrimary, fontWeight: '700' }
+                  : { color: theme.textMuted },
+              ]}
+            >
+              Sunday & Holidays
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* Web Link / Updates Banner */}
+        <Pressable
+          onPress={() => void WebBrowser.openBrowserAsync('https://iitj.ac.in/office-of-security-transports/en/transport')}
+          style={({ pressed }) => [
+            styles.updatesBanner,
+            { backgroundColor: theme.primaryTint },
+            pressed && styles.pressed,
+          ]}
+        >
+          <Ionicons name="information-circle-outline" size={16} color={theme.primary} />
+          <Text style={[styles.updatesText, { color: theme.primary }]}>
+            For latest official schedule updates, click here
+          </Text>
         </Pressable>
       </View>
 
@@ -348,5 +498,47 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.8,
+  },
+  filterSection: {
+    gap: AppSpacing.sm,
+    marginTop: AppSpacing.md,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    gap: AppSpacing.sm,
+  },
+  filterTab: {
+    flex: 1,
+    height: 42,
+    borderRadius: AppRadius.md,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  activeTab: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 1,
+  },
+  inactiveTab: {},
+  filterTabText: {
+    ...AppTypography.button,
+    fontSize: 12,
+  },
+  updatesBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: AppSpacing.xs,
+    paddingVertical: AppSpacing.sm,
+    borderRadius: AppRadius.md,
+    marginTop: AppSpacing.xs,
+  },
+  updatesText: {
+    ...AppTypography.caption,
+    fontWeight: '600',
+    fontSize: 11,
   },
 });
