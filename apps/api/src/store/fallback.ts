@@ -195,7 +195,27 @@ function buildDefaultState(): FallbackState {
         },
         {
           title: 'IIT Jodhpur',
-          body: 'Indian Institute of Technology Jodhpur is a premier engineering institute located in Rajasthan, India.',
+          body: 'Indian Institute of Technology Jodhpur is a public technical university and an Institute of National Importance by the Government of India. Located in Jodhpur, Rajasthan, IITJ is committed to excellence in education, research, and innovation.',
+        },
+        {
+          title: 'Institute Details',
+          body: 'Founded in 2008, IITJ is a fully residential campus spanning 852 acres. The current director is Prof. Avinash Kumar Agarwal. With a total enrollment of 2,574 students (2026), the institute maintains a strong academic environment. Located at NH 62, Nagaur Road, Karwar, Jodhpur, Rajasthan - 342030.',
+        },
+        {
+          title: 'Academic Excellence',
+          body: 'IITJ ranks 27th in NIRF Engineering Rankings (2025) and 66th in NIRF Overall Rankings (2025). The institute offers 16 academic departments including Aerospace Engineering, Computer Science, Mechanical Engineering, and many others.',
+        },
+        {
+          title: 'Academic Programs',
+          body: 'Undergraduate: B.Tech programs in 10 specializations, B.Sc in 4 specializations, and Integrated Teacher Education Programme (ITEP).\n\nPostgraduate: M.Tech with specializations in AR/VR, Robotics, Microelectronics & VLSI, and Drone Technologies; M.Sc programs; MBA; and Ph.D. with interdisciplinary focus.',
+        },
+        {
+          title: 'Innovation & Facilities',
+          body: 'The institute features the Technology Innovation and Start-up Center (IITJ-TISC) for entrepreneurship support, S. R. Ranganathan Learning Hub, AIOT Fab Facility, Central Research Facility (CRF), and Digital Infrastructure & Automation (DIA) center.',
+        },
+        {
+          title: 'Contact Information',
+          body: 'General Inquiries: +91-291-2801079, +91-291-2801138\n\nJEE Admission: office_jee@iitj.ac.in\n\nLibrary: office_library@iitj.ac.in\n\nWebsite: https://www.iitj.ac.in/',
         },
       ],
     },
