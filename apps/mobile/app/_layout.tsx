@@ -41,6 +41,8 @@ function RootNavigator() {
         <Stack.Screen name="map" options={{ title: 'Campus Map' }} />
         <Stack.Screen name="portals" options={{ title: 'Essential Portals' }} />
         <Stack.Screen name="services" options={{ title: 'Campus Services' }} />
+        <Stack.Screen name="laundry" options={{ title: 'Laundry' }} />
+        <Stack.Screen name="cabs-autos" options={{ title: 'Cabs & Autos' }} />
         <Stack.Screen name="wifi" options={{ title: 'Internet & Wi-Fi' }} />
         <Stack.Screen name="emergency" options={{ title: 'Emergency Contacts' }} />
         <Stack.Screen name="about" options={{ title: 'About IITJ' }} />

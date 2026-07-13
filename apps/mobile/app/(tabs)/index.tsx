@@ -43,6 +43,8 @@ const QUICK_LINKS: {
   { title: 'Map', icon: 'map-outline', route: '/map' },
   { title: 'Portals', icon: 'link-outline', route: '/portals' },
   { title: 'Services', icon: 'construct-outline', route: '/services' },
+  { title: 'Laundry', icon: 'shirt-outline', route: '/laundry' },
+  { title: 'Cabs & Autos', icon: 'car-outline', route: '/cabs-autos' },
   { title: 'Emergency', icon: 'alert-circle-outline', route: '/emergency', variant: 'danger' },
 ];
 
