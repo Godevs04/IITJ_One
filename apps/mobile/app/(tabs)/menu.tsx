@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
@@ -51,6 +51,7 @@ export default function MenuScreen() {
   const menu = readCachedModule<MenuDoc>('menu');
   const [selectedDay, setSelectedDay] = useState(todayDayName());
   const [dietPreference, setDietPreference] = useState<'veg' | 'nonVeg'>('veg');
+  const [showCharges, setShowCharges] = useState(false);
 
   const dayMenu = useMemo(
     () => menu?.days.find((d) => d.dayName === selectedDay),
@@ -117,7 +118,12 @@ export default function MenuScreen() {
       ) : null}
 
       {days.length > 0 ? (
-        <View style={styles.toggleStrip}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.toggleStripScroll}
+          contentContainerStyle={styles.toggleStrip}
+        >
           <Pressable
             onPress={() => setDietPreference('veg')}
             style={[
@@ -160,7 +166,22 @@ export default function MenuScreen() {
               Non-Vegetarian
             </Text>
           </Pressable>
-        </View>
+          <Pressable
+            onPress={() => setShowCharges(true)}
+            style={[
+              styles.toggleButton,
+              {
+                backgroundColor: theme.chipBackground,
+                borderColor: theme.border,
+              },
+            ]}
+          >
+            <Ionicons name="card-outline" size={15} color={theme.textMuted} />
+            <Text style={[styles.toggleButtonText, { color: theme.textMuted }]}>
+              Pay & Use
+            </Text>
+          </Pressable>
+        </ScrollView>
       ) : null}
 
       {dayMenu ? (
@@ -259,6 +280,89 @@ export default function MenuScreen() {
           message="Pull down to sync campus menu data."
         />
       )}
+
+      <Modal
+        visible={showCharges}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowCharges(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowCharges(false)}
+        >
+          <View style={[styles.modalContent, { backgroundColor: theme.surface }]} onStartShouldSetResponder={() => true}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Mess Charges</Text>
+              <Pressable
+                onPress={() => setShowCharges(false)}
+                style={styles.modalCloseButton}
+                hitSlop={8}
+              >
+                <Ionicons name="close" size={24} color={theme.textMuted} />
+              </Pressable>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Regular Users */}
+              <Text style={[styles.sectionHeading, { color: theme.primary }]}>
+                Regular Users (Per Day)
+              </Text>
+              <Text style={[styles.sectionDescription, { color: theme.textMuted }]}>
+                Students, staff, or faculty members who consume all meals in the mess. ERP or register maintained.
+              </Text>
+
+              <View style={[styles.priceCard, { backgroundColor: theme.chipBackground }]}>
+                <View style={styles.priceRow}>
+                  <Text style={[styles.priceLabel, { color: theme.text }]}>Veg Mess</Text>
+                  <Text style={[styles.priceVal, { color: theme.veg }]}>₹170 + GST (~₹179)</Text>
+                </View>
+                <View style={[styles.modalDivider, { backgroundColor: theme.border }]} />
+                <View style={styles.priceRow}>
+                  <Text style={[styles.priceLabel, { color: theme.text }]}>Non-veg Mess</Text>
+                  <Text style={[styles.priceVal, { color: theme.nonVeg }]}>₹180 + GST (~₹189)</Text>
+                </View>
+              </View>
+
+              {/* Meal-wise Users */}
+              <Text style={[styles.sectionHeading, { color: theme.primary, marginTop: AppSpacing.md }]}>
+                Meal-wise Users (Pay & Use)
+              </Text>
+              <Text style={[styles.sectionDescription, { color: theme.textMuted }]}>
+                Any user (students, staff, faculty, or visitors) availing only selected meals. Inclusive of GST.
+              </Text>
+
+              <View style={[styles.tableHeader, { borderBottomColor: theme.border }]}>
+                <Text style={[styles.th, { flex: 2, color: theme.textMuted }]}>Meal</Text>
+                <Text style={[styles.th, { flex: 1.5, textAlign: 'right', color: theme.textMuted }]}>Veg</Text>
+                <Text style={[styles.th, { flex: 1.5, textAlign: 'right', color: theme.textMuted }]}>Non-Veg</Text>
+              </View>
+
+              {[
+                { meal: 'Breakfast', veg: '₹45', nonVeg: '₹45' },
+                { meal: 'Lunch', veg: '₹75', nonVeg: '₹80' },
+                { meal: 'Snacks', veg: '₹35', nonVeg: '₹35' },
+                { meal: 'Dinner', veg: '₹75', nonVeg: '₹80' },
+              ].map((item, index) => (
+                <View key={index} style={[styles.tableRow, { borderBottomColor: theme.border }]}>
+                  <Text style={[styles.td, { flex: 2, fontWeight: '600', color: theme.text }]}>{item.meal}</Text>
+                  <Text style={[styles.td, { flex: 1.5, textAlign: 'right', color: theme.text }]}>{item.veg}</Text>
+                  <Text style={[styles.td, { flex: 1.5, textAlign: 'right', color: theme.text }]}>{item.nonVeg}</Text>
+                </View>
+              ))}
+
+              {/* Footer / Queries */}
+              <View style={[styles.queryContainer, { backgroundColor: theme.primaryTint }]}>
+                <Ionicons name="mail-outline" size={18} color={theme.primary} />
+                <Text style={[styles.queryText, { color: theme.primary }]}>
+                  For queries, contact Mess Office at mess@iitj.ac.in
+                </Text>
+              </View>
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
     </ScreenShell>
   );
 }
@@ -310,11 +414,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 16,
   },
+  toggleStripScroll: {
+    marginTop: AppSpacing.md,
+    marginBottom: AppSpacing.sm,
+  },
   toggleStrip: {
     flexDirection: 'row',
     gap: AppSpacing.md,
-    marginTop: AppSpacing.md,
-    marginBottom: AppSpacing.sm,
+    paddingRight: AppSpacing.md,
   },
   toggleButton: {
     flexDirection: 'row',
@@ -430,6 +537,102 @@ const styles = StyleSheet.create({
     ...AppTypography.caption,
     fontSize: 9,
     fontWeight: '700',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    maxHeight: '80%',
+    borderRadius: AppRadius.md,
+    padding: AppSpacing.lg,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: AppSpacing.md,
+  },
+  modalTitle: {
+    ...AppTypography.h2,
+    fontWeight: '700',
+  },
+  modalCloseButton: {
+    padding: 4,
+  },
+  sectionHeading: {
+    ...AppTypography.body,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  sectionDescription: {
+    ...AppTypography.caption,
+    fontSize: 12,
+    marginBottom: AppSpacing.sm,
+    lineHeight: 16,
+  },
+  priceCard: {
+    borderRadius: AppRadius.sm,
+    padding: AppSpacing.md,
+    marginVertical: AppSpacing.xs,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+  priceLabel: {
+    ...AppTypography.bodySmall,
+    fontWeight: '600',
+  },
+  priceVal: {
+    ...AppTypography.bodySmall,
+    fontWeight: '700',
+  },
+  modalDivider: {
+    height: 1,
+    marginVertical: 6,
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+  },
+  th: {
+    ...AppTypography.caption,
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  tableRow: {
+    flexDirection: 'row',
+    paddingVertical: AppSpacing.sm,
+    borderBottomWidth: 1,
+  },
+  td: {
+    ...AppTypography.bodySmall,
+    fontSize: 13,
+  },
+  queryContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.sm,
+    borderRadius: AppRadius.sm,
+    padding: AppSpacing.md,
+    marginTop: AppSpacing.lg,
+  },
+  queryText: {
+    ...AppTypography.caption,
+    flex: 1,
+    fontWeight: '600',
+    fontSize: 12,
   },
 });
 
