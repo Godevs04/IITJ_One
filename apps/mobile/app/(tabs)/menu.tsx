@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
+import { useSwipeGesture } from '@/navigation/SwipeContext';
 import { readCachedModule } from '@/services/sync';
 import type { MenuDoc } from '@/types/campus';
 import { todayDayName, getMealTimeStatus, MEAL_WINDOWS } from '@/utils/date';
@@ -48,6 +49,7 @@ function splitDishes(value: string): string[] {
 export default function MenuScreen() {
   const theme = useThemeColors();
   const { syncing, sync } = useCampusSync(false);
+  const { lockSwipe, unlockSwipe } = useSwipeGesture();
   const menu = readCachedModule<MenuDoc>('menu');
   const [selectedDay, setSelectedDay] = useState(todayDayName());
   const [dietPreference, setDietPreference] = useState<'veg' | 'nonVeg'>('veg');
@@ -76,6 +78,9 @@ export default function MenuScreen() {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.dayStripScroll}
+          onScrollBeginDrag={lockSwipe}
+          onScrollEndDrag={unlockSwipe}
+          onMomentumScrollEnd={unlockSwipe}
         >
           {days.map((d) => {
             const active = selectedDay === d.dayName;
@@ -123,6 +128,9 @@ export default function MenuScreen() {
           showsHorizontalScrollIndicator={false}
           style={styles.toggleStripScroll}
           contentContainerStyle={styles.toggleStrip}
+          onScrollBeginDrag={lockSwipe}
+          onScrollEndDrag={unlockSwipe}
+          onMomentumScrollEnd={unlockSwipe}
         >
           <Pressable
             onPress={() => setDietPreference('veg')}

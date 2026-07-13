@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ComponentProps } from '
 import { router, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { HomeHeader } from '@/components/HomeHeader';
 import { QuickAccessTile, type QuickAccessVariant } from '@/components/QuickAccessTile';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
@@ -316,7 +317,9 @@ export default function HomeScreen() {
   }, [vegDishes, nonVegDishes]);
 
   return (
-    <ScreenShell onRefresh={onRefresh} refreshing={syncing}>
+    <View style={styles.screen}>
+      <HomeHeader />
+      <ScreenShell onRefresh={onRefresh} refreshing={syncing}>
       {nextBus ? (
         <StatusCard
           label="Next Bus"
@@ -491,11 +494,15 @@ export default function HomeScreen() {
           ))}
         </View>
       ) : null}
-    </ScreenShell>
+      </ScreenShell>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
   card: {
     borderRadius: AppRadius.md,
     borderWidth: 1,
