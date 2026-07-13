@@ -26,7 +26,7 @@
 | Bus | Start Time | From | End Time | To | Route |
 |---|---|---|---|---|---|
 | B1 | 7:50 AM | GPRA | 8:50 AM | IITJ | MBM → Paota → Mandore → IITJ |
-| B2 | 1:30 PM | Gate 4: AIIMS Jodhpur | 2:30 PM | IITJ | AIIMS → IITJ |
+| B2 | 1:30 PM | Gate 4: AIIMS Jodhpur | 2:30 PM | IITJ | AIIMS Jodhpur → IITJ |
 | B1 | 2:30 PM | Gate 1: MBM | 3:30 PM | IITJ | MBM College → Paota → IITJ |
 | B2 | 5:20 PM | Gate 4: AIIMS Jodhpur | 6:20 PM | IITJ | Riktiya Bheruji Circle → MBM → Paota |
 | B1 | 9:00 PM | Gate 1: MBM | 10:00 PM | IITJ | MBM → Paota |
@@ -52,7 +52,7 @@
 | B1 | 1:00 PM | Gate 1: MBM | 2:00 PM | IITJ | MBM College → Paota → IITJ |
 | B2 | 4:00 PM | Gate 1: MBM | 5:00 PM | IITJ | MBM → Paota → Mandore → IITJ |
 | B1 | 9:00 PM | Gate 1: MBM | 10:00 PM | IITJ | MBM → Railway Station → Paota |
-| B2 | 9:00 PM | Gate 1: MBM | 10:00 PM | IITJ | MBM → IITJ |
+| B2 | 9:00 PM | Gate 1: MBM | 10:00 PM | IITJ | — |
 
 ---
 
