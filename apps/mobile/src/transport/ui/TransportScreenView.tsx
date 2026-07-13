@@ -116,8 +116,8 @@ export function TransportScreenView({
   }, [transport, calendar, dayTypeFilter, tick]);
 
   const isDepartureFromCampus = (trip: any) => {
-    const from = trip.from.toLowerCase();
-    return from.includes('campus') || from.includes('residential') || from.includes('hostel') || from.includes('admin') || from.includes('iitj');
+    const to = trip.to.toLowerCase();
+    return !to.includes('iitj');
   };
 
   // Filter trips based on direction, search query and selected favorite stop filter
