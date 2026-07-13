@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppSpacing, AppTypography } from '@/theme/tokens';
 import type { TripWithStatus } from '../models/BusTypes';
@@ -13,6 +14,7 @@ interface CampusMapScreenProps {
 
 export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProps) {
   const theme = useThemeColors();
+  const insets = useSafeAreaInsets();
 
   // Determine next bus times for each stop
   const stopNextTimes: Record<string, { bus: string; time: string }> = {};
@@ -304,7 +306,7 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
   `;
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
       {/* Header Bar */}
       <View style={[styles.header, { borderBottomColor: theme.border }]}>
         <Pressable onPress={onBack} style={styles.backButton} hitSlop={12}>

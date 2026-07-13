@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from 'expo-router';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppSpacing, AppTypography } from '@/theme/tokens';
 
@@ -18,6 +19,8 @@ interface ScreenShellProps {
   refreshing?: boolean;
   /** Hide in-content title when stack header already shows it */
   hideTitle?: boolean;
+  /** Manually override top safe area inclusion. Auto-detects based on header presence if undefined. */
+  safeAreaTop?: boolean;
 }
 
 export function ScreenShell({
@@ -27,13 +30,32 @@ export function ScreenShell({
   onRefresh,
   refreshing = false,
   hideTitle = false,
+  safeAreaTop,
 }: ScreenShellProps) {
   const theme = useThemeColors();
+  const navigation = useNavigation();
+
+  // Try to determine if a navigation header is visible
+  let hasHeader = true;
+  try {
+    const options = (navigation as any).getCurrentOptions();
+    hasHeader = options?.headerShown !== false;
+  } catch {
+    // Fail-safe default
+    hasHeader = true;
+  }
+
+  // Include top edge if header is hidden, or if explicitly requested via prop
+  const applyTopInset = safeAreaTop ?? !hasHeader;
+  const edges: ('left' | 'right' | 'top')[] = ['left', 'right'];
+  if (applyTopInset) {
+    edges.push('top');
+  }
 
   return (
     <SafeAreaView
       style={[styles.safe, { backgroundColor: theme.background }]}
-      edges={['left', 'right']}
+      edges={edges}
     >
       <ScrollView
         contentContainerStyle={styles.content}
