@@ -27,26 +27,24 @@ Two data categories exist in this app, and it's critical to keep them separate:
 Bottom Nav: Home | Menu | Notices | Transport | More
 
 Home
- ├─ Today's Menu (preview) ──► Menu (full)
- ├─ Next Bus (live tile) ────► Transport
- ├─ Next Class (live tile) ──► Timetable
- ├─ Top Notices (preview) ───► Notices (full)
- ├─ Upcoming (calendar preview)
+ ├─ Today's Menu (preview — main dishes only, split Veg/NonVeg) ──► Menu (full)
+ ├─ Next Bus (live tile) ────────────────────────────────────────► Transport
+ ├─ Next Class (live tile, opt-in via showOnHome toggle) ─────────► Timetable
+ ├─ Top Notices (preview) ───────────────────────────────────────► Notices (full)
  └─ Quick-access grid ──► My Mess QR / Timetable / Notes / Map / Portals / Services / Emergency
 
 More (menu screen, not the mess menu)
  ├─ Campus Map
- ├─ Academic Calendar
  ├─ Essential Portals
- ├─ Useful Campus Apps
  ├─ Campus Services Directory
+ ├─ Internet & Wi-Fi  ← NEW
  ├─ Emergency Contacts
  ├─ About IITJ
  └─ Settings
-      ├─ Dark Mode
+      ├─ Dark Mode  (Switch embedded in-row via renderRight prop)
       ├─ Notification Preferences
       ├─ My Mess QR ──► Add/View QR
-      ├─ Timetable ──► Weekly view / Add Class
+      ├─ Timetable ──► Weekly view / Add Class (includes Show on Home Screen toggle)
       ├─ Notes ──► List / Add-Edit Note
       └─ Suggest Something
 ```
@@ -151,7 +149,7 @@ MessQR {
 3. Home's "Next Class" tile: client computes today's classes matching the current weekday, finds the next one whose start time hasn't passed, shows a live countdown
 4. Editing/deleting a class updates or cancels its scheduled local notifications accordingly (see notification logic below)
 
-**Data model (local only):**
+**Data model (local only — SQLite via expo-sqlite):**
 ```
 TimetableEntry {
   id: string (uuid)
@@ -163,9 +161,12 @@ TimetableEntry {
   room: string | null
   reminderEnabled: boolean          // default true
   reminderMinutesBefore: number     // default 10, not user-configurable in v1
+  showOnHome: boolean               // default false — opt-in per class to show Next Class widget on Home
   createdAt: DateTime
 }
 ```
+
+> **showOnHome behaviour:** The Home Screen Next Class widget is completely hidden unless at least one TimetableEntry has `showOnHome = true`. When enabled, only `showOnHome=true` entries are passed to `getNextClass()`. This preference is stored in the local SQLite database. Existing databases are migrated automatically via `ALTER TABLE timetable ADD COLUMN show_on_home INTEGER NOT NULL DEFAULT 0` (no-op if column exists).
 
 **Notification scheduling logic (local notifications, not FCM — this is 100% on-device):**
 - Use `flutter_local_notifications` with its recurring/weekly scheduling capability (or reschedule daily via a background task, depending on platform reliability — test both approaches for Android battery-optimization edge cases)
@@ -228,14 +229,74 @@ suggestions collection:
 
 ---
 
+## 3.9 Internet & Wi-Fi *(campus utility — local/static, NEW)*
+
+**Flow:**
+1. More → Internet & Wi-Fi → screen loads instantly (no network call needed)
+2. Top card shows Internet Facility details: 9 Gbps speed, providers (NKN, BSNL, Airtel, PGCIL), ERP credentials, WPA2 Enterprise security
+3. Below the card, a dynamic list of `PlatformGuide` items (Linux, Windows, macOS, Android, Certificate)
+4. Tapping a card / "Open Official PDF" button → `Linking.openURL(pdfUrl)` → device default browser/PDF viewer opens the official IITJ document
+5. If the URL cannot be opened, an `Alert` is shown with a friendly message
+
+**Data model (static — no server required):**
+```
+PlatformGuide {
+  title: string          // e.g. "Linux"
+  icon: IoniconName      // e.g. "terminal-outline"
+  description: string    // one-line description
+  pdfUrl: string         // official IITJ document URL
+}
+```
+
+**Technical notes:**
+- No PDFs are downloaded or embedded inside the app — only deep-linked to via the device browser
+- New guides can be added by appending to the `PLATFORM_GUIDES[]` array in `wifi.tsx` with no UI changes
+- Route registered in `_layout.tsx` as `Stack.Screen name="wifi" options={{ title: 'Internet & Wi-Fi' }}`
+- Entry added to `MORE_LINKS` in `more.tsx` after Campus Services
+
+---
+
+## 3.10 Transport Schedule & UI Improvements *(campus data — server-synced, UPDATED)*
+
+**Flow changes:**
+1. Transport screen now has two rows of filter tabs:
+   - Row 1: `Departure from Campus` | `Arrival at Campus`
+   - Row 2: `Mon–Sat` | `Sunday & Holidays`
+2. Default day-type is auto-detected from the current date + calendar data
+3. Direction classification: trips whose `to` field does NOT contain `iitj` = Departure; trips arriving at `iitj` = Arrival
+4. A banner at the bottom of the filter tabs opens the official IITJ transport page via `expo-web-browser`
+
+**Schedule source of truth:**
+- `docs/FinalDoc/IITJ_Transport_Schedule.md` is the single source of truth for all schedule data
+- All Mon–Sat and Sunday/Holiday Departure and Arrival entries are recorded with `→` arrow notation
+- Sunday/Holiday B2 9:00 PM Arrival has no official route — stored as `—` (not fabricated)
+- Whenever the schedule changes, bump the `transport` metadata version in `seed.ts` and `store/index.ts` and re-run `npm run seed` — mobile clients automatically detect the new version and pull fresh data on next launch
+
+---
+
+## 3.11 Settings Screen — DirectoryRow Enhancement *(UI fix)*
+
+**Problem fixed:** The dark mode `Switch` was placed using a negative `marginTop: -48` hack, making it invisible or overlapping on many device screen densities.
+
+**Solution:**
+- Added `renderRight?: () => ReactNode` prop to the `DirectoryRow` component
+- The Settings screen passes the `Switch` via `renderRight` — it renders inline, right-aligned, within the row's flexbox layout
+- `DirectoryRow` now suppresses the default `chevron-forward` icon when `renderRight` is provided
+- When no `onPress` is provided, the row is marked `disabled={true}` to prevent tap feedback on non-interactive rows
+
+---
+
 # 4. Consolidated New Data Storage Summary
+
 
 | Feature | Storage | New backend endpoint? |
 |---|---|---|
 | My Mess QR | Local (image file + metadata) | No |
-| Timetable | Local (Hive/sqflite) | No |
-| Notes | Local (Hive/sqflite) | No |
+| Timetable (incl. showOnHome preference) | Local (SQLite via expo-sqlite) | No |
+| Notes | Local (SQLite via expo-sqlite) | No |
 | Suggest Something | Server (MongoDB `suggestions`) | Yes — `POST /suggestions`, `GET /admin/suggestions` |
+| Internet & Wi-Fi guides | Static (hardcoded PlatformGuide[] — official PDF URLs only) | No |
+| Transport schedule | Server (MongoDB, seeded from IITJ_Transport_Schedule.md) | Yes — bumped `transport` version to force client resync |
 
 Everything else in the app (Menu, Notices, Transport, Calendar, Portals, Apps, Map, Services, Emergency, About) remains exactly as specified in the existing API design doc — unaffected by this feature set.
 
