@@ -8,6 +8,7 @@ const MORE_LINKS = [
   { title: 'Campus Map', route: '/map' as const },
   { title: 'Essential Portals', route: '/portals' as const },
   { title: 'Campus Services', route: '/services' as const },
+  { title: 'Internet & Wi-Fi', route: '/wifi' as const },
   { title: 'Emergency Contacts', route: '/emergency' as const },
   { title: 'About IITJ', route: '/about' as const },
   { title: 'Settings', route: '/settings' as const },
