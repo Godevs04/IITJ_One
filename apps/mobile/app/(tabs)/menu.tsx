@@ -169,10 +169,6 @@ export default function MenuScreen() {
           const dishesStr = dietPreference === 'veg' ? items.veg : items.nonVeg;
           const dishes = splitDishes(dishesStr);
 
-          // Get equivalent list of the other type to identify specials
-          const otherDishesStr = dietPreference === 'veg' ? items.nonVeg : items.veg;
-          const otherDishes = new Set(splitDishes(otherDishesStr));
-
           const isToday = selectedDay === todayDayName();
           const timeStatus = isToday ? getMealTimeStatus(meal) : null;
           const mealWindow = MEAL_WINDOWS[meal];
@@ -239,44 +235,14 @@ export default function MenuScreen() {
               {/* Dishes Grid */}
               <View style={styles.dishesGrid}>
                 {dishes.map((dish, idx) => {
-                  const isSpecial = !otherDishes.has(dish);
-                  const isHighlight = dietPreference === 'nonVeg' && isSpecial;
-
                   return (
                     <View key={idx} style={styles.dishGridItem}>
                       <View style={styles.dishRow}>
                         <View style={[styles.dishDot, { backgroundColor: '#3B8E4C' }]} />
                         <View style={styles.dishTextContainer}>
-                          <Text
-                            style={[
-                              styles.dishText,
-                              { color: theme.text },
-                              isHighlight && styles.specialDishText,
-                            ]}
-                          >
+                          <Text style={[styles.dishText, { color: theme.text }]}>
                             {dish}
                           </Text>
-                          {isHighlight && (
-                            <View
-                              style={[
-                                styles.miniSpecialBadge,
-                                {
-                                  backgroundColor: theme.errorTint,
-                                },
-                              ]}
-                            >
-                              <Text
-                                style={[
-                                  styles.miniSpecialBadgeText,
-                                  {
-                                    color: theme.nonVeg,
-                                  },
-                                ]}
-                              >
-                                Non-Veg
-                              </Text>
-                            </View>
-                          )}
                         </View>
                       </View>
                     </View>
