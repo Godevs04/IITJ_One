@@ -34,6 +34,10 @@ export interface TransportTrip {
   endTime: string;
   to: string;
   route: string;
+  /** Stamped from the parent route group (or the Thursday override row) — the
+   * authoritative source of truth for direction. Prefer this over guessing
+   * from `to`/`from` text, which varies in how campus is labelled. */
+  direction?: 'departure' | 'arrival';
 }
 
 export interface TransportRouteGroup {

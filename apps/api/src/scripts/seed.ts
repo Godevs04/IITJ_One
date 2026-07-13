@@ -12,7 +12,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 const defaultVersions = (): MetaVersions => ({
   menu: 1,
   notices: 1,
-  transport: 6,
+  transport: 7,
   calendar: 1,
   portals: 1,
   apps: 1,

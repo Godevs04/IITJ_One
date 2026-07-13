@@ -120,7 +120,7 @@ export function parseRouteStops(routeStr: string, fromStop: string, toStop: stri
     return [fromStop, toStop].filter(Boolean);
   }
   const intermediate = routeStr
-    .split(/[–-]/)
+    .split(/[→–—-]/)
     .map((s) => s.trim())
     .filter((s) => s && s !== '—');
 

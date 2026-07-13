@@ -68,6 +68,7 @@ export interface TransportTrip {
   endTime: string;
   to: string;
   route: string;
+  direction?: 'departure' | 'arrival';
 }
 
 export interface TransportRouteGroup {

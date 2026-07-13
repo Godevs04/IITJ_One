@@ -29,10 +29,16 @@ function getTripsForToday(transport: TransportDoc, calendar: CalendarDoc | null)
   const override = transport.scheduleOverrides.find(
     (o) => o.dayOfWeek.toLowerCase() === day,
   );
-  if (override?.trips.length) return override.trips;
+  if (override?.trips.length) {
+    // Home's "Next Bus" widget only ever means departure-from-campus, so
+    // filter out any arrival rows the override might also carry.
+    return override.trips.filter((t) => t.direction !== 'arrival');
+  }
 
   const key = getScheduleKey(calendar);
-  const groups = transport.routes.filter((r) => r.weekday === key);
+  const groups = transport.routes.filter(
+    (r) => r.weekday === key && r.direction === 'departure',
+  );
   return groups.flatMap((g) => g.trips);
 }
 

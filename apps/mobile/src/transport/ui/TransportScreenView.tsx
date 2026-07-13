@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
-import type { CalendarDoc, TransportDoc } from '@/types/campus';
+import type { CalendarDoc, TransportDoc, TransportTrip } from '@/types/campus';
 import { getScheduleKey, getTripsForDayType, evaluateTripStatus } from '../services/ScheduleEngine';
 import { parseRouteStops } from '../utils/coordinates';
 import { TripCard } from '../widgets/TripCard';
@@ -115,9 +115,12 @@ export function TransportScreenView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transport, calendar, dayTypeFilter, tick]);
 
-  const isDepartureFromCampus = (trip: any) => {
-    const to = trip.to.toLowerCase();
-    return !to.includes('iitj');
+  const isDepartureFromCampus = (trip: TransportTrip) => {
+    // The route group already knows its direction — trust that over
+    // guessing from the `to` text, which varies in how campus is labelled
+    // (e.g. "IITJ" vs "IIT Jodhpur") and previously hid arrival trips.
+    if (trip.direction) return trip.direction === 'departure';
+    return !trip.to.toLowerCase().includes('iitj');
   };
 
   // Filter trips based on direction, search query and selected favorite stop filter

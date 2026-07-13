@@ -68,6 +68,7 @@ export const transportTripSchema = z.object({
   endTime: z.string(),
   to: z.string(),
   route: z.string(),
+  direction: z.enum(['departure', 'arrival']).optional(),
 });
 
 export const transportPutSchema = z.object({

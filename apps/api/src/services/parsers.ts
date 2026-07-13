@@ -19,7 +19,7 @@ function parseTableRows(section: string): string[][] {
   return rows;
 }
 
-function rowsToTrips(rows: string[][]): TransportTrip[] {
+function rowsToTrips(rows: string[][], direction: 'departure' | 'arrival'): TransportTrip[] {
   return rows.map((cells) => ({
     bus: cells[0] ?? '',
     startTime: cells[1] ?? '',
@@ -27,6 +27,7 @@ function rowsToTrips(rows: string[][]): TransportTrip[] {
     endTime: cells[3] ?? '',
     to: cells[4] ?? '',
     route: cells[5] ?? cells[6] ?? '',
+    direction,
   }));
 }
 
@@ -34,28 +35,34 @@ export function parseTransportMarkdown(filePath: string): {
   routes: TransportRouteGroup[];
   scheduleOverrides: ScheduleOverride[];
 } {
-  const content = fs.readFileSync(filePath, 'utf-8');
+  // Normalize CRLF -> LF so the blank-line-sensitive regexes below behave the
+  // same regardless of the source file's line endings.
+  const content = fs.readFileSync(filePath, 'utf-8').replace(/\r\n/g, '\n');
   const routes: TransportRouteGroup[] = [];
 
+  // Terminate on a *standalone* horizontal rule (`\n---\n`), not just any
+  // `---` — table separator rows (`|---|---|...|`) also contain "---" and
+  // would otherwise truncate the match right after the table header, before
+  // any data rows are captured.
   const monSatDep = content.match(
     /## Monday to Saturday[\s\S]*?### Departure from Campus([\s\S]*?)### Arrival at Campus/,
   );
   const monSatArr = content.match(
-    /## Monday to Saturday[\s\S]*?### Arrival at Campus([\s\S]*?)---/,
+    /## Monday to Saturday[\s\S]*?### Arrival at Campus([\s\S]*?)\n---\n/,
   );
 
   if (monSatDep) {
     routes.push({
       weekday: 'mon-sat',
       direction: 'departure',
-      trips: rowsToTrips(parseTableRows(monSatDep[1])),
+      trips: rowsToTrips(parseTableRows(monSatDep[1]), 'departure'),
     });
   }
   if (monSatArr) {
     routes.push({
       weekday: 'mon-sat',
       direction: 'arrival',
-      trips: rowsToTrips(parseTableRows(monSatArr[1])),
+      trips: rowsToTrips(parseTableRows(monSatArr[1]), 'arrival'),
     });
   }
 
@@ -63,26 +70,26 @@ export function parseTransportMarkdown(filePath: string): {
     /## Sunday & Institute Holidays[\s\S]*?### Departure from Campus([\s\S]*?)### Arrival at Campus/,
   );
   const sunArr = content.match(
-    /## Sunday & Institute Holidays[\s\S]*?### Arrival at Campus([\s\S]*?)---/,
+    /## Sunday & Institute Holidays[\s\S]*?### Arrival at Campus([\s\S]*?)\n---\n/,
   );
 
   if (sunDep) {
     routes.push({
       weekday: 'sun-holiday',
       direction: 'departure',
-      trips: rowsToTrips(parseTableRows(sunDep[1])),
+      trips: rowsToTrips(parseTableRows(sunDep[1]), 'departure'),
     });
   }
   if (sunArr) {
     routes.push({
       weekday: 'sun-holiday',
       direction: 'arrival',
-      trips: rowsToTrips(parseTableRows(sunArr[1])),
+      trips: rowsToTrips(parseTableRows(sunArr[1]), 'arrival'),
     });
   }
 
   const thursdaySection = content.match(
-    /### Revised Thursday Schedule[\s\S]*?\n\n([\s\S]*?)---/,
+    /### Revised Thursday Schedule[\s\S]*?\n\n([\s\S]*?)\n---\n/,
   );
   const scheduleOverrides: ScheduleOverride[] = [];
   if (thursdaySection) {
@@ -99,6 +106,9 @@ export function parseTransportMarkdown(filePath: string): {
         endTime: cells[4] ?? '',
         to: cells[5] ?? '',
         route: cells[6] ?? '',
+        direction: (cells[0] ?? '').toLowerCase().startsWith('arriv')
+          ? ('arrival' as const)
+          : ('departure' as const),
       })),
     });
   }

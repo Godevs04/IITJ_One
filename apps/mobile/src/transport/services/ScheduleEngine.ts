@@ -26,7 +26,12 @@ export function getTripsForDayType(
   dayType: 'mon-sat' | 'sun-holiday'
 ): TransportTrip[] {
   const groups = transport.routes.filter((r) => r.weekday === dayType);
-  let trips = groups.flatMap((g) => g.trips);
+  // Stamp each trip with its group's direction — this is authoritative and
+  // must not be re-derived from the `to`/`from` text (which varies in how
+  // campus is labelled and previously caused arrival trips to be misfiled).
+  let trips: TransportTrip[] = groups.flatMap((g) =>
+    g.trips.map((t) => ({ ...t, direction: g.direction })),
+  );
 
   const day = todayDayName();
   if (dayType === 'mon-sat' && day === 'thursday') {
