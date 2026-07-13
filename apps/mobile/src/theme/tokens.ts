@@ -31,6 +31,8 @@ export const AppColors = {
   stitchSecondary: '#885210',
   stitchBackground: '#FAF9FC',
   stitchOnSurface: '#1A1C1E',
+  errorContainer: '#FFDAD6',
+  errorContainerDark: '#442726',
 } as const;
 
 export const AppSpacing = {
@@ -113,6 +115,7 @@ export interface ThemeColors {
   importantCardBorder: string;
   noteCardBg: string;
   error: string;
+  errorTint: string;
   veg: string;
   vegTint: string;
   nonVeg: string;
@@ -156,6 +159,7 @@ export function getThemeColors(scheme: ColorScheme): ThemeColors {
       importantCardBorder: AppColors.duskDark,
       noteCardBg: AppColors.surfaceNightRaised,
       error: AppColors.nonVegRed,
+      errorTint: AppColors.errorContainerDark,
       veg: AppColors.sageDark,
       vegTint: '#1E2A22',
       nonVeg: '#E07A75',
@@ -198,6 +202,7 @@ export function getThemeColors(scheme: ColorScheme): ThemeColors {
     importantCardBorder: AppColors.tharDusk,
     noteCardBg: AppColors.desertSand,
     error: AppColors.nonVegRed,
+    errorTint: AppColors.errorContainer,
     veg: AppColors.sageWell,
     vegTint: AppColors.sageTint,
     nonVeg: AppColors.nonVegRed,

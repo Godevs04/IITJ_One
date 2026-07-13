@@ -8,6 +8,7 @@ interface ContentCardProps {
   subtitle?: string;
   children?: ReactNode;
   onPress?: () => void;
+  style?: any;
 }
 
 export function ContentCard({
@@ -15,6 +16,7 @@ export function ContentCard({
   subtitle,
   children,
   onPress,
+  style,
 }: ContentCardProps) {
   const theme = useThemeColors();
 
@@ -28,6 +30,7 @@ export function ContentCard({
           backgroundColor: theme.surface,
           borderColor: theme.border,
         },
+        style,
         pressed && onPress && styles.pressed,
       ]}
     >

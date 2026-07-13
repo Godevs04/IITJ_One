@@ -1,12 +1,12 @@
 import { useCallback, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ContentCard } from '@/components/ContentCard';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { readCachedModule } from '@/services/sync';
 import type { MenuDoc } from '@/types/campus';
-import { todayDayName } from '@/utils/date';
+import { todayDayName, getMealTimeStatus, MEAL_WINDOWS } from '@/utils/date';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
@@ -18,11 +18,19 @@ const MEAL_LABELS: Record<string, string> = {
   dinner: 'Dinner',
 };
 
+function splitDishes(value: string): string[] {
+  return value
+    .split(/[,;]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 export default function MenuScreen() {
   const theme = useThemeColors();
   const { syncing, sync } = useCampusSync(false);
   const menu = readCachedModule<MenuDoc>('menu');
   const [selectedDay, setSelectedDay] = useState(todayDayName());
+  const [dietPreference, setDietPreference] = useState<'veg' | 'nonVeg'>('veg');
 
   const dayMenu = useMemo(
     () => menu?.days.find((d) => d.dayName === selectedDay),
@@ -68,26 +76,149 @@ export default function MenuScreen() {
         </View>
       ) : null}
 
+      {days.length > 0 ? (
+        <View style={styles.toggleStrip}>
+          <Pressable
+            onPress={() => setDietPreference('veg')}
+            style={[
+              styles.toggleButton,
+              {
+                backgroundColor:
+                  dietPreference === 'veg' ? theme.vegTint : theme.chipBackground,
+                borderColor: dietPreference === 'veg' ? theme.veg : theme.border,
+              },
+            ]}
+          >
+            <View style={[styles.indicatorDot, { backgroundColor: theme.veg }]} />
+            <Text
+              style={[
+                styles.toggleButtonText,
+                { color: dietPreference === 'veg' ? theme.veg : theme.textMuted },
+              ]}
+            >
+              Vegetarian
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setDietPreference('nonVeg')}
+            style={[
+              styles.toggleButton,
+              {
+                backgroundColor:
+                  dietPreference === 'nonVeg' ? theme.errorTint : theme.chipBackground,
+                borderColor: dietPreference === 'nonVeg' ? theme.nonVeg : theme.border,
+              },
+            ]}
+          >
+            <View style={[styles.indicatorDot, { backgroundColor: theme.nonVeg }]} />
+            <Text
+              style={[
+                styles.toggleButtonText,
+                { color: dietPreference === 'nonVeg' ? theme.nonVeg : theme.textMuted },
+              ]}
+            >
+              Non-Vegetarian
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
+
       {dayMenu ? (
         MEALS.map((meal) => {
           const items = dayMenu[meal];
+          const dishesStr = dietPreference === 'veg' ? items.veg : items.nonVeg;
+          const dishes = splitDishes(dishesStr);
+
+          // Get equivalent list of the other type to identify specials
+          const otherDishesStr = dietPreference === 'veg' ? items.nonVeg : items.veg;
+          const otherDishes = new Set(splitDishes(otherDishesStr));
+
+          const isToday = selectedDay === todayDayName();
+          const timeStatus = isToday ? getMealTimeStatus(meal) : null;
+          const mealWindow = MEAL_WINDOWS[meal];
+          const cardSubtitle = `${mealWindow.timeLabel} • ${dayMenu.date}`;
+
+          const isActive = timeStatus?.status === 'active';
+
           return (
-            <ContentCard key={meal} title={MEAL_LABELS[meal]} subtitle={dayMenu.date}>
-              <Text style={[styles.items, { color: theme.text }]}>
-                Veg: {items.veg}
-              </Text>
-              <Text style={[styles.items, { color: theme.text }]}>
-                Non-veg: {items.nonVeg}
-              </Text>
-              <View style={styles.tagRow}>
-                <View style={[styles.tag, { backgroundColor: theme.vegTint }]}>
-                  <Text style={[styles.vegText, { color: theme.veg }]}>Veg</Text>
-                </View>
-                <View style={styles.tag}>
-                  <Text style={[styles.nonVegText, { color: theme.nonVeg }]}>
-                    Non-veg
+            <ContentCard
+              key={meal}
+              title={MEAL_LABELS[meal]}
+              subtitle={cardSubtitle}
+              style={isActive && { borderColor: theme.accent, borderWidth: 2 }}
+            >
+              {timeStatus && timeStatus.status !== 'passed' && (
+                <View
+                  style={[
+                    styles.mealBadge,
+                    {
+                      backgroundColor: isActive ? theme.importantCardBg : theme.chipBackground,
+                      borderColor: isActive ? theme.importantCardBorder : theme.border,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.mealBadgeText,
+                      { color: isActive ? theme.accent : theme.textMuted },
+                    ]}
+                  >
+                    {isActive ? 'ACTIVE NOW' : 'UPCOMING'} • {timeStatus.timeLeftString}
                   </Text>
                 </View>
+              )}
+              <View style={styles.dishesList}>
+                {dishes.map((dish, idx) => {
+                  const isSpecial = !otherDishes.has(dish);
+
+                  return (
+                    <View key={idx} style={styles.dishRow}>
+                      <View
+                        style={[
+                          styles.dishDot,
+                          {
+                            backgroundColor:
+                              dietPreference === 'nonVeg'
+                                ? (isSpecial ? theme.nonVeg : theme.veg)
+                                : theme.veg,
+                          },
+                        ]}
+                      />
+                      <Text
+                        style={[
+                          styles.dishText,
+                          { color: theme.text },
+                          isSpecial && styles.specialDishText,
+                        ]}
+                      >
+                        {dish}
+                      </Text>
+                      {isSpecial && (
+                        <View
+                          style={[
+                            styles.specialBadge,
+                            {
+                              backgroundColor:
+                                dietPreference === 'veg' ? theme.vegTint : theme.errorTint,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.specialBadgeText,
+                              {
+                                color:
+                                  dietPreference === 'veg' ? theme.veg : theme.nonVeg,
+                              },
+                            ]}
+                          >
+                            {dietPreference === 'veg' ? 'Veg Special' : 'Non-Veg'}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  );
+                })}
               </View>
             </ContentCard>
           );
@@ -117,23 +248,76 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: 'hidden',
   },
-  items: {
-    ...AppTypography.body,
-  },
-  tagRow: {
+  toggleStrip: {
     flexDirection: 'row',
-    marginTop: AppSpacing.sm,
-    gap: AppSpacing.sm,
+    gap: AppSpacing.md,
+    marginTop: AppSpacing.md,
+    marginBottom: AppSpacing.sm,
   },
-  tag: {
-    borderRadius: AppRadius.full,
-    paddingHorizontal: AppSpacing.sm,
+  toggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: AppSpacing.sm,
+    borderRadius: AppRadius.md,
+    borderWidth: 1,
+    gap: AppSpacing.xs,
+  },
+  toggleButtonText: {
+    ...AppTypography.button,
+    fontSize: 13,
+  },
+  indicatorDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  dishesList: {
+    gap: AppSpacing.xs,
+  },
+  dishRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.sm,
     paddingVertical: AppSpacing.xs,
   },
-  vegText: {
-    ...AppTypography.caption,
+  dishDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
-  nonVegText: {
+  dishText: {
+    ...AppTypography.body,
+    flex: 1,
+  },
+  specialDishText: {
+    fontWeight: '600',
+  },
+  specialBadge: {
+    paddingHorizontal: AppSpacing.sm,
+    paddingVertical: 2,
+    borderRadius: AppRadius.sm,
+  },
+  specialBadgeText: {
     ...AppTypography.caption,
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  mealBadge: {
+    flexDirection: 'row',
+    alignSelf: 'flex-start',
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: AppSpacing.xs,
+    borderRadius: AppRadius.sm,
+    borderWidth: 1,
+    marginBottom: AppSpacing.sm,
+    gap: AppSpacing.xs,
+  },
+  mealBadgeText: {
+    ...AppTypography.caption,
+    fontWeight: '700',
+    fontSize: 10,
+    letterSpacing: 0.5,
   },
 });
+

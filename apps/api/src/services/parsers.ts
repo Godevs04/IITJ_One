@@ -135,7 +135,10 @@ function parseSingleMenuCsv(csv: string): Record<string, Record<string, string>>
     const parts = splitCsvLine(lines[i]);
     const dayCell = (parts[0] ?? '').trim();
     const meal = (parts[1] ?? '').trim().toUpperCase();
-    const items = [parts[2], parts[3], parts[4]].filter(Boolean).join(', ').trim();
+    const items = [parts[2], parts[3], parts[4]]
+      .map((s) => (s ? s.trim() : ''))
+      .filter((s) => s && s.replace(/[\u2014\u2013-]/g, '').trim() !== '')
+      .join(', ');
 
     if (dayCell) {
       currentDay = dayCell;

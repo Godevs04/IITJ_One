@@ -3,51 +3,59 @@ import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
+export type QuickAccessVariant = 'default' | 'prominent' | 'danger';
+
 interface QuickAccessTileProps {
   title: string;
   icon: keyof typeof Ionicons.glyphMap;
   onPress: () => void;
-  prominent?: boolean;
+  variant?: QuickAccessVariant;
 }
 
 export function QuickAccessTile({
   title,
   icon,
   onPress,
-  prominent,
+  variant = 'default',
 }: QuickAccessTileProps) {
   const theme = useThemeColors();
+
+  const iconBox =
+    variant === 'prominent'
+      ? { backgroundColor: theme.quickAccessProminentBg }
+      : variant === 'danger'
+        ? { backgroundColor: theme.errorTint }
+        : {
+            backgroundColor: theme.quickAccessBg,
+            borderWidth: 1,
+            borderColor: theme.quickAccessBorder,
+          };
+
+  const iconColor =
+    variant === 'prominent'
+      ? theme.quickAccessProminentIcon
+      : variant === 'danger'
+        ? theme.error
+        : theme.quickAccessIcon;
+
+  const labelColor = variant === 'danger' ? theme.error : theme.text;
 
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.tile,
-        prominent && styles.prominent,
-        pressed && styles.pressed,
-      ]}
+      style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
     >
-      <View
-        style={[
-          styles.iconCircle,
-          prominent
-            ? { backgroundColor: theme.quickAccessProminentBg }
-            : {
-                backgroundColor: theme.quickAccessBg,
-                borderWidth: 1,
-                borderColor: theme.quickAccessBorder,
-              },
-        ]}
-      >
-        <Ionicons
-          name={icon}
-          size={24}
-          color={
-            prominent ? theme.quickAccessProminentIcon : theme.quickAccessIcon
-          }
-        />
+      <View style={[styles.iconBox, iconBox]}>
+        <Ionicons name={icon} size={24} color={iconColor} />
       </View>
-      <Text style={[styles.label, { color: theme.text }]} numberOfLines={2}>
+      <Text
+        style={[
+          styles.label,
+          { color: labelColor },
+          variant === 'danger' && styles.labelBold,
+        ]}
+        numberOfLines={2}
+      >
         {title}
       </Text>
     </Pressable>
@@ -56,29 +64,29 @@ export function QuickAccessTile({
 
 const styles = StyleSheet.create({
   tile: {
-    width: '30%',
-    minWidth: 100,
+    width: '25%',
     alignItems: 'center',
-    padding: AppSpacing.sm,
-    gap: AppSpacing.xs,
-  },
-  prominent: {
-    width: '47%',
+    paddingVertical: AppSpacing.sm,
+    paddingHorizontal: AppSpacing.xs,
+    gap: AppSpacing.sm,
   },
   pressed: {
     opacity: 0.85,
-    transform: [{ scale: 0.97 }],
+    transform: [{ scale: 0.95 }],
   },
-  iconCircle: {
+  iconBox: {
     width: 56,
     height: 56,
-    borderRadius: AppRadius.lg,
+    borderRadius: AppRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   label: {
-    ...AppTypography.bodySmall,
-    textAlign: 'center',
+    ...AppTypography.caption,
     fontWeight: '500',
+    textAlign: 'center',
+  },
+  labelBold: {
+    fontWeight: '700',
   },
 });

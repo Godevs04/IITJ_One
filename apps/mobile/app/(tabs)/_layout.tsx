@@ -1,4 +1,5 @@
-import { Tabs } from 'expo-router';
+import { Tabs, router } from 'expo-router';
+import { Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/theme/ThemeProvider';
 
@@ -30,6 +31,24 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
+          headerShown: true,
+          headerTitle: 'IITJ one',
+          headerStyle: { backgroundColor: colors.headerBackground },
+          headerTintColor: colors.headerTint,
+          headerTitleStyle: { fontWeight: '600' },
+          headerRight: () => (
+            <Pressable
+              onPress={() => router.push('/settings')}
+              hitSlop={8}
+              style={{ marginRight: 16 }}
+            >
+              <Ionicons
+                name="settings-outline"
+                size={22}
+                color={colors.headerTint}
+              />
+            </Pressable>
+          ),
           tabBarIcon: ({ color }) => <TabIcon name="home-outline" color={color} />,
         }}
       />
