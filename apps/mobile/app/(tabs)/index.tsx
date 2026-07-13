@@ -78,7 +78,8 @@ function to12Hour(time: string): { value: string; meridiem: string } {
   return { value: `${hour12}:${String(m || 0).padStart(2, '0')}`, meridiem };
 }
 
-function splitDishes(value: string): string[] {
+function splitDishes(value: string | undefined | null): string[] {
+  if (!value) return [];
   return value
     .split(/[,;]/)
     .map((s) => s.trim())
