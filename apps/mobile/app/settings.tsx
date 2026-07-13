@@ -26,12 +26,16 @@ export default function SettingsScreen() {
   return (
     <ScreenShell title="Settings" subtitle="Preferences and personal tools" hideTitle>
       <View style={{ gap: AppSpacing.sm }}>
-        <DirectoryRow title="Dark mode" subtitle={darkMode ? 'On' : 'Off'} />
-        <Switch
-          value={darkMode}
-          onValueChange={toggleDark}
-          trackColor={{ false: colors.border, true: colors.primary }}
-          style={{ alignSelf: 'flex-end', marginTop: -48, marginRight: 16 }}
+        <DirectoryRow
+          title="Dark mode"
+          subtitle={darkMode ? 'On' : 'Off'}
+          renderRight={() => (
+            <Switch
+              value={darkMode}
+              onValueChange={toggleDark}
+              trackColor={{ false: colors.border, true: colors.primary }}
+            />
+          )}
         />
       </View>
 

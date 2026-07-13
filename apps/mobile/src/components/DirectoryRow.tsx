@@ -8,6 +8,7 @@ interface DirectoryRowProps {
   subtitle?: string;
   phone?: string;
   onPress?: () => void;
+  renderRight?: () => React.ReactNode;
 }
 
 export function DirectoryRow({
@@ -15,19 +16,21 @@ export function DirectoryRow({
   subtitle,
   phone,
   onPress,
+  renderRight,
 }: DirectoryRowProps) {
   const theme = useThemeColors();
 
   return (
     <Pressable
       onPress={onPress}
+      disabled={!onPress}
       style={({ pressed }) => [
         styles.row,
         {
           backgroundColor: theme.surface,
           borderColor: theme.border,
         },
-        pressed && styles.pressed,
+        onPress && pressed && styles.pressed,
       ]}
     >
       <View style={styles.textBlock}>
@@ -46,9 +49,11 @@ export function DirectoryRow({
         >
           <Ionicons name="call-outline" size={20} color={theme.primary} />
         </Pressable>
-      ) : (
+      ) : renderRight ? (
+        renderRight()
+      ) : onPress ? (
         <Ionicons name="chevron-forward" size={18} color={theme.iconMuted} />
-      )}
+      ) : null}
     </Pressable>
   );
 }
