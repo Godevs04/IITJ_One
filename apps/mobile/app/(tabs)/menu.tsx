@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { ContentCard } from '@/components/ContentCard';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
@@ -17,6 +17,26 @@ const MEAL_LABELS: Record<string, string> = {
   snacks: 'Snacks',
   dinner: 'Dinner',
 };
+
+const MEAL_ICONS: Record<string, string> = {
+  breakfast: 'cafe-outline',
+  lunch: 'restaurant-outline',
+  snacks: 'fast-food-outline',
+  dinner: 'restaurant-outline',
+};
+
+function getDayNumber(dateStr: string): string {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (!isNaN(d.getTime())) {
+    return String(d.getDate());
+  }
+  const numbers = dateStr.match(/\b\d{1,2}\b/g);
+  if (numbers && numbers.length > 0) {
+    return numbers[0];
+  }
+  return '';
+}
 
 function splitDishes(value: string): string[] {
   return value
@@ -51,29 +71,49 @@ export default function MenuScreen() {
       refreshing={syncing}
     >
       {days.length > 0 ? (
-        <View style={styles.dayStrip}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.dayStripScroll}
+        >
           {days.map((d) => {
             const active = selectedDay === d.dayName;
+            const dayNum = getDayNumber(d.date);
+            const shortDay = d.dayName.slice(0, 3).toUpperCase();
+
             return (
-              <Text
-                key={d.dayName}
-                onPress={() => setSelectedDay(d.dayName)}
-                style={[
-                  styles.dayChip,
-                  {
-                    color: active ? theme.chipActiveText : theme.chipText,
-                    borderColor: active ? theme.primary : theme.border,
-                    backgroundColor: active
-                      ? theme.chipActiveBackground
-                      : theme.chipBackground,
-                  },
-                ]}
-              >
-                {d.dayName.slice(0, 3)}
-              </Text>
+              <View key={d.dayName} style={styles.dayCardWrapper}>
+                {active ? (
+                  <View style={[styles.activeDayOuter, { borderColor: theme.primary }]}>
+                    <Pressable
+                      onPress={() => setSelectedDay(d.dayName)}
+                      style={[styles.dayCard, { backgroundColor: theme.primary }]}
+                    >
+                      <Text style={[styles.activeDayNameText, { color: theme.onPrimary }]}>
+                        {shortDay}
+                      </Text>
+                      <Text style={[styles.activeDayNumText, { color: theme.onPrimary }]}>
+                        {dayNum}
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <Pressable
+                    onPress={() => setSelectedDay(d.dayName)}
+                    style={[styles.dayCard, { backgroundColor: theme.chipBackground }]}
+                  >
+                    <Text style={[styles.dayNameText, { color: theme.textMuted }]}>
+                      {shortDay}
+                    </Text>
+                    <Text style={[styles.dayNumText, { color: theme.text }]}>
+                      {dayNum}
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
             );
           })}
-        </View>
+        </ScrollView>
       ) : null}
 
       {days.length > 0 ? (
@@ -136,17 +176,41 @@ export default function MenuScreen() {
           const isToday = selectedDay === todayDayName();
           const timeStatus = isToday ? getMealTimeStatus(meal) : null;
           const mealWindow = MEAL_WINDOWS[meal];
-          const cardSubtitle = `${mealWindow.timeLabel} • ${dayMenu.date}`;
 
           const isActive = timeStatus?.status === 'active';
 
           return (
-            <ContentCard
+            <View
               key={meal}
-              title={MEAL_LABELS[meal]}
-              subtitle={cardSubtitle}
-              style={isActive && { borderColor: theme.accent, borderWidth: 2 }}
+              style={[
+                styles.mealCard,
+                {
+                  backgroundColor: theme.surface,
+                  borderColor: isActive ? theme.accent : theme.border,
+                  borderWidth: isActive ? 2 : 1,
+                },
+              ]}
             >
+              {/* Header Row */}
+              <View style={styles.cardHeader}>
+                <View style={styles.mealTitleContainer}>
+                  <Ionicons
+                    name={MEAL_ICONS[meal] as any}
+                    size={22}
+                    color={theme.primary}
+                  />
+                  <Text style={[styles.mealTitle, { color: theme.primary }]}>
+                    {MEAL_LABELS[meal]}
+                  </Text>
+                </View>
+                <View style={[styles.timeBadge, { backgroundColor: theme.chipBackground }]}>
+                  <Text style={[styles.timeBadgeText, { color: theme.textMuted }]}>
+                    {mealWindow.timeLabel}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Active / Countdown Badge */}
               {timeStatus && timeStatus.status !== 'passed' && (
                 <View
                   style={[
@@ -154,6 +218,7 @@ export default function MenuScreen() {
                     {
                       backgroundColor: isActive ? theme.importantCardBg : theme.chipBackground,
                       borderColor: isActive ? theme.importantCardBorder : theme.border,
+                      borderWidth: 1,
                     },
                   ]}
                 >
@@ -167,60 +232,58 @@ export default function MenuScreen() {
                   </Text>
                 </View>
               )}
-              <View style={styles.dishesList}>
+
+              {/* Divider */}
+              <View style={[styles.cardDivider, { backgroundColor: theme.border }]} />
+
+              {/* Dishes Grid */}
+              <View style={styles.dishesGrid}>
                 {dishes.map((dish, idx) => {
                   const isSpecial = !otherDishes.has(dish);
 
                   return (
-                    <View key={idx} style={styles.dishRow}>
-                      <View
-                        style={[
-                          styles.dishDot,
-                          {
-                            backgroundColor:
-                              dietPreference === 'nonVeg'
-                                ? (isSpecial ? theme.nonVeg : theme.veg)
-                                : theme.veg,
-                          },
-                        ]}
-                      />
-                      <Text
-                        style={[
-                          styles.dishText,
-                          { color: theme.text },
-                          isSpecial && styles.specialDishText,
-                        ]}
-                      >
-                        {dish}
-                      </Text>
-                      {isSpecial && (
-                        <View
+                    <View key={idx} style={styles.dishGridItem}>
+                      <View style={styles.dishRow}>
+                        <View style={[styles.dishDot, { backgroundColor: '#3B8E4C' }]} />
+                        <Text
                           style={[
-                            styles.specialBadge,
-                            {
-                              backgroundColor:
-                                dietPreference === 'veg' ? theme.vegTint : theme.errorTint,
-                            },
+                            styles.dishText,
+                            { color: theme.text },
+                            isSpecial && styles.specialDishText,
                           ]}
+                          numberOfLines={2}
                         >
-                          <Text
+                          {dish}
+                        </Text>
+                        {isSpecial && (
+                          <View
                             style={[
-                              styles.specialBadgeText,
+                              styles.miniSpecialBadge,
                               {
-                                color:
-                                  dietPreference === 'veg' ? theme.veg : theme.nonVeg,
+                                backgroundColor:
+                                  dietPreference === 'veg' ? theme.vegTint : theme.errorTint,
                               },
                             ]}
                           >
-                            {dietPreference === 'veg' ? 'Veg Special' : 'Non-Veg'}
-                          </Text>
-                        </View>
-                      )}
+                            <Text
+                              style={[
+                                styles.miniSpecialBadgeText,
+                                {
+                                  color:
+                                    dietPreference === 'veg' ? theme.veg : theme.nonVeg,
+                                },
+                              ]}
+                            >
+                              {dietPreference === 'veg' ? 'Veg' : 'Non-Veg'}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
                     </View>
                   );
                 })}
               </View>
-            </ContentCard>
+            </View>
           );
         })
       ) : (
@@ -235,18 +298,51 @@ export default function MenuScreen() {
 }
 
 const styles = StyleSheet.create({
-  dayStrip: {
+  dayStripScroll: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: AppSpacing.sm,
+    paddingVertical: AppSpacing.sm,
   },
-  dayChip: {
+  dayCardWrapper: {
+    height: 80,
+    width: 62,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  activeDayOuter: {
+    borderWidth: 2,
+    padding: 2,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dayCard: {
+    width: 52,
+    height: 66,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 4,
+  },
+  dayNameText: {
     ...AppTypography.caption,
-    paddingHorizontal: AppSpacing.md,
-    paddingVertical: AppSpacing.xs,
-    borderRadius: AppRadius.full,
-    borderWidth: 1,
-    overflow: 'hidden',
+    fontWeight: '600',
+    fontSize: 10,
+  },
+  dayNumText: {
+    ...AppTypography.body,
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  activeDayNameText: {
+    ...AppTypography.caption,
+    fontWeight: '600',
+    fontSize: 10,
+  },
+  activeDayNumText: {
+    ...AppTypography.body,
+    fontWeight: '700',
+    fontSize: 16,
   },
   toggleStrip: {
     flexDirection: 'row',
@@ -272,36 +368,37 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
   },
-  dishesList: {
-    gap: AppSpacing.xs,
+  mealCard: {
+    borderRadius: AppRadius.md,
+    padding: AppSpacing.lg,
+    gap: AppSpacing.sm,
+    marginBottom: AppSpacing.md,
   },
-  dishRow: {
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  mealTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: AppSpacing.sm,
-    paddingVertical: AppSpacing.xs,
   },
-  dishDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+  mealTitle: {
+    ...AppTypography.h2,
+    fontWeight: '700',
+    fontSize: 18,
   },
-  dishText: {
-    ...AppTypography.body,
-    flex: 1,
-  },
-  specialDishText: {
-    fontWeight: '600',
-  },
-  specialBadge: {
-    paddingHorizontal: AppSpacing.sm,
-    paddingVertical: 2,
+  timeBadge: {
     borderRadius: AppRadius.sm,
+    paddingHorizontal: AppSpacing.sm,
+    paddingVertical: 4,
   },
-  specialBadgeText: {
+  timeBadgeText: {
     ...AppTypography.caption,
-    fontSize: 10,
-    fontWeight: '600',
+    fontFamily: 'monospace',
+    fontWeight: '700',
+    fontSize: 11,
   },
   mealBadge: {
     flexDirection: 'row',
@@ -309,8 +406,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: AppSpacing.md,
     paddingVertical: AppSpacing.xs,
     borderRadius: AppRadius.sm,
-    borderWidth: 1,
-    marginBottom: AppSpacing.sm,
+    marginTop: AppSpacing.xs,
     gap: AppSpacing.xs,
   },
   mealBadgeText: {
@@ -318,6 +414,47 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 10,
     letterSpacing: 0.5,
+  },
+  cardDivider: {
+    height: 1,
+    marginVertical: AppSpacing.sm,
+  },
+  dishesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  dishGridItem: {
+    width: '50%',
+    paddingRight: AppSpacing.sm,
+    paddingVertical: AppSpacing.xs,
+  },
+  dishRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.xs,
+    flexWrap: 'wrap',
+  },
+  dishDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  dishText: {
+    ...AppTypography.bodySmall,
+    fontSize: 13,
+  },
+  specialDishText: {
+    fontWeight: '600',
+  },
+  miniSpecialBadge: {
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: AppRadius.sm,
+  },
+  miniSpecialBadgeText: {
+    ...AppTypography.caption,
+    fontSize: 9,
+    fontWeight: '700',
   },
 });
 
