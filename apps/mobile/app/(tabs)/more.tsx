@@ -28,6 +28,7 @@ const SECTIONS: MoreSection[] = [
       { title: 'Campus Services', icon: 'construct-outline', route: '/services' },
       { title: 'Internet & Wi-Fi', icon: 'wifi-outline', route: '/wifi' },
       { title: 'Laundry', icon: 'shirt-outline', route: '/laundry' },
+      { title: 'E-Rickshaw', icon: 'car-sport-outline', route: '/e-rickshaw' },
       { title: 'Cabs & Autos', icon: 'car-outline', route: '/cabs-autos' },
       { title: 'Emergency Contacts', icon: 'alert-circle-outline', route: '/emergency', variant: 'danger' },
     ],
