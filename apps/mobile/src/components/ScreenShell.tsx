@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from 'expo-router';
+import { useSegments } from 'expo-router';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppSpacing, AppTypography } from '@/theme/tokens';
 
@@ -33,20 +33,18 @@ export function ScreenShell({
   safeAreaTop,
 }: ScreenShellProps) {
   const theme = useThemeColors();
-  const navigation = useNavigation();
+  const segments = useSegments();
 
-  // Try to determine if a navigation header is visible
-  let hasHeader = true;
-  try {
-    const options = (navigation as any).getCurrentOptions();
-    hasHeader = options?.headerShown !== false;
-  } catch {
-    // Fail-safe default
-    hasHeader = true;
-  }
+  // Determine if this is one of the tab screens with hidden navigation headers
+  const isHeaderHiddenTab =
+    segments[0] === '(tabs)' &&
+    (segments[1] === 'menu' ||
+      segments[1] === 'notices' ||
+      segments[1] === 'transport' ||
+      segments[1] === 'more');
 
   // Include top edge if header is hidden, or if explicitly requested via prop
-  const applyTopInset = safeAreaTop ?? !hasHeader;
+  const applyTopInset = safeAreaTop ?? isHeaderHiddenTab;
   const edges: ('left' | 'right' | 'top')[] = ['left', 'right'];
   if (applyTopInset) {
     edges.push('top');
