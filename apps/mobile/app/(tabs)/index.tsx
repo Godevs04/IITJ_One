@@ -9,12 +9,13 @@ import { readCachedModule } from '@/services/sync';
 import { listTimetableEntries } from '@/services/localDb';
 import type { CalendarDoc, MenuDoc, TransportDoc } from '@/types/campus';
 import {
-  currentMealKey,
   expirySeconds,
   formatExpiryLabel,
   formatRelativeTime,
   todayDayName,
   getMealTimeStatus,
+  nowMinutes,
+  MEAL_WINDOWS,
 } from '@/utils/date';
 import { getNextDeparture } from '@/utils/transport';
 import { getNextClass, type NextClass } from '@/utils/timetable';
@@ -82,6 +83,31 @@ function splitDishes(value: string): string[] {
     .split(/[,;]/)
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+function isMainDish(dish: string): boolean {
+  const d = dish.toLowerCase().trim();
+  
+  const exactBlacklist = [
+    'tea', 'milk', 'coffee', 'butter', 'jam', 'pickle', 'pickles',
+    'sprout', 'sprouts', 'banana', 'salad', 'green salad', 'raita', 
+    'papad', 'sauce', 'chutney', 'curd', 'bread', 'butter, jam', 
+    'bread, butter, jam', 'tea, milk', 'coffee, milk'
+  ];
+  
+  if (exactBlacklist.includes(d)) {
+    return false;
+  }
+  
+  if (
+    d === 'tea' || d === 'milk' || d === 'coffee' || d === 'curd' || 
+    d === 'pickle' || d === 'papad' || d === 'salad' || d === 'raita' ||
+    d.startsWith('sprouts') || d.startsWith('sprout') || d.startsWith('banana')
+  ) {
+    return false;
+  }
+  
+  return true;
 }
 
 /** Bento status tile: uppercase label, headline, icon, large mono data row */
@@ -204,9 +230,41 @@ export default function HomeScreen() {
   const calendar = readCachedModule<CalendarDoc>('calendar');
   const notices = readCachedModule<CachedNotice[]>('notices');
 
-  const todayMenu = menu?.days.find((d) => d.dayName === todayDayName());
-  const mealKey = currentMealKey();
-  const meal = todayMenu?.[mealKey];
+  const { mealKey, targetDay } = (() => {
+    const now = nowMinutes();
+    let day = todayDayName();
+    let key: 'breakfast' | 'lunch' | 'snacks' | 'dinner' = 'breakfast';
+
+    if (now < MEAL_WINDOWS.breakfast.endMin) {
+      key = 'breakfast';
+    } else if (now < MEAL_WINDOWS.lunch.endMin) {
+      key = 'lunch';
+    } else if (now < MEAL_WINDOWS.snacks.endMin) {
+      key = 'snacks';
+    } else if (now < MEAL_WINDOWS.dinner.endMin) {
+      key = 'dinner';
+    } else {
+      // Past dinner time, show tomorrow's breakfast!
+      key = 'breakfast';
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const DAY_NAMES = [
+        'sunday',
+        'monday',
+        'tuesday',
+        'wednesday',
+        'thursday',
+        'friday',
+        'saturday',
+      ];
+      day = DAY_NAMES[tomorrow.getDay()];
+    }
+
+    return { mealKey: key, targetDay: day };
+  })();
+
+  const activeMenu = menu?.days.find((d) => d.dayName === targetDay);
+  const meal = activeMenu?.[mealKey];
   const nextBus = getNextDeparture(transport, calendar);
 
   const loadLocal = useCallback(async () => {
@@ -239,19 +297,20 @@ export default function HomeScreen() {
   const busCountdown = formatCountdown(busSeconds);
   const classTime = nextClass ? to12Hour(nextClass.entry.startTime) : null;
 
-  const dishes = useMemo(() => {
+  const vegDishes = useMemo(() => {
     if (!meal) return [];
-    const vegList = splitDishes(meal.veg);
-    const nonVegList = splitDishes(meal.nonVeg);
-    const vegSet = new Set(vegList);
-
-    return [
-      ...vegList.map((name) => ({ name, nonVeg: false })),
-      ...nonVegList
-        .filter((name) => !vegSet.has(name))
-        .map((name) => ({ name, nonVeg: true })),
-    ];
+    return splitDishes(meal.veg).filter(isMainDish);
   }, [meal]);
+
+  const nonVegDishes = useMemo(() => {
+    if (!meal) return [];
+    return splitDishes(meal.nonVeg).filter(isMainDish);
+  }, [meal]);
+
+  const isSameMenu = useMemo(() => {
+    if (vegDishes.length !== nonVegDishes.length) return false;
+    return vegDishes.every((val, index) => val === nonVegDishes[index]);
+  }, [vegDishes, nonVegDishes]);
 
   return (
     <ScreenShell onRefresh={onRefresh} refreshing={syncing}>
@@ -296,7 +355,7 @@ export default function HomeScreen() {
         />
       ) : null}
 
-      {dishes.length > 0 ? (
+      {vegDishes.length > 0 || nonVegDishes.length > 0 ? (
         <Pressable
           onPress={() => router.push('/(tabs)/menu')}
           style={({ pressed }) => [
@@ -315,10 +374,10 @@ export default function HomeScreen() {
             ]}
           >
             <Text style={[styles.cardLabel, { color: theme.textMuted }]}>
-              {"Today's Menu"}
+              {targetDay === todayDayName() ? "TODAY'S MENU" : "TOMORROW'S MENU"}
             </Text>
             <View style={styles.mealPillContainer}>
-              {todayMenu && (
+              {activeMenu && (
                 <Text style={[styles.mealCountdownText, { color: theme.accent }]}>
                   {getMealTimeStatus(mealKey).timeLeftString}
                 </Text>
@@ -331,22 +390,73 @@ export default function HomeScreen() {
             </View>
           </View>
           <View style={styles.menuBody}>
-            {dishes.map((dish, i) => (
-              <View key={`${dish.name}-${i}`} style={styles.menuItem}>
-                <View
-                  style={[
-                    styles.menuDot,
-                    { backgroundColor: dish.nonVeg ? theme.nonVeg : theme.secondary },
-                  ]}
-                />
-                <Text
-                  style={[styles.menuItemText, { color: theme.text }]}
-                  numberOfLines={1}
-                >
-                  {dish.name}
-                </Text>
+            {isSameMenu ? (
+              // Unified single column layout
+              <View style={styles.unifiedColumn}>
+                <View style={styles.columnHeader}>
+                  <View style={styles.splitDotContainer}>
+                    <View style={[styles.miniIndicatorDot, { backgroundColor: theme.veg }]} />
+                    <View style={[styles.miniIndicatorDot, { backgroundColor: theme.nonVeg, marginLeft: -4 }]} />
+                  </View>
+                  <Text style={[styles.columnHeaderTitle, { color: theme.textMuted }]}>
+                    VEG & NON-VEG
+                  </Text>
+                </View>
+                <View style={styles.dishList}>
+                  {vegDishes.map((dish, i) => (
+                    <View key={i} style={styles.menuItem}>
+                      <View style={[styles.menuDot, { backgroundColor: theme.secondary }]} />
+                      <Text style={[styles.menuItemText, { color: theme.text }]} numberOfLines={1}>
+                        {dish}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
               </View>
-            ))}
+            ) : (
+              // Split side-by-side columns layout
+              <View style={styles.splitColumns}>
+                {/* Left Column - Veg */}
+                <View style={[styles.column, { borderRightColor: theme.border, borderRightWidth: 1, paddingRight: AppSpacing.md }]}>
+                  <View style={styles.columnHeader}>
+                    <View style={[styles.indicatorDot, { backgroundColor: theme.veg }]} />
+                    <Text style={[styles.columnHeaderTitle, { color: theme.veg }]}>
+                      VEGETARIAN
+                    </Text>
+                  </View>
+                  <View style={styles.dishList}>
+                    {vegDishes.map((dish, i) => (
+                      <View key={i} style={styles.menuItem}>
+                        <View style={[styles.menuDot, { backgroundColor: theme.veg }]} />
+                        <Text style={[styles.menuItemText, { color: theme.text }]} numberOfLines={1}>
+                          {dish}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+
+                {/* Right Column - Non-Veg */}
+                <View style={[styles.column, { paddingLeft: AppSpacing.md }]}>
+                  <View style={styles.columnHeader}>
+                    <View style={[styles.indicatorDot, { backgroundColor: theme.nonVeg }]} />
+                    <Text style={[styles.columnHeaderTitle, { color: theme.nonVeg }]}>
+                      NON-VEG
+                    </Text>
+                  </View>
+                  <View style={styles.dishList}>
+                    {nonVegDishes.map((dish, i) => (
+                      <View key={i} style={styles.menuItem}>
+                        <View style={[styles.menuDot, { backgroundColor: theme.nonVeg }]} />
+                        <Text style={[styles.menuItemText, { color: theme.text }]} numberOfLines={1}>
+                          {dish}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              </View>
+            )}
           </View>
         </Pressable>
       ) : null}
@@ -487,6 +597,46 @@ const styles = StyleSheet.create({
   menuItemText: {
     ...AppTypography.bodySmall,
     flex: 1,
+  },
+  splitColumns: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  column: {
+    flex: 1,
+  },
+  columnHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.xs,
+    marginBottom: AppSpacing.sm,
+  },
+  columnHeaderTitle: {
+    ...AppTypography.caption,
+    fontWeight: '700',
+    fontSize: 10,
+    letterSpacing: 0.5,
+  },
+  dishList: {
+    gap: AppSpacing.xs,
+  },
+  indicatorDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  unifiedColumn: {
+    width: '100%',
+  },
+  splitDotContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  miniIndicatorDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   section: {
     gap: AppSpacing.md,
