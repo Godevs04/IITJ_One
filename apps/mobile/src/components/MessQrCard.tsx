@@ -108,6 +108,7 @@ const styles = StyleSheet.create({
     padding: AppSpacing.lg,
     gap: AppSpacing.lg,
     minHeight: 120,
+    justifyContent: 'center',
   },
   pressed: {
     opacity: 0.92,
@@ -121,6 +122,7 @@ const styles = StyleSheet.create({
   topText: {
     flex: 1,
     gap: AppSpacing.xs,
+    justifyContent: 'center',
   },
   label: {
     ...AppTypography.sectionLabel,
