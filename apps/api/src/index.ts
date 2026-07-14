@@ -9,6 +9,7 @@ import { requestIdMiddleware } from './middleware/requestId';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { setLogLevel, log } from './utils/logger';
 import routes from './routes';
+import path from 'path';
 import type { Server } from 'http';
 
 async function bootstrap(): Promise<void> {
@@ -58,6 +59,7 @@ async function bootstrap(): Promise<void> {
   app.use(express.json({ limit: '2mb' }));
   app.use(etagMiddleware);
   // CORS is applied per-router: open on public, locked on /admin
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
   app.use('/api/v1', publicRateLimiter, routes);
   app.use(notFoundHandler);
   app.use(errorHandler);
