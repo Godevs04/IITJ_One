@@ -68,7 +68,16 @@ async function bootstrap(): Promise<void> {
   app.use(express.json({ limit: '2mb' }));
   app.use(etagMiddleware);
   // CORS is applied per-router: open on public, locked on /admin
-  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+  app.use(
+    '/uploads',
+    express.static(path.join(process.cwd(), 'uploads'), {
+      setHeaders: (res) => {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', '*');
+      },
+    }),
+  );
   app.use('/api/v1', publicRateLimiter, routes);
   app.use(notFoundHandler);
   app.use(errorHandler);
