@@ -30,9 +30,28 @@ async function bootstrap(): Promise<void> {
   app.set('trust proxy', 1);
 
   // cross-origin so browser admin (localhost:3000) can read API responses
+  // CSP allows Scalar docs (/api/v1/docs) to load the CDN reference UI
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          'default-src': ["'self'"],
+          'script-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
+          'style-src': [
+            "'self'",
+            "'unsafe-inline'",
+            'https://cdn.jsdelivr.net',
+            'https://fonts.googleapis.com',
+          ],
+          'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:'],
+          'img-src': ["'self'", 'data:', 'https:', 'blob:'],
+          'connect-src': ["'self'", 'http:', 'https:', 'ws:', 'wss:'],
+          'worker-src': ["'self'", 'blob:'],
+          'frame-src': ["'self'", 'blob:'],
+        },
+      },
     }),
   );
   app.use(requestIdMiddleware);
@@ -50,6 +69,8 @@ async function bootstrap(): Promise<void> {
     );
     log.info(`IITJ One API listening on http://${config.host}:${config.port}/api/v1`);
     log.info(`Health: ${config.apiBaseUrl}/api/v1/health`);
+    log.info(`Docs (Scalar): ${config.apiBaseUrl}/api/v1/docs`);
+    log.info(`OpenAPI: ${config.apiBaseUrl}/api/v1/openapi.json`);
     log.info(`LAN: ${lanHint}/api/v1/health`);
     log.info(`CORS origins (admin): ${config.corsOrigin.join(', ')}`);
     log.info(`Storage: ${dbConnected ? 'mongodb' : 'fallback'}`);

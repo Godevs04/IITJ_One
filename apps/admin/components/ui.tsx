@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 export function Card({
   children,
@@ -9,7 +9,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`rounded-[1.35rem] border border-border/80 bg-surface/95 p-5 shadow-card backdrop-blur-sm ${className}`}
+      className={`rounded-[1.25rem] border border-border/80 bg-surface/95 p-4 shadow-card backdrop-blur-sm sm:rounded-[1.35rem] sm:p-5 ${className}`}
     >
       {children}
     </div>
@@ -29,16 +29,16 @@ export function PageHeader({
 }) {
   return (
     <div
-      className={`flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-4 ${className || 'mb-5'}`}
+      className={`flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4 ${className || 'mb-5'}`}
     >
       <div className="min-w-0">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">{title}</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-ink sm:text-2xl">{title}</h1>
         {subtitle ? (
-          <p className="mt-1 max-w-2xl text-sm text-muted">{subtitle}</p>
+          <p className="mt-1 max-w-2xl text-sm text-muted text-balance">{subtitle}</p>
         ) : null}
       </div>
       {actions ? (
-        <div className="flex shrink-0 flex-wrap items-center gap-2 pt-2 sm:pt-0">
+        <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
           {actions}
         </div>
       ) : null}
@@ -77,7 +77,7 @@ export function EmptyState({
   message?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-dashed border-border bg-white/50 px-6 py-12 text-center">
+    <div className="rounded-2xl border border-dashed border-border bg-white/50 px-4 py-10 text-center sm:px-6 sm:py-12">
       <p className="text-base font-medium text-ink">{title}</p>
       {message ? <p className="mt-1 text-sm text-muted">{message}</p> : null}
     </div>
@@ -86,9 +86,16 @@ export function EmptyState({
 
 export function LoadingBlock({ label = 'Loading…' }: { label?: string }) {
   return (
-    <div className="flex items-center justify-center gap-3 rounded-2xl border border-border bg-white px-6 py-16 text-sm text-muted">
+    <div className="flex items-center justify-center gap-3 rounded-2xl border border-border bg-white px-4 py-12 text-sm text-muted sm:px-6 sm:py-16">
       <span className="h-5 w-5 animate-spin rounded-full border-2 border-indigo border-r-transparent" />
       {label}
     </div>
+  );
+}
+
+/** Horizontal scroll wrapper for tables / wide editors on small screens. */
+export function ScrollX({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={`-mx-1 overflow-x-auto scroll-thin px-1 ${className}`}>{children}</div>
   );
 }

@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
@@ -51,30 +51,104 @@ export default function MenuScreen() {
   const { syncing, sync } = useCampusSync(false);
   const { lockSwipe, unlockSwipe } = useSwipeGesture();
   const menu = useCampusModule<MenuDoc>('menu');
-  const [selectedDay, setSelectedDay] = useState(todayDayName());
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [dietPreference, setDietPreference] = useState<'veg' | 'nonVeg'>('veg');
   const [showCharges, setShowCharges] = useState(false);
 
-  const dayMenu = useMemo(
-    () => menu?.days.find((d) => d.dayName === selectedDay),
-    [menu, selectedDay],
-  );
+  const scrollViewRef = useRef<ScrollView>(null);
+  const { width: screenWidth } = useWindowDimensions();
+
+  const isDateToday = useCallback((d: Date) => {
+    const today = new Date();
+    return (
+      d.getDate() === today.getDate() &&
+      d.getMonth() === today.getMonth() &&
+      d.getFullYear() === today.getFullYear()
+    );
+  }, []);
+
+  const getYearMonthString = useCallback((d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    return `${y}-${m}`;
+  }, []);
+
+  const getWeekdayName = useCallback((d: Date) => {
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    return dayNames[d.getDay()];
+  }, []);
+
+  const isMenuAvailable = useMemo(() => {
+    if (!menu) return false;
+    return getYearMonthString(selectedDate) === menu.month;
+  }, [menu, selectedDate, getYearMonthString]);
+
+  const dayMenu = useMemo(() => {
+    if (!menu || !isMenuAvailable) return null;
+    const weekday = getWeekdayName(selectedDate);
+    return menu.days.find((d) => d.dayName === weekday) || null;
+  }, [menu, selectedDate, isMenuAvailable, getWeekdayName]);
 
   const onRefresh = useCallback(async () => {
     await sync();
   }, [sync]);
 
-  const days = menu?.days ?? [];
+  const scrollDays = useMemo(() => {
+    const list = [];
+    const today = new Date();
+    // 15 days before and 15 days after today
+    for (let i = -15; i <= 15; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      list.push(d);
+    }
+    return list;
+  }, []);
+
+  const isSelectedToday = useMemo(() => isDateToday(selectedDate), [selectedDate, isDateToday]);
+
+  const formattedMonth = useMemo(() => {
+    const options: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric' };
+    return selectedDate.toLocaleDateString('en-US', options);
+  }, [selectedDate]);
+
+  // Center scroll helper
+  const centerIndex = useCallback((index: number, animated = true) => {
+    const itemWidth = 70; // 62px width + 8px gap
+    const offset = index * itemWidth - screenWidth / 2 + itemWidth / 2;
+    scrollViewRef.current?.scrollTo({ x: offset, animated });
+  }, [screenWidth]);
+
+  // Auto scroll to today on load
+  useEffect(() => {
+    if (menu) {
+      setTimeout(() => {
+        centerIndex(15, false); // Today is at index 15 in the scrollDays list
+      }, 100);
+    }
+  }, [menu, centerIndex]);
+
+  const handleSelectDate = useCallback((d: Date, index: number) => {
+    setSelectedDate(d);
+    centerIndex(index, true);
+  }, [centerIndex]);
+
+  const handleGoToToday = useCallback(() => {
+    const today = new Date();
+    setSelectedDate(today);
+    centerIndex(15, true);
+  }, [centerIndex]);
 
   return (
     <ScreenShell
       title="Mess Menu"
-      subtitle={menu ? `Month: ${menu.month}` : 'Campus mess schedule'}
+      subtitle={`Month: ${formattedMonth}`}
       onRefresh={onRefresh}
       refreshing={syncing}
     >
-      {days.length > 0 ? (
+      {menu ? (
         <ScrollView
+          ref={scrollViewRef}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.dayStripScroll}
@@ -82,17 +156,21 @@ export default function MenuScreen() {
           onScrollEndDrag={unlockSwipe}
           onMomentumScrollEnd={unlockSwipe}
         >
-          {days.map((d) => {
-            const active = selectedDay === d.dayName;
-            const dayNum = getDayNumber(d.date);
-            const shortDay = d.dayName.slice(0, 3).toUpperCase();
+          {scrollDays.map((d, idx) => {
+            const active = selectedDate.getDate() === d.getDate() &&
+                           selectedDate.getMonth() === d.getMonth() &&
+                           selectedDate.getFullYear() === d.getFullYear();
+            
+            const dayNum = String(d.getDate());
+            const shortDay = getWeekdayName(d).slice(0, 3).toUpperCase();
+            const isToday = isDateToday(d);
 
             return (
-              <View key={d.dayName} style={styles.dayCardWrapper}>
+              <View key={d.toISOString()} style={styles.dayCardWrapper}>
                 {active ? (
                   <View style={[styles.activeDayOuter, { borderColor: theme.primary }]}>
                     <Pressable
-                      onPress={() => setSelectedDay(d.dayName)}
+                      onPress={() => handleSelectDate(d, idx)}
                       style={[styles.dayCard, { backgroundColor: theme.primary }]}
                     >
                       <Text style={[styles.activeDayNameText, { color: theme.onPrimary }]}>
@@ -105,13 +183,19 @@ export default function MenuScreen() {
                   </View>
                 ) : (
                   <Pressable
-                    onPress={() => setSelectedDay(d.dayName)}
+                    onPress={() => handleSelectDate(d, idx)}
                     style={[styles.dayCard, { backgroundColor: theme.chipBackground }]}
                   >
-                    <Text style={[styles.dayNameText, { color: theme.textMuted }]}>
+                    <Text style={[
+                      styles.dayNameText, 
+                      { color: isToday ? theme.accent : theme.textMuted, fontWeight: isToday ? 'bold' : '600' }
+                    ]}>
                       {shortDay}
                     </Text>
-                    <Text style={[styles.dayNumText, { color: theme.text }]}>
+                    <Text style={[
+                      styles.dayNumText, 
+                      { color: isToday ? theme.accent : theme.text, fontWeight: isToday ? 'bold' : '700' }
+                    ]}>
                       {dayNum}
                     </Text>
                   </Pressable>
@@ -122,7 +206,7 @@ export default function MenuScreen() {
         </ScrollView>
       ) : null}
 
-      {days.length > 0 ? (
+      {menu ? (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -132,6 +216,23 @@ export default function MenuScreen() {
           onScrollEndDrag={unlockSwipe}
           onMomentumScrollEnd={unlockSwipe}
         >
+          {!isSelectedToday && (
+            <Pressable
+              onPress={handleGoToToday}
+              style={[
+                styles.toggleButton,
+                {
+                  backgroundColor: theme.primaryTint,
+                  borderColor: theme.primary,
+                },
+              ]}
+            >
+              <Ionicons name="today-outline" size={15} color={theme.primary} />
+              <Text style={[styles.toggleButtonText, { color: theme.primary, fontWeight: 'bold' }]}>
+                Today
+              </Text>
+            </Pressable>
+          )}
           <Pressable
             onPress={() => setDietPreference('veg')}
             style={[
@@ -198,7 +299,7 @@ export default function MenuScreen() {
           const dishesStr = dietPreference === 'veg' ? items.veg : items.nonVeg;
           const dishes = splitDishes(dishesStr);
 
-          const isToday = selectedDay === todayDayName();
+          const isToday = isSelectedToday;
           const timeStatus = isToday ? getMealTimeStatus(meal) : null;
           const mealWindow = getMealWindows()[meal];
 
@@ -281,6 +382,16 @@ export default function MenuScreen() {
             </View>
           );
         })
+      ) : menu ? (
+        <EmptyState
+          icon="calendar-outline"
+          title="Menu not available"
+          message={`No menu is available for ${selectedDate.toLocaleDateString('en-US', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+          })}.`}
+        />
       ) : (
         <EmptyState
           icon="restaurant-outline"
@@ -376,6 +487,20 @@ export default function MenuScreen() {
 }
 
 const styles = StyleSheet.create({
+  navigationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: AppSpacing.xs,
+  },
+  navArrow: {
+    width: 38,
+    height: 66,
+    borderRadius: 8,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   dayStripScroll: {
     flexDirection: 'row',
     gap: AppSpacing.sm,

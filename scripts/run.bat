@@ -35,6 +35,9 @@ goto menu
 
 :start
 echo.
+echo Building shared type definitions (@iitj1/types)...
+cd /d "%PROJECT_ROOT%" && call npm run build -w @iitj1/types
+
 echo Starting Backend API (Port 6002)...
 start "IITJ1 Backend" cmd /k "set PATH=%NODE_PATH%;%%PATH%% && cd /d "%PROJECT_ROOT%apps\api" && npm run dev"
 rem Wait 3 seconds

@@ -18,7 +18,7 @@ import {
   nowMinutes,
   getMealWindows,
 } from '@/utils/date';
-import { getNextDeparture } from '@/utils/transport';
+import { getNextDeparture, getNextArrival, type NextDeparture } from '@/utils/transport';
 import { getNextClass, type NextClass } from '@/utils/timetable';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import {
@@ -165,6 +165,108 @@ function StatusCard({
   );
 }
 
+function formatCountdownText(seconds: number, type: 'departure' | 'arrival'): string {
+  const mins = Math.ceil(seconds / 60);
+  const action = type === 'departure' ? 'Leaves' : 'Arrives';
+  if (mins < 60) {
+    return `${action} in ${mins} min`;
+  }
+  const hrs = Math.floor(mins / 60);
+  const remainingMins = mins % 60;
+  if (remainingMins === 0) {
+    return `${action} in ${hrs} hr`;
+  }
+  return `${action} in ${hrs} hr ${remainingMins} min`;
+}
+
+function TransportWidget({
+  departure,
+  arrival,
+  theme,
+  onPress,
+}: {
+  departure: NextDeparture | null;
+  arrival: NextDeparture | null;
+  theme: any;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.card,
+        { backgroundColor: theme.surface, borderColor: theme.border },
+        pressed && styles.pressed,
+      ]}
+    >
+      {/* Title Header */}
+      <View style={styles.cardTopRow}>
+        <View style={styles.cardTopText}>
+          <Text style={[styles.cardLabel, { color: theme.textMuted }]}>
+            🚌 Transport
+          </Text>
+        </View>
+        <Ionicons name="bus-outline" size={24} color={theme.secondary} />
+      </View>
+
+      {/* Next Departure Section */}
+      <View style={styles.widgetSection}>
+        <Text style={[styles.sectionHeadingLabel, { color: theme.secondary }]}>
+          ⬆️ Next Departure
+        </Text>
+        {departure ? (
+          <View style={styles.widgetContent}>
+            <View style={styles.widgetMainRow}>
+              <Text style={[styles.widgetBusText, { color: theme.text }]}>
+                {departure.trip.bus} • {departure.trip.startTime}
+              </Text>
+              <Text style={[styles.widgetCountdown, { color: theme.secondary }]}>
+                {formatCountdownText(departure.secondsUntil, 'departure')}
+              </Text>
+            </View>
+            <Text style={[styles.widgetRouteText, { color: theme.textMuted }]} numberOfLines={1}>
+              {departure.trip.from} → {departure.trip.to}
+            </Text>
+          </View>
+        ) : (
+          <Text style={[styles.widgetEmptyText, { color: theme.textMuted }]}>
+            No more departures today
+          </Text>
+        )}
+      </View>
+
+      {/* Divider */}
+      <View style={[styles.widgetDivider, { backgroundColor: theme.border }]} />
+
+      {/* Next Arrival Section */}
+      <View style={styles.widgetSection}>
+        <Text style={[styles.sectionHeadingLabel, { color: theme.primary }]}>
+          ⬇️ Next Arrival
+        </Text>
+        {arrival ? (
+          <View style={styles.widgetContent}>
+            <View style={styles.widgetMainRow}>
+              <Text style={[styles.widgetBusText, { color: theme.text }]}>
+                {arrival.trip.bus} • {arrival.trip.startTime}
+              </Text>
+              <Text style={[styles.widgetCountdown, { color: theme.primary }]}>
+                {formatCountdownText(arrival.secondsUntil, 'arrival')}
+              </Text>
+            </View>
+            <Text style={[styles.widgetRouteText, { color: theme.textMuted }]} numberOfLines={1}>
+              {arrival.trip.from} → {arrival.trip.to}
+            </Text>
+          </View>
+        ) : (
+          <Text style={[styles.widgetEmptyText, { color: theme.textMuted }]}>
+            No more arrivals today
+          </Text>
+        )}
+      </View>
+    </Pressable>
+  );
+}
+
 /** Compact notice row: category accent bar, #TAG, title, meta, chevron */
 function NoticeRow({
   notice,
@@ -222,7 +324,7 @@ function NoticeRow({
 export default function HomeScreen() {
   const theme = useThemeColors();
   const { syncing, sync, error: syncError } = useCampusSync();
-  const [busSeconds, setBusSeconds] = useState(0);
+  const [now, setNow] = useState(() => new Date());
   const [nextClass, setNextClass] = useState<NextClass | null>(null);
 
   const menu = useCampusModule<MenuDoc>('menu');
@@ -266,7 +368,13 @@ export default function HomeScreen() {
 
   const activeMenu = menu?.days.find((d) => d.dayName === targetDay);
   const meal = activeMenu?.[mealKey];
-  const nextBus = getNextDeparture(transport, calendar);
+  const nextDeparture = useMemo(() => {
+    return getNextDeparture(transport, calendar);
+  }, [transport, calendar, now]);
+
+  const nextArrival = useMemo(() => {
+    return getNextArrival(transport, calendar);
+  }, [transport, calendar, now]);
 
   const [showClassWidget, setShowClassWidget] = useState(false);
 
@@ -279,13 +387,12 @@ export default function HomeScreen() {
 
   useEffect(() => {
     void loadLocal();
-    setBusSeconds(nextBus?.secondsUntil ?? 0);
-  }, [loadLocal, nextBus?.secondsUntil]);
+  }, [loadLocal]);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setBusSeconds((s) => Math.max(0, s - 1));
-    }, 1000);
+      setNow(new Date());
+    }, 10000); // 10s tick to keep countdown fresh
     return () => clearInterval(timer);
   }, []);
 
@@ -306,7 +413,6 @@ export default function HomeScreen() {
       .slice(0, 3);
   }, [calendar]);
 
-  const busCountdown = formatCountdown(busSeconds);
   const classTime = nextClass ? to12Hour(nextClass.entry.startTime) : null;
 
   const vegDishes = useMemo(() => {
@@ -328,18 +434,12 @@ export default function HomeScreen() {
     <View style={styles.screen}>
       <HomeHeader />
       <ScreenShell onRefresh={onRefresh} refreshing={syncing}>
-      {nextBus ? (
-        <StatusCard
-          label="Next Bus"
-          headline={nextBus.trip.to}
-          icon="bus-outline"
-          iconColor={theme.secondary}
-          value={busCountdown.value}
-          unit={busCountdown.unit}
-          valueColor={theme.secondary}
-          onPress={() => router.push('/(tabs)/transport')}
-        />
-      ) : null}
+      <TransportWidget
+        departure={nextDeparture}
+        arrival={nextArrival}
+        theme={theme}
+        onPress={() => router.push('/(tabs)/transport')}
+      />
 
       {showClassWidget && nextClass && classTime ? (
         <StatusCard
@@ -760,5 +860,42 @@ const styles = StyleSheet.create({
   },
   syncError: {
     ...AppTypography.caption,
+  },
+  widgetSection: {
+    gap: AppSpacing.xs,
+  },
+  sectionHeadingLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  widgetContent: {
+    gap: 2,
+  },
+  widgetMainRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+  },
+  widgetBusText: {
+    ...AppTypography.body,
+    fontWeight: '600',
+  },
+  widgetCountdown: {
+    ...AppTypography.bodySmall,
+    fontFamily: 'monospace',
+    fontWeight: '600',
+  },
+  widgetRouteText: {
+    ...AppTypography.caption,
+  },
+  widgetEmptyText: {
+    ...AppTypography.bodySmall,
+    fontStyle: 'italic',
+  },
+  widgetDivider: {
+    height: 1,
+    marginVertical: AppSpacing.sm,
   },
 });

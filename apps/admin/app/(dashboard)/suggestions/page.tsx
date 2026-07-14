@@ -99,7 +99,8 @@ export default function SuggestionsAdminPage() {
       {visible.length === 0 ? (
         <EmptyState title="Inbox empty" message="No suggestions in this filter." />
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-card">
+        <div className="-mx-1 overflow-x-auto scroll-thin px-1">
+          <div className="min-w-[640px] overflow-hidden rounded-2xl border border-border bg-white shadow-card">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-border bg-sand/60 text-xs uppercase tracking-wide text-muted">
               <tr>
@@ -133,7 +134,7 @@ export default function SuggestionsAdminPage() {
                         }
                       />
                     </td>
-                    <td className="px-4 py-3 text-ink">{s.message}</td>
+                    <td className="max-w-xs px-4 py-3 text-ink sm:max-w-md">{s.message}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
                         {status !== 'read' ? (
@@ -173,6 +174,7 @@ export default function SuggestionsAdminPage() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

@@ -140,7 +140,7 @@ export default function CalendarAdminPage() {
         <div className="space-y-3">
           {events.map((event, index) => (
             <Card key={index} className="space-y-3">
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                 <div className="lg:col-span-2">
                   <Field label="Title">
                     <Input

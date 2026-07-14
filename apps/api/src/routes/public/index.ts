@@ -18,11 +18,13 @@ import wifiRouter from './wifi';
 import erickshawRouter from './erickshaw';
 import mealWindowsRouter from './mealWindows';
 import suggestionsRouter from './suggestions';
+import docsRouter from './docs';
 
 const router = Router();
 
 router.use(publicCors);
 
+router.use(docsRouter); // /openapi.json + /docs (Scalar)
 router.use('/health', healthRouter);
 router.use('/sync', syncRouter);
 router.use('/home', homeRouter);

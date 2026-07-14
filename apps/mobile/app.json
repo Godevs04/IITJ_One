@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "IITJ One",
-    "slug": "iitj1",
+    "slug": "iitj-one",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "in.iitjone.app"
+      "bundleIdentifier": "in.iitj-one.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -49,8 +49,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": ""
+        "projectId": "c307eca8-e310-4cfa-aca6-8c06b8fcd39f"
       }
-    }
+    },
+    "owner": "godevs"
   }
 }

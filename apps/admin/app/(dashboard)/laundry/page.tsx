@@ -82,7 +82,7 @@ export default function LaundryAdminPage() {
         title="Laundry"
         subtitle="Editable hostel laundry collection schedule for the mobile app."
         actions={
-          <div className="flex gap-2">
+          <div className="admin-actions">
             <Button variant="secondary" onClick={() => setSchedules((s) => [...s, emptyRow()])}>
               Add hostel
             </Button>
@@ -104,7 +104,7 @@ export default function LaundryAdminPage() {
       ) : (
         <div className="space-y-3">
           {schedules.map((row, index) => (
-            <Card key={`${row.hostel}-${index}`} className="grid gap-3 md:grid-cols-6">
+            <Card key={`${row.hostel}-${index}`} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
               <Field label="Hostel">
                 <Select
                   value={row.hostel}

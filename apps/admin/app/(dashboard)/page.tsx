@@ -129,7 +129,7 @@ export default function DashboardPage() {
 
       {/* Hero */}
       <section
-        className="dash-reveal relative overflow-hidden rounded-[1.75rem] border border-white/60 bg-gradient-to-br from-indigo-deep via-[#123652] to-[#1d3f5e] p-6 text-sand shadow-glow sm:p-8"
+        className="dash-reveal relative overflow-hidden rounded-[1.35rem] border border-white/60 bg-gradient-to-br from-indigo-deep via-[#123652] to-[#1d3f5e] p-5 text-sand shadow-glow sm:rounded-[1.75rem] sm:p-8"
         style={{ animationDelay: '0ms' }}
       >
         <div
@@ -155,7 +155,7 @@ export default function DashboardPage() {
               <IconSpark className="h-3.5 w-3.5 text-sandstone" />
               Campus console
             </div>
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            <h1 className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-3xl lg:text-4xl">
               {greeting}
             </h1>
             <p className="mt-2 text-sm leading-relaxed text-white/70 sm:text-base">

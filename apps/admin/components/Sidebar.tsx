@@ -67,7 +67,7 @@ export function Sidebar({
 
   return (
     <aside
-      className={`relative flex h-full w-[15.5rem] shrink-0 flex-col overflow-hidden border-r border-white/[0.08] bg-gradient-to-b from-indigo-deep via-[#00243f] to-[#001a2e] text-sand ${className}`}
+      className={`relative flex h-full min-h-dvh w-[15.5rem] shrink-0 flex-col overflow-hidden border-r border-white/[0.08] bg-gradient-to-b from-indigo-deep via-[#00243f] to-[#001a2e] text-sand ${className}`}
     >
       <div
         aria-hidden
