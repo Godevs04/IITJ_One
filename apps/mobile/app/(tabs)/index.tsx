@@ -165,18 +165,17 @@ function StatusCard({
   );
 }
 
-function formatCountdownText(seconds: number, type: 'departure' | 'arrival'): string {
+function formatCountdownText(seconds: number): string {
   const mins = Math.ceil(seconds / 60);
-  const action = type === 'departure' ? 'Leaves' : 'Arrives';
   if (mins < 60) {
-    return `${action} in ${mins} min`;
+    return `Leaves in ${mins} min`;
   }
   const hrs = Math.floor(mins / 60);
   const remainingMins = mins % 60;
   if (remainingMins === 0) {
-    return `${action} in ${hrs} hr`;
+    return `Leaves in ${hrs} hr`;
   }
-  return `${action} in ${hrs} hr ${remainingMins} min`;
+  return `Leaves in ${hrs} hr ${remainingMins} min`;
 }
 
 function TransportWidget({
@@ -209,10 +208,10 @@ function TransportWidget({
         <Ionicons name="bus-outline" size={24} color={theme.secondary} />
       </View>
 
-      {/* Next Departure Section */}
+      {/* From Campus Section */}
       <View style={styles.widgetSection}>
         <Text style={[styles.sectionHeadingLabel, { color: theme.secondary }]}>
-          ⬆️ Next Departure
+          ⬆️ From Campus
         </Text>
         {departure ? (
           <View style={styles.widgetContent}>
@@ -221,16 +220,19 @@ function TransportWidget({
                 {departure.trip.bus} • {departure.trip.startTime}
               </Text>
               <Text style={[styles.widgetCountdown, { color: theme.secondary }]}>
-                {formatCountdownText(departure.secondsUntil, 'departure')}
+                {formatCountdownText(departure.secondsUntil)}
               </Text>
             </View>
-            <Text style={[styles.widgetRouteText, { color: theme.textMuted }]} numberOfLines={1}>
-              {departure.trip.from} → {departure.trip.to}
+            <Text style={[styles.widgetRouteText, { color: theme.text }]}>
+              From: <Text style={{ color: theme.textMuted }}>{departure.trip.from}</Text>
+            </Text>
+            <Text style={[styles.widgetRouteText, { color: theme.text }]}>
+              To: <Text style={{ color: theme.textMuted }}>{departure.trip.to}</Text>
             </Text>
           </View>
         ) : (
           <Text style={[styles.widgetEmptyText, { color: theme.textMuted }]}>
-            No more departures today
+            No more departures from campus today
           </Text>
         )}
       </View>
@@ -238,10 +240,10 @@ function TransportWidget({
       {/* Divider */}
       <View style={[styles.widgetDivider, { backgroundColor: theme.border }]} />
 
-      {/* Next Arrival Section */}
+      {/* To Campus Section */}
       <View style={styles.widgetSection}>
         <Text style={[styles.sectionHeadingLabel, { color: theme.primary }]}>
-          ⬇️ Next Arrival
+          ⬇️ To Campus
         </Text>
         {arrival ? (
           <View style={styles.widgetContent}>
@@ -250,16 +252,19 @@ function TransportWidget({
                 {arrival.trip.bus} • {arrival.trip.startTime}
               </Text>
               <Text style={[styles.widgetCountdown, { color: theme.primary }]}>
-                {formatCountdownText(arrival.secondsUntil, 'arrival')}
+                {formatCountdownText(arrival.secondsUntil)}
               </Text>
             </View>
-            <Text style={[styles.widgetRouteText, { color: theme.textMuted }]} numberOfLines={1}>
-              {arrival.trip.from} → {arrival.trip.to}
+            <Text style={[styles.widgetRouteText, { color: theme.text }]}>
+              From: <Text style={{ color: theme.textMuted }}>{arrival.trip.from}</Text>
+            </Text>
+            <Text style={[styles.widgetRouteText, { color: theme.text }]}>
+              To: <Text style={{ color: theme.textMuted }}>{arrival.trip.to === 'IITJ' ? 'IIT Jodhpur' : arrival.trip.to}</Text>
             </Text>
           </View>
         ) : (
           <Text style={[styles.widgetEmptyText, { color: theme.textMuted }]}>
-            No more arrivals today
+            No more departures to campus today
           </Text>
         )}
       </View>
