@@ -37,5 +37,30 @@ export function getNextDeparture(
   return best;
 }
 
+export function getNextArrival(
+  transport: TransportDoc | null,
+  calendar: CalendarDoc | null,
+): NextDeparture | null {
+  if (!transport) return null;
+
+  const trips = getTripsForToday(transport, calendar).filter(
+    (t) => t.direction === 'arrival',
+  );
+  const now = nowMinutes();
+  let best: NextDeparture | null = null;
+
+  for (const trip of trips) {
+    const start = parseTimeToMinutes(trip.startTime);
+    const diff = start - now;
+    if (diff < 0) continue;
+    const secondsUntil = diff * 60;
+    if (!best || secondsUntil < best.secondsUntil) {
+      best = { trip, secondsUntil, direction: 'arrival' };
+    }
+  }
+
+  return best;
+}
+
 /** Re-export schedule helpers so callers have one import surface if needed. */
 export { getScheduleKey, getTripsForToday } from '@/transport/services/ScheduleEngine';
