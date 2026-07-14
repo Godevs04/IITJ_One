@@ -43,12 +43,12 @@ export default function MessQrScreen() {
 
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Intercept touch if user is swiping downwards by more than 20px
-        return Math.abs(gestureState.dx) < 60 && gestureState.dy > 20 && gestureState.vy > 0.1;
-      },
+      onStartShouldSetPanResponder: () => true,
       onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dy > 120 || gestureState.vy > 0.4) {
+        const isTap = Math.abs(gestureState.dx) < 10 && Math.abs(gestureState.dy) < 10;
+        if (isTap) {
+          revealControls();
+        } else if (gestureState.dy > 50 || gestureState.vy > 0.25) {
           router.back();
         }
       },
@@ -215,7 +215,7 @@ export default function MessQrScreen() {
     return (
       <>
         <Stack.Screen options={{ headerShown }} />
-        <Pressable style={styles.viewer} onPress={revealControls} {...panResponder.panHandlers}>
+        <View style={styles.viewer} {...panResponder.panHandlers}>
           <Animated.Image
             source={{ uri: qr.imagePath }}
             style={[styles.qrImage, { aspectRatio }]}
@@ -250,7 +250,7 @@ export default function MessQrScreen() {
               <Text style={[styles.bottomButtonText, styles.deleteText]}>Delete QR</Text>
             </Pressable>
           </Animated.View>
-        </Pressable>
+        </View>
       </>
     );
   }
