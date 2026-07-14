@@ -72,6 +72,8 @@ const MOBILE_ENV = path.join(REPO_ROOT, 'apps', 'mobile', '.env');
 const MOBILE_ENV_EXAMPLE = path.join(REPO_ROOT, 'apps', 'mobile', '.env.example');
 const API_ENV = path.join(REPO_ROOT, 'apps', 'api', '.env');
 const API_ENV_EXAMPLE = path.join(REPO_ROOT, 'apps', 'api', '.env.example');
+const ADMIN_ENV = path.join(REPO_ROOT, 'apps', 'admin', '.env');
+const ADMIN_ENV_EXAMPLE = path.join(REPO_ROOT, 'apps', 'admin', '.env.example');
 
 const API_PORT = process.env.API_PORT || '6002';
 const METRO_PORT = process.env.METRO_PORT || '6001';
@@ -130,6 +132,7 @@ if (!LAN_IP) {
 
 ensureEnvFile(MOBILE_ENV, MOBILE_ENV_EXAMPLE, 'apps/mobile/.env');
 ensureEnvFile(API_ENV, API_ENV_EXAMPLE, 'apps/api/.env');
+ensureEnvFile(ADMIN_ENV, ADMIN_ENV_EXAMPLE, 'apps/admin/.env');
 
 const API_URL = `http://${LAN_IP}:${API_PORT}/api/v1`;
 const API_BASE = `http://${LAN_IP}:${API_PORT}`;
@@ -138,6 +141,10 @@ const API_BASE = `http://${LAN_IP}:${API_PORT}`;
 setEnvVar('EXPO_PUBLIC_API_URL', API_URL, MOBILE_ENV);
 setEnvVar('REACT_NATIVE_PACKAGER_HOSTNAME', LAN_IP, MOBILE_ENV);
 setEnvVar('EXPO_PUBLIC_DEV_PORT', METRO_PORT, MOBILE_ENV);
+
+// Admin panel (Next.js)
+setEnvVar('NEXT_PUBLIC_API_URL', API_URL, ADMIN_ENV);
+setEnvVar('NEXT_PUBLIC_CAMPUS_ID', 'iitj', ADMIN_ENV);
 
 // API server
 setEnvVar('HOST', '0.0.0.0', API_ENV);
@@ -154,6 +161,10 @@ console.log('[mobile]');
 console.log(`  EXPO_PUBLIC_API_URL=${API_URL}`);
 console.log(`  REACT_NATIVE_PACKAGER_HOSTNAME=${LAN_IP}`);
 console.log(`  Metro: exp://${LAN_IP}:${METRO_PORT}`);
+console.log('');
+console.log('[admin]');
+console.log(`  NEXT_PUBLIC_API_URL=${API_URL}`);
+console.log(`  Dev: http://localhost:${ADMIN_PORT}`);
 console.log('');
 console.log('[api]');
 console.log('  HOST=0.0.0.0');

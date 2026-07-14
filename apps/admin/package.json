@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "predev": "bash ../../scripts/set-lan-ip.sh",
+    "predev": "node ../../scripts/set-lan-ip.js",
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
