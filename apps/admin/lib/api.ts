@@ -72,14 +72,23 @@ function resolveOrigin(): string {
   return 'http://localhost:3000';
 }
 
+function resolveApiBase(): string {
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    // Replace any LAN IP format (e.g. 172.x.x.x or 192.x.x.x) with localhost
+    return apiBaseUrl.replace(/https?:\/\/\d+\.\d+\.\d+\.\d+/, 'http://localhost');
+  }
+  return apiBaseUrl;
+}
+
 export function buildUrl(
   path: string,
   query?: Record<string, string | undefined>,
 ): string {
   const suffix = path.startsWith('/') ? path : `/${path}`;
+  const base = resolveApiBase();
   const combined = path.startsWith('http')
     ? path
-    : `${apiBaseUrl.replace(/\/$/, '')}${suffix}`;
+    : `${base.replace(/\/$/, '')}${suffix}`;
 
   const url = combined.startsWith('http')
     ? new URL(combined)
@@ -189,7 +198,7 @@ function formatApiErrorMessage(data: unknown, status: number): string {
 export async function fetchCampusModule<T>(modulePath: string): Promise<T> {
   return apiFetch<T>(modulePath, {
     auth: false,
-    query: { campus: campusId },
+    query: { campus: campusId, _cb: Date.now().toString() },
   });
 }
 
