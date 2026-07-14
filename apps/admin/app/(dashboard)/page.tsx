@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { apiFetch, withCampus } from '@/lib/api';
+import { apiFetch, fetchCampusModule } from '@/lib/api';
 import { Card, PageHeader, StatusPill } from '@/components/ui';
 import type { MetaDoc, SuggestionDoc } from '@/lib/types';
 
@@ -49,9 +49,7 @@ export default function DashboardPage() {
   useEffect(() => {
     void (async () => {
       try {
-        const m = await apiFetch<MetaDoc>(withCampus('/sync/manifest'), {
-          auth: false,
-        });
+        const m = await fetchCampusModule<MetaDoc>('/sync/manifest');
         setMeta(m);
       } catch {
         setMeta(null);

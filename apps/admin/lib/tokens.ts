@@ -17,6 +17,6 @@ export const colors = {
 export const campusId =
   process.env.NEXT_PUBLIC_CAMPUS_ID?.trim() || 'iitj';
 
+/** Prefer same-origin Next rewrite so browser can always reach the API. */
 export const apiBaseUrl =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ||
-  'http://localhost:6002/api/v1';
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') || '/backend/api/v1';

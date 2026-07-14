@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ApiError, apiFetch, campusId, withCampus } from '@/lib/api';
+import { ApiError, apiFetch, campusId, fetchCampusModule } from '@/lib/api';
 import { Button } from '@/components/Button';
 import { Field, Input } from '@/components/Field';
 import { Card, EmptyState, LoadingBlock, PageHeader } from '@/components/ui';
@@ -17,9 +17,7 @@ export default function PortalsAdminPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<PortalsDoc>(withCampus('/portals'), {
-        auth: false,
-      });
+      const data = await fetchCampusModule<PortalsDoc>('/portals');
       setLinks(data.links ?? []);
     } catch (err) {
       if (!(err instanceof ApiError && err.status === 404)) {

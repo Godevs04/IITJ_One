@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ApiError, apiFetch, withCampus } from '@/lib/api';
+import { ApiError, apiFetch, fetchCampusModule } from '@/lib/api';
+import { asRecord, stripMeta } from '@/lib/sanitize';
 import { Button } from '@/components/Button';
 import { Textarea } from '@/components/Field';
 import { Card, LoadingBlock, PageHeader } from '@/components/ui';
@@ -12,7 +13,7 @@ interface JsonModuleEditorProps {
   subtitle: string;
   publicPath: string;
   adminPath: string;
-  emptyDoc: unknown;
+  emptyDoc: Record<string, unknown>;
 }
 
 export function JsonModuleEditor({
@@ -30,10 +31,9 @@ export function JsonModuleEditor({
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<unknown>(withCampus(publicPath), {
-        auth: false,
-      });
-      setText(JSON.stringify(data ?? emptyDoc, null, 2));
+      const data = await fetchCampusModule<Record<string, unknown>>(publicPath);
+      const cleaned = asRecord(data) ? stripMeta(data as Record<string, unknown>) : emptyDoc;
+      setText(JSON.stringify(cleaned ?? emptyDoc, null, 2));
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) {
         setText(JSON.stringify(emptyDoc, null, 2));
@@ -62,9 +62,17 @@ export function JsonModuleEditor({
       push('error', 'Invalid JSON', 'Fix syntax before publishing.');
       return;
     }
+    const record = asRecord(parsed);
+    if (!record) {
+      push('error', 'Invalid document', 'Root value must be a JSON object.');
+      return;
+    }
     setSaving(true);
     try {
-      await apiFetch(adminPath, { method: 'PUT', body: parsed });
+      await apiFetch(adminPath, {
+        method: 'PUT',
+        body: stripMeta(record),
+      });
       push('success', `${title} published`, 'Module version bumped for sync.');
       await load();
     } catch (err) {
@@ -98,7 +106,7 @@ export function JsonModuleEditor({
       />
       <Card>
         <p className="mb-3 text-sm text-muted">
-          Edit the full document as JSON. Structure must match the API schema.
+          Live data from the API. Edit and Save & Publish to update the mobile app.
         </p>
         <Textarea
           value={text}

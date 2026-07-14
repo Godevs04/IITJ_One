@@ -34,7 +34,7 @@ async function refreshAccessToken(): Promise<boolean> {
   if (!refreshToken) return false;
 
   try {
-    const res = await fetch(`${apiBaseUrl}/admin/refresh`, {
+    const res = await fetch(buildUrl('/admin/refresh'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
@@ -65,15 +65,34 @@ async function refreshAccessToken(): Promise<boolean> {
   }
 }
 
-function buildUrl(path: string, query?: Record<string, string | undefined>): string {
-  const url = new URL(
-    path.startsWith('http') ? path : `${apiBaseUrl}${path.startsWith('/') ? path : `/${path}`}`,
-  );
+function resolveOrigin(): string {
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin;
+  }
+  return 'http://localhost:3000';
+}
+
+export function buildUrl(
+  path: string,
+  query?: Record<string, string | undefined>,
+): string {
+  const suffix = path.startsWith('/') ? path : `/${path}`;
+  const combined = path.startsWith('http')
+    ? path
+    : `${apiBaseUrl.replace(/\/$/, '')}${suffix}`;
+
+  const url = combined.startsWith('http')
+    ? new URL(combined)
+    : new URL(combined, resolveOrigin());
+
   if (query) {
     Object.entries(query).forEach(([key, value]) => {
-      if (value !== undefined && value !== '') url.searchParams.set(key, value);
+      if (value !== undefined && value !== '') {
+        url.searchParams.set(key, value);
+      }
     });
   }
+
   return url.toString();
 }
 
@@ -145,6 +164,19 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   return data as T;
 }
 
+/** Public campus read — always includes campus query. */
+export async function fetchCampusModule<T>(modulePath: string): Promise<T> {
+  return apiFetch<T>(modulePath, {
+    auth: false,
+    query: { campus: campusId },
+  });
+}
+
+/** Admin write with JWT. */
+export async function putAdminModule(modulePath: string, body: unknown): Promise<void> {
+  await apiFetch(modulePath, { method: 'PUT', body });
+}
+
 export async function login(email: string, password: string): Promise<LoginResponse> {
   const data = await apiFetch<LoginResponse>('/admin/login', {
     method: 'POST',
@@ -162,6 +194,7 @@ export function logout(): void {
   }
 }
 
+/** @deprecated prefer fetchCampusModule with query — kept for existing call sites */
 export function withCampus(path: string): string {
   const sep = path.includes('?') ? '&' : '?';
   return `${path}${sep}campus=${encodeURIComponent(campusId)}`;

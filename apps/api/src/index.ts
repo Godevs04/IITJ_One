@@ -19,7 +19,12 @@ async function bootstrap(): Promise<void> {
 
   const app = express();
 
-  app.use(helmet());
+  // cross-origin so browser admin (localhost:3000) can read API responses
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
   app.use(publicCors);
   app.use(express.json({ limit: '2mb' }));
   app.use(etagMiddleware);

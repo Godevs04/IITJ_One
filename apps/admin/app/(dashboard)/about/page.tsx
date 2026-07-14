@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ApiError, apiFetch, campusId, withCampus } from '@/lib/api';
+import { ApiError, apiFetch, campusId, fetchCampusModule } from '@/lib/api';
 import { Button } from '@/components/Button';
 import { Field, Input, Textarea } from '@/components/Field';
 import { Card, EmptyState, LoadingBlock, PageHeader } from '@/components/ui';
@@ -17,9 +17,7 @@ export default function AboutAdminPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<AboutDoc>(withCampus('/about'), {
-        auth: false,
-      });
+      const data = await fetchCampusModule<AboutDoc>('/about');
       setSections(data.sections ?? []);
     } catch (err) {
       if (!(err instanceof ApiError && err.status === 404)) {

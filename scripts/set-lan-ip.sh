@@ -109,9 +109,10 @@ set_env_var "EXPO_PUBLIC_API_URL" "$API_URL" "$MOBILE_ENV"
 set_env_var "REACT_NATIVE_PACKAGER_HOSTNAME" "$LAN_IP" "$MOBILE_ENV"
 set_env_var "EXPO_PUBLIC_DEV_PORT" "$METRO_PORT" "$MOBILE_ENV"
 
-# Admin panel (Next.js)
-set_env_var "NEXT_PUBLIC_API_URL" "$API_URL" "$ADMIN_ENV"
+# Admin panel (Next.js) — same-origin proxy avoids browser CORS/CORP issues
+set_env_var "NEXT_PUBLIC_API_URL" "/backend/api/v1" "$ADMIN_ENV"
 set_env_var "NEXT_PUBLIC_CAMPUS_ID" "iitj" "$ADMIN_ENV"
+set_env_var "API_PROXY_TARGET" "http://127.0.0.1:${API_PORT}" "$ADMIN_ENV"
 
 # API server — bind all interfaces, public URL, CORS for Expo (6001) + admin (3000)
 set_env_var "HOST" "0.0.0.0" "$API_ENV"
@@ -130,7 +131,7 @@ echo "  REACT_NATIVE_PACKAGER_HOSTNAME=$LAN_IP"
 echo "  Metro: exp://${LAN_IP}:${METRO_PORT}"
 echo ""
 echo "[admin]"
-echo "  NEXT_PUBLIC_API_URL=$API_URL"
+echo "  NEXT_PUBLIC_API_URL=/backend/api/v1 (Next rewrite → 127.0.0.1:${API_PORT})"
 echo "  Dev: http://localhost:${ADMIN_PORT}"
 echo ""
 echo "[api]"

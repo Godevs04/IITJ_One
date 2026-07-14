@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ApiError, apiFetch, campusId, withCampus } from '@/lib/api';
+import { ApiError, apiFetch, campusId, fetchCampusModule } from '@/lib/api';
 import { Button } from '@/components/Button';
 import { Field, Input, Textarea } from '@/components/Field';
 import { Card, EmptyState, LoadingBlock, PageHeader, StatusPill } from '@/components/ui';
@@ -51,7 +51,7 @@ export default function MenuAdminPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const doc = await apiFetch<MenuDoc>(withCampus('/menu'), { auth: false });
+      const doc = await fetchCampusModule<MenuDoc>("/menu");
       setMonth(doc.month || currentMonth());
       setDays(doc.days?.length ? doc.days : []);
       setSelectedIdx(0);

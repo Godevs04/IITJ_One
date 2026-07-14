@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ApiError, apiFetch, campusId, withCampus } from '@/lib/api';
+import { ApiError, apiFetch, campusId, fetchCampusModule } from '@/lib/api';
 import { Button } from '@/components/Button';
 import { Field, Input, Select, Textarea } from '@/components/Field';
 import {
@@ -77,10 +77,7 @@ export default function NoticesAdminPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<{ notices: NoticeDoc[] }>(
-        withCampus('/notices'),
-        { auth: false },
-      );
+      const data = await fetchCampusModule<{ notices: NoticeDoc[] }>('/notices');
       setNotices(data.notices ?? []);
     } catch (err) {
       push(
