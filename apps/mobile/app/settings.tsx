@@ -44,6 +44,8 @@ export default function SettingsScreen() {
               value={darkMode}
               onValueChange={toggleDark}
               trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={darkMode ? '#ffffff' : '#f4f3f4'}
+              ios_backgroundColor={colors.border}
               accessibilityLabel="Dark mode"
             />
           )}

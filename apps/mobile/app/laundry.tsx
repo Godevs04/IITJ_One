@@ -203,6 +203,8 @@ export default function LaundryScreen() {
             value={prefs.reminderEnabled}
             onValueChange={(v) => void toggleReminder(v)}
             trackColor={{ false: theme.border, true: theme.primary }}
+            thumbColor={prefs.reminderEnabled ? '#ffffff' : '#f4f3f4'}
+            ios_backgroundColor={theme.border}
             disabled={!prefs.hostel}
           />
         </View>

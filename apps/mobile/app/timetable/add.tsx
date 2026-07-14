@@ -221,6 +221,8 @@ export default function AddClassScreen() {
           value={reminderEnabled}
           onValueChange={setReminderEnabled}
           trackColor={{ false: theme.border, true: theme.primary }}
+          thumbColor={reminderEnabled ? '#ffffff' : '#f4f3f4'}
+          ios_backgroundColor={theme.border}
         />
       </View>
 
@@ -237,6 +239,8 @@ export default function AddClassScreen() {
           value={showOnHome}
           onValueChange={setShowOnHome}
           trackColor={{ false: theme.border, true: theme.primary }}
+          thumbColor={showOnHome ? '#ffffff' : '#f4f3f4'}
+          ios_backgroundColor={theme.border}
         />
       </View>
 
