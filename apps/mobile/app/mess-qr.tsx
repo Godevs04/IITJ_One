@@ -53,10 +53,19 @@ export default function MessQrScreen() {
     return (
       <View style={[styles.fullScreen, { backgroundColor: theme.surface }]}>
         <View style={styles.fullHeader}>
-          <Pressable onPress={() => setDisplayMode(false)} hitSlop={12}>
+          <Pressable
+            onPress={() => setDisplayMode(false)}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="Exit full screen QR"
+          >
             <Text style={[styles.closeText, { color: theme.primary }]}>✕</Text>
           </Pressable>
-          <Pressable onPress={() => void importImage(false)}>
+          <Pressable
+            onPress={() => void importImage(false)}
+            accessibilityRole="button"
+            accessibilityLabel="Replace Mess QR image"
+          >
             <Text style={[styles.editText, { color: theme.primary }]}>Edit</Text>
           </Pressable>
         </View>
@@ -64,6 +73,7 @@ export default function MessQrScreen() {
           source={{ uri: qr.imagePath }}
           style={[styles.qrImage, { borderColor: theme.primary }]}
           resizeMode="contain"
+          accessibilityLabel="Mess QR code full screen"
         />
         <Text style={[styles.caption, { color: theme.textMuted }]}>Mess QR</Text>
       </View>

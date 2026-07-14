@@ -1,3 +1,4 @@
+import { DEFAULT_LAUNDRY_SCHEDULES, DEFAULT_WIFI_DOC, DEFAULT_ERICKSHAW_DOC, DEFAULT_MEAL_WINDOWS } from '@iitj1/types';
 import { config } from '../config';
 import { loadMenuFromFiles, loadTransportFromFile } from '../services/parsers';
 import type {
@@ -13,6 +14,10 @@ import type {
   ServicesDoc,
   EmergencyDoc,
   AboutDoc,
+  LaundryDoc,
+  WifiDoc,
+  ErickshawDoc,
+  MealWindowsDoc,
   AdminDoc,
   AuditLogDoc,
   SuggestionDoc,
@@ -30,6 +35,10 @@ const defaultVersions = (): MetaVersions => ({
   services: 1,
   emergency: 1,
   about: 1,
+  laundry: 1,
+  wifi: 1,
+  erickshaw: 1,
+  mealWindows: 1,
 });
 
 interface FallbackState {
@@ -44,6 +53,10 @@ interface FallbackState {
   services: ServicesDoc;
   emergency: EmergencyDoc;
   about: AboutDoc;
+  laundry: LaundryDoc;
+  wifi: WifiDoc;
+  erickshaw: ErickshawDoc;
+  mealWindows: MealWindowsDoc;
   admins: AdminDoc[];
   auditLog: AuditLogDoc[];
   suggestions: SuggestionDoc[];
@@ -56,10 +69,34 @@ function nextId(): string {
   return `fallback-${idCounter++}`;
 }
 
+function loadSeedTransport(): { routes: TransportDoc['routes']; scheduleOverrides: TransportDoc['scheduleOverrides'] } {
+  try {
+    return loadTransportFromFile(config.docsRoot);
+  } catch (err) {
+    console.warn(
+      '[fallback] Transport seed docs unavailable — using empty routes:',
+      (err as Error).message,
+    );
+    return { routes: [], scheduleOverrides: [] };
+  }
+}
+
+function loadSeedMenu() {
+  try {
+    return loadMenuFromFiles(config.docsRoot);
+  } catch (err) {
+    console.warn(
+      '[fallback] Menu seed docs unavailable — using empty menu:',
+      (err as Error).message,
+    );
+    return [];
+  }
+}
+
 function buildDefaultState(): FallbackState {
   const campusId = config.campusId;
-  const { routes, scheduleOverrides } = loadTransportFromFile(config.docsRoot);
-  const menuDays = loadMenuFromFiles(config.docsRoot);
+  const { routes, scheduleOverrides } = loadSeedTransport();
+  const menuDays = loadSeedMenu();
   const now = new Date();
 
   return {
@@ -219,6 +256,22 @@ function buildDefaultState(): FallbackState {
         },
       ],
     },
+    laundry: {
+      campusId,
+      schedules: [...DEFAULT_LAUNDRY_SCHEDULES],
+    },
+    wifi: {
+      campusId,
+      ...DEFAULT_WIFI_DOC,
+    },
+    erickshaw: {
+      campusId,
+      ...DEFAULT_ERICKSHAW_DOC,
+    },
+    mealWindows: {
+      campusId,
+      windows: { ...DEFAULT_MEAL_WINDOWS },
+    },
     admins: [],
     auditLog: [],
     suggestions: [],
@@ -278,6 +331,7 @@ export function fallbackGetNotices(campusId: string, category?: string): NoticeD
     .notices.filter(
       (n) =>
         n.campusId === campusId &&
+        !n.deletedAt &&
         n.startDate <= now &&
         n.expiryDate > now &&
         (!category || n.category === category),
@@ -289,7 +343,6 @@ export function fallbackAddNotice(notice: NoticeDoc): NoticeDoc {
   const s = getFallbackState();
   const saved = { ...notice, _id: nextId() };
   s.notices.unshift(saved);
-  fallbackBumpVersion('notices', notice.campusId);
   return saved;
 }
 
@@ -298,17 +351,23 @@ export function fallbackUpdateNotice(id: string, patch: Partial<NoticeDoc>): Not
   const idx = s.notices.findIndex((n) => n._id === id);
   if (idx < 0) return null;
   s.notices[idx] = { ...s.notices[idx], ...patch };
-  fallbackBumpVersion('notices', s.notices[idx].campusId);
   return s.notices[idx];
 }
 
+export function fallbackSoftDeleteNotice(id: string): NoticeDoc | null {
+  return fallbackUpdateNotice(id, { deletedAt: new Date() });
+}
+
+export function fallbackRestoreNotice(id: string): NoticeDoc | null {
+  return fallbackUpdateNotice(id, { deletedAt: null });
+}
+
+/** @deprecated Prefer soft-delete; kept for rare hard purge. */
 export function fallbackDeleteNotice(id: string): boolean {
   const s = getFallbackState();
   const idx = s.notices.findIndex((n) => n._id === id);
   if (idx < 0) return false;
-  const campusId = s.notices[idx].campusId;
   s.notices.splice(idx, 1);
-  fallbackBumpVersion('notices', campusId);
   return true;
 }
 

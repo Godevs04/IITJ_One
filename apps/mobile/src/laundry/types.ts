@@ -1,21 +1,6 @@
-export type Hostel =
-  | 'B1'
-  | 'B3'
-  | 'B5'
-  | 'G1'
-  | 'G2'
-  | 'G3'
-  | 'G5'
-  | 'G6'
-  | 'O3'
-  | 'O4'
-  | 'Y3'
-  | 'Y4'
-  | 'B2'
-  | 'B4'
-  | 'G4'
-  | 'I2'
-  | 'I3';
+import type { DayName, HostelId, LaundrySchedule } from '@iitj1/types';
+export type { DayName, LaundrySchedule } from '@iitj1/types';
+export type Hostel = HostelId;
 
 export interface HostelOption {
   id: Hostel;
@@ -42,23 +27,6 @@ export const HOSTELS: HostelOption[] = [
   { id: 'I3', category: 'girls' },
 ];
 
-export type DayName =
-  | 'monday'
-  | 'tuesday'
-  | 'wednesday'
-  | 'thursday'
-  | 'friday'
-  | 'saturday'
-  | 'sunday';
-
-export interface LaundrySchedule {
-  hostel: Hostel;
-  collectionDay1: DayName;
-  collectionDay2: DayName;
-  collectionTime: string;
-  location: string;
-}
-
 export const REMINDER_OPTIONS: { minutesBefore: number; label: string }[] = [
   { minutesBefore: 10, label: '10 minutes before' },
   { minutesBefore: 20, label: '20 minutes before' },
@@ -67,8 +35,6 @@ export const REMINDER_OPTIONS: { minutesBefore: number; label: string }[] = [
   { minutesBefore: 60, label: '1 hour before' },
 ];
 
-// A single reminder is used today, but preferences store a list so a future
-// "add another reminder" feature doesn't need a data migration.
 export interface LaundryReminder {
   id: string;
   minutesBefore: number;
@@ -89,3 +55,6 @@ export const DEFAULT_LAUNDRY_PREFERENCES: LaundryPreferences = {
   reminders: [{ id: 'default', minutesBefore: 30 }],
   notificationPermissionStatus: 'undetermined',
 };
+
+// Keep DayName import used for type-only consumers
+export type { DayName as LaundryDayName };

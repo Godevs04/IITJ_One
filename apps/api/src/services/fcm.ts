@@ -3,24 +3,30 @@ import { config } from '../config';
 
 let initialized = false;
 
+export function isFcmConfigured(): boolean {
+  return Boolean(
+    config.fcm.serviceAccountPath ||
+      (config.fcm.projectId && config.fcm.clientEmail && config.fcm.privateKey),
+  );
+}
+
 function initFcm(): boolean {
   if (initialized) return true;
+  if (!isFcmConfigured()) return false;
 
   try {
     if (config.fcm.serviceAccountPath) {
       admin.initializeApp({
         credential: admin.credential.cert(config.fcm.serviceAccountPath),
       });
-    } else if (config.fcm.projectId && config.fcm.clientEmail && config.fcm.privateKey) {
+    } else {
       admin.initializeApp({
         credential: admin.credential.cert({
-          projectId: config.fcm.projectId,
-          clientEmail: config.fcm.clientEmail,
-          privateKey: config.fcm.privateKey,
+          projectId: config.fcm.projectId!,
+          clientEmail: config.fcm.clientEmail!,
+          privateKey: config.fcm.privateKey!,
         }),
       });
-    } else {
-      return false;
     }
     initialized = true;
     return true;
@@ -35,10 +41,14 @@ export async function sendTopicPush(
   title: string,
   body: string,
   data?: Record<string, string>,
-): Promise<{ success: boolean; messageId?: string; error?: string }> {
+): Promise<{ success: boolean; messageId?: string; error?: string; configured: boolean }> {
   if (!initFcm()) {
-    console.log(`[fcm] Stub push to topic "${topic}": ${title}`);
-    return { success: true, messageId: 'stub-' + Date.now() };
+    console.warn(`[fcm] Not configured — refusing stub push to "${topic}": ${title}`);
+    return {
+      success: false,
+      configured: false,
+      error: 'FCM is not configured on this server',
+    };
   }
 
   try {
@@ -47,9 +57,9 @@ export async function sendTopicPush(
       notification: { title, body },
       data: data ?? {},
     });
-    return { success: true, messageId };
+    return { success: true, configured: true, messageId };
   } catch (err) {
-    return { success: false, error: (err as Error).message };
+    return { success: false, configured: true, error: (err as Error).message };
   }
 }
 

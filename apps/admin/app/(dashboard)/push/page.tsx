@@ -51,7 +51,7 @@ export default function PushAdminPage() {
     <div>
       <PageHeader
         title="Push composer"
-        subtitle="Broadcast an FCM topic message to subscribed devices."
+        subtitle="Broadcast an FCM topic message. Returns 503 if Firebase is not configured on the API."
       />
       <Card className="max-w-2xl space-y-4">
         <Field label="Topic">

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ContentCard } from '@/components/ContentCard';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
-import { readCachedModule } from '@/services/sync';
+import { useCampusModule } from '@/hooks/useCampusModule';
 import type { AboutDoc } from '@/types/campus';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
@@ -93,7 +93,7 @@ function ContactRow({
 export default function AboutScreen() {
   const theme = useThemeColors();
   const { syncing, sync } = useCampusSync(false);
-  const about = readCachedModule<AboutDoc>('about');
+  const about = useCampusModule<AboutDoc>('about');
   const syncedSections = about?.sections ?? [];
   const sections = syncedSections.length > 0 ? syncedSections : INSTITUTE_DETAILS;
 

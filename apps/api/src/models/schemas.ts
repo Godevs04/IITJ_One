@@ -180,6 +180,12 @@ export const aboutPutSchema = z.object({
   ),
 });
 
+export { laundryPutSchema, wifiPutSchema, erickshawPutSchema, mealWindowsPutSchema } from '@iitj1/types';
+
+export const suggestionStatusSchema = z.object({
+  status: z.enum(['new', 'read', 'archived']),
+});
+
 export const pushBodySchema = z.object({
   topic: z.string().min(1),
   title: z.string().min(1).max(200),

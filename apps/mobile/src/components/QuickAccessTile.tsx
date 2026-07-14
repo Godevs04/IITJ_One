@@ -43,6 +43,8 @@ export function QuickAccessTile({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={title}
       style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
     >
       <View style={[styles.iconBox, iconBox]}>

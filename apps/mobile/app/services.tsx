@@ -5,7 +5,7 @@ import { DirectoryRow } from '@/components/DirectoryRow';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
-import { readCachedModule } from '@/services/sync';
+import { useCampusModule } from '@/hooks/useCampusModule';
 import type { ServicesDoc } from '@/types/campus';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing } from '@/theme/tokens';
@@ -13,7 +13,7 @@ import { AppRadius, AppSpacing } from '@/theme/tokens';
 export default function ServicesScreen() {
   const theme = useThemeColors();
   const { syncing, sync } = useCampusSync(false);
-  const services = readCachedModule<ServicesDoc>('services');
+  const services = useCampusModule<ServicesDoc>('services');
   const [query, setQuery] = useState('');
 
   const entries = useMemo(() => {

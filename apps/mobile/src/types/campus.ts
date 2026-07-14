@@ -147,6 +147,61 @@ export interface AboutDoc {
   sections: AboutSection[];
 }
 
+export interface LaundryDoc {
+  campusId: string;
+  schedules: {
+    hostel: string;
+    collectionDay1: string;
+    collectionDay2: string;
+    collectionTime: string;
+    location: string;
+  }[];
+}
+
+export interface WifiDoc {
+  campusId: string;
+  providers: string[];
+  guides: {
+    title: string;
+    description: string;
+    pdfUrl: string;
+    icon?: string;
+    order?: number;
+  }[];
+  notes?: string;
+}
+
+export interface ErickshawDoc {
+  campusId: string;
+  service: {
+    name: string;
+    operatingHours: string;
+    description: string;
+    vehicles: { type: string; count: number }[];
+  };
+  drivers: {
+    id: string;
+    name: string;
+    phone: string;
+    isVerified: boolean;
+  }[];
+  fares: {
+    route: string;
+    price: number;
+    description?: string;
+  }[];
+}
+
+export interface MealWindowsDoc {
+  campusId: string;
+  windows: {
+    breakfast: { start: string; end: string; label: string; timeLabel: string };
+    lunch: { start: string; end: string; label: string; timeLabel: string };
+    snacks: { start: string; end: string; label: string; timeLabel: string };
+    dinner: { start: string; end: string; label: string; timeLabel: string };
+  };
+}
+
 export interface HomeBundle {
   campusId: string;
   todayMenu: {

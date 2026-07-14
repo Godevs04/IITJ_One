@@ -4,10 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
+import { useCampusModule } from '@/hooks/useCampusModule';
 import { useSwipeGesture } from '@/navigation/SwipeContext';
-import { readCachedModule } from '@/services/sync';
 import type { MenuDoc } from '@/types/campus';
-import { todayDayName, getMealTimeStatus, MEAL_WINDOWS } from '@/utils/date';
+import { todayDayName, getMealTimeStatus, getMealWindows } from '@/utils/date';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
@@ -50,7 +50,7 @@ export default function MenuScreen() {
   const theme = useThemeColors();
   const { syncing, sync } = useCampusSync(false);
   const { lockSwipe, unlockSwipe } = useSwipeGesture();
-  const menu = readCachedModule<MenuDoc>('menu');
+  const menu = useCampusModule<MenuDoc>('menu');
   const [selectedDay, setSelectedDay] = useState(todayDayName());
   const [dietPreference, setDietPreference] = useState<'veg' | 'nonVeg'>('veg');
   const [showCharges, setShowCharges] = useState(false);
@@ -200,7 +200,7 @@ export default function MenuScreen() {
 
           const isToday = selectedDay === todayDayName();
           const timeStatus = isToday ? getMealTimeStatus(meal) : null;
-          const mealWindow = MEAL_WINDOWS[meal];
+          const mealWindow = getMealWindows()[meal];
 
           const isActive = timeStatus?.status === 'active';
 

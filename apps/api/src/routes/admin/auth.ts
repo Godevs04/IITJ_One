@@ -41,14 +41,25 @@ router.post(
   },
 );
 
-router.post('/refresh', validateBody(refreshBodySchema), (req: AuthRequest, res: Response) => {
+router.post('/refresh', validateBody(refreshBodySchema), async (req: AuthRequest, res: Response) => {
   try {
     const { refreshToken } = req.body as { refreshToken: string };
     const payload = verifyRefreshToken(refreshToken);
-    const { sub, email, name, role } = payload;
+    const admin = await findAdminByEmail(payload.email);
+    if (!admin) {
+      res.status(401).json({ error: 'Admin no longer exists' });
+      return;
+    }
+    const next = {
+      sub: admin._id ?? payload.sub,
+      email: admin.email,
+      name: admin.name,
+      role: admin.role,
+    };
     res.json({
-      accessToken: signAccessToken({ sub, email, name, role }),
-      refreshToken: signRefreshToken({ sub, email, name, role }),
+      accessToken: signAccessToken(next),
+      refreshToken: signRefreshToken(next),
+      admin: { email: admin.email, name: admin.name, role: admin.role },
     });
   } catch {
     res.status(401).json({ error: 'Invalid or expired refresh token' });

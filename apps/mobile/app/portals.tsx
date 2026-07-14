@@ -5,13 +5,13 @@ import { DirectoryRow } from '@/components/DirectoryRow';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
-import { readCachedModule } from '@/services/sync';
+import { useCampusModule } from '@/hooks/useCampusModule';
 import type { PortalsDoc } from '@/types/campus';
 import { AppSpacing } from '@/theme/tokens';
 
 export default function PortalsScreen() {
   const { syncing, sync } = useCampusSync(false);
-  const portals = readCachedModule<PortalsDoc>('portals');
+  const portals = useCampusModule<PortalsDoc>('portals');
   const links = [...(portals?.links ?? [])].sort((a, b) => a.order - b.order);
 
   const onRefresh = useCallback(async () => {

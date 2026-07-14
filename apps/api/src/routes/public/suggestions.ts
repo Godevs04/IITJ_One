@@ -17,6 +17,7 @@ router.post(
       campusId: config.campusId,
       message,
       submittedAt: new Date(),
+      status: 'new',
     });
     res.status(201).json({ success: true, id: doc._id });
   },

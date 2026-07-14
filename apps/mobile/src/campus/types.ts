@@ -1,3 +1,6 @@
+import type { ComponentProps } from 'react';
+import type { Ionicons } from '@expo/vector-icons';
+
 export type LocationCategory =
   | 'academic'
   | 'department'
@@ -10,6 +13,8 @@ export type LocationCategory =
   | 'gate'
   | 'service'
   | 'landmark';
+
+export type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
 export interface CampusLocation {
   id: string;
@@ -29,7 +34,7 @@ export interface CampusLocation {
 export interface LocationCategory_ {
   id: LocationCategory;
   label: string;
-  icon: string;
+  icon: IoniconName;
   emoji: string;
 }
 

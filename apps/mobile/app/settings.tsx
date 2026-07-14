@@ -1,11 +1,16 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Switch, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Switch, Text, View } from 'react-native';
 import { DirectoryRow } from '@/components/DirectoryRow';
 import { ScreenShell } from '@/components/ScreenShell';
-import { getSetting, setSetting } from '@/services/cache';
+import {
+  loadTopicPrefs,
+  registerForPushNotifications,
+  saveTopicPrefs,
+  type PushRegistration,
+} from '@/services/pushTopics';
 import { useTheme } from '@/theme/ThemeProvider';
-import { AppSpacing } from '@/theme/tokens';
+import { AppSpacing, AppTypography } from '@/theme/tokens';
 
 const NOTIFICATION_TOPICS = [
   { key: 'iitj_all', label: 'All campus updates' },
@@ -17,7 +22,12 @@ const NOTIFICATION_TOPICS = [
 
 export default function SettingsScreen() {
   const { darkMode, setDarkMode, colors } = useTheme();
-  const [topicPrefs, setTopicPrefs] = useState(getSetting<Record<string, boolean>>('topicPrefs', {}));
+  const [topicPrefs, setTopicPrefs] = useState(loadTopicPrefs());
+  const [pushInfo, setPushInfo] = useState<PushRegistration | null>(null);
+
+  useEffect(() => {
+    void registerForPushNotifications().then(setPushInfo);
+  }, []);
 
   const toggleDark = (value: boolean) => {
     setDarkMode(value);
@@ -34,22 +44,35 @@ export default function SettingsScreen() {
               value={darkMode}
               onValueChange={toggleDark}
               trackColor={{ false: colors.border, true: colors.primary }}
+              accessibilityLabel="Dark mode"
             />
           )}
         />
       </View>
 
       <View style={{ gap: AppSpacing.sm }}>
-        <DirectoryRow title="Notification preferences" subtitle="FCM topic toggles (local)" />
+        <DirectoryRow
+          title="Notification preferences"
+          subtitle={
+            pushInfo?.expoPushToken
+              ? 'Device token registered'
+              : 'Local prefs · remote FCM topics need a release build'
+          }
+        />
+        {pushInfo?.note ? (
+          <Text style={{ ...AppTypography.caption, color: colors.textMuted, paddingHorizontal: 4 }}>
+            {pushInfo.note}
+          </Text>
+        ) : null}
         {NOTIFICATION_TOPICS.map((topic) => (
           <DirectoryRow
             key={topic.key}
             title={topic.label}
-            subtitle={topicPrefs[topic.key] !== false ? 'Subscribed' : 'Muted'}
+            subtitle={topicPrefs[topic.key] !== false ? 'Enabled locally' : 'Muted locally'}
             onPress={() => {
               const next = { ...topicPrefs, [topic.key]: topicPrefs[topic.key] === false };
               setTopicPrefs(next);
-              setSetting('topicPrefs', next);
+              saveTopicPrefs(next);
             }}
           />
         ))}

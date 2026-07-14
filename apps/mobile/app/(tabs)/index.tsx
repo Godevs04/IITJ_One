@@ -6,7 +6,7 @@ import { HomeHeader } from '@/components/HomeHeader';
 import { QuickAccessTile, type QuickAccessVariant } from '@/components/QuickAccessTile';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
-import { readCachedModule } from '@/services/sync';
+import { useCampusModule } from '@/hooks/useCampusModule';
 import { listTimetableEntries } from '@/services/localDb';
 import type { CalendarDoc, MenuDoc, TransportDoc } from '@/types/campus';
 import {
@@ -16,7 +16,7 @@ import {
   todayDayName,
   getMealTimeStatus,
   nowMinutes,
-  MEAL_WINDOWS,
+  getMealWindows,
 } from '@/utils/date';
 import { getNextDeparture } from '@/utils/transport';
 import { getNextClass, type NextClass } from '@/utils/timetable';
@@ -221,27 +221,28 @@ function NoticeRow({
 
 export default function HomeScreen() {
   const theme = useThemeColors();
-  const { syncing, sync } = useCampusSync();
+  const { syncing, sync, error: syncError } = useCampusSync();
   const [busSeconds, setBusSeconds] = useState(0);
   const [nextClass, setNextClass] = useState<NextClass | null>(null);
 
-  const menu = readCachedModule<MenuDoc>('menu');
-  const transport = readCachedModule<TransportDoc>('transport');
-  const calendar = readCachedModule<CalendarDoc>('calendar');
-  const notices = readCachedModule<CachedNotice[]>('notices');
+  const menu = useCampusModule<MenuDoc>('menu');
+  const transport = useCampusModule<TransportDoc>('transport');
+  const calendar = useCampusModule<CalendarDoc>('calendar');
+  const notices = useCampusModule<CachedNotice[]>('notices');
 
   const { mealKey, targetDay } = (() => {
     const now = nowMinutes();
+    const windows = getMealWindows();
     let day = todayDayName();
     let key: 'breakfast' | 'lunch' | 'snacks' | 'dinner' = 'breakfast';
 
-    if (now < MEAL_WINDOWS.breakfast.endMin) {
+    if (now < windows.breakfast.endMin) {
       key = 'breakfast';
-    } else if (now < MEAL_WINDOWS.lunch.endMin) {
+    } else if (now < windows.lunch.endMin) {
       key = 'lunch';
-    } else if (now < MEAL_WINDOWS.snacks.endMin) {
+    } else if (now < windows.snacks.endMin) {
       key = 'snacks';
-    } else if (now < MEAL_WINDOWS.dinner.endMin) {
+    } else if (now < windows.dinner.endMin) {
       key = 'dinner';
     } else {
       // Past dinner time, show tomorrow's breakfast!
@@ -296,6 +297,14 @@ export default function HomeScreen() {
   const topNotices = [...(notices ?? [])]
     .sort((a, b) => Number(b.isImportant) - Number(a.isImportant))
     .slice(0, 3);
+
+  const upcomingEvents = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return [...(calendar?.events ?? [])]
+      .filter((e) => e.endDate >= today)
+      .sort((a, b) => a.startDate.localeCompare(b.startDate))
+      .slice(0, 3);
+  }, [calendar]);
 
   const busCountdown = formatCountdown(busSeconds);
   const classTime = nextClass ? to12Hour(nextClass.entry.startTime) : null;
@@ -471,6 +480,50 @@ export default function HomeScreen() {
           ))}
         </View>
       </View>
+
+      {upcomingEvents.length > 0 ? (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
+              Upcoming
+            </Text>
+            <Pressable onPress={() => router.push('/calendar')} hitSlop={8}>
+              <Text style={[styles.viewAll, { color: theme.primary }]}>
+                Calendar
+              </Text>
+            </Pressable>
+          </View>
+          {upcomingEvents.map((event, i) => (
+            <Pressable
+              key={`${event.title}-${i}`}
+              onPress={() => router.push('/calendar')}
+              style={({ pressed }) => [
+                styles.eventRow,
+                { backgroundColor: theme.surface, borderColor: theme.border },
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={[styles.eventType, { color: theme.primary }]}>
+                {event.type}
+              </Text>
+              <Text style={[styles.eventTitle, { color: theme.text }]} numberOfLines={1}>
+                {event.title}
+              </Text>
+              <Text style={[styles.eventDate, { color: theme.textMuted }]}>
+                {event.startDate === event.endDate
+                  ? event.startDate
+                  : `${event.startDate} → ${event.endDate}`}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+
+      {syncError ? (
+        <Text style={[styles.syncError, { color: theme.error }]}>
+          Sync issue: {syncError}
+        </Text>
+      ) : null}
 
       {topNotices.length > 0 ? (
         <View style={styles.section}>
@@ -686,5 +739,26 @@ const styles = StyleSheet.create({
   noticeChevron: {
     alignSelf: 'center',
     marginRight: AppSpacing.md,
+  },
+  eventRow: {
+    borderRadius: AppRadius.md,
+    borderWidth: 1,
+    padding: AppSpacing.md,
+    gap: 2,
+  },
+  eventType: {
+    ...AppTypography.caption,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  eventTitle: {
+    ...AppTypography.body,
+    fontWeight: '600',
+  },
+  eventDate: {
+    ...AppTypography.caption,
+  },
+  syncError: {
+    ...AppTypography.caption,
   },
 });

@@ -1,17 +1,20 @@
 import { useCallback } from 'react';
-import { View } from 'react-native';
+import { Linking, View } from 'react-native';
 import { DirectoryRow } from '@/components/DirectoryRow';
-import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
-import { readCachedModule } from '@/services/sync';
+import { useCampusModule } from '@/hooks/useCampusModule';
+import { BUNDLED_EMERGENCY_CONTACTS } from '@/data/emergencyFallback';
 import type { EmergencyDoc } from '@/types/campus';
 import { AppSpacing } from '@/theme/tokens';
 
 export default function EmergencyScreen() {
   const { syncing, sync } = useCampusSync(false);
-  const emergency = readCachedModule<EmergencyDoc>('emergency');
-  const contacts = [...(emergency?.contacts ?? [])].sort((a, b) => a.order - b.order);
+  const emergency = useCampusModule<EmergencyDoc>('emergency');
+  const synced = emergency?.contacts ?? [];
+  const contacts = (
+    synced.length > 0 ? synced : [...BUNDLED_EMERGENCY_CONTACTS]
+  ).sort((a, b) => a.order - b.order);
 
   const onRefresh = useCallback(async () => {
     await sync();
@@ -20,28 +23,24 @@ export default function EmergencyScreen() {
   return (
     <ScreenShell
       hideTitle
-      subtitle="Tap to call immediately"
+      subtitle={
+        synced.length > 0
+          ? 'Tap to call immediately'
+          : 'Offline fallback — pull to sync latest contacts'
+      }
       onRefresh={onRefresh}
       refreshing={syncing}
     >
-      {contacts.length > 0 ? (
-        <View style={{ gap: AppSpacing.sm }}>
-          {contacts.map((c) => (
-            <DirectoryRow
-              key={c.phone}
-              title={c.label}
-              subtitle={c.phone}
-              phone={c.phone}
-            />
-          ))}
-        </View>
-      ) : (
-        <EmptyState
-          icon="call-outline"
-          title="No contacts loaded"
-          message="Pull down to sync emergency contacts."
-        />
-      )}
+      <View style={{ gap: AppSpacing.sm }}>
+        {contacts.map((c) => (
+          <DirectoryRow
+            key={`${c.label}-${c.phone}`}
+            title={c.label}
+            subtitle={c.phone}
+            onPress={() => void Linking.openURL(`tel:${c.phone}`)}
+          />
+        ))}
+      </View>
     </ScreenShell>
   );
 }

@@ -20,6 +20,10 @@ const defaultVersions = (): MetaVersions => ({
   services: 1,
   emergency: 1,
   about: 1,
+  laundry: 1,
+  wifi: 1,
+  erickshaw: 1,
+  mealWindows: 1,
 });
 
 async function seedMongo(): Promise<void> {
@@ -65,6 +69,10 @@ async function seedMongo(): Promise<void> {
   await collections.services().replaceOne({ campusId }, fallback.services, { upsert: true });
   await collections.emergency().replaceOne({ campusId }, fallback.emergency, { upsert: true });
   await collections.about().replaceOne({ campusId }, fallback.about, { upsert: true });
+  await collections.laundry().replaceOne({ campusId }, fallback.laundry, { upsert: true });
+  await collections.wifi().replaceOne({ campusId }, fallback.wifi, { upsert: true });
+  await collections.erickshaw().replaceOne({ campusId }, fallback.erickshaw, { upsert: true });
+  await collections.mealWindows().replaceOne({ campusId }, fallback.mealWindows, { upsert: true });
 
   const existingNotices = await collections.notices().countDocuments({ campusId });
   if (existingNotices === 0) {

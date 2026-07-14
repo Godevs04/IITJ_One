@@ -1,18 +1,20 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
 import type { CampusLocation } from '../types';
 import { LOCATION_CATEGORIES } from '../types';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { highlightText } from '../utils/highlightText';
-import type { ReturnType } from 'react';
-import { useThemeColors } from '@/theme/ThemeProvider';
+import type { ThemeColors } from '@/theme/tokens';
+
+type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
 interface SearchResultCardProps {
   location: CampusLocation;
   query: string;
   matchType: 'exact' | 'partial' | 'alias' | 'category' | 'address' | 'pluscode';
   matchedField?: string;
-  theme: ReturnType<typeof useThemeColors>;
+  theme: ThemeColors;
 }
 
 const MATCH_TYPE_LABELS: Record<string, string> = {
@@ -24,7 +26,7 @@ const MATCH_TYPE_LABELS: Record<string, string> = {
   pluscode: 'Plus Code',
 };
 
-const MATCH_TYPE_ICONS: Record<string, string> = {
+const MATCH_TYPE_ICONS: Record<string, IoniconName> = {
   exact: 'checkmark-circle',
   alias: 'layers-outline',
   partial: 'search-outline',
@@ -124,7 +126,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    gap: AppSpacing.xs,
+    gap: 4,
   },
   name: {
     ...AppTypography.body,
@@ -139,7 +141,7 @@ const styles = StyleSheet.create({
     ...AppTypography.caption,
     paddingHorizontal: 4,
     paddingVertical: 2,
-    borderRadius: AppRadius.xs,
+    borderRadius: 4,
   },
   badge: {
     flexDirection: 'row',

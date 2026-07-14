@@ -1,32 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
-import { syncCampusData, type SyncResult } from '@/services/sync';
+import { useCampusData } from '@/state/CampusDataProvider';
 
-export function useCampusSync(auto = true) {
-  const [syncing, setSyncing] = useState(false);
-  const [lastSync, setLastSync] = useState<SyncResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const sync = useCallback(async () => {
-    setSyncing(true);
-    setError(null);
-    try {
-      const result = await syncCampusData();
-      setLastSync(result);
-      return result;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Sync failed';
-      setError(message);
-      throw err;
-    } finally {
-      setSyncing(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (auto) {
-      void sync();
-    }
-  }, [auto, sync]);
-
+/** Shared campus sync — one run updates all tabs via CampusDataProvider. */
+export function useCampusSync(_auto = true) {
+  const { syncing, lastSync, error, sync } = useCampusData();
   return { syncing, lastSync, error, sync };
 }

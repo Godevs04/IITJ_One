@@ -1,56 +1,18 @@
 import * as Linking from 'expo-linking';
+import { useCallback, useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import type { ComponentProps } from 'react';
 import { ScreenShell } from '@/components/ScreenShell';
+import { useCampusSync } from '@/hooks/useCampusSync';
+import { useCampusModule } from '@/hooks/useCampusModule';
+import { DEFAULT_WIFI_DOC, type WifiGuide } from '@iitj1/types';
+import type { WifiDoc } from '@/types/campus';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
-// ─── Data model ──────────────────────────────────────────────────────────────
-interface PlatformGuide {
-  title: string;
-  icon: React.ComponentProps<typeof Ionicons>['name'];
-  description: string;
-  pdfUrl: string;
-}
+type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
-const PLATFORM_GUIDES: PlatformGuide[] = [
-  {
-    title: 'Linux',
-    icon: 'terminal-outline',
-    description: 'Official WPA2-Enterprise Wi-Fi configuration guide for Linux devices.',
-    pdfUrl: 'https://iitj.ac.in/PageImages/Gallery/01-2025/internet-linux-638738366727934551.pdf',
-  },
-  {
-    title: 'Windows',
-    icon: 'desktop-outline',
-    description: 'Official WPA2-Enterprise Wi-Fi configuration guide for Windows devices.',
-    pdfUrl:
-      'https://iitj.ac.in/PageImages/Gallery/01-2025/Internet-window-638738369547845162.pdf',
-  },
-  {
-    title: 'macOS',
-    icon: 'laptop-outline',
-    description: 'Official WPA2-Enterprise Wi-Fi configuration guide for macOS devices.',
-    pdfUrl: 'https://iitj.ac.in/PageImages/Gallery/01-2025/Internet-mac-638738370188410589.pdf',
-  },
-  {
-    title: 'Android',
-    icon: 'phone-portrait-outline',
-    description: 'Official IITJ WPA2-Enterprise Wi-Fi configuration guide for Android devices.',
-    pdfUrl:
-      'https://iitj.ac.in/PageImages/Gallery/09-2025/IITJWLAN-configuration-steps-for-Android-User-638944967480274395.pdf',
-  },
-  {
-    title: 'Certificate',
-    icon: 'shield-checkmark-outline',
-    description: 'Download the official IITJ Wi-Fi certificate if required during device configuration.',
-    pdfUrl: 'https://drive.google.com/file/d/1rjTBValxR_6jEIvGDzGYZH13ye7o-VBL/view',
-  },
-];
-
-const PROVIDERS = ['NKN', 'BSNL', 'Airtel', 'PGCIL'];
-
-// ─── Helper ───────────────────────────────────────────────────────────────────
 async function openPdf(url: string, title: string) {
   try {
     const supported = await Linking.canOpenURL(url);
@@ -64,7 +26,11 @@ async function openPdf(url: string, title: string) {
   }
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+function resolveIcon(name?: string): IoniconName {
+  if (name && name in Ionicons.glyphMap) return name as IoniconName;
+  return 'document-outline';
+}
+
 function InfoChip({ label }: { label: string }) {
   const theme = useThemeColors();
   return (
@@ -78,9 +44,7 @@ function InfoChip({ label }: { label: string }) {
 
 function SectionLabel({ text }: { text: string }) {
   const theme = useThemeColors();
-  return (
-    <Text style={[styles.sectionLabel, { color: theme.textMuted }]}>{text}</Text>
-  );
+  return <Text style={[styles.sectionLabel, { color: theme.textMuted }]}>{text}</Text>;
 }
 
 function InfoRow({
@@ -88,7 +52,7 @@ function InfoRow({
   label,
   value,
 }: {
-  icon: React.ComponentProps<typeof Ionicons>['name'];
+  icon: IoniconName;
   label: string;
   value: string;
 }) {
@@ -106,13 +70,13 @@ function InfoRow({
   );
 }
 
-function GuideCard({ guide }: { guide: PlatformGuide }) {
+function GuideCard({ guide }: { guide: WifiGuide }) {
   const theme = useThemeColors();
   return (
     <View style={[styles.guideCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <View style={styles.guideCardHeader}>
         <View style={[styles.guideIconWrap, { backgroundColor: theme.primaryTint }]}>
-          <Ionicons name={guide.icon} size={22} color={theme.primary} />
+          <Ionicons name={resolveIcon(guide.icon)} size={22} color={theme.primary} />
         </View>
         <View style={styles.guideTitleBlock}>
           <Text style={[styles.guideTitle, { color: theme.text }]}>{guide.title}</Text>
@@ -124,6 +88,8 @@ function GuideCard({ guide }: { guide: PlatformGuide }) {
 
       <Pressable
         onPress={() => openPdf(guide.pdfUrl, guide.title)}
+        accessibilityRole="button"
+        accessibilityLabel={`Open ${guide.title} PDF`}
         style={({ pressed }) => [
           styles.openButton,
           { backgroundColor: theme.primary, opacity: pressed ? 0.82 : 1 },
@@ -136,17 +102,35 @@ function GuideCard({ guide }: { guide: PlatformGuide }) {
   );
 }
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
 export default function WifiScreen() {
   const theme = useThemeColors();
+  const { syncing, sync } = useCampusSync(false);
+  const wifi = useCampusModule<WifiDoc>('wifi');
+
+  const providers = wifi?.providers?.length ? wifi.providers : DEFAULT_WIFI_DOC.providers;
+  const guides = useMemo(() => {
+    const list = wifi?.guides?.length ? wifi.guides : DEFAULT_WIFI_DOC.guides;
+    return [...list].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }, [wifi]);
+  const notes =
+    wifi?.notes ||
+    DEFAULT_WIFI_DOC.notes ||
+    'Connect to the IIT Jodhpur WPA2-Enterprise Wi-Fi network using your ERP credentials.';
+
+  const onRefresh = useCallback(async () => {
+    await sync();
+  }, [sync]);
 
   return (
-    <ScreenShell hideTitle subtitle="Official WPA2-Enterprise setup guides">
-      {/* ── Information card ────────────────────────────────────────────── */}
+    <ScreenShell
+      hideTitle
+      subtitle="Official WPA2-Enterprise setup guides"
+      onRefresh={onRefresh}
+      refreshing={syncing}
+    >
       <View
         style={[styles.infoCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
       >
-        {/* Header row */}
         <View style={styles.infoCardHeader}>
           <View style={[styles.wifiIconWrap, { backgroundColor: theme.primaryTint }]}>
             <Ionicons name="wifi-outline" size={26} color={theme.primary} />
@@ -159,32 +143,24 @@ export default function WifiScreen() {
           </View>
         </View>
 
-        {/* Divider */}
         <View style={[styles.divider, { backgroundColor: theme.border }]} />
 
-        {/* Providers */}
         <SectionLabel text="SERVICE PROVIDERS" />
         <View style={styles.chipRow}>
-          {PROVIDERS.map((p) => (
+          {providers.map((p) => (
             <InfoChip key={p} label={p} />
           ))}
         </View>
 
-        {/* Auth + Security */}
         <InfoRow icon="person-outline" label="Username" value="ERP Username" />
         <InfoRow icon="lock-closed-outline" label="Password" value="ERP Password" />
         <InfoRow icon="shield-outline" label="Security" value="WPA2 Enterprise" />
 
-        {/* Divider */}
         <View style={[styles.divider, { backgroundColor: theme.border }]} />
 
-        <Text style={[styles.infoCardNote, { color: theme.textMuted }]}>
-          Connect to the IIT Jodhpur WPA2-Enterprise Wi-Fi network using your ERP credentials.
-          Follow the official setup guide for your device.
-        </Text>
+        <Text style={[styles.infoCardNote, { color: theme.textMuted }]}>{notes}</Text>
       </View>
 
-      {/* ── Platform setup guides ────────────────────────────────────────── */}
       <View style={styles.guidesSection}>
         <Text style={[styles.guidesSectionTitle, { color: theme.text }]}>Wi-Fi Setup Guides</Text>
         <Text style={[styles.guidesSectionSub, { color: theme.textMuted }]}>
@@ -193,17 +169,15 @@ export default function WifiScreen() {
       </View>
 
       <View style={{ gap: AppSpacing.md }}>
-        {PLATFORM_GUIDES.map((guide) => (
-          <GuideCard key={guide.title} guide={guide} />
+        {guides.map((guide) => (
+          <GuideCard key={`${guide.title}-${guide.pdfUrl}`} guide={guide} />
         ))}
       </View>
     </ScreenShell>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  // Info card
   infoCard: {
     borderRadius: AppRadius.lg,
     borderWidth: 1,
@@ -278,7 +252,6 @@ const styles = StyleSheet.create({
   infoCardNote: {
     ...AppTypography.bodySmall,
   },
-  // Guides section header
   guidesSection: {
     gap: AppSpacing.xs,
   },
@@ -289,7 +262,6 @@ const styles = StyleSheet.create({
   guidesSectionSub: {
     ...AppTypography.bodySmall,
   },
-  // Guide card
   guideCard: {
     borderRadius: AppRadius.lg,
     borderWidth: 1,

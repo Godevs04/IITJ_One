@@ -1,6 +1,8 @@
 services:
   api:
-    build: .
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
     ports:
       - "6002:6002"
     env_file:
@@ -16,7 +18,8 @@ services:
   mongo:
     image: mongo:7
     ports:
-      - "27017:27017"
+      # Internal-only — do not publish Mongo publicly
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongo_data:/data/db
     healthcheck:

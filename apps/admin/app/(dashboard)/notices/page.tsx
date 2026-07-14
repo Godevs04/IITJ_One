@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ApiError, apiFetch, campusId, fetchCampusModule } from '@/lib/api';
+import { ApiError, apiFetch, campusId } from '@/lib/api';
 import { Button } from '@/components/Button';
+import { CloudinaryUploadField } from '@/components/CloudinaryUploadField';
 import { Field, Input, Select, Textarea } from '@/components/Field';
 import {
   Card,
@@ -57,6 +58,7 @@ function emptyForm(): FormState {
 }
 
 function noticeStatus(n: NoticeDoc): { label: string; tone: 'success' | 'danger' | 'warning' | 'info' } {
+  if (n.deletedAt) return { label: 'Trash', tone: 'danger' };
   const now = Date.now();
   const start = new Date(n.startDate).getTime();
   const end = new Date(n.expiryDate).getTime();
@@ -77,7 +79,9 @@ export default function NoticesAdminPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchCampusModule<{ notices: NoticeDoc[] }>('/notices');
+      const data = await apiFetch<{ notices: NoticeDoc[] }>('/admin/notices', {
+        query: { campus: campusId },
+      });
       setNotices(data.notices ?? []);
     } catch (err) {
       push(
@@ -167,15 +171,29 @@ export default function NoticesAdminPage() {
   }
 
   async function remove(id: string) {
-    if (!window.confirm('Delete this notice?')) return;
+    if (!window.confirm('Move this notice to trash? You can restore it later.')) return;
     try {
       await apiFetch(`/admin/notices/${id}`, { method: 'DELETE' });
-      push('success', 'Notice deleted');
+      push('success', 'Notice moved to trash');
       await load();
     } catch (err) {
       push(
         'error',
         'Delete failed',
+        err instanceof Error ? err.message : 'Unknown error',
+      );
+    }
+  }
+
+  async function restore(id: string) {
+    try {
+      await apiFetch(`/admin/notices/${id}/restore`, { method: 'POST' });
+      push('success', 'Notice restored');
+      await load();
+    } catch (err) {
+      push(
+        'error',
+        'Restore failed',
         err instanceof Error ? err.message : 'Unknown error',
       );
     }
@@ -253,15 +271,11 @@ export default function NoticesAdminPage() {
                 placeholder="https://"
               />
             </Field>
-            <Field label="Image URL (optional)">
-              <Input
-                value={form.imageUrl}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, imageUrl: e.target.value }))
-                }
-                placeholder="https://res.cloudinary.com/…"
-              />
-            </Field>
+            <CloudinaryUploadField
+              label="Image (optional)"
+              value={form.imageUrl}
+              onChange={(imageUrl) => setForm((f) => ({ ...f, imageUrl }))}
+            />
           </div>
           <label className="flex items-center gap-2 text-sm text-ink">
             <input
@@ -310,14 +324,24 @@ export default function NoticesAdminPage() {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="secondary" onClick={() => openEdit(n)}>
-                      Edit
-                    </Button>
-                    {id ? (
-                      <Button variant="danger" onClick={() => void remove(id)}>
-                        Delete
-                      </Button>
-                    ) : null}
+                    {n.deletedAt ? (
+                      id ? (
+                        <Button variant="secondary" onClick={() => void restore(id)}>
+                          Restore
+                        </Button>
+                      ) : null
+                    ) : (
+                      <>
+                        <Button variant="secondary" onClick={() => openEdit(n)}>
+                          Edit
+                        </Button>
+                        {id ? (
+                          <Button variant="danger" onClick={() => void remove(id)}>
+                            Trash
+                          </Button>
+                        ) : null}
+                      </>
+                    )}
                   </div>
                 </div>
               </Card>

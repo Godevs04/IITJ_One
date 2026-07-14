@@ -1,3 +1,10 @@
+import {
+  DEFAULT_MEAL_WINDOWS,
+  type MealKey,
+  type MealWindowsDoc,
+} from '@iitj1/types';
+import { readCachedModule } from '@/services/sync';
+
 const DAY_NAMES = [
   'sunday',
   'monday',
@@ -72,18 +79,45 @@ export interface MealWindow {
   timeLabel: string;
 }
 
-export const MEAL_WINDOWS: Record<'breakfast' | 'lunch' | 'snacks' | 'dinner', MealWindow> = {
-  breakfast: { startMin: 7 * 60, endMin: 10 * 60, label: 'Breakfast', timeLabel: '7:00 AM - 10:00 AM' },
-  lunch: { startMin: 12 * 60, endMin: 14 * 60, label: 'Lunch', timeLabel: '12:00 PM - 2:00 PM' },
-  snacks: { startMin: 16 * 60 + 30, endMin: 18 * 60, label: 'Snacks', timeLabel: '4:30 PM - 6:00 PM' },
-  dinner: { startMin: 19 * 60 + 30, endMin: 22 * 60, label: 'Dinner', timeLabel: '7:30 PM - 10:00 PM' },
+function toMealWindow(cfg: {
+  start: string;
+  end: string;
+  label: string;
+  timeLabel: string;
+}): MealWindow {
+  return {
+    startMin: parseTimeToMinutes(cfg.start),
+    endMin: parseTimeToMinutes(cfg.end),
+    label: cfg.label,
+    timeLabel: cfg.timeLabel,
+  };
+}
+
+/** Hardcoded defaults — prefer getMealWindows() after sync. */
+export const MEAL_WINDOWS: Record<MealKey, MealWindow> = {
+  breakfast: toMealWindow(DEFAULT_MEAL_WINDOWS.breakfast),
+  lunch: toMealWindow(DEFAULT_MEAL_WINDOWS.lunch),
+  snacks: toMealWindow(DEFAULT_MEAL_WINDOWS.snacks),
+  dinner: toMealWindow(DEFAULT_MEAL_WINDOWS.dinner),
 };
 
-export function currentMealKey(): 'breakfast' | 'lunch' | 'snacks' | 'dinner' {
+export function getMealWindows(): Record<MealKey, MealWindow> {
+  const doc = readCachedModule<MealWindowsDoc>('mealWindows');
+  const windows = doc?.windows ?? DEFAULT_MEAL_WINDOWS;
+  return {
+    breakfast: toMealWindow(windows.breakfast),
+    lunch: toMealWindow(windows.lunch),
+    snacks: toMealWindow(windows.snacks),
+    dinner: toMealWindow(windows.dinner),
+  };
+}
+
+export function currentMealKey(): MealKey {
   const now = nowMinutes();
-  if (now < MEAL_WINDOWS.breakfast.endMin) return 'breakfast';
-  if (now < MEAL_WINDOWS.lunch.endMin) return 'lunch';
-  if (now < MEAL_WINDOWS.snacks.endMin) return 'snacks';
+  const windows = getMealWindows();
+  if (now < windows.breakfast.endMin) return 'breakfast';
+  if (now < windows.lunch.endMin) return 'lunch';
+  if (now < windows.snacks.endMin) return 'snacks';
   return 'dinner';
 }
 
@@ -92,11 +126,9 @@ export interface MealTimeStatus {
   timeLeftString: string;
 }
 
-export function getMealTimeStatus(
-  key: 'breakfast' | 'lunch' | 'snacks' | 'dinner'
-): MealTimeStatus {
+export function getMealTimeStatus(key: MealKey): MealTimeStatus {
   const now = nowMinutes();
-  const window = MEAL_WINDOWS[key];
+  const window = getMealWindows()[key];
 
   if (now >= window.startMin && now < window.endMin) {
     const diff = window.endMin - now;
@@ -124,4 +156,3 @@ function formatMinutes(mins: number): string {
   const m = mins % 60;
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
-

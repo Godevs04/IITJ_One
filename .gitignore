@@ -1,0 +1,68 @@
+# =============================================================================
+# IITJ1 monorepo — root .gitignore
+# App-level .gitignore files still apply under apps/*
+# =============================================================================
+
+# Dependencies (root workspaces + nested)
+node_modules/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.turbo/
+*.tsbuildinfo
+
+# packages/types compiled output (rebuild with: npm run build -w @iitj1/types)
+packages/types/dist/
+
+# Logs & debug
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+*.swp
+*.swo
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Expo / React Native
+.expo/
+web-build/
+android/app/build/
+ios/build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Next / Vercel
+.vercel
+
+# Misc certs / keys
+*.pem
+
+# Optional local tooling
+.cache/
+tmp/
+temp/

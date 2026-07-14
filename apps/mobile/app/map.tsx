@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
-import { Share, StyleSheet, TextInput, View, FlatList, Pressable, Text, ScrollView, Modal } from 'react-native';
+import { Alert, Share, StyleSheet, TextInput, View, FlatList, Pressable, Text, ScrollView, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { campusDirectoryServiceProvider } from '@/campus/services/campusDirectoryService';
+import { useCampusData } from '@/state/CampusDataProvider';
 import { favoritesStore } from '@/campus/services/favoritesStore';
 import { searchService } from '@/campus/services/searchService';
 import { recentSearchesStore } from '@/campus/services/recentSearchesStore';
@@ -37,13 +39,13 @@ function LocationDetailCard({
   };
 
   const handleCopyAddress = async () => {
-    if (location.address || location.plusCode) {
-      const text = location.address || location.plusCode || '';
-      try {
-        await Linking.openURL(`https://api.react-native.com/share?text=${encodeURIComponent(text)}`);
-      } catch {
-        handleOpenMaps();
-      }
+    const text = location.address || location.plusCode || '';
+    if (!text) return;
+    try {
+      await Clipboard.setStringAsync(text);
+      Alert.alert('Copied', 'Address copied to clipboard.');
+    } catch {
+      await Share.share({ message: text, title: location.name });
     }
   };
 
@@ -192,13 +194,17 @@ function LocationDetailCard({
 
 export default function MapScreen() {
   const theme = useThemeColors();
+  const { revision } = useCampusData();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<Set<LocationCategory>>(new Set());
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
-  const allLocations = useMemo(() => campusDirectoryServiceProvider.getAllLocations(), []);
+  const allLocations = useMemo(() => {
+    void revision;
+    return campusDirectoryServiceProvider.getAllLocations();
+  }, [revision]);
 
   useEffect(() => {
     void favoritesStore.getFavorites().then(setFavorites);

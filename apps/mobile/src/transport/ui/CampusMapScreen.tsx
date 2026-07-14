@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useThemeColors } from '@/theme/ThemeProvider';
+import { useTheme, useThemeColors } from '@/theme/ThemeProvider';
 import { AppSpacing, AppTypography } from '@/theme/tokens';
 import type { TripWithStatus } from '../models/BusTypes';
 import { BUS_STOPS, getNormalizedStopName, openStopInMaps } from '../utils/coordinates';
@@ -14,7 +14,12 @@ interface CampusMapScreenProps {
 
 export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProps) {
   const theme = useThemeColors();
+  const { scheme } = useTheme();
   const insets = useSafeAreaInsets();
+  const basemap =
+    scheme === 'dark'
+      ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+      : 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
 
   // Determine next bus times for each stop
   const stopNextTimes: Record<string, { bus: string; time: string }> = {};
@@ -161,7 +166,7 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
 
         const map = new maplibregl.Map({
           container: 'map',
-          style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+          style: '${basemap}',
           center: [73.075, 26.38], // Midpoint Jodhpur -> Karwar
           zoom: 11
         });
@@ -319,6 +324,7 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
       {/* Map WebView */}
       <View style={styles.mapContainer}>
         <WebView
+          key={scheme}
           originWhitelist={['*']}
           source={{ html: htmlContent }}
           onMessage={onMessage}

@@ -10,33 +10,52 @@ import {
   getServices,
   getEmergency,
   getAbout,
+  getLaundry,
+  getWifi,
+  getErickshaw,
+  getMealWindows,
 } from '../store';
+import { DEFAULT_MEAL_WINDOWS, type MealKey } from '@iitj1/types';
 
 function todayDayName(): string {
   const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   return days[new Date().getDay()];
 }
 
-function currentMeal(): string {
-  const hour = new Date().getHours();
-  if (hour < 10) return 'breakfast';
-  if (hour < 14) return 'lunch';
-  if (hour < 17) return 'snacks';
+function parseHourMinute(time: string): number {
+  const clean = time.trim().toUpperCase();
+  const isPM = clean.includes('PM');
+  const isAM = clean.includes('AM');
+  const parts = clean.replace(/[AP]M/, '').trim().split(':');
+  let h = parseInt(parts[0], 10) || 0;
+  const m = parseInt(parts[1], 10) || 0;
+  if (isPM && h < 12) h += 12;
+  else if (isAM && h === 12) h = 0;
+  return h * 60 + m;
+}
+
+function currentMeal(windows = DEFAULT_MEAL_WINDOWS): MealKey {
+  const now = new Date();
+  const mins = now.getHours() * 60 + now.getMinutes();
+  if (mins < parseHourMinute(windows.breakfast.end)) return 'breakfast';
+  if (mins < parseHourMinute(windows.lunch.end)) return 'lunch';
+  if (mins < parseHourMinute(windows.snacks.end)) return 'snacks';
   return 'dinner';
 }
 
 export async function buildHomeBundle(campusId: string) {
-  const [meta, menu, transport, notices, calendar] = await Promise.all([
+  const [meta, menu, transport, notices, calendar, mealWindows] = await Promise.all([
     getMeta(campusId),
     getMenu(campusId),
     getTransport(campusId),
     getNotices(campusId),
     getCalendar(campusId),
+    getMealWindows(campusId),
   ]);
 
   const dayName = todayDayName();
   const todayMenu = menu?.days.find((d) => d.dayName === dayName) ?? null;
-  const meal = currentMeal();
+  const meal = currentMeal(mealWindows?.windows ?? DEFAULT_MEAL_WINDOWS);
 
   const upcomingEvents =
     calendar?.events
@@ -51,7 +70,7 @@ export async function buildHomeBundle(campusId: string) {
       ? {
           dayName: todayMenu.dayName,
           currentMeal: meal,
-          meal: todayMenu[meal as keyof typeof todayMenu],
+          meal: todayMenu[meal],
         }
       : null,
     nextBus: transport
@@ -95,5 +114,9 @@ export async function getAllModuleData(campusId: string) {
     services: await getServices(campusId),
     emergency: await getEmergency(campusId),
     about: await getAbout(campusId),
+    laundry: await getLaundry(campusId),
+    wifi: await getWifi(campusId),
+    erickshaw: await getErickshaw(campusId),
+    mealWindows: await getMealWindows(campusId),
   };
 }

@@ -8,7 +8,11 @@ export type ModuleName =
   | 'map'
   | 'services'
   | 'emergency'
-  | 'about';
+  | 'about'
+  | 'laundry'
+  | 'wifi'
+  | 'erickshaw'
+  | 'mealWindows';
 
 export interface MetaVersions {
   menu: number;
@@ -21,6 +25,10 @@ export interface MetaVersions {
   services: number;
   emergency: number;
   about: number;
+  laundry: number;
+  wifi: number;
+  erickshaw: number;
+  mealWindows: number;
 }
 
 export interface MetaDoc {
@@ -59,6 +67,8 @@ export interface NoticeDoc {
   startDate: Date;
   expiryDate: Date;
   publishedAt: Date;
+  /** Soft-delete marker — omitted/null means active. */
+  deletedAt?: Date | null;
 }
 
 export interface TransportTrip {
@@ -178,6 +188,15 @@ export interface AboutDoc {
   sections: AboutSection[];
 }
 
+export type {
+  LaundryDoc,
+  LaundrySchedule,
+  WifiDoc,
+  WifiGuide,
+  ErickshawDoc,
+  MealWindowsDoc,
+} from '@iitj1/types';
+
 export interface AdminDoc {
   _id?: string;
   email: string;
@@ -194,11 +213,14 @@ export interface AuditLogDoc {
   diffSummary: string;
 }
 
+export type SuggestionStatus = 'new' | 'read' | 'archived';
+
 export interface SuggestionDoc {
   _id?: string;
   campusId: string;
   message: string;
   submittedAt: Date;
+  status?: SuggestionStatus;
 }
 
 export interface JwtPayload {

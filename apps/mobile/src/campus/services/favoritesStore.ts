@@ -1,6 +1,6 @@
-import { cacheService } from '@/services/cache';
+import { getSetting, setSetting } from '@/services/cache';
 
-const FAVORITES_CACHE_KEY = 'iitj1:campus:favorites';
+const FAVORITES_CACHE_KEY = 'campusFavorites';
 
 export interface FavoritesStore {
   getFavorites(): Promise<Set<string>>;
@@ -13,8 +13,8 @@ export interface FavoritesStore {
 export class LocalFavoritesStore implements FavoritesStore {
   async getFavorites(): Promise<Set<string>> {
     try {
-      const cached = await cacheService.get<string[]>(FAVORITES_CACHE_KEY);
-      return new Set(cached || []);
+      const cached = getSetting<string[]>(FAVORITES_CACHE_KEY, []);
+      return new Set(cached);
     } catch {
       return new Set();
     }
@@ -23,13 +23,13 @@ export class LocalFavoritesStore implements FavoritesStore {
   async addFavorite(locationId: string): Promise<void> {
     const favorites = await this.getFavorites();
     favorites.add(locationId);
-    await cacheService.set(FAVORITES_CACHE_KEY, Array.from(favorites));
+    setSetting(FAVORITES_CACHE_KEY, Array.from(favorites));
   }
 
   async removeFavorite(locationId: string): Promise<void> {
     const favorites = await this.getFavorites();
     favorites.delete(locationId);
-    await cacheService.set(FAVORITES_CACHE_KEY, Array.from(favorites));
+    setSetting(FAVORITES_CACHE_KEY, Array.from(favorites));
   }
 
   async isFavorite(locationId: string): Promise<boolean> {
@@ -42,10 +42,9 @@ export class LocalFavoritesStore implements FavoritesStore {
     if (isFav) {
       await this.removeFavorite(locationId);
       return false;
-    } else {
-      await this.addFavorite(locationId);
-      return true;
     }
+    await this.addFavorite(locationId);
+    return true;
   }
 }
 

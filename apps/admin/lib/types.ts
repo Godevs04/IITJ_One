@@ -43,6 +43,7 @@ export interface NoticeDoc {
   startDate: string;
   expiryDate: string;
   publishedAt?: string;
+  deletedAt?: string | null;
 }
 
 export interface TransportTrip {
@@ -122,6 +123,30 @@ export interface EmergencyDoc {
   contacts: { label: string; phone: string; order: number }[];
 }
 
+export interface LaundryDoc {
+  campusId: string;
+  schedules: {
+    hostel: string;
+    collectionDay1: string;
+    collectionDay2: string;
+    collectionTime: string;
+    location: string;
+  }[];
+}
+
+export interface WifiDoc {
+  campusId: string;
+  providers: string[];
+  guides: {
+    title: string;
+    description: string;
+    pdfUrl: string;
+    icon?: string;
+    order?: number;
+  }[];
+  notes?: string;
+}
+
 export interface AboutDoc {
   campusId: string;
   sections: { title: string; body: string }[];
@@ -130,7 +155,9 @@ export interface AboutDoc {
 export interface SuggestionDoc {
   _id?: string;
   message: string;
-  createdAt: string;
+  submittedAt?: string;
+  createdAt?: string;
+  status?: 'new' | 'read' | 'archived';
 }
 
 export interface AuditLogEntry {

@@ -1,0 +1,19 @@
+{
+  "name": "iitj1",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w @iitj1/api",
+    "dev:admin": "npm run dev -w @iitj1/admin",
+    "dev:mobile": "npm run start -w @iitj1/mobile",
+    "seed": "npm run seed -w @iitj1/api",
+    "test:api": "npm run test -w @iitj1/api",
+    "typecheck": "npm run typecheck -w @iitj1/types && npm run typecheck -w @iitj1/api && npm run typecheck -w @iitj1/admin"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

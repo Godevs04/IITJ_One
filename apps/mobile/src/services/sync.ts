@@ -18,6 +18,10 @@ export const SYNC_MODULES = [
   'services',
   'emergency',
   'about',
+  'laundry',
+  'wifi',
+  'erickshaw',
+  'mealWindows',
 ] as const;
 
 export type SyncModule = (typeof SYNC_MODULES)[number];
@@ -34,6 +38,10 @@ const VERSION_KEY: Record<SyncModule, string> = {
   services: 'services',
   emergency: 'emergency',
   about: 'about',
+  laundry: 'laundry',
+  wifi: 'wifi',
+  erickshaw: 'erickshaw',
+  mealWindows: 'mealWindows',
 };
 
 export interface SyncResult {

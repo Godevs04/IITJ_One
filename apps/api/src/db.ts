@@ -12,6 +12,10 @@ import type {
   ServicesDoc,
   EmergencyDoc,
   AboutDoc,
+  LaundryDoc,
+  WifiDoc,
+  ErickshawDoc,
+  MealWindowsDoc,
   AdminDoc,
   AuditLogDoc,
   SuggestionDoc,
@@ -66,6 +70,27 @@ async function ensureIndexes(): Promise<void> {
     { expireAfterSeconds: 30 * 24 * 60 * 60 },
   );
   await db.collection('suggestions').createIndex({ submittedAt: -1 });
+  await db.collection('suggestions').createIndex({ status: 1, submittedAt: -1 });
+
+  // One document per campus for singleton modules
+  const uniqueCampus = { campusId: 1 } as const;
+  for (const name of [
+    'menus',
+    'transport',
+    'calendar',
+    'portals',
+    'apps',
+    'mapLocations',
+    'services',
+    'emergency',
+    'about',
+    'laundry',
+    'wifi',
+    'erickshaw',
+    'mealWindows',
+  ] as const) {
+    await db.collection(name).createIndex(uniqueCampus, { unique: true });
+  }
 }
 
 export function getDb(): Db {
@@ -89,6 +114,10 @@ export const collections = {
   services: () => col<ServicesDoc>('services'),
   emergency: () => col<EmergencyDoc>('emergency'),
   about: () => col<AboutDoc>('about'),
+  laundry: () => col<LaundryDoc>('laundry'),
+  wifi: () => col<WifiDoc>('wifi'),
+  erickshaw: () => col<ErickshawDoc>('erickshaw'),
+  mealWindows: () => col<MealWindowsDoc>('mealWindows'),
   admins: () => col<AdminDoc>('admins'),
   auditLog: () => col<AuditLogDoc>('auditLog'),
   suggestions: () => col<SuggestionDoc>('suggestions'),

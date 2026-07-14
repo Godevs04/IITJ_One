@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { requireAuth, AuthRequest } from '../../middleware/auth';
 import { adminCors } from '../../middleware/cors';
+import { requireMongoForAdminWrites } from '../../middleware/requireMongoWrite';
 import authRouter from './auth';
 import menuRouter from './menu';
 import noticesRouter from './notices';
@@ -12,6 +13,10 @@ import mapRouter from './map';
 import servicesRouter from './services';
 import emergencyRouter from './emergency';
 import aboutRouter from './about';
+import laundryRouter from './laundry';
+import wifiRouter from './wifi';
+import erickshawRouter from './erickshaw';
+import mealWindowsRouter from './mealWindows';
 import pushRouter from './push';
 import auditRouter from './audit';
 import suggestionsRouter from './suggestions';
@@ -23,6 +28,7 @@ router.use(adminCors);
 router.use(authRouter);
 
 router.use(requireAuth);
+router.use(requireMongoForAdminWrites);
 router.get('/me', (req: AuthRequest, res: Response) => {
   const admin = req.admin;
   if (!admin) {
@@ -46,6 +52,10 @@ router.use('/map', mapRouter);
 router.use('/services', servicesRouter);
 router.use('/emergency', emergencyRouter);
 router.use('/about', aboutRouter);
+router.use('/laundry', laundryRouter);
+router.use('/wifi', wifiRouter);
+router.use('/erickshaw', erickshawRouter);
+router.use('/mealWindows', mealWindowsRouter);
 router.use('/push', pushRouter);
 router.use('/audit', auditRouter);
 router.use('/suggestions', suggestionsRouter);

@@ -1,26 +1,30 @@
-import { LAUNDRY_SCHEDULES } from '../data/schedules';
-import type { Hostel, LaundrySchedule } from '../types';
+import { DEFAULT_LAUNDRY_SCHEDULES, type HostelId, type LaundrySchedule } from '@iitj1/types';
+import { readCachedModule } from '@/services/sync';
+import type { LaundryDoc } from '@/types/campus';
 
 /**
- * Data-source boundary for laundry schedules. Today this reads the hardcoded
- * list; once the Admin Panel/API ships, replace `laundryScheduleProvider`
- * below with an API-backed implementation (same shape as the campus sync
- * modules) — the UI and notification logic never call LAUNDRY_SCHEDULES
- * directly, so nothing else needs to change.
+ * Prefer synced laundry module; fall back to shared defaults offline.
  */
 export interface LaundryScheduleProvider {
-  getSchedule(hostel: Hostel): LaundrySchedule | null;
+  getSchedule(hostel: HostelId): LaundrySchedule | null;
   getAllSchedules(): LaundrySchedule[];
 }
 
-class HardcodedLaundryScheduleProvider implements LaundryScheduleProvider {
-  getSchedule(hostel: Hostel): LaundrySchedule | null {
-    return LAUNDRY_SCHEDULES.find((s) => s.hostel === hostel) ?? null;
+class SyncedLaundryScheduleProvider implements LaundryScheduleProvider {
+  private schedules(): LaundrySchedule[] {
+    const doc = readCachedModule<LaundryDoc>('laundry');
+    if (doc?.schedules?.length) return doc.schedules as LaundrySchedule[];
+    return [...DEFAULT_LAUNDRY_SCHEDULES];
+  }
+
+  getSchedule(hostel: HostelId): LaundrySchedule | null {
+    return this.schedules().find((s) => s.hostel === hostel) ?? null;
   }
 
   getAllSchedules(): LaundrySchedule[] {
-    return LAUNDRY_SCHEDULES;
+    return this.schedules();
   }
 }
 
-export const laundryScheduleProvider: LaundryScheduleProvider = new HardcodedLaundryScheduleProvider();
+export const laundryScheduleProvider: LaundryScheduleProvider =
+  new SyncedLaundryScheduleProvider();

@@ -18,7 +18,8 @@ router.post('/', validateBody(pushBodySchema), async (req: AuthRequest, res: Res
   const result = await sendTopicPush(resolvedTopic, title, body, data);
 
   if (!result.success) {
-    res.status(502).json({ error: result.error ?? 'Push failed' });
+    const status = result.configured === false ? 503 : 502;
+    res.status(status).json({ error: result.error ?? 'Push failed' });
     return;
   }
 

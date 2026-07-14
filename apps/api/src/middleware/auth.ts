@@ -38,11 +38,11 @@ export function signAccessToken(payload: Omit<JwtPayload, 'type'>): string {
 }
 
 export function signRefreshToken(payload: Omit<JwtPayload, 'type'>): string {
-  return jwt.sign({ ...payload, type: 'refresh' }, config.jwt.secret, refreshSignOptions);
+  return jwt.sign({ ...payload, type: 'refresh' }, config.jwt.refreshSecret, refreshSignOptions);
 }
 
 export function verifyRefreshToken(token: string): JwtPayload {
-  const payload = jwt.verify(token, config.jwt.secret) as JwtPayload;
+  const payload = jwt.verify(token, config.jwt.refreshSecret) as JwtPayload;
   if (payload.type !== 'refresh') {
     throw new Error('Invalid token type');
   }

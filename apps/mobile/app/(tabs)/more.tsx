@@ -24,6 +24,8 @@ const SECTIONS: MoreSection[] = [
     title: 'Campus tools',
     links: [
       { title: 'Campus Map', icon: 'map-outline', route: '/map' },
+      { title: 'Academic Calendar', icon: 'calendar-outline', route: '/calendar' },
+      { title: 'Campus Apps', icon: 'apps-outline', route: '/apps' },
       { title: 'Essential Portals', icon: 'link-outline', route: '/portals' },
       { title: 'Campus Services', icon: 'construct-outline', route: '/services' },
       { title: 'Internet & Wi-Fi', icon: 'wifi-outline', route: '/wifi' },

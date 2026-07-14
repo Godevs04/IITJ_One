@@ -1,11 +1,13 @@
-import { ERICKSHAW_SERVICE_DATA } from '../data/service';
+import {
+  DEFAULT_ERICKSHAW_DOC,
+  type ErickshawDoc,
+  type ErickshawDriver,
+} from '@iitj1/types';
+import { readCachedModule } from '@/services/sync';
 import type { ERickshawService, Driver } from '../types';
 
 /**
- * Data-source boundary for E-Rickshaw service. Today this reads the hardcoded
- * data; once the Admin Panel/API ships, replace this implementation with
- * an API-backed version (same interface shape) — the UI and business logic
- * never call ERICKSHAW_SERVICE_DATA directly, so nothing else needs to change.
+ * Prefer synced erickshaw module; fall back to shared defaults offline.
  */
 export interface ERickshawServiceProvider {
   getService(): ERickshawService;
@@ -13,21 +15,37 @@ export interface ERickshawServiceProvider {
   callDriver(phone: string): void;
 }
 
-class HardcodedERickshawServiceProvider implements ERickshawServiceProvider {
+function asService(doc: Omit<ErickshawDoc, 'campusId'> | ErickshawDoc): ERickshawService {
+  return {
+    service: doc.service,
+    drivers: doc.drivers as Driver[],
+    fares: doc.fares,
+  };
+}
+
+class SyncedERickshawServiceProvider implements ERickshawServiceProvider {
+  private doc(): ERickshawService {
+    const cached = readCachedModule<ErickshawDoc>('erickshaw');
+    if (cached?.service && cached.drivers && cached.fares) {
+      return asService(cached);
+    }
+    return asService(DEFAULT_ERICKSHAW_DOC);
+  }
+
   getService(): ERickshawService {
-    return ERICKSHAW_SERVICE_DATA;
+    return this.doc();
   }
 
   getDrivers(): Driver[] {
-    return ERICKSHAW_SERVICE_DATA.drivers;
+    return this.doc().drivers;
   }
 
   callDriver(phone: string): void {
-    // In a real app, this might log the call or send analytics
-    // For now, it's a placeholder for future driver app integration
     console.log(`[E-Rickshaw] User initiated call to ${phone}`);
   }
 }
 
 export const erickshawServiceProvider: ERickshawServiceProvider =
-  new HardcodedERickshawServiceProvider();
+  new SyncedERickshawServiceProvider();
+
+export type { ErickshawDriver };

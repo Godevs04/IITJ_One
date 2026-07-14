@@ -53,21 +53,67 @@ export const AppRadius = {
 } as const;
 
 export const AppTypography = {
-  display: { fontSize: 28, lineHeight: 34, fontWeight: '600' as const },
-  h1: { fontSize: 22, lineHeight: 28, fontWeight: '600' as const },
-  h2: { fontSize: 18, lineHeight: 24, fontWeight: '500' as const },
-  body: { fontSize: 15, lineHeight: 22, fontWeight: '400' as const },
-  bodySmall: { fontSize: 13, lineHeight: 18, fontWeight: '400' as const },
-  caption: { fontSize: 12, lineHeight: 16, fontWeight: '400' as const },
-  button: { fontSize: 15, fontWeight: '500' as const, letterSpacing: 0.2 },
-  dataMono: { fontSize: 16, lineHeight: 22, fontWeight: '500' as const },
-  dataLargeMono: { fontSize: 24, lineHeight: 30, fontWeight: '500' as const },
+  display: {
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: '600' as const,
+    fontFamily: 'IBMPlexSans_600SemiBold',
+  },
+  h1: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '600' as const,
+    fontFamily: 'IBMPlexSans_600SemiBold',
+  },
+  h2: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '500' as const,
+    fontFamily: 'IBMPlexSans_500Medium',
+  },
+  body: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '400' as const,
+    fontFamily: 'IBMPlexSans_400Regular',
+  },
+  bodySmall: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '400' as const,
+    fontFamily: 'IBMPlexSans_400Regular',
+  },
+  caption: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '400' as const,
+    fontFamily: 'IBMPlexSans_400Regular',
+  },
+  button: {
+    fontSize: 15,
+    fontWeight: '500' as const,
+    letterSpacing: 0.2,
+    fontFamily: 'IBMPlexSans_500Medium',
+  },
+  dataMono: {
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '500' as const,
+    fontFamily: 'IBMPlexSans_500Medium',
+  },
+  dataLargeMono: {
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '500' as const,
+    fontFamily: 'IBMPlexSans_500Medium',
+  },
   sectionLabel: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '500' as const,
     letterSpacing: 1.2,
     textTransform: 'uppercase' as const,
+    fontFamily: 'IBMPlexSans_500Medium',
   },
 } as const;
 

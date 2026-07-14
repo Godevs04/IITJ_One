@@ -28,6 +28,10 @@ const NAV = [
       { href: '/map', label: 'Map' },
       { href: '/services', label: 'Services' },
       { href: '/emergency', label: 'Emergency' },
+      { href: '/laundry', label: 'Laundry' },
+      { href: '/wifi', label: 'Wi-Fi' },
+      { href: '/erickshaw', label: 'E-Rickshaw' },
+      { href: '/meal-windows', label: 'Meal windows' },
       { href: '/about', label: 'About' },
     ],
   },
@@ -46,7 +50,13 @@ function navActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function Sidebar() {
+export function Sidebar({
+  onNavigate,
+  className = '',
+}: {
+  onNavigate?: () => void;
+  className?: string;
+}) {
   const pathname = usePathname();
   const [adminName, setAdminName] = useState('Admin');
 
@@ -56,7 +66,9 @@ export function Sidebar() {
   }, []);
 
   return (
-    <aside className="flex h-screen w-56 shrink-0 flex-col border-r border-border bg-indigo-deep text-sand">
+    <aside
+      className={`flex h-full w-56 shrink-0 flex-col border-r border-border bg-indigo-deep text-sand ${className}`}
+    >
       <div className="border-b border-white/10 px-4 py-5">
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-sandstone">
           IITJ one
@@ -77,6 +89,7 @@ export function Sidebar() {
                   <li key={item.href}>
                     <Link
                       href={item.href}
+                      onClick={onNavigate}
                       className={`block rounded-md px-2.5 py-1.5 text-sm transition ${
                         active
                           ? 'bg-white/12 font-medium text-white'

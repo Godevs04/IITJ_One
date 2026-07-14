@@ -151,17 +151,38 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   }
 
   if (!res.ok) {
-    const message =
-      typeof data === 'object' &&
-      data &&
-      'error' in data &&
-      typeof (data as { error: unknown }).error === 'string'
-        ? (data as { error: string }).error
-        : `Request failed (${res.status})`;
+    const message = formatApiErrorMessage(data, res.status);
     throw new ApiError(message, res.status, data);
   }
 
   return data as T;
+}
+
+function formatApiErrorMessage(data: unknown, status: number): string {
+  if (typeof data === 'object' && data) {
+    const record = data as {
+      error?: unknown;
+      details?: { fieldErrors?: Record<string, string[]>; formErrors?: string[] };
+    };
+    const parts: string[] = [];
+    if (typeof record.error === 'string') parts.push(record.error);
+
+    const fieldErrors = record.details?.fieldErrors;
+    if (fieldErrors) {
+      Object.entries(fieldErrors).forEach(([field, messages]) => {
+        if (messages?.length) {
+          parts.push(`${field}: ${messages.join(', ')}`);
+        }
+      });
+    }
+    const formErrors = record.details?.formErrors;
+    if (formErrors?.length) {
+      parts.push(...formErrors);
+    }
+
+    if (parts.length) return parts.join(' · ');
+  }
+  return `Request failed (${status})`;
 }
 
 /** Public campus read — always includes campus query. */

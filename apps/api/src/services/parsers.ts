@@ -121,12 +121,11 @@ export function parseMenuCsv(vegCsv: string, nonVegCsv: string, month: string) {
   const nonVegDays = parseSingleMenuCsv(nonVegCsv);
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-  return dayNames.map((dayName, index) => {
+  return dayNames.map((dayName) => {
     const veg = vegDays[dayName] ?? {};
     const nonVeg = nonVegDays[dayName] ?? {};
-    const dayNum = String(index + 1).padStart(2, '0');
     return {
-      date: `${month}-${dayNum}`,
+      date: firstWeekdayDateInMonth(month, dayName),
       dayName: dayName.toLowerCase(),
       breakfast: { veg: veg.BREAKFAST ?? '', nonVeg: nonVeg.BREAKFAST ?? '' },
       lunch: { veg: veg.LUNCH ?? '', nonVeg: nonVeg.LUNCH ?? '' },
@@ -134,6 +133,37 @@ export function parseMenuCsv(vegCsv: string, nonVegCsv: string, month: string) {
       dinner: { veg: veg.DINNER ?? '', nonVeg: nonVeg.DINNER ?? '' },
     };
   });
+}
+
+/** Map weekday template rows to the first real calendar date in `YYYY-MM`. */
+export function firstWeekdayDateInMonth(month: string, dayName: string): string {
+  const [yearStr, monthStr] = month.split('-');
+  const year = Number(yearStr);
+  const monthIndex = Number(monthStr) - 1;
+  const wanted = weekdayIndex(dayName);
+  if (!year || Number.isNaN(monthIndex) || wanted < 0) {
+    return `${month}-01`;
+  }
+
+  const cursor = new Date(Date.UTC(year, monthIndex, 1));
+  while (cursor.getUTCDay() !== wanted) {
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return cursor.toISOString().slice(0, 10);
+}
+
+function weekdayIndex(dayName: string): number {
+  const key = dayName.trim().toLowerCase();
+  const map: Record<string, number> = {
+    sunday: 0,
+    monday: 1,
+    tuesday: 2,
+    wednesday: 3,
+    thursday: 4,
+    friday: 5,
+    saturday: 6,
+  };
+  return map[key] ?? -1;
 }
 
 function parseSingleMenuCsv(csv: string): Record<string, Record<string, string>> {

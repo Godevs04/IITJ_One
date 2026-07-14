@@ -30,6 +30,8 @@ import {
   requestLaundryNotificationPermission,
   rescheduleLaundryNotifications,
 } from '@/laundry/services/laundryNotifications';
+import { useCampusData } from '@/state/CampusDataProvider';
+import { useCampusSync } from '@/hooks/useCampusSync';
 
 const DAY_LABELS: Record<string, string> = {
   monday: 'Monday',
@@ -43,6 +45,8 @@ const DAY_LABELS: Record<string, string> = {
 
 export default function LaundryScreen() {
   const theme = useThemeColors();
+  const { revision } = useCampusData();
+  const { syncing, sync } = useCampusSync(false);
   const [prefs, setPrefs] = useState<LaundryPreferences>(DEFAULT_LAUNDRY_PREFERENCES);
   const [pickerOpen, setPickerOpen] = useState(false);
   const prefsRef = useRef(prefs);
@@ -52,10 +56,10 @@ export default function LaundryScreen() {
     setPrefs(laundryPreferencesStore.get());
   }, []);
 
-  const schedule = useMemo(
-    () => (prefs.hostel ? laundryScheduleProvider.getSchedule(prefs.hostel) : null),
-    [prefs.hostel],
-  );
+  const schedule = useMemo(() => {
+    void revision;
+    return prefs.hostel ? laundryScheduleProvider.getSchedule(prefs.hostel) : null;
+  }, [prefs.hostel, revision]);
 
   const minutesBefore = prefs.reminders[0]?.minutesBefore ?? 30;
 
@@ -63,6 +67,10 @@ export default function LaundryScreen() {
     setPrefs(next);
     laundryPreferencesStore.save(next);
   }, []);
+
+  const onRefresh = useCallback(async () => {
+    await sync();
+  }, [sync]);
 
   const refreshPermissionStatus = useCallback(async () => {
     const status = await getNotificationPermissionStatus();
@@ -143,7 +151,12 @@ export default function LaundryScreen() {
   const hostelLabel = prefs.hostel ?? 'Select your hostel';
 
   return (
-    <ScreenShell hideTitle subtitle="Laundry collection reminders">
+    <ScreenShell
+      hideTitle
+      subtitle="Laundry collection reminders"
+      onRefresh={onRefresh}
+      refreshing={syncing}
+    >
       <Section title="Hostel Selection" theme={theme}>
         <Pressable
           onPress={() => setPickerOpen(true)}

@@ -11,7 +11,8 @@ import {
   fallbackGetNotices,
   fallbackAddNotice,
   fallbackUpdateNotice,
-  fallbackDeleteNotice,
+  fallbackSoftDeleteNotice,
+  fallbackRestoreNotice,
   fallbackGetSuggestions,
   fallbackGetAudit,
   getFallbackState,
@@ -33,6 +34,10 @@ import type {
   AuditLogDoc,
   SuggestionDoc,
   ModuleName,
+  LaundryDoc,
+  WifiDoc,
+  ErickshawDoc,
+  MealWindowsDoc,
 } from '../types';
 
 const defaultVersions = (): MetaVersions => ({
@@ -46,6 +51,10 @@ const defaultVersions = (): MetaVersions => ({
   services: 1,
   emergency: 1,
   about: 1,
+  laundry: 1,
+  wifi: 1,
+  erickshaw: 1,
+  mealWindows: 1,
 });
 
 export async function ensureMeta(campusId: string): Promise<MetaDoc> {
@@ -136,6 +145,7 @@ export async function getNotices(campusId: string, category?: string): Promise<N
       campusId,
       startDate: { $lte: now },
       expiryDate: { $gt: now },
+      $or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
     };
     if (category) filter.category = category;
     return collections
@@ -147,6 +157,23 @@ export async function getNotices(campusId: string, category?: string): Promise<N
   return fallbackGetNotices(campusId, category);
 }
 
+/** Admin list — includes scheduled, expired, and soft-deleted notices. */
+export async function getAllNotices(campusId: string, category?: string): Promise<NoticeDoc[]> {
+  if (isDbConnected()) {
+    const filter: Record<string, unknown> = { campusId };
+    if (category) filter.category = category;
+    return collections
+      .notices()
+      .find(filter)
+      .sort({ publishedAt: -1 })
+      .toArray();
+  }
+  initFallbackStore();
+  return getFallbackState()
+    .notices.filter((n) => n.campusId === campusId && (!category || n.category === category))
+    .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
+}
+
 export async function createNotice(notice: NoticeDoc, adminEmail: string): Promise<NoticeDoc> {
   if (isDbConnected()) {
     const result = await collections.notices().insertOne(notice);
@@ -154,15 +181,7 @@ export async function createNotice(notice: NoticeDoc, adminEmail: string): Promi
     return { ...notice, _id: result.insertedId.toString() };
   }
   const saved = fallbackAddNotice(notice);
-  fallbackAddAudit({
-    adminEmail,
-    action: 'create',
-    module: 'notices',
-    timestamp: new Date(),
-    diffSummary: `Notice: ${notice.title}`,
-  });
-  invalidateModule('notices', notice.campusId);
-  invalidateModule('home', notice.campusId);
+  await bumpVersion('notices', notice.campusId, adminEmail, 'create', `Notice: ${notice.title}`);
   return saved;
 }
 
@@ -181,15 +200,7 @@ export async function updateNotice(
   }
   const saved = fallbackUpdateNotice(id, patch);
   if (saved) {
-    fallbackAddAudit({
-      adminEmail,
-      action: 'update',
-      module: 'notices',
-      timestamp: new Date(),
-      diffSummary: `Notice ${id} updated`,
-    });
-    invalidateModule('notices', saved.campusId);
-    invalidateModule('home', saved.campusId);
+    await bumpVersion('notices', saved.campusId, adminEmail, 'update', `Notice ${id} updated`);
   }
   return saved;
 }
@@ -197,26 +208,41 @@ export async function updateNotice(
 export async function deleteNotice(id: string, adminEmail: string): Promise<boolean> {
   if (isDbConnected()) {
     const existing = await collections.notices().findOne({ _id: new ObjectId(id) });
-    if (!existing) return false;
-    await collections.notices().deleteOne({ _id: new ObjectId(id) });
-    await bumpVersion('notices', existing.campusId, adminEmail, 'delete', `Notice ${id} deleted`);
+    if (!existing || existing.deletedAt) return false;
+    await collections.notices().updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { deletedAt: new Date() } },
+    );
+    await bumpVersion('notices', existing.campusId, adminEmail, 'delete', `Notice ${id} soft-deleted`);
     return true;
   }
-  const s = getFallbackState();
-  const notice = s.notices.find((n) => n._id === id);
-  const ok = fallbackDeleteNotice(id);
-  if (ok && notice) {
-    fallbackAddAudit({
-      adminEmail,
-      action: 'delete',
-      module: 'notices',
-      timestamp: new Date(),
-      diffSummary: `Notice ${id} deleted`,
-    });
-    invalidateModule('notices', notice.campusId);
-    invalidateModule('home', notice.campusId);
+  const notice = getFallbackState().notices.find((n) => n._id === id);
+  if (!notice || notice.deletedAt) return false;
+  const saved = fallbackSoftDeleteNotice(id);
+  if (saved) {
+    await bumpVersion('notices', notice.campusId, adminEmail, 'delete', `Notice ${id} soft-deleted`);
   }
-  return ok;
+  return !!saved;
+}
+
+export async function restoreNotice(id: string, adminEmail: string): Promise<NoticeDoc | null> {
+  if (isDbConnected()) {
+    const result = await collections.notices().findOneAndUpdate(
+      { _id: new ObjectId(id), deletedAt: { $ne: null } },
+      { $set: { deletedAt: null } },
+      { returnDocument: 'after' },
+    );
+    if (!result) return null;
+    await bumpVersion('notices', result.campusId, adminEmail, 'restore', `Notice ${id} restored`);
+    return { ...result, _id: result._id?.toString() };
+  }
+  const notice = getFallbackState().notices.find((n) => n._id === id);
+  if (!notice?.deletedAt) return null;
+  const saved = fallbackRestoreNotice(id);
+  if (saved) {
+    await bumpVersion('notices', saved.campusId, adminEmail, 'restore', `Notice ${id} restored`);
+  }
+  return saved;
 }
 
 export async function getCalendar(campusId: string): Promise<CalendarDoc | null> {
@@ -343,19 +369,104 @@ export async function putAbout(doc: AboutDoc, adminEmail: string): Promise<void>
   await bumpVersion('about', doc.campusId, adminEmail, 'update', 'About updated');
 }
 
-export async function addSuggestion(doc: SuggestionDoc): Promise<SuggestionDoc> {
-  if (isDbConnected()) {
-    const result = await collections.suggestions().insertOne(doc);
-    return { ...doc, _id: result.insertedId.toString() };
-  }
-  return fallbackAddSuggestion(doc);
+export async function getLaundry(campusId: string): Promise<LaundryDoc | null> {
+  if (isDbConnected()) return collections.laundry().findOne({ campusId });
+  initFallbackStore();
+  return getFallbackState().laundry;
 }
 
-export async function getSuggestions(): Promise<SuggestionDoc[]> {
+export async function putLaundry(doc: LaundryDoc, adminEmail: string): Promise<void> {
   if (isDbConnected()) {
-    return collections.suggestions().find().sort({ submittedAt: -1 }).toArray();
+    await collections.laundry().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
+  } else {
+    getFallbackState().laundry = doc;
   }
-  return fallbackGetSuggestions();
+  await bumpVersion('laundry', doc.campusId, adminEmail, 'update', 'Laundry schedules updated');
+}
+
+export async function getWifi(campusId: string): Promise<WifiDoc | null> {
+  if (isDbConnected()) return collections.wifi().findOne({ campusId });
+  initFallbackStore();
+  return getFallbackState().wifi;
+}
+
+export async function putWifi(doc: WifiDoc, adminEmail: string): Promise<void> {
+  if (isDbConnected()) {
+    await collections.wifi().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
+  } else {
+    getFallbackState().wifi = doc;
+  }
+  await bumpVersion('wifi', doc.campusId, adminEmail, 'update', 'Wi-Fi guides updated');
+}
+
+export async function getErickshaw(campusId: string): Promise<ErickshawDoc | null> {
+  if (isDbConnected()) return collections.erickshaw().findOne({ campusId });
+  initFallbackStore();
+  return getFallbackState().erickshaw;
+}
+
+export async function putErickshaw(doc: ErickshawDoc, adminEmail: string): Promise<void> {
+  if (isDbConnected()) {
+    await collections.erickshaw().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
+  } else {
+    getFallbackState().erickshaw = doc;
+  }
+  await bumpVersion('erickshaw', doc.campusId, adminEmail, 'update', 'E-rickshaw service updated');
+}
+
+export async function getMealWindows(campusId: string): Promise<MealWindowsDoc | null> {
+  if (isDbConnected()) return collections.mealWindows().findOne({ campusId });
+  initFallbackStore();
+  return getFallbackState().mealWindows;
+}
+
+export async function putMealWindows(doc: MealWindowsDoc, adminEmail: string): Promise<void> {
+  if (isDbConnected()) {
+    await collections.mealWindows().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
+  } else {
+    getFallbackState().mealWindows = doc;
+  }
+  await bumpVersion('mealWindows', doc.campusId, adminEmail, 'update', 'Meal windows updated');
+}
+
+export async function addSuggestion(doc: SuggestionDoc): Promise<SuggestionDoc> {
+  const withStatus: SuggestionDoc = { status: 'new', ...doc };
+  if (isDbConnected()) {
+    const result = await collections.suggestions().insertOne(withStatus);
+    return { ...withStatus, _id: result.insertedId.toString() };
+  }
+  return fallbackAddSuggestion(withStatus);
+}
+
+export async function getSuggestions(status?: SuggestionDoc['status']): Promise<SuggestionDoc[]> {
+  if (isDbConnected()) {
+    const filter = status ? { status } : {};
+    return collections.suggestions().find(filter).sort({ submittedAt: -1 }).toArray();
+  }
+  const all = fallbackGetSuggestions();
+  return status ? all.filter((s) => (s.status ?? 'new') === status) : all;
+}
+
+export async function updateSuggestionStatus(
+  id: string,
+  status: NonNullable<SuggestionDoc['status']>,
+): Promise<SuggestionDoc | null> {
+  if (isDbConnected()) {
+    const result = await collections
+      .suggestions()
+      .findOneAndUpdate(
+        { _id: new ObjectId(id) } as never,
+        { $set: { status } },
+        { returnDocument: 'after' },
+      );
+    if (!result) return null;
+    return { ...result, _id: result._id?.toString() };
+  }
+  const s = getFallbackState();
+  const idx = s.suggestions.findIndex((row) => row._id === id);
+  if (idx < 0) return null;
+  s.suggestions[idx] = { ...s.suggestions[idx], status };
+  return s.suggestions[idx];
 }
 
 export async function getAuditLog(limit = 100): Promise<AuditLogDoc[]> {
