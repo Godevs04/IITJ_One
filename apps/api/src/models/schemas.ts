@@ -8,6 +8,19 @@ export const noticesQuerySchema = campusQuerySchema.extend({
   category: z.string().optional(),
 });
 
+export const paginationQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export const adminNoticesQuerySchema = noticesQuerySchema.merge(paginationQuerySchema);
+
+export const adminSuggestionsQuerySchema = paginationQuerySchema.extend({
+  status: z.enum(['new', 'read', 'archived']).optional(),
+});
+
+export const adminAuditQuerySchema = paginationQuerySchema;
+
 export const servicesQuerySchema = campusQuerySchema.extend({
   category: z.string().optional(),
   q: z.string().optional(),
@@ -24,6 +37,17 @@ export const loginBodySchema = z.object({
 
 export const refreshBodySchema = z.object({
   refreshToken: z.string().min(1),
+});
+
+export const adminCreateSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  name: z.string().trim().min(1),
+  role: z.enum(['admin', 'superadmin']).default('admin'),
+});
+
+export const adminUpdateSchema = z.object({
+  active: z.boolean(),
 });
 
 const mealSchema = z.object({
@@ -148,18 +172,6 @@ export const appsPutSchema = z.object({
   ),
 });
 
-export const mapPutSchema = z.object({
-  campusId: z.string().min(1),
-  locations: z.array(
-    z.object({
-      name: z.string(),
-      category: z.string(),
-      lat: z.number(),
-      lng: z.number(),
-    }),
-  ),
-});
-
 export const servicesPutSchema = z.object({
   campusId: z.string().min(1),
   entries: z.array(
@@ -196,7 +208,13 @@ export const aboutPutSchema = z.object({
   ),
 });
 
-export { laundryPutSchema, wifiPutSchema, erickshawPutSchema, mealWindowsPutSchema } from '@iitj1/types';
+export {
+  laundryPutSchema,
+  wifiPutSchema,
+  erickshawPutSchema,
+  mealWindowsPutSchema,
+  mapPutSchema,
+} from '@iitj1/types';
 
 export const suggestionStatusSchema = z.object({
   status: z.enum(['new', 'read', 'archived']),

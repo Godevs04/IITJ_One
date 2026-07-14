@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ApiError, apiFetch, campusId, fetchCampusModule } from '@/lib/api';
+import { ApiError, campusId, fetchCampusModule, fetchModuleVersion, putAdminModule } from '@/lib/api';
 import { Button } from '@/components/Button';
 import { Field, Input, Textarea } from '@/components/Field';
 import { Card, EmptyState, LoadingBlock, PageHeader } from '@/components/ui';
@@ -13,12 +13,17 @@ export default function AboutAdminPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sections, setSections] = useState<AboutDoc['sections']>([]);
+  const [version, setVersion] = useState<number | undefined>();
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchCampusModule<AboutDoc>('/about');
+      const [data, moduleVersion] = await Promise.all([
+        fetchCampusModule<AboutDoc>('/about'),
+        fetchModuleVersion('about'),
+      ]);
       setSections(data.sections ?? []);
+      setVersion(moduleVersion);
     } catch (err) {
       if (!(err instanceof ApiError && err.status === 404)) {
         push('error', 'Load failed', err instanceof Error ? err.message : '');
@@ -36,13 +41,15 @@ export default function AboutAdminPage() {
   async function save() {
     setSaving(true);
     try {
-      await apiFetch('/admin/about', {
-        method: 'PUT',
-        body: { campusId, sections },
-      });
+      await putAdminModule('/admin/about', { campusId, sections }, version);
       push('success', 'About content published');
       await load();
     } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        push('error', 'Changed elsewhere', 'Someone else saved this in the meantime — reloaded the latest version.');
+        await load();
+        return;
+      }
       push('error', 'Save failed', err instanceof Error ? err.message : '');
     } finally {
       setSaving(false);

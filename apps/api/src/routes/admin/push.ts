@@ -4,10 +4,11 @@ import { pushBodySchema } from '../../models/schemas';
 import { AuthRequest } from '../../middleware/auth';
 import { sendTopicPush, resolveTopic } from '../../services/fcm';
 import { bumpVersion } from '../../store';
+import { asyncHandler } from '../../middleware/asyncHandler';
 
 const router = Router();
 
-router.post('/', validateBody(pushBodySchema), async (req: AuthRequest, res: Response) => {
+router.post('/', validateBody(pushBodySchema), asyncHandler(async (req: AuthRequest, res: Response) => {
   const { topic, title, body, data } = req.body as {
     topic: string;
     title: string;
@@ -25,6 +26,6 @@ router.post('/', validateBody(pushBodySchema), async (req: AuthRequest, res: Res
 
   await bumpVersion('notices', 'iitj', req.admin!.email, 'push', `Push to ${resolvedTopic}: ${title}`);
   res.json({ success: true, messageId: result.messageId, topic: resolvedTopic });
-});
+}));
 
 export default router;

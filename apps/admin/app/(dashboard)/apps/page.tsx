@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ApiError, apiFetch, campusId, fetchCampusModule } from '@/lib/api';
+import { ApiError, campusId, fetchCampusModule, fetchModuleVersion, putAdminModule } from '@/lib/api';
 import { Button } from '@/components/Button';
+import { CloudinaryUploadField } from '@/components/CloudinaryUploadField';
 import { Field, Input, Textarea } from '@/components/Field';
 import { Card, EmptyState, LoadingBlock, PageHeader } from '@/components/ui';
 import { useToast } from '@/components/Toast';
@@ -13,12 +14,17 @@ export default function AppsAdminPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [apps, setApps] = useState<AppsDoc['apps']>([]);
+  const [version, setVersion] = useState<number | undefined>();
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchCampusModule<AppsDoc>("/apps");
+      const [data, moduleVersion] = await Promise.all([
+        fetchCampusModule<AppsDoc>('/apps'),
+        fetchModuleVersion('apps'),
+      ]);
       setApps(data.apps ?? []);
+      setVersion(moduleVersion);
     } catch (err) {
       if (!(err instanceof ApiError && err.status === 404)) {
         push('error', 'Load failed', err instanceof Error ? err.message : '');
@@ -36,13 +42,15 @@ export default function AppsAdminPage() {
   async function save() {
     setSaving(true);
     try {
-      await apiFetch('/admin/apps', {
-        method: 'PUT',
-        body: { campusId, apps },
-      });
+      await putAdminModule('/admin/apps', { campusId, apps }, version);
       push('success', 'Apps published');
       await load();
     } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        push('error', 'Changed elsewhere', 'Someone else saved this in the meantime — reloaded the latest version.');
+        await load();
+        return;
+      }
       push('error', 'Save failed', err instanceof Error ? err.message : '');
     } finally {
       setSaving(false);
@@ -169,18 +177,15 @@ export default function AppsAdminPage() {
                 />
               </Field>
               <div className="grid gap-3 md:grid-cols-2">
-                <Field label="Logo filename/URL">
-                  <Input
-                    value={app.logo ?? ''}
-                    onChange={(e) =>
-                      setApps((prev) =>
-                        prev.map((row, i) =>
-                          i === idx ? { ...row, logo: e.target.value } : row,
-                        ),
-                      )
-                    }
-                  />
-                </Field>
+                <CloudinaryUploadField
+                  label="Logo"
+                  value={app.logo ?? ''}
+                  onChange={(logo) =>
+                    setApps((prev) =>
+                      prev.map((row, i) => (i === idx ? { ...row, logo } : row)),
+                    )
+                  }
+                />
                 <Field label="Website (Optional)">
                   <Input
                     value={app.website ?? ''}

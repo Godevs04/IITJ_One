@@ -3,13 +3,14 @@ import { validateQuery } from '../../middleware/validate';
 import { noticesQuerySchema } from '../../models/schemas';
 import { cached, cacheKey } from '../../cache';
 import { getNotices } from '../../store';
+import { asyncHandler } from '../../middleware/asyncHandler';
 
 const router = Router();
 
 router.get(
   '/',
   validateQuery(noticesQuerySchema),
-  async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const { campus, category } = (
       req as Request & { validatedQuery: { campus: string; category?: string } }
     ).validatedQuery;
@@ -18,7 +19,7 @@ router.get(
       getNotices(campus, category),
     );
     res.json({ campusId: campus, notices: data });
-  },
+  }),
 );
 
 export default router;

@@ -100,6 +100,16 @@ export default function LaundryScreen() {
     [],
   );
 
+  // Re-sync scheduled notifications whenever campus data syncs (covers app
+  // restart / returning to the screen after the admin changed this hostel's
+  // schedule while a reminder was already enabled — cancel+recreate is cheap).
+  useEffect(() => {
+    const current = prefsRef.current;
+    if (!current.hostel || !current.reminderEnabled) return;
+    void applyReminders(current, current.hostel);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revision, applyReminders]);
+
   const selectHostel = useCallback(
     (hostel: Hostel) => {
       setPickerOpen(false);

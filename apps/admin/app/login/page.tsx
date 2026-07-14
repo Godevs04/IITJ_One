@@ -10,7 +10,7 @@ import { useToast } from '@/components/Toast';
 export default function LoginPage() {
   const router = useRouter();
   const { push } = useToast();
-  const [email, setEmail] = useState('admin@iitjone.in');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 

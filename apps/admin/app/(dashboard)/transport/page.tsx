@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ApiError, apiFetch, campusId, fetchCampusModule } from '@/lib/api';
+import { ApiError, campusId, fetchCampusModule, fetchModuleVersion, putAdminModule } from '@/lib/api';
 import { asRecord, stripMeta } from '@/lib/sanitize';
 import { Button } from '@/components/Button';
 import { Field, Input, Textarea } from '@/components/Field';
@@ -48,17 +48,22 @@ export default function TransportAdminPage() {
   const [routes, setRoutes] = useState<RouteGroup[]>(() => ensureRouteGroups([]));
   const [overrides, setOverrides] = useState<Override[]>([]);
   const [activeKey, setActiveKey] = useState(groupKey({ weekday: 'mon-sat', direction: 'departure', trips: [] }));
+  const [version, setVersion] = useState<number | undefined>();
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchCampusModule<TransportDoc>('/transport');
+      const [data, moduleVersion] = await Promise.all([
+        fetchCampusModule<TransportDoc>('/transport'),
+        fetchModuleVersion('transport'),
+      ]);
       const cleaned = asRecord(data)
         ? (stripMeta(data as unknown as Record<string, unknown>) as unknown as TransportDoc)
         : null;
       setLiveTrackingUrl(cleaned?.liveTrackingUrl ?? '');
       setRoutes(ensureRouteGroups(cleaned?.routes ?? []));
       setOverrides(cleaned?.scheduleOverrides ?? []);
+      setVersion(moduleVersion);
     } catch (err) {
       if (!(err instanceof ApiError && err.status === 404)) {
         push(
@@ -118,10 +123,15 @@ export default function TransportAdminPage() {
         liveTrackingUrl: liveTrackingUrl.trim() || null,
         scheduleOverrides: overrides,
       };
-      await apiFetch('/admin/transport', { method: 'PUT', body });
+      await putAdminModule('/admin/transport', body, version);
       push('success', 'Transport published', 'Mobile sync will refresh schedules.');
       await load();
     } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        push('error', 'Changed elsewhere', 'Someone else saved this in the meantime — reloaded the latest version.');
+        await load();
+        return;
+      }
       push(
         'error',
         'Save failed',

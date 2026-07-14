@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ApiError, apiFetch, campusId, fetchCampusModule } from '@/lib/api';
+import { ApiError, campusId, fetchCampusModule, fetchModuleVersion, putAdminModule } from '@/lib/api';
 import { Button } from '@/components/Button';
 import { Field, Input } from '@/components/Field';
 import { Card, EmptyState, LoadingBlock, PageHeader } from '@/components/ui';
@@ -13,12 +13,17 @@ export default function PortalsAdminPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [links, setLinks] = useState<PortalsDoc['links']>([]);
+  const [version, setVersion] = useState<number | undefined>();
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchCampusModule<PortalsDoc>('/portals');
+      const [data, moduleVersion] = await Promise.all([
+        fetchCampusModule<PortalsDoc>('/portals'),
+        fetchModuleVersion('portals'),
+      ]);
       setLinks(data.links ?? []);
+      setVersion(moduleVersion);
     } catch (err) {
       if (!(err instanceof ApiError && err.status === 404)) {
         push('error', 'Load failed', err instanceof Error ? err.message : '');
@@ -43,13 +48,15 @@ export default function PortalsAdminPage() {
   async function save() {
     setSaving(true);
     try {
-      await apiFetch('/admin/portals', {
-        method: 'PUT',
-        body: { campusId, links },
-      });
+      await putAdminModule('/admin/portals', { campusId, links }, version);
       push('success', 'Portals published');
       await load();
     } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        push('error', 'Changed elsewhere', 'Someone else saved this in the meantime — reloaded the latest version.');
+        await load();
+        return;
+      }
       push('error', 'Save failed', err instanceof Error ? err.message : '');
     } finally {
       setSaving(false);

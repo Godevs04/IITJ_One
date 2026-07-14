@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenShell } from '@/components/ScreenShell';
@@ -6,14 +6,16 @@ import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { erickshawServiceProvider } from '@/erickshaw/services/erickshawService';
 import type { Driver, FareStructure } from '@/erickshaw/types';
+import { useCampusData } from '@/state/CampusDataProvider';
+import { useCampusSync } from '@/hooks/useCampusSync';
 
 function ServiceInfoCard({
+  service,
   theme,
 }: {
+  service: ReturnType<typeof erickshawServiceProvider.getService>;
   theme: ReturnType<typeof useThemeColors>;
 }) {
-  const service = erickshawServiceProvider.getService();
-
   return (
     <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <View style={styles.cardHeader}>
@@ -152,12 +154,30 @@ function FareCard({
 
 export default function ERickshawScreen() {
   const theme = useThemeColors();
-  const service = erickshawServiceProvider.getService();
-  const drivers = erickshawServiceProvider.getDrivers();
+  const { revision } = useCampusData();
+  const { syncing, sync } = useCampusSync(false);
+
+  const service = useMemo(() => {
+    void revision;
+    return erickshawServiceProvider.getService();
+  }, [revision]);
+  const drivers = useMemo(() => {
+    void revision;
+    return erickshawServiceProvider.getDrivers();
+  }, [revision]);
+
+  const onRefresh = useCallback(async () => {
+    await sync();
+  }, [sync]);
 
   return (
-    <ScreenShell hideTitle subtitle="On-campus transportation service">
-      <ServiceInfoCard theme={theme} />
+    <ScreenShell
+      hideTitle
+      subtitle="On-campus transportation service"
+      onRefresh={onRefresh}
+      refreshing={syncing}
+    >
+      <ServiceInfoCard service={service} theme={theme} />
 
       <View style={styles.section}>
         <Text style={[styles.sectionLabel, { color: theme.textMuted }]}>

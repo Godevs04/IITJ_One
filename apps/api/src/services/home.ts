@@ -4,15 +4,6 @@ import {
   getTransport,
   getNotices,
   getCalendar,
-  getPortals,
-  getApps,
-  getMap,
-  getServices,
-  getEmergency,
-  getAbout,
-  getLaundry,
-  getWifi,
-  getErickshaw,
   getMealWindows,
 } from '../store';
 import { DEFAULT_MEAL_WINDOWS, type MealKey } from '@iitj1/types';
@@ -99,24 +90,5 @@ export async function buildManifest(campusId: string) {
     campusId: meta.campusId,
     versions: meta.versions,
     updatedAt: meta.updatedAt,
-  };
-}
-
-export async function getAllModuleData(campusId: string) {
-  return {
-    menu: await getMenu(campusId),
-    notices: await getNotices(campusId),
-    transport: await getTransport(campusId),
-    calendar: await getCalendar(campusId),
-    portals: await getPortals(campusId),
-    apps: await getApps(campusId),
-    map: await getMap(campusId),
-    services: await getServices(campusId),
-    emergency: await getEmergency(campusId),
-    about: await getAbout(campusId),
-    laundry: await getLaundry(campusId),
-    wifi: await getWifi(campusId),
-    erickshaw: await getErickshaw(campusId),
-    mealWindows: await getMealWindows(campusId),
   };
 }

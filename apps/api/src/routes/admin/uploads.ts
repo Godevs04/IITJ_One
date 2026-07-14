@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import crypto from 'crypto';
 import { AuthRequest } from '../../middleware/auth';
 import { config } from '../../config';
+import { asyncHandler } from '../../middleware/asyncHandler';
 
 const router = Router();
 
@@ -9,7 +10,7 @@ const router = Router();
  * Returns a Cloudinary signed upload payload when env is configured.
  * Admin UI may fall back to pasting a URL if Cloudinary is unset.
  */
-router.post('/sign', async (_req: AuthRequest, res: Response) => {
+router.post('/sign', asyncHandler(async (_req: AuthRequest, res: Response) => {
   const { cloudName, apiKey, apiSecret, folder } = config.cloudinary;
 
   if (!cloudName || !apiKey || !apiSecret) {
@@ -33,6 +34,6 @@ router.post('/sign', async (_req: AuthRequest, res: Response) => {
     signature,
     uploadUrl: `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
   });
-});
+}));
 
 export default router;

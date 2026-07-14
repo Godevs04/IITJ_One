@@ -48,3 +48,13 @@ export function verifyRefreshToken(token: string): JwtPayload {
   }
   return payload;
 }
+
+export function requireRole(role: string) {
+  return (req: AuthRequest, res: Response, next: NextFunction): void => {
+    if (req.admin?.role !== role) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+    next();
+  };
+}

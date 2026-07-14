@@ -41,6 +41,7 @@ const NAV = [
       { href: '/push', label: 'Push' },
       { href: '/suggestions', label: 'Suggestions' },
       { href: '/audit', label: 'Audit log' },
+      { href: '/admins', label: 'Admins', superadminOnly: true },
     ],
   },
 ] as const;
@@ -59,10 +60,12 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const [adminName, setAdminName] = useState('Admin');
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
 
   useEffect(() => {
     const admin = getStoredAdmin();
     if (admin?.name) setAdminName(admin.name);
+    setIsSuperadmin(admin?.role === 'superadmin');
   }, []);
 
   return (
@@ -93,7 +96,9 @@ export function Sidebar({
               {group.label}
             </p>
             <ul className="space-y-0.5">
-              {group.items.map((item) => {
+              {group.items
+                .filter((item) => !('superadminOnly' in item && item.superadminOnly) || isSuperadmin)
+                .map((item) => {
                 const active = navActive(pathname, item.href);
                 return (
                   <li key={item.href}>
@@ -131,7 +136,7 @@ export function Sidebar({
             <p className="truncate text-sm font-medium text-white">{adminName}</p>
             <button
               type="button"
-              onClick={() => logout()}
+              onClick={() => void logout()}
               className="mt-0.5 text-xs text-white/50 transition hover:text-sandstone"
             >
               Sign out

@@ -17,6 +17,15 @@ async function bootstrap(): Promise<void> {
   assertProductionSecrets();
   initFallbackStore();
 
+  // Defense-in-depth for async code outside the Express request cycle
+  // (route handlers themselves are wrapped via middleware/asyncHandler).
+  process.on('unhandledRejection', (reason) => {
+    log.error('Unhandled promise rejection', {
+      reason: reason instanceof Error ? reason.message : String(reason),
+      stack: reason instanceof Error ? reason.stack : undefined,
+    });
+  });
+
   const dbConnected = await connectDb();
   if (!dbConnected) {
     log.warn('Running in fallback mode — campus data served from in-memory seed');

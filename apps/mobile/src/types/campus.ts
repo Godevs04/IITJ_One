@@ -117,17 +117,7 @@ export interface AppsDoc {
   apps: CampusApp[];
 }
 
-export interface MapLocation {
-  name: string;
-  category: string;
-  lat: number;
-  lng: number;
-}
-
-export interface MapDoc {
-  campusId: string;
-  locations: MapLocation[];
-}
+export type { MapLocationsDoc as MapDoc, CampusLocation as MapLocation } from '@iitj1/types';
 
 export interface ServiceEntry {
   name: string;

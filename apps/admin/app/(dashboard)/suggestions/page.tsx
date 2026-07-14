@@ -1,12 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import { Button } from '@/components/Button';
 import {
   EmptyState,
   LoadingBlock,
   PageHeader,
+  Pagination,
   StatusPill,
 } from '@/components/ui';
 import { useToast } from '@/components/Toast';
@@ -22,29 +23,40 @@ export default function SuggestionsAdminPage() {
   const [rows, setRows] = useState<SuggestionDoc[]>([]);
   const [filter, setFilter] = useState<Status | 'all'>('all');
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 20;
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<{ suggestions: SuggestionDoc[] }>(
+      const data = await apiFetch<{ suggestions: SuggestionDoc[]; total: number }>(
         '/admin/suggestions',
+        {
+          query: {
+            status: filter === 'all' ? undefined : filter,
+            page: String(page),
+            limit: String(pageSize),
+          },
+        },
       );
       setRows(data.suggestions ?? []);
+      setTotal(data.total ?? 0);
     } catch (err) {
       push('error', 'Load failed', err instanceof Error ? err.message : '');
     } finally {
       setLoading(false);
     }
-  }, [push]);
+  }, [push, filter, page]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  const visible = useMemo(() => {
-    if (filter === 'all') return rows;
-    return rows.filter((s) => (s.status ?? 'new') === filter);
-  }, [rows, filter]);
+  function changeFilter(f: Status | 'all') {
+    setFilter(f);
+    setPage(1);
+  }
 
   async function setStatus(id: string | undefined, status: Status) {
     if (!id) return;
@@ -58,6 +70,7 @@ export default function SuggestionsAdminPage() {
         prev.map((row) => (row._id === id ? { ...row, ...updated, status } : row)),
       );
       push('success', 'Updated', `Marked as ${status}`);
+      await load();
     } catch (err) {
       push('error', 'Update failed', err instanceof Error ? err.message : '');
     } finally {
@@ -84,7 +97,7 @@ export default function SuggestionsAdminPage() {
           <button
             key={f}
             type="button"
-            onClick={() => setFilter(f)}
+            onClick={() => changeFilter(f)}
             className={`rounded-xl border px-3 py-1.5 text-sm capitalize transition ${
               filter === f
                 ? 'border-indigo bg-indigo-tint text-indigo'
@@ -96,7 +109,7 @@ export default function SuggestionsAdminPage() {
         ))}
       </div>
 
-      {visible.length === 0 ? (
+      {rows.length === 0 ? (
         <EmptyState title="Inbox empty" message="No suggestions in this filter." />
       ) : (
         <div className="-mx-1 overflow-x-auto scroll-thin px-1">
@@ -111,7 +124,7 @@ export default function SuggestionsAdminPage() {
               </tr>
             </thead>
             <tbody>
-              {visible.map((s, i) => {
+              {rows.map((s, i) => {
                 const status = (s.status ?? 'new') as Status;
                 const when = s.submittedAt ?? s.createdAt;
                 return (
@@ -177,6 +190,8 @@ export default function SuggestionsAdminPage() {
           </div>
         </div>
       )}
+
+      <Pagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
     </div>
   );
 }

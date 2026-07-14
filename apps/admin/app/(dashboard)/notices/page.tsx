@@ -10,6 +10,7 @@ import {
   EmptyState,
   LoadingBlock,
   PageHeader,
+  Pagination,
   StatusPill,
 } from '@/components/ui';
 import { useToast } from '@/components/Toast';
@@ -75,14 +76,18 @@ export default function NoticesAdminPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm());
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 20;
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<{ notices: NoticeDoc[] }>('/admin/notices', {
-        query: { campus: campusId },
+      const data = await apiFetch<{ notices: NoticeDoc[]; total: number }>('/admin/notices', {
+        query: { campus: campusId, page: String(page), limit: String(pageSize) },
       });
       setNotices(data.notices ?? []);
+      setTotal(data.total ?? 0);
     } catch (err) {
       push(
         'error',
@@ -92,7 +97,7 @@ export default function NoticesAdminPage() {
     } finally {
       setLoading(false);
     }
-  }, [push]);
+  }, [push, page]);
 
   useEffect(() => {
     void load();
@@ -349,6 +354,8 @@ export default function NoticesAdminPage() {
           })}
         </div>
       )}
+
+      <Pagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
     </div>
   );
 }

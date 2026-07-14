@@ -99,3 +99,44 @@ export function ScrollX({ children, className = '' }: { children: ReactNode; cla
     <div className={`-mx-1 overflow-x-auto scroll-thin px-1 ${className}`}>{children}</div>
   );
 }
+
+export function Pagination({
+  page,
+  pageSize,
+  total,
+  onPageChange,
+}: {
+  page: number;
+  pageSize: number;
+  total: number;
+  onPageChange: (page: number) => void;
+}) {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="mt-4 flex items-center justify-between gap-3 text-sm text-muted">
+      <span>
+        Page {page} of {totalPages} · {total} total
+      </span>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          disabled={page <= 1}
+          onClick={() => onPageChange(page - 1)}
+          className="rounded-lg border border-border bg-white px-3 py-1.5 font-medium text-ink transition disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Previous
+        </button>
+        <button
+          type="button"
+          disabled={page >= totalPages}
+          onClick={() => onPageChange(page + 1)}
+          className="rounded-lg border border-border bg-white px-3 py-1.5 font-medium text-ink transition disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+}
