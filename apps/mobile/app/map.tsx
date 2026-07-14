@@ -203,10 +203,12 @@ export default function MapScreen() {
   const filteredLocations = useMemo(() => {
     let results = allLocations;
 
+    // Apply search filter
     if (searchQuery.trim()) {
       results = campusDirectoryServiceProvider.searchLocations(searchQuery);
     }
 
+    // Apply category filter (if any categories are selected)
     if (selectedCategories.size > 0) {
       results = results.filter((loc) => selectedCategories.has(loc.category));
     }
@@ -265,6 +267,18 @@ export default function MapScreen() {
         ) : null}
       </View>
 
+      {selectedCategories.size > 0 && (
+        <View style={[styles.filterInfo, { backgroundColor: theme.primaryTint, borderColor: theme.primary }]}>
+          <Ionicons name="filter-outline" size={16} color={theme.primary} />
+          <Text style={[styles.filterInfoText, { color: theme.primary }]}>
+            {selectedCategories.size} categor{selectedCategories.size === 1 ? 'y' : 'ies'} selected · {filteredLocations.length} location{filteredLocations.length === 1 ? '' : 's'}
+          </Text>
+          <Pressable onPress={() => setSelectedCategories(new Set())}>
+            <Text style={[styles.clearFilterText, { color: theme.primary }]}>Clear</Text>
+          </Pressable>
+        </View>
+      )}
+
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -282,26 +296,37 @@ export default function MapScreen() {
                 {
                   backgroundColor: isSelected ? theme.primary : theme.surface,
                   borderColor: isSelected ? theme.primary : theme.border,
+                  borderWidth: isSelected ? 0 : 1,
                 },
-                pressed && { opacity: 0.8 },
+                pressed && { transform: [{ scale: 0.96 }] },
               ]}
             >
-              <Text
-                style={[
-                  styles.categoryChipText,
-                  { color: isSelected ? theme.surface : theme.text },
-                ]}
-              >
-                {cat.emoji}
-              </Text>
-              <Text
-                style={[
-                  styles.categoryChipLabel,
-                  { color: isSelected ? theme.surface : theme.text },
-                ]}
-              >
-                {cat.label}
-              </Text>
+              <View style={styles.chipContent}>
+                <Text
+                  style={[
+                    styles.categoryChipText,
+                    { color: isSelected ? theme.surface : theme.text },
+                  ]}
+                >
+                  {cat.emoji}
+                </Text>
+                <View style={styles.chipTextContainer}>
+                  <Text
+                    style={[
+                      styles.categoryChipLabel,
+                      { color: isSelected ? theme.surface : theme.text },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {cat.label}
+                  </Text>
+                </View>
+              </View>
+              {isSelected && (
+                <View style={[styles.selectedBadge, { backgroundColor: theme.surface }]}>
+                  <Ionicons name="checkmark" size={12} color={theme.primary} />
+                </View>
+              )}
             </Pressable>
           );
         })}
@@ -349,6 +374,27 @@ const styles = StyleSheet.create({
     ...AppTypography.body,
     paddingVertical: AppSpacing.xs,
   },
+  filterInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.sm,
+    borderRadius: AppRadius.md,
+    borderWidth: 1,
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: AppSpacing.sm,
+    marginBottom: AppSpacing.md,
+  },
+  filterInfoText: {
+    ...AppTypography.bodySmall,
+    fontWeight: '600',
+    flex: 1,
+  },
+  clearFilterText: {
+    ...AppTypography.bodySmall,
+    fontWeight: '600',
+    paddingVertical: AppSpacing.xs,
+    paddingHorizontal: AppSpacing.sm,
+  },
   categoriesScroll: {
     marginHorizontal: -AppSpacing.lg,
     marginBottom: AppSpacing.md,
@@ -360,18 +406,35 @@ const styles = StyleSheet.create({
   categoryChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: AppSpacing.xs,
+    justifyContent: 'space-between',
+    gap: AppSpacing.sm,
     borderRadius: AppRadius.full,
-    borderWidth: 1,
     paddingHorizontal: AppSpacing.md,
     paddingVertical: AppSpacing.sm,
+    minHeight: 40,
+  },
+  chipContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.sm,
+  },
+  chipTextContainer: {
+    maxWidth: 100,
   },
   categoryChipText: {
     fontSize: 16,
+    lineHeight: 20,
   },
   categoryChipLabel: {
     ...AppTypography.bodySmall,
     fontWeight: '600',
+  },
+  selectedBadge: {
+    width: 18,
+    height: 18,
+    borderRadius: AppRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   list: {
     gap: AppSpacing.md,
