@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, View, PanResponder } from 'react-native';
-import { Stack, router } from 'expo-router';
+import { Stack, router, useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as Brightness from 'expo-brightness';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
@@ -80,31 +80,41 @@ export default function MessQrScreen() {
     scheduleFade();
   }, [controlsOpacity, scheduleFade]);
 
-  const initialBrightness = useRef<number | null>(null);
-
+  // Handle local control animations on mode change
   useEffect(() => {
-    if (mode !== 'viewing') return undefined;
-
-    revealControls();
-    void activateKeepAwakeAsync('mess-qr');
-    
-    void Brightness.getBrightnessAsync().then((val) => {
-      initialBrightness.current = val;
-      void Brightness.setBrightnessAsync(1);
-    }).catch(() => {
-      void Brightness.setBrightnessAsync(1);
-    });
-
+    if (mode === 'viewing') {
+      revealControls();
+    }
     return () => {
       if (fadeTimer.current) clearTimeout(fadeTimer.current);
-      deactivateKeepAwake('mess-qr');
-      if (initialBrightness.current !== null) {
-        void Brightness.setBrightnessAsync(initialBrightness.current);
-      } else {
-        void Brightness.restoreSystemBrightnessAsync();
-      }
     };
   }, [mode, revealControls]);
+
+  // Focus-aware keep-awake and brightness setting
+  useFocusEffect(
+    useCallback(() => {
+      if (mode !== 'viewing') return;
+
+      void activateKeepAwakeAsync('mess-qr');
+      
+      let initialVal: number | null = null;
+      void Brightness.getBrightnessAsync().then((val) => {
+        initialVal = val;
+        void Brightness.setBrightnessAsync(1);
+      }).catch(() => {
+        void Brightness.setBrightnessAsync(1);
+      });
+
+      return () => {
+        deactivateKeepAwake('mess-qr');
+        if (initialVal !== null) {
+          void Brightness.setBrightnessAsync(initialVal);
+        } else {
+          void Brightness.restoreSystemBrightnessAsync();
+        }
+      };
+    }, [mode])
+  );
 
   const overlayStyle = useAnimatedStyle(() => ({
     opacity: controlsOpacity.value,
