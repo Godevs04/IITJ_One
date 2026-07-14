@@ -83,10 +83,13 @@ export default function AppsScreen() {
     }
   };
 
-  // Resolve logo source: temporarily hardcode Isthara to bundled asset, otherwise support remote URLs or placeholders
+  // Resolve logo source: temporarily hardcode Isthara & Cravee to bundled assets, otherwise support remote URLs or placeholders
   const getLogoSource = (name: string, logo: string) => {
     if (name.toLowerCase() === 'isthara') {
       return require('../assets/isthara.png');
+    }
+    if (name.toLowerCase() === 'cravee') {
+      return require('../assets/cravee.webp');
     }
     if (logo && (logo.startsWith('http://') || logo.startsWith('https://'))) {
       return { uri: logo };
@@ -139,27 +142,45 @@ export default function AppsScreen() {
                   {app.description}
                 </Text>
 
-                <View style={styles.locationContainer}>
-                  <Ionicons name="location-outline" size={16} color={theme.textMuted} />
-                  <Text style={[styles.locationText, { color: theme.textMuted }]}>
-                    {app.locationName}
-                  </Text>
-                </View>
+                {app.locationName ? (
+                  <View style={styles.locationContainer}>
+                    <Ionicons name="location-outline" size={16} color={theme.textMuted} />
+                    <Text style={[styles.locationText, { color: theme.textMuted }]}>
+                      {app.locationName}
+                    </Text>
+                  </View>
+                ) : null}
 
                 <View style={styles.buttonRow}>
-                  <Pressable
-                    onPress={() => handleOpenInMaps(app)}
-                    style={({ pressed }) => [
-                      styles.actionButton,
-                      { backgroundColor: theme.surfaceMuted },
-                      pressed && styles.pressed,
-                    ]}
-                  >
-                    <Ionicons name="map-outline" size={16} color={theme.text} />
-                    <Text style={[styles.actionButtonText, { color: theme.text }]}>
-                      Open in Maps
-                    </Text>
-                  </Pressable>
+                  {app.website ? (
+                    <Pressable
+                      onPress={() => Linking.openURL(app.website!)}
+                      style={({ pressed }) => [
+                        styles.actionButton,
+                        { backgroundColor: theme.surfaceMuted },
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Ionicons name="globe-outline" size={16} color={theme.text} />
+                      <Text style={[styles.actionButtonText, { color: theme.text }]}>
+                        Visit Website
+                      </Text>
+                    </Pressable>
+                  ) : app.locationName || app.plusCode ? (
+                    <Pressable
+                      onPress={() => handleOpenInMaps(app)}
+                      style={({ pressed }) => [
+                        styles.actionButton,
+                        { backgroundColor: theme.surfaceMuted },
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Ionicons name="map-outline" size={16} color={theme.text} />
+                      <Text style={[styles.actionButtonText, { color: theme.text }]}>
+                        Open in Maps
+                      </Text>
+                    </Pressable>
+                  ) : null}
 
                   <Pressable
                     onPress={() => handleLaunchApp(app)}
