@@ -90,37 +90,17 @@ export default function MenuScreen() {
     await sync();
   }, [sync]);
 
-  const handlePrevDay = useCallback(() => {
-    setSelectedDate((prev) => {
-      const next = new Date(prev);
-      next.setDate(prev.getDate() - 1);
-      return next;
-    });
-  }, []);
-
-  const handleNextDay = useCallback(() => {
-    setSelectedDate((prev) => {
-      const next = new Date(prev);
-      next.setDate(prev.getDate() + 1);
-      return next;
-    });
-  }, []);
-
-  const weekDays = useMemo(() => {
+  const scrollDays = useMemo(() => {
     const list = [];
-    const current = new Date(selectedDate);
-    const day = current.getDay();
-    // Monday as start of week. Sunday = 0, Monday = 1.
-    const diff = current.getDate() - day + (day === 0 ? -6 : 1);
-    const monday = new Date(current.setDate(diff));
-
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
+    const today = new Date();
+    // 15 days before and 15 days after today
+    for (let i = -15; i <= 15; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
       list.push(d);
     }
     return list;
-  }, [selectedDate]);
+  }, []);
 
   const isSelectedToday = useMemo(() => isDateToday(selectedDate), [selectedDate, isDateToday]);
 
@@ -137,78 +117,62 @@ export default function MenuScreen() {
       refreshing={syncing}
     >
       {menu ? (
-        <View style={styles.navigationRow}>
-          <Pressable
-            onPress={handlePrevDay}
-            style={[styles.navArrow, { borderColor: theme.border, backgroundColor: theme.chipBackground }]}
-          >
-            <Ionicons name="chevron-back" size={18} color={theme.text} />
-          </Pressable>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.dayStripScroll}
+          onScrollBeginDrag={lockSwipe}
+          onScrollEndDrag={unlockSwipe}
+          onMomentumScrollEnd={unlockSwipe}
+        >
+          {scrollDays.map((d) => {
+            const active = selectedDate.getDate() === d.getDate() &&
+                           selectedDate.getMonth() === d.getMonth() &&
+                           selectedDate.getFullYear() === d.getFullYear();
+            
+            const dayNum = String(d.getDate());
+            const shortDay = getWeekdayName(d).slice(0, 3).toUpperCase();
+            const isToday = isDateToday(d);
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.dayStripScroll}
-            onScrollBeginDrag={lockSwipe}
-            onScrollEndDrag={unlockSwipe}
-            onMomentumScrollEnd={unlockSwipe}
-          >
-            {weekDays.map((d) => {
-              const active = selectedDate.getDate() === d.getDate() &&
-                             selectedDate.getMonth() === d.getMonth() &&
-                             selectedDate.getFullYear() === d.getFullYear();
-              
-              const dayNum = String(d.getDate());
-              const shortDay = getWeekdayName(d).slice(0, 3).toUpperCase();
-              const isToday = isDateToday(d);
-
-              return (
-                <View key={d.toISOString()} style={styles.dayCardWrapper}>
-                  {active ? (
-                    <View style={[styles.activeDayOuter, { borderColor: theme.primary }]}>
-                      <Pressable
-                        onPress={() => setSelectedDate(d)}
-                        style={[styles.dayCard, { backgroundColor: theme.primary }]}
-                      >
-                        <Text style={[styles.activeDayNameText, { color: theme.onPrimary }]}>
-                          {shortDay}
-                        </Text>
-                        <Text style={[styles.activeDayNumText, { color: theme.onPrimary }]}>
-                          {dayNum}
-                        </Text>
-                      </Pressable>
-                    </View>
-                  ) : (
+            return (
+              <View key={d.toISOString()} style={styles.dayCardWrapper}>
+                {active ? (
+                  <View style={[styles.activeDayOuter, { borderColor: theme.primary }]}>
                     <Pressable
                       onPress={() => setSelectedDate(d)}
-                      style={[styles.dayCard, { backgroundColor: theme.chipBackground }]}
+                      style={[styles.dayCard, { backgroundColor: theme.primary }]}
                     >
-                      <Text style={[
-                        styles.dayNameText, 
-                        { color: isToday ? theme.accent : theme.textMuted, fontWeight: isToday ? 'bold' : '600' }
-                      ]}>
+                      <Text style={[styles.activeDayNameText, { color: theme.onPrimary }]}>
                         {shortDay}
                       </Text>
-                      <Text style={[
-                        styles.dayNumText, 
-                        { color: isToday ? theme.accent : theme.text, fontWeight: isToday ? 'bold' : '700' }
-                      ]}>
+                      <Text style={[styles.activeDayNumText, { color: theme.onPrimary }]}>
                         {dayNum}
                       </Text>
                     </Pressable>
-                  )}
-                </View>
-              );
-            })}
-          </ScrollView>
-
-          <Pressable
-            onPress={handleNextDay}
-            style={[styles.navArrow, { borderColor: theme.border, backgroundColor: theme.chipBackground }]}
-          >
-            <Ionicons name="chevron-forward" size={18} color={theme.text} />
-          </Pressable>
-        </View>
+                  </View>
+                ) : (
+                  <Pressable
+                    onPress={() => setSelectedDate(d)}
+                    style={[styles.dayCard, { backgroundColor: theme.chipBackground }]}
+                  >
+                    <Text style={[
+                      styles.dayNameText, 
+                      { color: isToday ? theme.accent : theme.textMuted, fontWeight: isToday ? 'bold' : '600' }
+                    ]}>
+                      {shortDay}
+                    </Text>
+                    <Text style={[
+                      styles.dayNumText, 
+                      { color: isToday ? theme.accent : theme.text, fontWeight: isToday ? 'bold' : '700' }
+                    ]}>
+                      {dayNum}
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+            );
+          })}
+        </ScrollView>
       ) : null}
 
       {menu ? (
