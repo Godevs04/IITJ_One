@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
@@ -55,6 +55,9 @@ export default function MenuScreen() {
   const [dietPreference, setDietPreference] = useState<'veg' | 'nonVeg'>('veg');
   const [showCharges, setShowCharges] = useState(false);
 
+  const scrollViewRef = useRef<ScrollView>(null);
+  const { width: screenWidth } = useWindowDimensions();
+
   const isDateToday = useCallback((d: Date) => {
     const today = new Date();
     return (
@@ -109,6 +112,33 @@ export default function MenuScreen() {
     return selectedDate.toLocaleDateString('en-US', options);
   }, [selectedDate]);
 
+  // Center scroll helper
+  const centerIndex = useCallback((index: number, animated = true) => {
+    const itemWidth = 70; // 62px width + 8px gap
+    const offset = index * itemWidth - screenWidth / 2 + itemWidth / 2;
+    scrollViewRef.current?.scrollTo({ x: offset, animated });
+  }, [screenWidth]);
+
+  // Auto scroll to today on load
+  useEffect(() => {
+    if (menu) {
+      setTimeout(() => {
+        centerIndex(15, false); // Today is at index 15 in the scrollDays list
+      }, 100);
+    }
+  }, [menu, centerIndex]);
+
+  const handleSelectDate = useCallback((d: Date, index: number) => {
+    setSelectedDate(d);
+    centerIndex(index, true);
+  }, [centerIndex]);
+
+  const handleGoToToday = useCallback(() => {
+    const today = new Date();
+    setSelectedDate(today);
+    centerIndex(15, true);
+  }, [centerIndex]);
+
   return (
     <ScreenShell
       title="Mess Menu"
@@ -118,6 +148,7 @@ export default function MenuScreen() {
     >
       {menu ? (
         <ScrollView
+          ref={scrollViewRef}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.dayStripScroll}
@@ -125,7 +156,7 @@ export default function MenuScreen() {
           onScrollEndDrag={unlockSwipe}
           onMomentumScrollEnd={unlockSwipe}
         >
-          {scrollDays.map((d) => {
+          {scrollDays.map((d, idx) => {
             const active = selectedDate.getDate() === d.getDate() &&
                            selectedDate.getMonth() === d.getMonth() &&
                            selectedDate.getFullYear() === d.getFullYear();
@@ -139,7 +170,7 @@ export default function MenuScreen() {
                 {active ? (
                   <View style={[styles.activeDayOuter, { borderColor: theme.primary }]}>
                     <Pressable
-                      onPress={() => setSelectedDate(d)}
+                      onPress={() => handleSelectDate(d, idx)}
                       style={[styles.dayCard, { backgroundColor: theme.primary }]}
                     >
                       <Text style={[styles.activeDayNameText, { color: theme.onPrimary }]}>
@@ -152,7 +183,7 @@ export default function MenuScreen() {
                   </View>
                 ) : (
                   <Pressable
-                    onPress={() => setSelectedDate(d)}
+                    onPress={() => handleSelectDate(d, idx)}
                     style={[styles.dayCard, { backgroundColor: theme.chipBackground }]}
                   >
                     <Text style={[
@@ -187,7 +218,7 @@ export default function MenuScreen() {
         >
           {!isSelectedToday && (
             <Pressable
-              onPress={() => setSelectedDate(new Date())}
+              onPress={handleGoToToday}
               style={[
                 styles.toggleButton,
                 {
