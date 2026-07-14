@@ -18,13 +18,20 @@
   --color-surface: #fffcf7;
 }
 
+html {
+  min-height: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
 html,
 body {
   min-height: 100%;
+  min-height: 100dvh;
 }
 
 body {
   color: var(--color-ink);
+  overflow-x: hidden;
   background:
     radial-gradient(1200px 600px at 8% -10%, rgba(198, 134, 66, 0.14), transparent 55%),
     radial-gradient(900px 500px at 100% 0%, rgba(29, 63, 94, 0.08), transparent 50%),
@@ -32,15 +39,48 @@ body {
   background-attachment: fixed;
 }
 
+/* Standalone PWA: avoid overscroll chrome gaps */
+@media all and (display-mode: standalone) {
+  body {
+    background-attachment: scroll;
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .safe-top {
+    padding-top: max(0.625rem, env(safe-area-inset-top));
+  }
+
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .safe-x {
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    padding-right: max(0.75rem, env(safe-area-inset-right));
   }
 }
 
 @layer components {
   .dash-reveal {
     animation: dashReveal 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* Responsive editor grids used across admin modules */
+  .admin-grid-2 {
+    @apply grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4;
+  }
+
+  .admin-grid-3 {
+    @apply grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3;
+  }
+
+  .admin-actions {
+    @apply flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap;
   }
 }
 
@@ -75,15 +115,6 @@ body {
   }
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 100% 50%;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -111,4 +142,14 @@ body {
 }
 .scroll-thin::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* Touch-friendly form controls on small screens */
+@media (max-width: 639px) {
+  input,
+  select,
+  textarea,
+  button {
+    font-size: 16px; /* prevent iOS zoom on focus */
+  }
 }

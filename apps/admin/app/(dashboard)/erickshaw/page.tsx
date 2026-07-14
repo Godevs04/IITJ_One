@@ -148,7 +148,7 @@ export default function ErickshawAdminPage() {
           <EmptyState title="No vehicles" />
         ) : (
           service.vehicles.map((v, index) => (
-            <Card key={index} className="grid gap-3 md:grid-cols-3">
+            <Card key={index} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <Field label="Type">
                 <Input
                   value={v.type}
@@ -206,7 +206,7 @@ export default function ErickshawAdminPage() {
           <EmptyState title="No drivers" />
         ) : (
           drivers.map((d, index) => (
-            <Card key={d.id} className="grid gap-3 md:grid-cols-4">
+            <Card key={d.id} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Field label="Name">
                 <Input
                   value={d.name}
@@ -265,7 +265,7 @@ export default function ErickshawAdminPage() {
           <EmptyState title="No fares" />
         ) : (
           fares.map((f, index) => (
-            <Card key={index} className="grid gap-3 md:grid-cols-4">
+            <Card key={index} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Field label="Route">
                 <Input
                   value={f.route}

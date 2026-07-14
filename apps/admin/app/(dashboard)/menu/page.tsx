@@ -207,7 +207,7 @@ export default function MenuAdminPage() {
         title="Mess Menu"
         subtitle="Edit by day and meal. Save publishes to the mobile app."
         actions={
-          <>
+          <div className="admin-actions">
             <Button variant="secondary" onClick={() => setShowImport((v) => !v)}>
               {showImport ? 'Hide import' : 'Import CSV'}
             </Button>
@@ -217,7 +217,7 @@ export default function MenuAdminPage() {
             <Button loading={saving} onClick={() => void save()}>
               Save & Publish
             </Button>
-          </>
+          </div>
         }
       />
 

@@ -323,7 +323,7 @@ export default function NoticesAdminPage() {
                       {String(n.expiryDate).slice(0, 10)}
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex w-full flex-wrap gap-2 sm:w-auto">
                     {n.deletedAt ? (
                       id ? (
                         <Button variant="secondary" onClick={() => void restore(id)}>

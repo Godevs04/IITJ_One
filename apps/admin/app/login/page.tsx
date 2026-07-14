@@ -31,7 +31,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
+    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden px-4 py-8 safe-top safe-bottom">
       <div
         className="pointer-events-none absolute inset-0"
         style={{

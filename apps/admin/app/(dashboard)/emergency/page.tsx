@@ -82,7 +82,7 @@ export default function EmergencyAdminPage() {
           {contacts.map((c, idx) => (
             <Card
               key={idx}
-              className="grid gap-3 md:grid-cols-[1.5fr_1.2fr_80px_auto]"
+              className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1.5fr_1.2fr_80px_auto]"
             >
               <Field label="Label">
                 <Input

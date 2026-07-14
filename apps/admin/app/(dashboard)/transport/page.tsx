@@ -212,7 +212,7 @@ export default function TransportAdminPage() {
               {activeGroup.trips.map((trip, index) => (
                 <div
                   key={index}
-                  className="grid gap-2 rounded-xl border border-border bg-white/70 p-3 md:grid-cols-7"
+                  className="grid gap-2 rounded-xl border border-border bg-white/70 p-3 sm:grid-cols-2 lg:grid-cols-7"
                 >
                   <Field label="Bus">
                     <Input value={trip.bus} onChange={(e) => updateTrip(index, { bus: e.target.value })} />

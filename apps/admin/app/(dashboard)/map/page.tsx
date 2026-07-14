@@ -82,7 +82,7 @@ export default function MapAdminPage() {
           {locations.map((loc, idx) => (
             <Card
               key={idx}
-              className="grid gap-3 md:grid-cols-[1.2fr_1fr_0.8fr_0.8fr_auto]"
+              className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_0.8fr_0.8fr_auto]"
             >
               <Field label="Name">
                 <Input

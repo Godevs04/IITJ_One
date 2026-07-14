@@ -79,7 +79,7 @@ export default function PortalsAdminPage() {
       ) : (
         <div className="space-y-3">
           {links.map((link, idx) => (
-            <Card key={idx} className="grid gap-3 md:grid-cols-[1fr_2fr_80px_auto]">
+            <Card key={idx} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_2fr_80px_auto]">
               <Field label="Name">
                 <Input
                   value={link.name}

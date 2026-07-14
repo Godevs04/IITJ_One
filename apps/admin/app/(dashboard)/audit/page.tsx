@@ -51,7 +51,8 @@ export default function AuditAdminPage() {
       {logs.length === 0 ? (
         <EmptyState title="No audit entries yet" />
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-card">
+        <div className="-mx-1 overflow-x-auto scroll-thin px-1">
+          <div className="min-w-[720px] overflow-hidden rounded-2xl border border-border bg-white shadow-card">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-border bg-sand/60 text-xs uppercase tracking-wide text-muted">
               <tr>
@@ -85,6 +86,7 @@ export default function AuditAdminPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>
