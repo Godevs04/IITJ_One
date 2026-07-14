@@ -83,16 +83,15 @@ export default function AppsScreen() {
     }
   };
 
-  // Resolve logo source dynamically using API hostname derivation
-  const getLogoSource = (logo: string) => {
-    if (!logo) return null;
-    if (logo.startsWith('http://') || logo.startsWith('https://')) {
+  // Resolve logo source: temporarily hardcode Isthara to bundled asset, otherwise support remote URLs or placeholders
+  const getLogoSource = (name: string, logo: string) => {
+    if (name.toLowerCase() === 'isthara') {
+      return require('../assets/isthara.png');
+    }
+    if (logo && (logo.startsWith('http://') || logo.startsWith('https://'))) {
       return { uri: logo };
     }
-    // Clean path and append to backend base URL
-    const cleanPath = logo.replace(/^\//, '');
-    const apiBase = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:6002').replace(/\/api\/v1\/?$/, '');
-    return { uri: `${apiBase}/uploads/${cleanPath}` };
+    return null;
   };
 
   return (
@@ -105,7 +104,7 @@ export default function AppsScreen() {
       {apps.length > 0 ? (
         <View style={{ gap: AppSpacing.md }}>
           {apps.map((app) => {
-            const logoSrc = getLogoSource(app.logo);
+            const logoSrc = getLogoSource(app.name, app.logo);
             return (
               <View
                 key={app.name}
