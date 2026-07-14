@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Text, View, PanResponder } from 'react-native';
 import { Stack, router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as Brightness from 'expo-brightness';
@@ -40,6 +40,20 @@ export default function MessQrScreen() {
 
   const controlsOpacity = useSharedValue(1);
   const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Intercept touch if user is swiping downwards by more than 20px
+        return Math.abs(gestureState.dx) < 60 && gestureState.dy > 20 && gestureState.vy > 0.1;
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 120 || gestureState.vy > 0.4) {
+          router.back();
+        }
+      },
+    })
+  ).current;
 
   useEffect(() => {
     let active = true;
@@ -201,7 +215,7 @@ export default function MessQrScreen() {
     return (
       <>
         <Stack.Screen options={{ headerShown }} />
-        <Pressable style={styles.viewer} onPress={revealControls}>
+        <Pressable style={styles.viewer} onPress={revealControls} {...panResponder.panHandlers}>
           <Animated.Image
             source={{ uri: qr.imagePath }}
             style={[styles.qrImage, { aspectRatio }]}
