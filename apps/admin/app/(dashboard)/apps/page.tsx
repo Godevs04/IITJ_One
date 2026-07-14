@@ -63,7 +63,21 @@ export default function AppsAdminPage() {
               onClick={() =>
                 setApps((prev) => [
                   ...prev,
-                  { name: '', description: '' },
+                  {
+                    name: '',
+                    description: '',
+                    category: '',
+                    logo: '',
+                    androidUrl: '',
+                    iosUrl: '',
+                    website: '',
+                    locationName: '',
+                    latitude: 0,
+                    longitude: 0,
+                    plusCode: '',
+                    displayOrder: prev.length + 1,
+                    isEnabled: true,
+                  },
                 ])
               }
             >
@@ -80,8 +94,28 @@ export default function AppsAdminPage() {
       ) : (
         <div className="space-y-3">
           {apps.map((app, idx) => (
-            <Card key={idx} className="space-y-3">
-              <div className="grid gap-3 md:grid-cols-2">
+            <Card key={idx} className="space-y-4 p-4">
+              <div className="flex justify-between items-center border-b pb-2">
+                <h3 className="font-semibold text-lg">{app.name || 'New App'}</h3>
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-1 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={app.isEnabled}
+                      onChange={(e) =>
+                        setApps((prev) =>
+                          prev.map((row, i) =>
+                            i === idx ? { ...row, isEnabled: e.target.checked } : row,
+                          ),
+                        )
+                      }
+                      className="rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <span className="text-sm">Enabled</span>
+                  </label>
+                </div>
+              </div>
+              <div className="grid gap-3 md:grid-cols-3">
                 <Field label="Name">
                   <Input
                     value={app.name}
@@ -94,13 +128,26 @@ export default function AppsAdminPage() {
                     }
                   />
                 </Field>
-                <Field label="Icon URL">
+                <Field label="Category">
                   <Input
-                    value={app.iconUrl ?? ''}
+                    value={app.category ?? ''}
                     onChange={(e) =>
                       setApps((prev) =>
                         prev.map((row, i) =>
-                          i === idx ? { ...row, iconUrl: e.target.value } : row,
+                          i === idx ? { ...row, category: e.target.value } : row,
+                        ),
+                      )
+                    }
+                  />
+                </Field>
+                <Field label="Display Order">
+                  <Input
+                    type="number"
+                    value={app.displayOrder ?? 0}
+                    onChange={(e) =>
+                      setApps((prev) =>
+                        prev.map((row, i) =>
+                          i === idx ? { ...row, displayOrder: parseInt(e.target.value) || 0 } : row,
                         ),
                       )
                     }
@@ -122,28 +169,54 @@ export default function AppsAdminPage() {
                 />
               </Field>
               <div className="grid gap-3 md:grid-cols-2">
-                <Field label="Play Store URL">
+                <Field label="Logo filename/URL">
                   <Input
-                    value={app.playStoreUrl ?? ''}
+                    value={app.logo ?? ''}
+                    onChange={(e) =>
+                      setApps((prev) =>
+                        prev.map((row, i) =>
+                          i === idx ? { ...row, logo: e.target.value } : row,
+                        ),
+                      )
+                    }
+                  />
+                </Field>
+                <Field label="Website (Optional)">
+                  <Input
+                    value={app.website ?? ''}
+                    onChange={(e) =>
+                      setApps((prev) =>
+                        prev.map((row, i) =>
+                          i === idx ? { ...row, website: e.target.value } : row,
+                        ),
+                      )
+                    }
+                  />
+                </Field>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <Field label="Android Play Store URL">
+                  <Input
+                    value={app.androidUrl ?? ''}
                     onChange={(e) =>
                       setApps((prev) =>
                         prev.map((row, i) =>
                           i === idx
-                            ? { ...row, playStoreUrl: e.target.value }
+                            ? { ...row, androidUrl: e.target.value }
                             : row,
                         ),
                       )
                     }
                   />
                 </Field>
-                <Field label="App Store URL">
+                <Field label="iOS App Store URL">
                   <Input
-                    value={app.appStoreUrl ?? ''}
+                    value={app.iosUrl ?? ''}
                     onChange={(e) =>
                       setApps((prev) =>
                         prev.map((row, i) =>
                           i === idx
-                            ? { ...row, appStoreUrl: e.target.value }
+                            ? { ...row, iosUrl: e.target.value }
                             : row,
                         ),
                       )
@@ -151,14 +224,75 @@ export default function AppsAdminPage() {
                   />
                 </Field>
               </div>
-              <Button
-                variant="ghost"
-                onClick={() =>
-                  setApps((prev) => prev.filter((_, i) => i !== idx))
-                }
-              >
-                Remove
-              </Button>
+              <div className="border-t pt-3 space-y-3">
+                <h4 className="font-medium text-sm text-gray-700">Location Settings</h4>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <Field label="Location Name">
+                    <Input
+                      value={app.locationName ?? ''}
+                      onChange={(e) =>
+                        setApps((prev) =>
+                          prev.map((row, i) =>
+                            i === idx ? { ...row, locationName: e.target.value } : row,
+                          ),
+                        )
+                      }
+                    />
+                  </Field>
+                  <Field label="Plus Code">
+                    <Input
+                      value={app.plusCode ?? ''}
+                      onChange={(e) =>
+                        setApps((prev) =>
+                          prev.map((row, i) =>
+                            i === idx ? { ...row, plusCode: e.target.value } : row,
+                          ),
+                        )
+                      }
+                    />
+                  </Field>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <Field label="Latitude">
+                    <Input
+                      type="number"
+                      step="any"
+                      value={app.latitude ?? 0}
+                      onChange={(e) =>
+                        setApps((prev) =>
+                          prev.map((row, i) =>
+                            i === idx ? { ...row, latitude: parseFloat(e.target.value) || 0 } : row,
+                          ),
+                        )
+                      }
+                    />
+                  </Field>
+                  <Field label="Longitude">
+                    <Input
+                      type="number"
+                      step="any"
+                      value={app.longitude ?? 0}
+                      onChange={(e) =>
+                        setApps((prev) =>
+                          prev.map((row, i) =>
+                            i === idx ? { ...row, longitude: parseFloat(e.target.value) || 0 } : row,
+                          ),
+                        )
+                      }
+                    />
+                  </Field>
+                </div>
+              </div>
+              <div className="pt-2 border-t flex justify-end">
+                <Button
+                  variant="ghost"
+                  onClick={() =>
+                    setApps((prev) => prev.filter((_, i) => i !== idx))
+                  }
+                >
+                  Remove App
+                </Button>
+              </div>
             </Card>
           ))}
         </div>

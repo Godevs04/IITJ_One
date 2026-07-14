@@ -87,11 +87,22 @@ export interface PortalsDoc {
 }
 
 export interface CampusApp {
+  id?: string;
   name: string;
   description: string;
-  playStoreUrl?: string;
-  appStoreUrl?: string;
-  iconUrl?: string;
+  category: string;
+  logo: string;
+  androidUrl: string;
+  iosUrl: string;
+  website?: string;
+  locationName: string;
+  latitude: number;
+  longitude: number;
+  plusCode: string;
+  displayOrder: number;
+  isEnabled: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AppsDoc {
