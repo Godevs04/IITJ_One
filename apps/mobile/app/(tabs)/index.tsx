@@ -42,7 +42,6 @@ const QUICK_LINKS: {
   { title: 'Services', icon: 'construct-outline', route: '/services' },
   { title: 'Laundry', icon: 'shirt-outline', route: '/laundry' },
   { title: 'Cabs & Autos', icon: 'car-outline', route: '/cabs-autos' },
-  { title: 'Emergency', icon: 'alert-circle-outline', route: '/emergency', variant: 'danger' },
 ];
 
 interface CachedNotice {
