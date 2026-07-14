@@ -101,7 +101,7 @@ export default function AppsAdminPage() {
                   <label className="flex items-center gap-1 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={app.isEnabled}
+                      checked={app.isEnabled ?? true}
                       onChange={(e) =>
                         setApps((prev) =>
                           prev.map((row, i) =>
