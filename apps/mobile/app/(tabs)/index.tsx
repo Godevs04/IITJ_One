@@ -202,7 +202,7 @@ function TransportWidget({
       <View style={styles.cardTopRow}>
         <View style={styles.cardTopText}>
           <Text style={[styles.cardLabel, { color: theme.textMuted }]}>
-            🚌 Transport
+            Transport
           </Text>
         </View>
         <Ionicons name="bus-outline" size={24} color={theme.secondary} />
@@ -210,9 +210,12 @@ function TransportWidget({
 
       {/* From Campus Section */}
       <View style={styles.widgetSection}>
-        <Text style={[styles.sectionHeadingLabel, { color: theme.secondary }]}>
-          ⬆️ From Campus
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+          <Ionicons name="arrow-up-circle-outline" size={16} color={theme.secondary} />
+          <Text style={[styles.sectionHeadingLabel, { color: theme.secondary }]}>
+            From Campus
+          </Text>
+        </View>
         {departure ? (
           <View style={styles.widgetContent}>
             <View style={styles.widgetMainRow}>
@@ -242,9 +245,12 @@ function TransportWidget({
 
       {/* To Campus Section */}
       <View style={styles.widgetSection}>
-        <Text style={[styles.sectionHeadingLabel, { color: theme.primary }]}>
-          ⬇️ To Campus
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+          <Ionicons name="arrow-down-circle-outline" size={16} color={theme.primary} />
+          <Text style={[styles.sectionHeadingLabel, { color: theme.primary }]}>
+            To Campus
+          </Text>
+        </View>
         {arrival ? (
           <View style={styles.widgetContent}>
             <View style={styles.widgetMainRow}>
