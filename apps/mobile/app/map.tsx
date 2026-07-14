@@ -1,16 +1,19 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as Linking from 'expo-linking';
-import { Share, StyleSheet, TextInput, View, FlatList, Pressable, Text, ScrollView } from 'react-native';
+import { Share, StyleSheet, TextInput, View, FlatList, Pressable, Text, ScrollView, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { campusDirectoryServiceProvider } from '@/campus/services/campusDirectoryService';
 import { favoritesStore } from '@/campus/services/favoritesStore';
+import { searchService } from '@/campus/services/searchService';
+import { recentSearchesStore } from '@/campus/services/recentSearchesStore';
 import { LOCATION_CATEGORIES } from '@/campus/types';
 import type { CampusLocation, LocationCategory } from '@/campus/types';
+import { SearchResultCard } from '@/campus/components/SearchResultCard';
 
-function LocationCard({
+function LocationDetailCard({
   location,
   isFavorite,
   onFavoriteToggle,
@@ -39,7 +42,6 @@ function LocationCard({
       try {
         await Linking.openURL(`https://api.react-native.com/share?text=${encodeURIComponent(text)}`);
       } catch {
-        // Fallback: just open maps
         handleOpenMaps();
       }
     }
@@ -191,30 +193,58 @@ function LocationCard({
 export default function MapScreen() {
   const theme = useThemeColors();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<Set<LocationCategory>>(new Set());
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
   const allLocations = useMemo(() => campusDirectoryServiceProvider.getAllLocations(), []);
 
   useEffect(() => {
     void favoritesStore.getFavorites().then(setFavorites);
+    void recentSearchesStore.getRecentSearches().then(setRecentSearches);
   }, []);
 
-  const filteredLocations = useMemo(() => {
-    let results = allLocations;
-
-    // Apply search filter
-    if (searchQuery.trim()) {
-      results = campusDirectoryServiceProvider.searchLocations(searchQuery);
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return [];
     }
+    return searchService.search(searchQuery);
+  }, [searchQuery]);
 
-    // Apply category filter (if any categories are selected)
-    if (selectedCategories.size > 0) {
-      results = results.filter((loc) => selectedCategories.has(loc.category));
+  const searchSuggestions = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return [];
+    }
+    return searchService.getSearchSuggestions(searchQuery);
+  }, [searchQuery]);
+
+  const filteredLocations = useMemo(() => {
+    let results: CampusLocation[] = [];
+
+    if (searchQuery.trim()) {
+      // Use search results
+      results = searchResults.map((r) => r.location);
+    } else if (selectedCategories.size > 0) {
+      // Use category filters
+      results = allLocations.filter((loc) => selectedCategories.has(loc.category));
+    } else {
+      // No filters, show all
+      results = allLocations;
     }
 
     return results;
-  }, [allLocations, searchQuery, selectedCategories]);
+  }, [searchQuery, searchResults, selectedCategories, allLocations]);
+
+  const handleSearch = useCallback(
+    (query: string) => {
+      setSearchQuery(query);
+      if (query.trim()) {
+        void recentSearchesStore.addSearch(query);
+      }
+    },
+    []
+  );
 
   const handleCategoryToggle = (category: LocationCategory) => {
     setSelectedCategories((prev) => {
@@ -247,17 +277,33 @@ export default function MapScreen() {
       });
   };
 
+  const handleRemoveRecentSearch = (query: string) => {
+    void recentSearchesStore.removeSearch(query).then(() => {
+      setRecentSearches((prev) => prev.filter((s) => s !== query));
+    });
+  };
+
+  const handleClearRecentSearches = () => {
+    void recentSearchesStore.clearRecentSearches().then(() => {
+      setRecentSearches([]);
+    });
+  };
+
   const categories = Object.values(LOCATION_CATEGORIES);
+  const isSearchActive = searchQuery.trim().length > 0;
 
   return (
     <ScreenShell hideTitle subtitle="Campus Directory">
+      {/* Search Bar */}
       <View style={[styles.searchBar, { backgroundColor: theme.surface, borderColor: theme.border }]}>
         <Ionicons name="search-outline" size={18} color={theme.textMuted} />
         <TextInput
-          placeholder="Search locations..."
+          placeholder="Search by name, alias, address..."
           placeholderTextColor={theme.textMuted}
           value={searchQuery}
-          onChangeText={setSearchQuery}
+          onChangeText={handleSearch}
+          onFocus={() => setIsSearchFocused(true)}
+          onBlur={() => setIsSearchFocused(false)}
           style={[styles.searchInput, { color: theme.text }]}
         />
         {searchQuery ? (
@@ -267,11 +313,97 @@ export default function MapScreen() {
         ) : null}
       </View>
 
+      {/* Search Suggestions Dropdown */}
+      {isSearchFocused && searchQuery.trim() && (
+        <Modal transparent visible animationType="none">
+          <Pressable
+            style={styles.modalOverlay}
+            onPress={() => setIsSearchFocused(false)}
+          />
+          <View style={[styles.suggestionsDropdown, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <FlatList
+              data={searchSuggestions}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <Pressable
+                  onPress={() => {
+                    setIsSearchFocused(false);
+                  }}
+                  style={({ pressed }) => [
+                    styles.suggestionItem,
+                    { borderBottomColor: theme.border },
+                    pressed && { backgroundColor: theme.surfaceMuted },
+                  ]}
+                >
+                  <Ionicons
+                    name={LOCATION_CATEGORIES[item.category].icon}
+                    size={16}
+                    color={theme.primary}
+                  />
+                  <View style={styles.suggestionContent}>
+                    <Text style={[styles.suggestionTitle, { color: theme.text }]}>
+                      {item.name}
+                    </Text>
+                    {item.description && (
+                      <Text style={[styles.suggestionSubtitle, { color: theme.textMuted }]}>
+                        {item.description}
+                      </Text>
+                    )}
+                  </View>
+                </Pressable>
+              )}
+              scrollEnabled={false}
+              ItemSeparatorComponent={() => (
+                <View style={[styles.divider, { backgroundColor: theme.border }]} />
+              )}
+            />
+          </View>
+        </Modal>
+      )}
+
+      {/* Recent Searches */}
+      {!isSearchActive && isSearchFocused && recentSearches.length > 0 && (
+        <View style={[styles.recentSearchesContainer, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <View style={styles.recentSearchesHeader}>
+            <Text style={[styles.recentSearchesTitle, { color: theme.text }]}>
+              Recent Searches
+            </Text>
+            <Pressable onPress={handleClearRecentSearches}>
+              <Text style={[styles.clearRecentText, { color: theme.primary }]}>
+                Clear All
+              </Text>
+            </Pressable>
+          </View>
+          <View style={styles.recentSearchesList}>
+            {recentSearches.slice(0, 5).map((query, idx) => (
+              <Pressable
+                key={idx}
+                onPress={() => handleSearch(query)}
+                style={({ pressed }) => [
+                  styles.recentSearchItem,
+                  { backgroundColor: theme.surfaceMuted },
+                  pressed && { opacity: 0.8 },
+                ]}
+              >
+                <Ionicons name="time-outline" size={14} color={theme.textMuted} />
+                <Text style={[styles.recentSearchText, { color: theme.text }]} numberOfLines={1}>
+                  {query}
+                </Text>
+                <Pressable onPress={() => handleRemoveRecentSearch(query)}>
+                  <Ionicons name="close-outline" size={14} color={theme.textMuted} />
+                </Pressable>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* Filter Info */}
       {selectedCategories.size > 0 && (
         <View style={[styles.filterInfo, { backgroundColor: theme.primaryTint, borderColor: theme.primary }]}>
           <Ionicons name="filter-outline" size={16} color={theme.primary} />
           <Text style={[styles.filterInfoText, { color: theme.primary }]}>
-            {selectedCategories.size} categor{selectedCategories.size === 1 ? 'y' : 'ies'} selected · {filteredLocations.length} location{filteredLocations.length === 1 ? '' : 's'}
+            {selectedCategories.size} categor{selectedCategories.size === 1 ? 'y' : 'ies'} · {filteredLocations.length} location{filteredLocations.length === 1 ? '' : 's'}
           </Text>
           <Pressable onPress={() => setSelectedCategories(new Set())}>
             <Text style={[styles.clearFilterText, { color: theme.primary }]}>Clear</Text>
@@ -279,77 +411,113 @@ export default function MapScreen() {
         </View>
       )}
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.categoriesScroll}
-        contentContainerStyle={styles.categoriesContainer}
-      >
-        {categories.map((cat) => {
-          const isSelected = selectedCategories.has(cat.id);
-          return (
-            <Pressable
-              key={cat.id}
-              onPress={() => handleCategoryToggle(cat.id)}
-              style={({ pressed }) => [
-                styles.categoryChip,
-                {
-                  backgroundColor: isSelected ? theme.primary : theme.surface,
-                  borderColor: isSelected ? theme.primary : theme.border,
-                  borderWidth: isSelected ? 0 : 1,
-                },
-                pressed && { transform: [{ scale: 0.96 }] },
-              ]}
-            >
-              <View style={styles.chipContent}>
-                <Text
-                  style={[
-                    styles.categoryChipText,
-                    { color: isSelected ? theme.surface : theme.text },
-                  ]}
-                >
-                  {cat.emoji}
-                </Text>
-                <View style={styles.chipTextContainer}>
+      {/* Category Chips */}
+      {!isSearchActive && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoriesScroll}
+          contentContainerStyle={styles.categoriesContainer}
+        >
+          {categories.map((cat) => {
+            const isSelected = selectedCategories.has(cat.id);
+            return (
+              <Pressable
+                key={cat.id}
+                onPress={() => handleCategoryToggle(cat.id)}
+                style={({ pressed }) => [
+                  styles.categoryChip,
+                  {
+                    backgroundColor: isSelected ? theme.primary : theme.surface,
+                    borderColor: isSelected ? theme.primary : theme.border,
+                    borderWidth: isSelected ? 0 : 1,
+                  },
+                  pressed && { transform: [{ scale: 0.96 }] },
+                ]}
+              >
+                <View style={styles.chipContent}>
                   <Text
                     style={[
-                      styles.categoryChipLabel,
+                      styles.categoryChipText,
                       { color: isSelected ? theme.surface : theme.text },
                     ]}
-                    numberOfLines={1}
                   >
-                    {cat.label}
+                    {cat.emoji}
                   </Text>
+                  <View style={styles.chipTextContainer}>
+                    <Text
+                      style={[
+                        styles.categoryChipLabel,
+                        { color: isSelected ? theme.surface : theme.text },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {cat.label}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-              {isSelected && (
-                <View style={[styles.selectedBadge, { backgroundColor: theme.surface }]}>
-                  <Ionicons name="checkmark" size={12} color={theme.primary} />
-                </View>
-              )}
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+                {isSelected && (
+                  <View style={[styles.selectedBadge, { backgroundColor: theme.surface }]}>
+                    <Ionicons name="checkmark" size={12} color={theme.primary} />
+                  </View>
+                )}
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      )}
 
+      {/* Results */}
       <FlatList
         data={filteredLocations}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <LocationCard
-            location={item}
-            isFavorite={favorites.has(item.id)}
-            onFavoriteToggle={handleFavoriteToggle}
-            theme={theme}
-          />
-        )}
+        renderItem={({ item }) => {
+          if (isSearchActive) {
+            // Find search result details
+            const searchResult = searchResults.find((r) => r.location.id === item.id);
+            if (searchResult) {
+              return (
+                <Pressable
+                  onPress={() => handleFavoriteToggle(item.id)}
+                  style={{ marginBottom: AppSpacing.sm }}
+                >
+                  <SearchResultCard
+                    location={item}
+                    query={searchQuery}
+                    matchType={searchResult.matchType}
+                    matchedField={searchResult.matchedField}
+                    theme={theme}
+                  />
+                </Pressable>
+              );
+            }
+          }
+
+          // Default card for browsing
+          return (
+            <LocationDetailCard
+              location={item}
+              isFavorite={favorites.has(item.id)}
+              onFavoriteToggle={handleFavoriteToggle}
+              theme={theme}
+            />
+          );
+        }}
         scrollEnabled={false}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Ionicons name="search-outline" size={40} color={theme.textMuted} />
+            <Ionicons
+              name={isSearchActive ? 'search-outline' : 'grid-outline'}
+              size={40}
+              color={theme.textMuted}
+            />
             <Text style={[styles.emptyText, { color: theme.textMuted }]}>
-              {searchQuery ? 'No locations found' : 'Select a category to view locations'}
+              {isSearchActive
+                ? 'No locations found'
+                : selectedCategories.size > 0
+                  ? 'No locations in selected categories'
+                  : 'Select a category to view locations'}
             </Text>
           </View>
         }
@@ -373,6 +541,78 @@ const styles = StyleSheet.create({
     flex: 1,
     ...AppTypography.body,
     paddingVertical: AppSpacing.xs,
+  },
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'transparent',
+  },
+  suggestionsDropdown: {
+    marginHorizontal: AppSpacing.lg,
+    marginTop: AppSpacing.xs,
+    borderRadius: AppRadius.lg,
+    borderWidth: 1,
+    maxHeight: 300,
+    zIndex: 1000,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.md,
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: AppSpacing.md,
+    borderBottomWidth: 1,
+  },
+  suggestionContent: {
+    flex: 1,
+    gap: AppSpacing.xs,
+  },
+  suggestionTitle: {
+    ...AppTypography.body,
+    fontWeight: '600',
+  },
+  suggestionSubtitle: {
+    ...AppTypography.bodySmall,
+  },
+  divider: {
+    height: 1,
+  },
+  recentSearchesContainer: {
+    borderRadius: AppRadius.md,
+    borderWidth: 1,
+    marginBottom: AppSpacing.md,
+    overflow: 'hidden',
+  },
+  recentSearchesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: AppSpacing.sm,
+  },
+  recentSearchesTitle: {
+    ...AppTypography.bodySmall,
+    fontWeight: '600',
+  },
+  clearRecentText: {
+    ...AppTypography.bodySmall,
+    fontWeight: '600',
+  },
+  recentSearchesList: {
+    gap: AppSpacing.sm,
+    paddingHorizontal: AppSpacing.md,
+    paddingBottom: AppSpacing.md,
+  },
+  recentSearchItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.sm,
+    borderRadius: AppRadius.md,
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: AppSpacing.sm,
+  },
+  recentSearchText: {
+    flex: 1,
+    ...AppTypography.bodySmall,
   },
   filterInfo: {
     flexDirection: 'row',

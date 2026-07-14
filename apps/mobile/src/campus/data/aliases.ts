@@ -1,0 +1,58 @@
+/**
+ * Common aliases and abbreviations for campus locations.
+ * Maps aliases to location IDs for enhanced search.
+ */
+export const LOCATION_ALIASES: Record<string, string[]> = {
+  'academic-004': ['LHC', 'LHC1', 'Lecture Hall Complex 1', 'Lecture Hall'],
+  'academic-005': ['LHC2', 'Lecture Hall Complex 2', 'New Building'],
+  'academic-003': ['Library', 'Central Library', 'Learning Hub', 'SRRL', 'S R Ranganathan'],
+  'academic-007': ['CASE', 'Centre for Advanced Scientific Equipment'],
+  'academic-008': ['CBSA', 'Brain Science', 'Neuroscience'],
+  'academic-017': ['AyurTech', 'Ayurveda', 'Ayurvedic Technology'],
+  'academic-018': ['MedTech', 'Medical Technology'],
+  'academic-011': ['Design School', 'Design Center'],
+  'academic-012': ['Management School', 'SME', 'Entrepreneurship'],
+  'academic-013': ['Liberal Arts', 'SOLA', 'Humanities'],
+  'academic-014': ['TISC', 'Startup Center', 'Innovation Hub'],
+  'food-008': ['Old Mess', 'Mess', 'Food Court'],
+  'food-009': ['New Mess', 'Veg Mess'],
+  'dept-001': ['CSE', 'CS', 'Computer Science'],
+  'dept-002': ['EE', 'Electrical', 'Electrical Engg'],
+  'dept-003': ['ME', 'Mechanical', 'Mechanical Engg'],
+  'dept-004': ['CE', 'Civil', 'Civil Engg', 'Infrastructure'],
+  'dept-005': ['Chem', 'Chemistry Department'],
+  'dept-006': ['Physics Department', 'Phys'],
+  'dept-007': ['Math', 'Mathematics Department'],
+  'hostel-b1': ['B1', 'Boy Hostel 1'],
+  'hostel-b2': ['B2', 'Girl Hostel 2'],
+  'hostel-b3': ['B3', 'Boy Hostel 3'],
+  'hostel-b4': ['B4', 'Girl Hostel 4'],
+  'hostel-g1': ['G1', 'Boys Hostel'],
+  'hostel-g2': ['G2', 'Hostel G2'],
+  'hostel-i2': ['I2', 'Girls Hostel'],
+  'hostel-i3': ['I3', 'Girls Hostel I3'],
+  'hostel-y3': ['Y3', 'Amaltas Hostel'],
+  'hostel-y4': ['Y4', 'Gulmohar Hostel'],
+  'health-001': ['Medical', 'Health Centre', 'Clinic', 'Hospital', 'PHC', 'Doctor'],
+  'sports-001': ['Gym', 'Sports Complex', 'Fitness'],
+  'sports-002': ['Cricket', 'Cricket Ground', 'Cricket Pitch'],
+  'sports-003': ['Football', 'Football Ground', 'Soccer'],
+  'sports-004': ['Hockey', 'Hockey Ground'],
+  'sports-005': ['Track', 'Running Track', 'Athletic Track'],
+  'sports-006': ['Basketball', 'Basketball Court'],
+  'sports-007': ['Tennis', 'Tennis Court', 'Lawn Tennis'],
+  'service-002': ['Salon', 'Barber', 'Hair Cut'],
+  'service-001': ['Laundry', 'Washing'],
+  'landmark-001': ['Tree', 'Knowledge Tree'],
+  'landmark-002': ['Fountain', 'Water Fountain'],
+  'office-001': ['Director', "Director's Office"],
+  'office-002': ['Academics', 'Academic Office'],
+  'office-003': ['R&D', 'Research Office'],
+  'gate-001': ['Main Gate', 'Front Gate', 'Gate 1'],
+  'gate-002': ['Side Gate', 'NIFT Gate', 'Gate 2'],
+  'banking-001': ['SBI', 'Bank ATM', 'ATM'],
+};
+
+export function getLocationAliases(locationId: string): string[] {
+  return LOCATION_ALIASES[locationId] ?? [];
+}
