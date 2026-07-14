@@ -39,6 +39,8 @@ npm run dev:admin
 ```
 
 - Health: `http://localhost:6002/api/v1/health` (or your LAN IP)
+- API docs (Scalar): `http://localhost:6002/api/v1/docs`
+- OpenAPI JSON: `http://localhost:6002/api/v1/openapi.json`
 - Admin: `http://localhost:3000` (login uses `ADMIN_BOOTSTRAP_*` from `apps/api/.env`)
 - Admin calls API via Next rewrite `/backend` → `127.0.0.1:6002`
 
