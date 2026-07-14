@@ -89,15 +89,35 @@ export interface PortalsDoc {
   links: { name: string; url: string; icon?: string; order: number }[];
 }
 
+export interface CampusApp {
+  id?: string;
+  name: string;
+  description: string;
+  category: string;
+  logo: string;
+  androidUrl: string;
+  iosUrl: string;
+  website?: string;
+  locationName: string;
+  address?: string;
+  latitude: number;
+  longitude: number;
+  plusCode: string;
+  displayOrder: number;
+  isEnabled: boolean;
+  deepLink?: string;
+  androidPackage?: string;
+  iosBundleId?: string;
+  featured?: boolean;
+  badge?: string;
+  requiresLogin?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface AppsDoc {
   campusId: string;
-  apps: {
-    name: string;
-    description: string;
-    playStoreUrl?: string;
-    appStoreUrl?: string;
-    iconUrl?: string;
-  }[];
+  apps: CampusApp[];
 }
 
 export interface MapDoc {

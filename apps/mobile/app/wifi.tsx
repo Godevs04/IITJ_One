@@ -137,9 +137,12 @@ export default function WifiScreen() {
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={[styles.infoCardTitle, { color: theme.text }]}>Internet Facility</Text>
-            <Text style={[styles.speedBadge, { color: theme.primary }]}>
-              ✔ Up to 9 Gbps Connectivity
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Ionicons name="checkmark-circle-outline" size={14} color={theme.primary} />
+              <Text style={[styles.speedBadge, { color: theme.primary }]}>
+                Up to 9 Gbps Connectivity
+              </Text>
+            </View>
           </View>
         </View>
 

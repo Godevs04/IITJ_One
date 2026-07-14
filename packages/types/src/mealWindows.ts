@@ -38,10 +38,10 @@ export const DEFAULT_MEAL_WINDOWS: MealWindowsDoc['windows'] = {
     timeLabel: '12:00 PM - 2:00 PM',
   },
   snacks: {
-    start: '4:30 PM',
-    end: '6:00 PM',
+    start: '5:30 PM',
+    end: '6:30 PM',
     label: 'Snacks',
-    timeLabel: '4:30 PM - 6:00 PM',
+    timeLabel: '5:30 PM - 6:30 PM',
   },
   dinner: {
     start: '7:30 PM',

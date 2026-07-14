@@ -89,9 +89,12 @@ function DriverCard({
               </View>
             ) : null}
           </View>
-          <Text style={[styles.driverPhone, { color: theme.textMuted }]}>
-            📞 {driver.phone}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Ionicons name="call-outline" size={13} color={theme.textMuted} />
+            <Text style={[styles.driverPhone, { color: theme.textMuted }]}>
+              {driver.phone}
+            </Text>
+          </View>
         </View>
       </View>
       <View style={[styles.callButton, { backgroundColor: theme.primaryTint }]}>

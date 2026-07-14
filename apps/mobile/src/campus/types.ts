@@ -35,7 +35,6 @@ export interface LocationCategory_ {
   id: LocationCategory;
   label: string;
   icon: IoniconName;
-  emoji: string;
 }
 
 export const LOCATION_CATEGORIES: Record<LocationCategory, LocationCategory_> = {
@@ -43,66 +42,55 @@ export const LOCATION_CATEGORIES: Record<LocationCategory, LocationCategory_> = 
     id: 'academic',
     label: 'Academic Buildings',
     icon: 'school-outline',
-    emoji: '🏛',
   },
   department: {
     id: 'department',
     label: 'Departments',
     icon: 'briefcase-outline',
-    emoji: '🎓',
   },
   hostel: {
     id: 'hostel',
     label: 'Hostels',
     icon: 'home-outline',
-    emoji: '🏠',
   },
   food: {
     id: 'food',
     label: 'Food & Cafés',
     icon: 'restaurant-outline',
-    emoji: '🍽',
   },
   banking: {
     id: 'banking',
     label: 'Banking',
     icon: 'card-outline',
-    emoji: '🏦',
   },
   health: {
     id: 'health',
     label: 'Health',
     icon: 'medical-outline',
-    emoji: '🏥',
   },
   sports: {
     id: 'sports',
     label: 'Sports',
     icon: 'basketball-outline',
-    emoji: '⚽',
   },
   office: {
     id: 'office',
     label: 'Administrative Offices',
     icon: 'business-outline',
-    emoji: '🏢',
   },
   gate: {
     id: 'gate',
     label: 'Gates',
     icon: 'enter-outline',
-    emoji: '🚪',
   },
   service: {
     id: 'service',
     label: 'Campus Services',
     icon: 'car-outline',
-    emoji: '🚖',
   },
   landmark: {
     id: 'landmark',
     label: 'Landmarks',
     icon: 'pin-outline',
-    emoji: '📍',
   },
 };

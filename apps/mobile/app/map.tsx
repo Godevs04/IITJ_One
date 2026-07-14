@@ -96,14 +96,20 @@ function LocationDetailCard({
       {(location.address || location.plusCode) && (
         <View style={styles.addressSection}>
           {location.address && (
-            <Text style={[styles.address, { color: theme.textMuted }]}>
-              📍 {location.address}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              <Ionicons name="location-outline" size={14} color={theme.textMuted} />
+              <Text style={[styles.address, { color: theme.textMuted, flex: 1 }]}>
+                {location.address}
+              </Text>
+            </View>
           )}
           {location.plusCode && (
-            <Text style={[styles.plusCode, { color: theme.textMuted }]}>
-              🎯 {location.plusCode}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="locate-outline" size={14} color={theme.textMuted} />
+              <Text style={[styles.plusCode, { color: theme.textMuted, flex: 1 }]}>
+                {location.plusCode}
+              </Text>
+            </View>
           )}
         </View>
       )}
@@ -442,14 +448,11 @@ export default function MapScreen() {
                 ]}
               >
                 <View style={styles.chipContent}>
-                  <Text
-                    style={[
-                      styles.categoryChipText,
-                      { color: isSelected ? theme.surface : theme.text },
-                    ]}
-                  >
-                    {cat.emoji}
-                  </Text>
+                  <Ionicons
+                    name={cat.icon}
+                    size={14}
+                    color={isSelected ? theme.surface : theme.text}
+                  />
                   <View style={styles.chipTextContainer}>
                     <Text
                       style={[

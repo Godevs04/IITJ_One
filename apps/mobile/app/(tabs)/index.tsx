@@ -42,7 +42,6 @@ const QUICK_LINKS: {
   { title: 'Services', icon: 'construct-outline', route: '/services' },
   { title: 'Laundry', icon: 'shirt-outline', route: '/laundry' },
   { title: 'Cabs & Autos', icon: 'car-outline', route: '/cabs-autos' },
-  { title: 'Emergency', icon: 'alert-circle-outline', route: '/emergency', variant: 'danger' },
 ];
 
 interface CachedNotice {
@@ -165,18 +164,17 @@ function StatusCard({
   );
 }
 
-function formatCountdownText(seconds: number, type: 'departure' | 'arrival'): string {
+function formatCountdownText(seconds: number): string {
   const mins = Math.ceil(seconds / 60);
-  const action = type === 'departure' ? 'Leaves' : 'Arrives';
   if (mins < 60) {
-    return `${action} in ${mins} min`;
+    return `Leaves in ${mins} min`;
   }
   const hrs = Math.floor(mins / 60);
   const remainingMins = mins % 60;
   if (remainingMins === 0) {
-    return `${action} in ${hrs} hr`;
+    return `Leaves in ${hrs} hr`;
   }
-  return `${action} in ${hrs} hr ${remainingMins} min`;
+  return `Leaves in ${hrs} hr ${remainingMins} min`;
 }
 
 function TransportWidget({
@@ -203,17 +201,20 @@ function TransportWidget({
       <View style={styles.cardTopRow}>
         <View style={styles.cardTopText}>
           <Text style={[styles.cardLabel, { color: theme.textMuted }]}>
-            🚌 Transport
+            Transport
           </Text>
         </View>
         <Ionicons name="bus-outline" size={24} color={theme.secondary} />
       </View>
 
-      {/* Next Departure Section */}
+      {/* From Campus Section */}
       <View style={styles.widgetSection}>
-        <Text style={[styles.sectionHeadingLabel, { color: theme.secondary }]}>
-          ⬆️ Next Departure
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+          <Ionicons name="arrow-up-circle-outline" size={16} color={theme.secondary} />
+          <Text style={[styles.sectionHeadingLabel, { color: theme.secondary }]}>
+            From Campus
+          </Text>
+        </View>
         {departure ? (
           <View style={styles.widgetContent}>
             <View style={styles.widgetMainRow}>
@@ -221,16 +222,19 @@ function TransportWidget({
                 {departure.trip.bus} • {departure.trip.startTime}
               </Text>
               <Text style={[styles.widgetCountdown, { color: theme.secondary }]}>
-                {formatCountdownText(departure.secondsUntil, 'departure')}
+                {formatCountdownText(departure.secondsUntil)}
               </Text>
             </View>
-            <Text style={[styles.widgetRouteText, { color: theme.textMuted }]} numberOfLines={1}>
-              {departure.trip.from} → {departure.trip.to}
+            <Text style={[styles.widgetRouteText, { color: theme.text }]}>
+              From: <Text style={{ color: theme.textMuted }}>{departure.trip.from}</Text>
+            </Text>
+            <Text style={[styles.widgetRouteText, { color: theme.text }]}>
+              To: <Text style={{ color: theme.textMuted }}>{departure.trip.to}</Text>
             </Text>
           </View>
         ) : (
           <Text style={[styles.widgetEmptyText, { color: theme.textMuted }]}>
-            No more departures today
+            No more departures from campus today
           </Text>
         )}
       </View>
@@ -238,11 +242,14 @@ function TransportWidget({
       {/* Divider */}
       <View style={[styles.widgetDivider, { backgroundColor: theme.border }]} />
 
-      {/* Next Arrival Section */}
+      {/* To Campus Section */}
       <View style={styles.widgetSection}>
-        <Text style={[styles.sectionHeadingLabel, { color: theme.primary }]}>
-          ⬇️ Next Arrival
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+          <Ionicons name="arrow-down-circle-outline" size={16} color={theme.primary} />
+          <Text style={[styles.sectionHeadingLabel, { color: theme.primary }]}>
+            To Campus
+          </Text>
+        </View>
         {arrival ? (
           <View style={styles.widgetContent}>
             <View style={styles.widgetMainRow}>
@@ -250,16 +257,19 @@ function TransportWidget({
                 {arrival.trip.bus} • {arrival.trip.startTime}
               </Text>
               <Text style={[styles.widgetCountdown, { color: theme.primary }]}>
-                {formatCountdownText(arrival.secondsUntil, 'arrival')}
+                {formatCountdownText(arrival.secondsUntil)}
               </Text>
             </View>
-            <Text style={[styles.widgetRouteText, { color: theme.textMuted }]} numberOfLines={1}>
-              {arrival.trip.from} → {arrival.trip.to}
+            <Text style={[styles.widgetRouteText, { color: theme.text }]}>
+              From: <Text style={{ color: theme.textMuted }}>{arrival.trip.from}</Text>
+            </Text>
+            <Text style={[styles.widgetRouteText, { color: theme.text }]}>
+              To: <Text style={{ color: theme.textMuted }}>{arrival.trip.to === 'IITJ' ? 'IIT Jodhpur' : arrival.trip.to}</Text>
             </Text>
           </View>
         ) : (
           <Text style={[styles.widgetEmptyText, { color: theme.textMuted }]}>
-            No more arrivals today
+            No more departures to campus today
           </Text>
         )}
       </View>
