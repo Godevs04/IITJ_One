@@ -1,5 +1,5 @@
-import { Router } from 'express';
-import { requireAuth } from '../../middleware/auth';
+import { Router, Response } from 'express';
+import { requireAuth, AuthRequest } from '../../middleware/auth';
 import { adminCors } from '../../middleware/cors';
 import authRouter from './auth';
 import menuRouter from './menu';
@@ -15,6 +15,7 @@ import aboutRouter from './about';
 import pushRouter from './push';
 import auditRouter from './audit';
 import suggestionsRouter from './suggestions';
+import uploadsRouter from './uploads';
 
 const router = Router();
 
@@ -22,6 +23,19 @@ router.use(adminCors);
 router.use(authRouter);
 
 router.use(requireAuth);
+router.get('/me', (req: AuthRequest, res: Response) => {
+  const admin = req.admin;
+  if (!admin) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+  res.json({
+    email: admin.email,
+    name: admin.name,
+    role: admin.role,
+  });
+});
+router.use('/uploads', uploadsRouter);
 router.use('/menu', menuRouter);
 router.use('/notices', noticesRouter);
 router.use('/transport', transportRouter);

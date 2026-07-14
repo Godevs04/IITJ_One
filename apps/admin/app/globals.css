@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-indigo: #1d3f5e;
+  --color-indigo-deep: #002947;
+  --color-indigo-tint: #e8edf2;
+  --color-sandstone: #c68642;
+  --color-sandstone-tint: #f7ede0;
+  --color-dusk: #e2703a;
+  --color-sand: #f6f0e4;
+  --color-ink: #22292f;
+  --color-muted: #5c6570;
+  --color-border: #dcd4c4;
+  --color-sage: #6e8b74;
+  --color-non-veg: #b23a34;
+  --color-surface: #ffffff;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  color: var(--color-ink);
+  background: var(--color-sand);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Nice scrollbars in sidebar / tables */
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 999px;
+}

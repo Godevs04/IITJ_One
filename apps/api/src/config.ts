@@ -40,6 +40,12 @@ export const config = {
     password: process.env.ADMIN_BOOTSTRAP_PASSWORD ?? 'change-me-on-first-login',
     name: process.env.ADMIN_BOOTSTRAP_NAME ?? 'IITJ One Admin',
   },
+  cloudinary: {
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    apiSecret: process.env.CLOUDINARY_API_SECRET,
+    folder: process.env.CLOUDINARY_UPLOAD_FOLDER ?? 'iitj1',
+  },
   docsRoot: path.resolve(__dirname, '../../../docs/FinalDoc'),
 } as const;
 

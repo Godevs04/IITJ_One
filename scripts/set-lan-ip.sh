@@ -17,6 +17,8 @@ MOBILE_ENV="$REPO_ROOT/apps/mobile/.env"
 MOBILE_ENV_EXAMPLE="$REPO_ROOT/apps/mobile/.env.example"
 API_ENV="$REPO_ROOT/apps/api/.env"
 API_ENV_EXAMPLE="$REPO_ROOT/apps/api/.env.example"
+ADMIN_ENV="$REPO_ROOT/apps/admin/.env"
+ADMIN_ENV_EXAMPLE="$REPO_ROOT/apps/admin/.env.example"
 API_PORT="${API_PORT:-6002}"
 METRO_PORT="${METRO_PORT:-6001}"
 ADMIN_PORT="${ADMIN_PORT:-3000}"
@@ -97,6 +99,7 @@ fi
 
 ensure_env_file "$MOBILE_ENV" "$MOBILE_ENV_EXAMPLE" "apps/mobile/.env"
 ensure_env_file "$API_ENV" "$API_ENV_EXAMPLE" "apps/api/.env"
+ensure_env_file "$ADMIN_ENV" "$ADMIN_ENV_EXAMPLE" "apps/admin/.env"
 
 API_URL="http://${LAN_IP}:${API_PORT}/api/v1"
 API_BASE="http://${LAN_IP}:${API_PORT}"
@@ -105,6 +108,10 @@ API_BASE="http://${LAN_IP}:${API_PORT}"
 set_env_var "EXPO_PUBLIC_API_URL" "$API_URL" "$MOBILE_ENV"
 set_env_var "REACT_NATIVE_PACKAGER_HOSTNAME" "$LAN_IP" "$MOBILE_ENV"
 set_env_var "EXPO_PUBLIC_DEV_PORT" "$METRO_PORT" "$MOBILE_ENV"
+
+# Admin panel (Next.js)
+set_env_var "NEXT_PUBLIC_API_URL" "$API_URL" "$ADMIN_ENV"
+set_env_var "NEXT_PUBLIC_CAMPUS_ID" "iitj" "$ADMIN_ENV"
 
 # API server — bind all interfaces, public URL, CORS for Expo (6001) + admin (3000)
 set_env_var "HOST" "0.0.0.0" "$API_ENV"
@@ -121,6 +128,10 @@ echo "[mobile]"
 echo "  EXPO_PUBLIC_API_URL=$API_URL"
 echo "  REACT_NATIVE_PACKAGER_HOSTNAME=$LAN_IP"
 echo "  Metro: exp://${LAN_IP}:${METRO_PORT}"
+echo ""
+echo "[admin]"
+echo "  NEXT_PUBLIC_API_URL=$API_URL"
+echo "  Dev: http://localhost:${ADMIN_PORT}"
 echo ""
 echo "[api]"
 echo "  HOST=0.0.0.0"

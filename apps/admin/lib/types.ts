@@ -1,0 +1,149 @@
+export interface AdminUser {
+  email: string;
+  name: string;
+  role: string;
+}
+
+export interface LoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  admin: AdminUser;
+}
+
+export interface MealItems {
+  veg: string;
+  nonVeg: string;
+}
+
+export interface MenuDay {
+  date: string;
+  dayName: string;
+  breakfast: MealItems;
+  lunch: MealItems;
+  snacks: MealItems;
+  dinner: MealItems;
+  specialNote?: string;
+}
+
+export interface MenuDoc {
+  campusId: string;
+  month: string;
+  days: MenuDay[];
+}
+
+export interface NoticeDoc {
+  _id?: string;
+  campusId: string;
+  title: string;
+  body: string;
+  category: string;
+  isImportant: boolean;
+  link?: string;
+  imageUrl?: string;
+  startDate: string;
+  expiryDate: string;
+  publishedAt?: string;
+}
+
+export interface TransportTrip {
+  bus: string;
+  startTime: string;
+  from: string;
+  endTime: string;
+  to: string;
+  route: string;
+  direction?: 'departure' | 'arrival';
+}
+
+export interface TransportDoc {
+  campusId: string;
+  routes: {
+    weekday: 'mon-sat' | 'sun-holiday';
+    direction: 'departure' | 'arrival';
+    trips: TransportTrip[];
+  }[];
+  shuttle: unknown[];
+  liveTrackingUrl: string | null;
+  scheduleOverrides: {
+    dayOfWeek: string;
+    effectiveFrom: string;
+    description: string;
+    trips: TransportTrip[];
+  }[];
+}
+
+export interface CalendarDoc {
+  campusId: string;
+  semester: string;
+  events: {
+    title: string;
+    type: string;
+    startDate: string;
+    endDate: string;
+  }[];
+}
+
+export interface PortalsDoc {
+  campusId: string;
+  links: { name: string; url: string; icon?: string; order: number }[];
+}
+
+export interface AppsDoc {
+  campusId: string;
+  apps: {
+    name: string;
+    description: string;
+    playStoreUrl?: string;
+    appStoreUrl?: string;
+    iconUrl?: string;
+  }[];
+}
+
+export interface MapDoc {
+  campusId: string;
+  locations: { name: string; category: string; lat: number; lng: number }[];
+}
+
+export interface ServicesDoc {
+  campusId: string;
+  entries: {
+    name: string;
+    category: string;
+    phone?: string;
+    lat?: number;
+    lng?: number;
+    hours?: string;
+    description?: string;
+  }[];
+}
+
+export interface EmergencyDoc {
+  campusId: string;
+  contacts: { label: string; phone: string; order: number }[];
+}
+
+export interface AboutDoc {
+  campusId: string;
+  sections: { title: string; body: string }[];
+}
+
+export interface SuggestionDoc {
+  _id?: string;
+  message: string;
+  createdAt: string;
+}
+
+export interface AuditLogEntry {
+  _id?: string;
+  adminEmail: string;
+  action: string;
+  module: string;
+  timestamp: string;
+  diffSummary?: string;
+}
+
+export interface MetaDoc {
+  campusId: string;
+  versions: Record<string, number>;
+  updatedAt?: string;
+}

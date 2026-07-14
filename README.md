@@ -93,6 +93,15 @@ npm install
 npm start
 ```
 
+#### 3. Start Admin Panel (Next.js)
+```bash
+cd apps/admin
+cp .env.example .env
+npm install
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000). Sign in with `ADMIN_BOOTSTRAP_EMAIL` / `ADMIN_BOOTSTRAP_PASSWORD` from `apps/api/.env`.
+
 ---
 
 ## 🍽️ Mess Menu Module Features
