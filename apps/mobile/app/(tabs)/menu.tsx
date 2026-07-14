@@ -51,78 +51,167 @@ export default function MenuScreen() {
   const { syncing, sync } = useCampusSync(false);
   const { lockSwipe, unlockSwipe } = useSwipeGesture();
   const menu = useCampusModule<MenuDoc>('menu');
-  const [selectedDay, setSelectedDay] = useState(todayDayName());
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [dietPreference, setDietPreference] = useState<'veg' | 'nonVeg'>('veg');
   const [showCharges, setShowCharges] = useState(false);
 
-  const dayMenu = useMemo(
-    () => menu?.days.find((d) => d.dayName === selectedDay),
-    [menu, selectedDay],
-  );
+  const isDateToday = useCallback((d: Date) => {
+    const today = new Date();
+    return (
+      d.getDate() === today.getDate() &&
+      d.getMonth() === today.getMonth() &&
+      d.getFullYear() === today.getFullYear()
+    );
+  }, []);
+
+  const getYearMonthString = useCallback((d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    return `${y}-${m}`;
+  }, []);
+
+  const getWeekdayName = useCallback((d: Date) => {
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    return dayNames[d.getDay()];
+  }, []);
+
+  const isMenuAvailable = useMemo(() => {
+    if (!menu) return false;
+    return getYearMonthString(selectedDate) === menu.month;
+  }, [menu, selectedDate, getYearMonthString]);
+
+  const dayMenu = useMemo(() => {
+    if (!menu || !isMenuAvailable) return null;
+    const weekday = getWeekdayName(selectedDate);
+    return menu.days.find((d) => d.dayName === weekday) || null;
+  }, [menu, selectedDate, isMenuAvailable, getWeekdayName]);
 
   const onRefresh = useCallback(async () => {
     await sync();
   }, [sync]);
 
-  const days = menu?.days ?? [];
+  const handlePrevDay = useCallback(() => {
+    setSelectedDate((prev) => {
+      const next = new Date(prev);
+      next.setDate(prev.getDate() - 1);
+      return next;
+    });
+  }, []);
+
+  const handleNextDay = useCallback(() => {
+    setSelectedDate((prev) => {
+      const next = new Date(prev);
+      next.setDate(prev.getDate() + 1);
+      return next;
+    });
+  }, []);
+
+  const weekDays = useMemo(() => {
+    const list = [];
+    const current = new Date(selectedDate);
+    const day = current.getDay();
+    // Monday as start of week. Sunday = 0, Monday = 1.
+    const diff = current.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(current.setDate(diff));
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      list.push(d);
+    }
+    return list;
+  }, [selectedDate]);
+
+  const isSelectedToday = useMemo(() => isDateToday(selectedDate), [selectedDate, isDateToday]);
+
+  const formattedMonth = useMemo(() => {
+    const options: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric' };
+    return selectedDate.toLocaleDateString('en-US', options);
+  }, [selectedDate]);
 
   return (
     <ScreenShell
       title="Mess Menu"
-      subtitle={menu ? `Month: ${menu.month}` : 'Campus mess schedule'}
+      subtitle={`Month: ${formattedMonth}`}
       onRefresh={onRefresh}
       refreshing={syncing}
     >
-      {days.length > 0 ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.dayStripScroll}
-          onScrollBeginDrag={lockSwipe}
-          onScrollEndDrag={unlockSwipe}
-          onMomentumScrollEnd={unlockSwipe}
-        >
-          {days.map((d) => {
-            const active = selectedDay === d.dayName;
-            const dayNum = getDayNumber(d.date);
-            const shortDay = d.dayName.slice(0, 3).toUpperCase();
+      {menu ? (
+        <View style={styles.navigationRow}>
+          <Pressable
+            onPress={handlePrevDay}
+            style={[styles.navArrow, { borderColor: theme.border, backgroundColor: theme.chipBackground }]}
+          >
+            <Ionicons name="chevron-back" size={18} color={theme.text} />
+          </Pressable>
 
-            return (
-              <View key={d.dayName} style={styles.dayCardWrapper}>
-                {active ? (
-                  <View style={[styles.activeDayOuter, { borderColor: theme.primary }]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.dayStripScroll}
+            onScrollBeginDrag={lockSwipe}
+            onScrollEndDrag={unlockSwipe}
+            onMomentumScrollEnd={unlockSwipe}
+          >
+            {weekDays.map((d) => {
+              const active = selectedDate.getDate() === d.getDate() &&
+                             selectedDate.getMonth() === d.getMonth() &&
+                             selectedDate.getFullYear() === d.getFullYear();
+              
+              const dayNum = String(d.getDate());
+              const shortDay = getWeekdayName(d).slice(0, 3).toUpperCase();
+              const isToday = isDateToday(d);
+
+              return (
+                <View key={d.toISOString()} style={styles.dayCardWrapper}>
+                  {active ? (
+                    <View style={[styles.activeDayOuter, { borderColor: theme.primary }]}>
+                      <Pressable
+                        onPress={() => setSelectedDate(d)}
+                        style={[styles.dayCard, { backgroundColor: theme.primary }]}
+                      >
+                        <Text style={[styles.activeDayNameText, { color: theme.onPrimary }]}>
+                          {shortDay}
+                        </Text>
+                        <Text style={[styles.activeDayNumText, { color: theme.onPrimary }]}>
+                          {dayNum}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  ) : (
                     <Pressable
-                      onPress={() => setSelectedDay(d.dayName)}
-                      style={[styles.dayCard, { backgroundColor: theme.primary }]}
+                      onPress={() => setSelectedDate(d)}
+                      style={[styles.dayCard, { backgroundColor: theme.chipBackground }]}
                     >
-                      <Text style={[styles.activeDayNameText, { color: theme.onPrimary }]}>
+                      <Text style={[
+                        styles.dayNameText, 
+                        { color: isToday ? theme.accent : theme.textMuted, fontWeight: isToday ? 'bold' : '600' }
+                      ]}>
                         {shortDay}
                       </Text>
-                      <Text style={[styles.activeDayNumText, { color: theme.onPrimary }]}>
+                      <Text style={[
+                        styles.dayNumText, 
+                        { color: isToday ? theme.accent : theme.text, fontWeight: isToday ? 'bold' : '700' }
+                      ]}>
                         {dayNum}
                       </Text>
                     </Pressable>
-                  </View>
-                ) : (
-                  <Pressable
-                    onPress={() => setSelectedDay(d.dayName)}
-                    style={[styles.dayCard, { backgroundColor: theme.chipBackground }]}
-                  >
-                    <Text style={[styles.dayNameText, { color: theme.textMuted }]}>
-                      {shortDay}
-                    </Text>
-                    <Text style={[styles.dayNumText, { color: theme.text }]}>
-                      {dayNum}
-                    </Text>
-                  </Pressable>
-                )}
-              </View>
-            );
-          })}
-        </ScrollView>
+                  )}
+                </View>
+              );
+            })}
+          </ScrollView>
+
+          <Pressable
+            onPress={handleNextDay}
+            style={[styles.navArrow, { borderColor: theme.border, backgroundColor: theme.chipBackground }]}
+          >
+            <Ionicons name="chevron-forward" size={18} color={theme.text} />
+          </Pressable>
+        </View>
       ) : null}
 
-      {days.length > 0 ? (
+      {menu ? (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -132,6 +221,23 @@ export default function MenuScreen() {
           onScrollEndDrag={unlockSwipe}
           onMomentumScrollEnd={unlockSwipe}
         >
+          {!isSelectedToday && (
+            <Pressable
+              onPress={() => setSelectedDate(new Date())}
+              style={[
+                styles.toggleButton,
+                {
+                  backgroundColor: theme.primaryTint,
+                  borderColor: theme.primary,
+                },
+              ]}
+            >
+              <Ionicons name="today-outline" size={15} color={theme.primary} />
+              <Text style={[styles.toggleButtonText, { color: theme.primary, fontWeight: 'bold' }]}>
+                Today
+              </Text>
+            </Pressable>
+          )}
           <Pressable
             onPress={() => setDietPreference('veg')}
             style={[
@@ -198,7 +304,7 @@ export default function MenuScreen() {
           const dishesStr = dietPreference === 'veg' ? items.veg : items.nonVeg;
           const dishes = splitDishes(dishesStr);
 
-          const isToday = selectedDay === todayDayName();
+          const isToday = isSelectedToday;
           const timeStatus = isToday ? getMealTimeStatus(meal) : null;
           const mealWindow = getMealWindows()[meal];
 
@@ -281,6 +387,16 @@ export default function MenuScreen() {
             </View>
           );
         })
+      ) : menu ? (
+        <EmptyState
+          icon="calendar-outline"
+          title="Menu not available"
+          message={`No menu is available for ${selectedDate.toLocaleDateString('en-US', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+          })}.`}
+        />
       ) : (
         <EmptyState
           icon="restaurant-outline"
@@ -376,6 +492,20 @@ export default function MenuScreen() {
 }
 
 const styles = StyleSheet.create({
+  navigationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: AppSpacing.xs,
+  },
+  navArrow: {
+    width: 38,
+    height: 66,
+    borderRadius: 8,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   dayStripScroll: {
     flexDirection: 'row',
     gap: AppSpacing.sm,
