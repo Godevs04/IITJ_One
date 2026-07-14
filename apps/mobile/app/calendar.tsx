@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View, Modal, ActivityIndicator } from 'rea
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router, Stack } from 'expo-router';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
@@ -133,6 +134,23 @@ export default function CalendarScreen() {
       onRefresh={onRefresh}
       refreshing={syncing}
     >
+      <Stack.Screen
+        options={{
+          headerLeft: () => (
+            <Pressable
+              onPress={() => router.back()}
+              hitSlop={10}
+              style={({ pressed }) => [
+                { padding: 8, marginLeft: -8, opacity: pressed ? 0.7 : 1 }
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Back"
+            >
+              <Ionicons name="arrow-back" size={24} color={theme.headerTint || theme.text} />
+            </Pressable>
+          ),
+        }}
+      />
       <Pressable
         onPress={() => setShowPdf(true)}
         style={({ pressed }) => [
