@@ -33,7 +33,7 @@ export default function DashboardLayout({
 
   if (!ready) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-sand text-sm text-muted">
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted">
         <span className="mr-3 h-5 w-5 animate-spin rounded-full border-2 border-indigo border-r-transparent" />
         Checking session…
       </div>
@@ -41,7 +41,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-sand">
+    <div className="flex min-h-screen">
       {/* Desktop sidebar */}
       <div className="sticky top-0 hidden h-screen shrink-0 md:block">
         <Sidebar />
@@ -52,29 +52,29 @@ export default function DashboardLayout({
         <div className="fixed inset-0 z-40 md:hidden">
           <button
             type="button"
-            className="absolute inset-0 bg-ink/40"
+            className="absolute inset-0 bg-ink/45 backdrop-blur-[2px] transition"
             aria-label="Close menu"
             onClick={() => setMenuOpen(false)}
           />
-          <div className="relative z-10 h-full w-56 shadow-xl">
+          <div className="relative z-10 h-full w-[15.5rem] shadow-glow animate-fadeIn">
             <Sidebar onNavigate={() => setMenuOpen(false)} />
           </div>
         </div>
       ) : null}
 
       <main className="scroll-thin min-w-0 flex-1 overflow-y-auto">
-        <div className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-sand/95 px-4 py-3 backdrop-blur md:hidden">
+        <div className="sticky top-0 z-20 flex items-center gap-3 border-b border-border/70 bg-sand/80 px-4 py-3 backdrop-blur-xl md:hidden">
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
-            className="rounded-lg border border-border bg-white px-3 py-2 text-sm font-medium text-ink"
+            className="rounded-xl border border-border bg-surface px-3 py-2 text-sm font-medium text-ink shadow-card transition hover:shadow-soft"
             aria-label="Open navigation"
           >
             Menu
           </button>
           <span className="text-sm font-semibold text-indigo">IITJ One Admin</span>
         </div>
-        <div className="mx-auto w-full max-w-6xl animate-fadeIn px-4 py-5 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           {children}
         </div>
       </main>

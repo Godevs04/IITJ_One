@@ -230,7 +230,7 @@ export function getThemeColors(scheme: ColorScheme): ThemeColors {
     secondaryTint: AppColors.sandstoneTint,
     tabBar: AppColors.white,
     tabActive: AppColors.stitchPrimary,
-    tabInactive: AppColors.mutedText,
+    tabInactive: '#8A939E',
     headerBackground: AppColors.stitchPrimary,
     headerTint: AppColors.white,
     inputBackground: AppColors.white,

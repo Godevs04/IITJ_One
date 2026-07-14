@@ -9,13 +9,13 @@
   --color-sandstone: #c68642;
   --color-sandstone-tint: #f7ede0;
   --color-dusk: #e2703a;
-  --color-sand: #f6f0e4;
-  --color-ink: #22292f;
+  --color-sand: #f4ece0;
+  --color-ink: #1a2229;
   --color-muted: #5c6570;
-  --color-border: #dcd4c4;
+  --color-border: #e2d8c8;
   --color-sage: #6e8b74;
   --color-non-veg: #b23a34;
-  --color-surface: #ffffff;
+  --color-surface: #fffcf7;
 }
 
 html,
@@ -25,12 +25,62 @@ body {
 
 body {
   color: var(--color-ink);
-  background: var(--color-sand);
+  background:
+    radial-gradient(1200px 600px at 8% -10%, rgba(198, 134, 66, 0.14), transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, rgba(29, 63, 94, 0.08), transparent 50%),
+    var(--color-sand);
+  background-attachment: fixed;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+}
+
+@layer components {
+  .dash-reveal {
+    animation: dashReveal 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@keyframes dashReveal {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes floatSoft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes floatSoftDelayed {
+  0%,
+  100% {
+    transform: translateY(0) translateX(0);
+  }
+  50% {
+    transform: translateY(10px) translateX(-8px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
   }
 }
 
@@ -42,14 +92,23 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+
+  .dash-reveal {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
-/* Nice scrollbars in sidebar / tables */
+/* Elegant thin scrollbars */
 .scroll-thin::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 .scroll-thin::-webkit-scrollbar-thumb {
-  background: var(--color-border);
+  background: color-mix(in srgb, var(--color-border) 80%, var(--color-indigo) 20%);
   border-radius: 999px;
+}
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
 }
