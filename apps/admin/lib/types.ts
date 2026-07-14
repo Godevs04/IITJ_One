@@ -99,11 +99,18 @@ export interface CampusApp {
   iosUrl: string;
   website?: string;
   locationName: string;
+  address?: string;
   latitude: number;
   longitude: number;
   plusCode: string;
   displayOrder: number;
   isEnabled: boolean;
+  deepLink?: string;
+  androidPackage?: string;
+  iosBundleId?: string;
+  featured?: boolean;
+  badge?: string;
+  requiresLogin?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

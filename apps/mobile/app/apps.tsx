@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { Linking, Platform, View, Text, Pressable, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '@/components/EmptyState';
@@ -13,6 +13,8 @@ export default function AppsScreen() {
   const { syncing, sync } = useCampusSync(false);
   const theme = useThemeColors();
   const appsDoc = useCampusModule<AppsDoc>('apps');
+
+  // Filter out disabled apps and sort by displayOrder ASC
   const apps = (appsDoc?.apps ?? [])
     .filter((app) => app.isEnabled !== false)
     .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
@@ -21,30 +23,76 @@ export default function AppsScreen() {
     await sync();
   }, [sync]);
 
-  const openStore = (app: CampusApp) => {
-    const url = Platform.OS === 'ios' ? app.iosUrl : app.androidUrl;
-    if (url) void Linking.openURL(url);
-  };
-
-  const openInMaps = (app: CampusApp) => {
-    const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
-    const latLng = `${app.latitude},${app.longitude}`;
-    const label = encodeURIComponent(app.locationName);
-    const url = Platform.select({
-      ios: `${scheme}${label}@${latLng}`,
-      android: `${scheme}${latLng}(${label})`,
-    });
-    if (url) void Linking.openURL(url);
-  };
-
-  const getLogoSource = (logo: string) => {
-    if (logo === 'isthara.png') {
-      return require('../assets/isthara.png');
+  // Smart launch flow: try deep link first, then fall back to platform app store, then website
+  const handleLaunchApp = async (app: CampusApp) => {
+    if (app.deepLink) {
+      const canOpen = await Linking.canOpenURL(app.deepLink);
+      if (canOpen) {
+        void Linking.openURL(app.deepLink);
+        return;
+      }
     }
-    if (logo && (logo.startsWith('http://') || logo.startsWith('https://'))) {
+
+    const storeUrl = Platform.OS === 'ios' ? app.iosUrl : app.androidUrl;
+    if (storeUrl) {
+      void Linking.openURL(storeUrl);
+    } else if (app.website) {
+      void Linking.openURL(app.website);
+    }
+  };
+
+  // Open maps using lat/long if available, fall back to plusCode, and fallback to name/address query
+  const handleOpenInMaps = async (app: CampusApp) => {
+    const hasCoords = typeof app.latitude === 'number' && typeof app.longitude === 'number' && app.latitude !== 0;
+    const label = encodeURIComponent(app.locationName || app.name);
+
+    if (hasCoords) {
+      const latLng = `${app.latitude},${app.longitude}`;
+      const googleMapsUrl = `comgooglemaps://?q=${latLng}&query=${label}`;
+      const googleMapsWebUrl = `https://www.google.com/maps/search/?api=1&query=${latLng}`;
+
+      if (Platform.OS === 'ios') {
+        const canOpenGoogle = await Linking.canOpenURL('comgooglemaps://');
+        if (canOpenGoogle) {
+          void Linking.openURL(googleMapsUrl);
+          return;
+        }
+        // Fallback to default Apple Maps
+        void Linking.openURL(`maps://0,0?q=${label}@${latLng}`);
+      } else {
+        // Android: try geo URI, fall back to Web URL
+        const geoUrl = `geo:0,0?q=${latLng}(${label})`;
+        const canOpenGeo = await Linking.canOpenURL(geoUrl);
+        if (canOpenGeo) {
+          void Linking.openURL(geoUrl);
+        } else {
+          void Linking.openURL(googleMapsWebUrl);
+        }
+      }
+    } else if (app.plusCode) {
+      const query = encodeURIComponent(app.plusCode);
+      const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
+      void Linking.openURL(url);
+    } else {
+      const query = encodeURIComponent(app.address || app.locationName || app.name);
+      const url = Platform.select({
+        ios: `maps://0,0?q=${query}`,
+        android: `geo:0,0?q=${query}`,
+      });
+      if (url) void Linking.openURL(url);
+    }
+  };
+
+  // Resolve logo source dynamically using API hostname derivation
+  const getLogoSource = (logo: string) => {
+    if (!logo) return null;
+    if (logo.startsWith('http://') || logo.startsWith('https://')) {
       return { uri: logo };
     }
-    return null;
+    // Clean path and append to backend base URL
+    const cleanPath = logo.replace(/^\//, '');
+    const apiBase = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:6002').replace(/\/api\/v1\/?$/, '');
+    return { uri: `${apiBase}/uploads/${cleanPath}` };
   };
 
   return (
@@ -101,7 +149,7 @@ export default function AppsScreen() {
 
                 <View style={styles.buttonRow}>
                   <Pressable
-                    onPress={() => openInMaps(app)}
+                    onPress={() => handleOpenInMaps(app)}
                     style={({ pressed }) => [
                       styles.actionButton,
                       { backgroundColor: theme.surfaceMuted },
@@ -115,7 +163,7 @@ export default function AppsScreen() {
                   </Pressable>
 
                   <Pressable
-                    onPress={() => openStore(app)}
+                    onPress={() => handleLaunchApp(app)}
                     style={({ pressed }) => [
                       styles.actionButton,
                       { backgroundColor: theme.primary },
