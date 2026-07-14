@@ -38,7 +38,7 @@ function RootNavigator() {
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="map" options={{ title: 'Campus Map' }} />
+        <Stack.Screen name="map" options={{ title: 'Campus Directory' }} />
         <Stack.Screen name="portals" options={{ title: 'Essential Portals' }} />
         <Stack.Screen name="services" options={{ title: 'Campus Services' }} />
         <Stack.Screen name="laundry" options={{ title: 'Laundry' }} />
