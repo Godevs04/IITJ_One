@@ -19,7 +19,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Login with bootstrap credentials from `apps/api/.env`:
 
-- `ADMIN_BOOTSTRAP_EMAIL` (default `admin@iitjone.in`)
+- `ADMIN_BOOTSTRAP_EMAIL` (default `admin@iitjone.app`)
 - `ADMIN_BOOTSTRAP_PASSWORD`
 
 ## Features

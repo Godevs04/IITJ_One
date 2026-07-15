@@ -46,7 +46,7 @@ export const config = {
     topicPrefix: process.env.FCM_TOPIC_PREFIX ?? 'iitj',
   },
   adminBootstrap: {
-    email: process.env.ADMIN_BOOTSTRAP_EMAIL ?? 'admin@iitjone.in',
+    email: process.env.ADMIN_BOOTSTRAP_EMAIL ?? 'admin@iitjone.app',
     password: process.env.ADMIN_BOOTSTRAP_PASSWORD ?? INSECURE_DEFAULTS.bootstrapPassword,
     name: process.env.ADMIN_BOOTSTRAP_NAME ?? 'IITJ One Admin',
   },
@@ -74,11 +74,10 @@ export function assertProductionSecrets(): void {
   ) {
     failures.push('JWT_SECRET must be set to a unique value (≥32 chars)');
   }
-  if (
-    process.env.JWT_REFRESH_SECRET &&
-    process.env.JWT_REFRESH_SECRET.length < 32
-  ) {
-    failures.push('JWT_REFRESH_SECRET must be ≥32 chars when set');
+  if (!process.env.JWT_REFRESH_SECRET || process.env.JWT_REFRESH_SECRET.length < 32) {
+    failures.push('JWT_REFRESH_SECRET must be set to a unique value (≥32 chars)');
+  } else if (process.env.JWT_REFRESH_SECRET === process.env.JWT_SECRET) {
+    failures.push('JWT_REFRESH_SECRET must be different from JWT_SECRET');
   }
   if (
     !process.env.ADMIN_BOOTSTRAP_PASSWORD ||

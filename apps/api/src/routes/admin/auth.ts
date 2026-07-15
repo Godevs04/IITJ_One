@@ -10,7 +10,7 @@ import {
   requireAuth,
   AuthRequest,
 } from '../../middleware/auth';
-import { findAdminByEmail, bumpAdminTokenVersion } from '../../store';
+import { findAdminByEmail, bumpAdminTokenVersion, logAudit } from '../../store';
 import { asyncHandler } from '../../middleware/asyncHandler';
 
 const router = Router();
@@ -24,20 +24,25 @@ router.post(
     const admin = await findAdminByEmail(email);
 
     if (!admin) {
+      await logAudit(email, 'login_failed', 'Invalid credentials (unknown email)');
       res.status(401).json({ error: 'Invalid credentials' });
       return;
     }
 
     const valid = await bcrypt.compare(password, admin.passwordHash);
     if (!valid) {
+      await logAudit(email, 'login_failed', 'Invalid credentials (wrong password)');
       res.status(401).json({ error: 'Invalid credentials' });
       return;
     }
 
     if (admin.active === false) {
+      await logAudit(email, 'login_blocked', 'Login attempt on a disabled account');
       res.status(403).json({ error: 'This admin account has been disabled' });
       return;
     }
+
+    await logAudit(email, 'login', 'Admin logged in');
 
     const payload = {
       sub: admin._id ?? email,
@@ -89,6 +94,7 @@ router.post(
   requireAuth,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     await bumpAdminTokenVersion(req.admin!.email);
+    await logAudit(req.admin!.email, 'logout', 'Admin logged out');
     res.json({ success: true });
   }),
 );

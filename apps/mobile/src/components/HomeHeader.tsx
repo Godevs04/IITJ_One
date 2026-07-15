@@ -17,13 +17,26 @@ export function HomeHeader() {
         <Text style={[styles.title, { color: theme.headerTint }]}>
           IITJ one
         </Text>
-        <Pressable
-          onPress={() => router.push('/settings')}
-          hitSlop={8}
-          style={styles.action}
-        >
-          <Ionicons name="settings-outline" size={22} color={theme.headerTint} />
-        </Pressable>
+        <View style={styles.actions}>
+          <Pressable
+            onPress={() => router.push('/search')}
+            hitSlop={8}
+            style={styles.action}
+            accessibilityRole="button"
+            accessibilityLabel="Search"
+          >
+            <Ionicons name="search-outline" size={22} color={theme.headerTint} />
+          </Pressable>
+          <Pressable
+            onPress={() => router.push('/settings')}
+            hitSlop={8}
+            style={styles.action}
+            accessibilityRole="button"
+            accessibilityLabel="Settings"
+          >
+            <Ionicons name="settings-outline" size={22} color={theme.headerTint} />
+          </Pressable>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -40,6 +53,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '600',
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.sm,
   },
   action: {
     padding: 4,

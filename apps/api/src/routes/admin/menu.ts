@@ -6,12 +6,13 @@ import { putMenu } from '../../store';
 import { parseMenuCsv } from '../../services/parsers';
 import type { MenuDoc } from '../../types';
 import { asyncHandler } from '../../middleware/asyncHandler';
+import { readExpectedVersion } from '../../utils/expectedVersion';
 
 const router = Router();
 
 router.put('/', validateBody(menuPutSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
   const body = req.body as MenuDoc;
-  await putMenu(body, req.admin!.email);
+  await putMenu(body, req.admin!.email, readExpectedVersion(req));
   res.json({ success: true });
 }));
 
@@ -24,7 +25,7 @@ router.post('/import', validateBody(menuImportSchema), asyncHandler(async (req: 
   };
   const days = parseMenuCsv(vegCsv, nonVegCsv, month);
   const doc: MenuDoc = { campusId, month, days };
-  await putMenu(doc, req.admin!.email);
+  await putMenu(doc, req.admin!.email, readExpectedVersion(req));
   res.json({ success: true, daysImported: days.length });
 }));
 

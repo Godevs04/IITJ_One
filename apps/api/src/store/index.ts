@@ -37,6 +37,9 @@ import type {
   WifiDoc,
   ErickshawDoc,
   MealWindowsDoc,
+  HolidaysDoc,
+  TransportAlertsDoc,
+  TemporaryTransportScheduleDoc,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
 
@@ -50,6 +53,30 @@ export async function ensureMeta(campusId: string): Promise<MetaDoc> {
   }
   initFallbackStore();
   return fallbackGetMeta(campusId) ?? { campusId, versions: defaultVersions(), updatedAt: new Date() };
+}
+
+/**
+ * Audit entry for events that aren't a synced content module (admin account
+ * lifecycle, login/logout) — unlike bumpVersion, this never touches
+ * meta.versions or invalidates module caches.
+ */
+export async function logAudit(
+  adminEmail: string,
+  action: string,
+  diffSummary: string,
+  module = 'admin',
+): Promise<void> {
+  if (isDbConnected()) {
+    await collections.auditLog().insertOne({
+      adminEmail,
+      action,
+      module,
+      timestamp: new Date(),
+      diffSummary,
+    });
+  } else {
+    fallbackAddAudit({ adminEmail, action, module, timestamp: new Date(), diffSummary });
+  }
 }
 
 export async function bumpVersion(
@@ -86,27 +113,44 @@ export async function getMeta(campusId: string): Promise<MetaDoc> {
 }
 
 export class VersionConflictError extends Error {
-  constructor(module: ModuleName) {
-    super(`This ${module} document was changed by someone else — reload and try again.`);
+  constructor(module: ModuleName, reason: 'missing' | 'stale' = 'stale') {
+    super(
+      reason === 'missing'
+        ? `Missing X-Expected-Version header for ${module} — reload and try again.`
+        : `This ${module} document was changed by someone else — reload and try again.`,
+    );
     this.name = 'VersionConflictError';
   }
 }
 
 /**
- * Optimistic-concurrency guard for whole-doc PUT modules: if the caller
- * supplies the version it loaded and it no longer matches the current
- * version, reject instead of silently clobbering a concurrent edit.
- * Omitting expectedVersion skips the check (back-compat for older clients).
+ * Optimistic-concurrency guard for whole-doc PUT modules: the caller must
+ * supply the version it loaded, and it must still match the current
+ * version, or the write is rejected instead of silently clobbering a
+ * concurrent edit. A missing header is treated as a conflict rather than
+ * "skip the check" for any module that already has a version — but a
+ * module can genuinely have no version yet: defaultVersions() only seeds
+ * every key for a brand-new campus's meta document, so a module added to
+ * the schema after a campus's meta doc already existed has no
+ * meta.versions[module] entry at all (verified live — 'holidays',
+ * 'transportAlerts', and 'temporaryTransportSchedule' had none on the
+ * existing seeded campus) until its first successful save. Blocking a
+ * missing header unconditionally would make that first save permanently
+ * impossible, since there's no version for a real client to have loaded.
  */
 async function assertVersionMatches(
   module: ModuleName,
   campusId: string,
   expectedVersion?: number,
 ): Promise<void> {
-  if (expectedVersion == null) return;
   const meta = await ensureMeta(campusId);
-  if (meta.versions[module] !== expectedVersion) {
-    throw new VersionConflictError(module);
+  const currentVersion = meta.versions[module];
+  if (expectedVersion == null) {
+    if (currentVersion == null) return;
+    throw new VersionConflictError(module, 'missing');
+  }
+  if (currentVersion !== expectedVersion) {
+    throw new VersionConflictError(module, 'stale');
   }
 }
 
@@ -119,7 +163,12 @@ export async function getMenu(campusId: string): Promise<MenuDoc | null> {
   return s.menu.campusId === campusId ? s.menu : null;
 }
 
-export async function putMenu(doc: MenuDoc, adminEmail: string): Promise<void> {
+export async function putMenu(
+  doc: MenuDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('menu', doc.campusId, expectedVersion);
   if (isDbConnected()) {
     await collections.menus().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
   } else {
@@ -611,4 +660,73 @@ export async function setAdminActive(email: string, active: boolean): Promise<Ad
 
 export function getStorageMode(): 'mongodb' | 'fallback' {
   return isDbConnected() ? 'mongodb' : 'fallback';
+}
+
+export async function getHolidays(campusId: string): Promise<HolidaysDoc | null> {
+  if (isDbConnected()) {
+    return collections.holidays().findOne({ campusId });
+  }
+  initFallbackStore();
+  const s = getFallbackState();
+  return s.holidays?.campusId === campusId ? s.holidays : null;
+}
+
+export async function putHolidays(
+  doc: HolidaysDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('holidays', doc.campusId, expectedVersion);
+  if (isDbConnected()) {
+    await collections.holidays().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
+  } else {
+    getFallbackState().holidays = doc;
+  }
+  await bumpVersion('holidays', doc.campusId, adminEmail, 'update', 'Holidays updated');
+}
+
+export async function getTransportAlerts(campusId: string): Promise<TransportAlertsDoc | null> {
+  if (isDbConnected()) {
+    return collections.transportAlerts().findOne({ campusId });
+  }
+  initFallbackStore();
+  const s = getFallbackState();
+  return s.transportAlerts?.campusId === campusId ? s.transportAlerts : null;
+}
+
+export async function putTransportAlerts(
+  doc: TransportAlertsDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('transportAlerts', doc.campusId, expectedVersion);
+  if (isDbConnected()) {
+    await collections.transportAlerts().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
+  } else {
+    getFallbackState().transportAlerts = doc;
+  }
+  await bumpVersion('transportAlerts', doc.campusId, adminEmail, 'update', 'Transport alerts updated');
+}
+
+export async function getTemporaryTransportSchedule(campusId: string): Promise<TemporaryTransportScheduleDoc | null> {
+  if (isDbConnected()) {
+    return collections.temporaryTransportSchedule().findOne({ campusId });
+  }
+  initFallbackStore();
+  const s = getFallbackState();
+  return s.temporaryTransportSchedule?.campusId === campusId ? s.temporaryTransportSchedule : null;
+}
+
+export async function putTemporaryTransportSchedule(
+  doc: TemporaryTransportScheduleDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('temporaryTransportSchedule', doc.campusId, expectedVersion);
+  if (isDbConnected()) {
+    await collections.temporaryTransportSchedule().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
+  } else {
+    getFallbackState().temporaryTransportSchedule = doc;
+  }
+  await bumpVersion('temporaryTransportSchedule', doc.campusId, adminEmail, 'update', 'Temporary transport schedule updated');
 }

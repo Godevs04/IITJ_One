@@ -17,6 +17,9 @@ import laundryRouter from './laundry';
 import wifiRouter from './wifi';
 import erickshawRouter from './erickshaw';
 import mealWindowsRouter from './mealWindows';
+import holidaysRouter from './holidays';
+import transportAlertsRouter from './transportAlerts';
+import temporaryTransportScheduleRouter from './temporaryTransportSchedule';
 import suggestionsRouter from './suggestions';
 import docsRouter from './docs';
 
@@ -42,6 +45,9 @@ router.use('/laundry', laundryRouter);
 router.use('/wifi', wifiRouter);
 router.use('/erickshaw', erickshawRouter);
 router.use('/mealWindows', mealWindowsRouter);
+router.use('/holidays', holidaysRouter);
+router.use('/transportAlerts', transportAlertsRouter);
+router.use('/temporaryTransportSchedule', temporaryTransportScheduleRouter);
 router.use('/suggestions', suggestionsRouter);
 
 export default router;

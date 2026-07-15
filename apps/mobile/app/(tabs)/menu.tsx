@@ -7,7 +7,7 @@ import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
 import { useSwipeGesture } from '@/navigation/SwipeContext';
 import type { MenuDoc } from '@/types/campus';
-import { todayDayName, getMealTimeStatus, getMealWindows } from '@/utils/date';
+import { getMealTimeStatus, getMealWindows } from '@/utils/date';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
@@ -25,19 +25,6 @@ const MEAL_ICONS: Record<string, string> = {
   snacks: 'fast-food-outline',
   dinner: 'restaurant-outline',
 };
-
-function getDayNumber(dateStr: string): string {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  if (!isNaN(d.getTime())) {
-    return String(d.getDate());
-  }
-  const numbers = dateStr.match(/\b\d{1,2}\b/g);
-  if (numbers && numbers.length > 0) {
-    return numbers[0];
-  }
-  return '';
-}
 
 function splitDishes(value: string): string[] {
   return value
@@ -121,11 +108,11 @@ export default function MenuScreen() {
 
   // Auto scroll to today on load
   useEffect(() => {
-    if (menu) {
-      setTimeout(() => {
-        centerIndex(15, false); // Today is at index 15 in the scrollDays list
-      }, 100);
-    }
+    if (!menu) return;
+    const timer = setTimeout(() => {
+      centerIndex(15, false); // Today is at index 15 in the scrollDays list
+    }, 100);
+    return () => clearTimeout(timer);
   }, [menu, centerIndex]);
 
   const handleSelectDate = useCallback((d: Date, index: number) => {

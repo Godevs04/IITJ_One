@@ -9,6 +9,7 @@ import { useCampusModule } from '@/hooks/useCampusModule';
 import { loadTopicPrefs } from '@/services/pushTopics';
 import type { NoticeDoc } from '@/types/campus';
 import { expirySeconds, formatExpiryLabel } from '@/utils/date';
+import { isHttpUrl } from '@/utils/urlSafety';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppSpacing, AppTypography } from '@/theme/tokens';
 
@@ -67,9 +68,9 @@ export default function NoticesScreen() {
               isImportant={n.isImportant}
               expiryLabel={formatExpiryLabel(expirySeconds(n.expiryDate))}
               imageUrl={n.imageUrl}
-              hasLink={Boolean(n.link)}
+              hasLink={isHttpUrl(n.link)}
               onPress={() => {
-                if (n.link) void WebBrowser.openBrowserAsync(n.link);
+                if (isHttpUrl(n.link)) void WebBrowser.openBrowserAsync(n.link);
               }}
             />
           ))}

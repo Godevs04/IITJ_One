@@ -1,7 +1,7 @@
 import express from 'express';
 import helmet from 'helmet';
 import { assertProductionSecrets, config } from './config';
-import { connectDb, disconnectDb } from './db';
+import { connectDb, disconnectDb, startReconnectLoop } from './db';
 import { initFallbackStore } from './store/fallback';
 import { publicRateLimiter } from './middleware/rateLimit';
 import { etagMiddleware } from './middleware/etag';
@@ -32,6 +32,7 @@ async function bootstrap(): Promise<void> {
     if (config.nodeEnv === 'production') {
       log.warn('Production + fallback: admin writes are disabled until MongoDB is available');
     }
+    startReconnectLoop();
   }
 
   const app = express();

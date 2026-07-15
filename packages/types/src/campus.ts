@@ -33,9 +33,13 @@ export const campusLocationSchema = z
     description: z.string().optional(),
     aliases: z.array(z.string()).optional(),
   })
-  .refine((loc) => (loc.lat != null && loc.lng != null) || !!loc.plusCode, {
-    message: 'Location needs coordinates (lat/lng) or a Plus Code',
-    path: ['plusCode'],
+  .superRefine((loc, ctx) => {
+    if ((loc.lat != null && loc.lng != null) || !!loc.plusCode) return;
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `"${loc.name || loc.id}" needs coordinates (lat/lng) or a Plus Code`,
+      path: ['plusCode'],
+    });
   });
 
 export const mapPutSchema = z.object({
@@ -158,3 +162,21 @@ export const DEFAULT_CAMPUS_LOCATIONS: CampusLocation[] = [
   { id: 'landmark-004', name: 'Balaji & Shiv Temple', category: 'landmark', plusCode: 'F4PF+66W' },
   { id: 'landmark-005', name: 'National Flag', category: 'landmark', plusCode: 'F4G9+PRP' },
 ];
+
+export const holidaySchema = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
+  description: z.string().optional(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const holidaysPutSchema = z.object({
+  campusId: z.string().min(1),
+  holidays: z.array(holidaySchema),
+});
+
+export type Holiday = z.infer<typeof holidaySchema>;
+export type HolidaysDoc = z.infer<typeof holidaysPutSchema>;

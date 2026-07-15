@@ -14,14 +14,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "in.iitj-one.app"
+      "bundleIdentifier": "app.iitjone"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1D3F5E"
       },
-      "package": "in.iitjone.app"
+      "package": "app.iitjone"
     },
     "web": {
       "bundler": "metro",
@@ -35,6 +35,13 @@
         {
           "icon": "./assets/notification-icon.png",
           "color": "#1D3F5E"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "IITJ One uses the camera so you can photograph your Mess QR code.",
+          "photosPermission": "IITJ One uses your photo library so you can import your Mess QR code image."
         }
       ],
       "expo-sqlite",

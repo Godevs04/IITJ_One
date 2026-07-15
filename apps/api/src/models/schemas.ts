@@ -233,3 +233,5 @@ export const menuImportSchema = z.object({
   vegCsv: z.string().min(1),
   nonVegCsv: z.string().min(1),
 });
+
+export { holidaysPutSchema, transportAlertsPutSchema, temporaryTransportSchedulePutSchema } from '@iitj1/types';

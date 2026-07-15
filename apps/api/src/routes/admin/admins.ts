@@ -4,7 +4,7 @@ import { validateBody } from '../../middleware/validate';
 import { adminCreateSchema, adminUpdateSchema } from '../../models/schemas';
 import { AuthRequest, requireRole } from '../../middleware/auth';
 import { config } from '../../config';
-import { findAdminByEmail, getAdmins, upsertAdmin, setAdminActive } from '../../store';
+import { findAdminByEmail, getAdmins, upsertAdmin, setAdminActive, logAudit } from '../../store';
 import { asyncHandler } from '../../middleware/asyncHandler';
 import type { AdminDoc } from '../../types';
 
@@ -49,6 +49,7 @@ router.post(
     const passwordHash = await bcrypt.hash(password, config.bcryptRounds);
     const admin: AdminDoc = { email, passwordHash, name, role, active: true, tokenVersion: 0 };
     await upsertAdmin(admin);
+    await logAudit(req.admin!.email, 'admin_create', `Created admin ${email} (${role})`);
     res.status(201).json(toSafeAdmin(admin));
   }),
 );
@@ -70,6 +71,11 @@ router.patch(
       res.status(404).json({ error: 'Admin not found' });
       return;
     }
+    await logAudit(
+      req.admin!.email,
+      active ? 'admin_activate' : 'admin_deactivate',
+      `${active ? 'Activated' : 'Deactivated'} admin ${targetEmail}`,
+    );
     res.json(toSafeAdmin(updated));
   }),
 );

@@ -107,7 +107,6 @@ export default function LaundryScreen() {
     const current = prefsRef.current;
     if (!current.hostel || !current.reminderEnabled) return;
     void applyReminders(current, current.hostel);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revision, applyReminders]);
 
   const selectHostel = useCallback(

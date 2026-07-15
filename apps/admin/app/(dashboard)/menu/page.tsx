@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ApiError, apiFetch, campusId, fetchCampusModule } from '@/lib/api';
+import { ApiError, apiFetch, campusId, fetchCampusModule, fetchModuleVersion, putAdminModule } from '@/lib/api';
 import { Button } from '@/components/Button';
 import { Field, Input, Textarea } from '@/components/Field';
 import { Card, EmptyState, LoadingBlock, PageHeader, StatusPill } from '@/components/ui';
@@ -47,14 +47,19 @@ export default function MenuAdminPage() {
   const [showImport, setShowImport] = useState(false);
   const [vegCsv, setVegCsv] = useState('');
   const [nonVegCsv, setNonVegCsv] = useState('');
+  const [version, setVersion] = useState<number | undefined>();
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const doc = await fetchCampusModule<MenuDoc>("/menu");
+      const [doc, moduleVersion] = await Promise.all([
+        fetchCampusModule<MenuDoc>("/menu"),
+        fetchModuleVersion('menu'),
+      ]);
       setMonth(doc.month || currentMonth());
       setDays(doc.days?.length ? doc.days : []);
       setSelectedIdx(0);
+      setVersion(moduleVersion);
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) {
         setDays([]);
@@ -134,7 +139,7 @@ export default function MenuAdminPage() {
     setSaving(true);
     try {
       const body: MenuDoc = { campusId, month, days };
-      await apiFetch('/admin/menu', { method: 'PUT', body });
+      await putAdminModule('/admin/menu', body, version);
       push(
         'success',
         'Menu published',
@@ -142,6 +147,11 @@ export default function MenuAdminPage() {
       );
       await load();
     } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        push('error', 'Changed elsewhere', 'Someone else saved this in the meantime — reloaded the latest version.');
+        await load();
+        return;
+      }
       push(
         'error',
         'Save failed',
@@ -169,6 +179,7 @@ export default function MenuAdminPage() {
             vegCsv,
             nonVegCsv,
           },
+          headers: version == null ? undefined : { 'X-Expected-Version': String(version) },
         },
       );
       push(
@@ -181,6 +192,11 @@ export default function MenuAdminPage() {
       setNonVegCsv('');
       await load();
     } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        push('error', 'Changed elsewhere', 'Someone else saved this in the meantime — reloaded the latest version.');
+        await load();
+        return;
+      }
       push(
         'error',
         'Import failed',

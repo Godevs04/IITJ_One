@@ -113,6 +113,9 @@ export default function NoticesAdminPage() {
     [notices],
   );
 
+  const activeNotices = useMemo(() => sorted.filter((n) => !n.deletedAt), [sorted]);
+  const trashedNotices = useMemo(() => sorted.filter((n) => n.deletedAt), [sorted]);
+
   function openCreate() {
     setEditingId(null);
     setForm(emptyForm());
@@ -303,59 +306,72 @@ export default function NoticesAdminPage() {
         </Card>
       ) : null}
 
-      {sorted.length === 0 ? (
+      {activeNotices.length === 0 ? (
         <EmptyState title="No notices" message="Create one to notify the campus." />
       ) : (
         <div className="space-y-3">
-          {sorted.map((n) => {
-            const id = n._id ? String(n._id) : '';
-            const status = noticeStatus(n);
-            return (
-              <Card key={id || n.title}>
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-2 flex flex-wrap gap-2">
-                      <StatusPill label={status.label} tone={status.tone} />
-                      <StatusPill label={n.category} tone="info" />
-                      {n.isImportant ? (
-                        <StatusPill label="Important" tone="warning" />
-                      ) : null}
-                    </div>
-                    <h3 className="text-base font-semibold text-ink">{n.title}</h3>
-                    <p className="mt-1 line-clamp-2 text-sm text-muted">{n.body}</p>
-                    <p className="mt-2 font-mono text-xs text-muted">
-                      {String(n.startDate).slice(0, 10)} →{' '}
-                      {String(n.expiryDate).slice(0, 10)}
-                    </p>
-                  </div>
-                  <div className="flex w-full flex-wrap gap-2 sm:w-auto">
-                    {n.deletedAt ? (
-                      id ? (
-                        <Button variant="secondary" onClick={() => void restore(id)}>
-                          Restore
-                        </Button>
-                      ) : null
-                    ) : (
-                      <>
-                        <Button variant="secondary" onClick={() => openEdit(n)}>
-                          Edit
-                        </Button>
-                        {id ? (
-                          <Button variant="danger" onClick={() => void remove(id)}>
-                            Trash
-                          </Button>
-                        ) : null}
-                      </>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
+          {activeNotices.map((n) => renderNoticeCard(n))}
         </div>
       )}
+
+      {trashedNotices.length > 0 ? (
+        <div className="mt-8">
+          <h2 className="mb-4 text-lg font-semibold text-muted">
+            Trashed ({trashedNotices.length})
+          </h2>
+          <div className="space-y-3 opacity-75">
+            {trashedNotices.map((n) => renderNoticeCard(n))}
+          </div>
+        </div>
+      ) : null}
 
       <Pagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
     </div>
   );
+
+  function renderNoticeCard(n: NoticeDoc) {
+    const id = n._id ? String(n._id) : '';
+    const status = noticeStatus(n);
+    return (
+      <Card key={id || n.title}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="mb-2 flex flex-wrap gap-2">
+              <StatusPill label={status.label} tone={status.tone} />
+              <StatusPill label={n.category} tone="info" />
+              {n.isImportant ? (
+                <StatusPill label="Important" tone="warning" />
+              ) : null}
+            </div>
+            <h3 className="text-base font-semibold text-ink">{n.title}</h3>
+            <p className="mt-1 line-clamp-2 text-sm text-muted">{n.body}</p>
+            <p className="mt-2 font-mono text-xs text-muted">
+              {String(n.startDate).slice(0, 10)} →{' '}
+              {String(n.expiryDate).slice(0, 10)}
+            </p>
+          </div>
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+            {n.deletedAt ? (
+              id ? (
+                <Button variant="secondary" onClick={() => void restore(id)}>
+                  Restore
+                </Button>
+              ) : null
+            ) : (
+              <>
+                <Button variant="secondary" onClick={() => openEdit(n)}>
+                  Edit
+                </Button>
+                {id ? (
+                  <Button variant="danger" onClick={() => void remove(id)}>
+                    Trash
+                  </Button>
+                ) : null}
+              </>
+            )}
+          </div>
+        </div>
+      </Card>
+    );
+  }
 }

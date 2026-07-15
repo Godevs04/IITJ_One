@@ -233,3 +233,12 @@ export interface HomeBundle {
   upcomingEvents: CalendarEvent[];
   generatedAt: string;
 }
+
+export type {
+  Holiday,
+  HolidaysDoc,
+  TransportAlert,
+  TransportAlertsDoc,
+  TemporaryTransportSchedule,
+  TemporaryTransportScheduleDoc,
+} from '@iitj1/types';

@@ -21,5 +21,8 @@ export function defaultVersions(): MetaVersions {
     wifi: 1,
     erickshaw: 1,
     mealWindows: 1,
+    holidays: 1,
+    transportAlerts: 1,
+    temporaryTransportSchedule: 1,
   };
 }

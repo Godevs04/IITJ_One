@@ -1,12 +1,13 @@
 import { useEffect, useState, useMemo } from 'react';
 import { StyleSheet, Text, View, TextInput, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
-import { useThemeColors } from '@/theme/ThemeProvider';
+import { useTheme } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
-import type { CalendarDoc, TransportDoc, TransportTrip } from '@/types/campus';
-import { getScheduleKey, getTripsForDayType, evaluateTripStatus } from '../services/ScheduleEngine';
+import type { CalendarDoc, TransportDoc, TransportTrip, HolidaysDoc, TransportAlertsDoc, TemporaryTransportScheduleDoc } from '@/types/campus';
+import { getScheduleKey, getTripsForDayType, evaluateTripStatus, isScheduleOverridden, isAlertActive, getTripsForToday } from '../services/ScheduleEngine';
 import { parseRouteStops } from '../utils/coordinates';
 import { TripCard } from '../widgets/TripCard';
 import { EmptyState } from '@/components/EmptyState';
@@ -15,8 +16,10 @@ import { ScreenShell } from '@/components/ScreenShell';
 interface TransportScreenViewProps {
   transport: TransportDoc | null;
   calendar: CalendarDoc | null;
+  holidays: HolidaysDoc | null;
+  alerts: TransportAlertsDoc | null;
+  tempSchedule: TemporaryTransportScheduleDoc | null;
   tick: number;
-  onOpenMap: () => void;
   onRefresh: () => Promise<void>;
   refreshing: boolean;
 }
@@ -26,18 +29,20 @@ const FAVORITES_KEY = '@iitj1/favorite_stops';
 export function TransportScreenView({
   transport,
   calendar,
+  holidays,
+  alerts,
+  tempSchedule,
   tick,
-  onOpenMap,
   onRefresh,
   refreshing,
 }: TransportScreenViewProps) {
-  const theme = useThemeColors();
+  const { colors: theme, darkMode } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [favorites, setFavorites] = useState<string[]>([]);
   const [selectedFavoriteFilter, setSelectedFavoriteFilter] = useState<string | null>(null);
   const [showCompleted, setShowCompleted] = useState(false);
 
-  const defaultDayType = useMemo(() => getScheduleKey(calendar), [calendar]);
+  const defaultDayType = useMemo(() => getScheduleKey(calendar, holidays), [calendar, holidays, tick]);
   const [dayTypeFilter, setDayTypeFilter] = useState<'mon-sat' | 'sun-holiday'>(defaultDayType);
   const [directionFilter, setDirectionFilter] = useState<'departure' | 'arrival'>('departure');
 
@@ -45,21 +50,6 @@ export function TransportScreenView({
   useEffect(() => {
     setDayTypeFilter(defaultDayType);
   }, [defaultDayType]);
-
-  // Time details for header display
-  const [nowStr, setNowStr] = useState('');
-  const [dayStr, setDayStr] = useState('');
-
-  useEffect(() => {
-    const updateTime = () => {
-      const d = new Date();
-      setNowStr(d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-      setDayStr(d.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' }));
-    };
-    updateTime();
-    const t = setInterval(updateTime, 10000); // Update every 10s for better accuracy
-    return () => clearInterval(t);
-  }, []);
 
   // Load favorites from AsyncStorage
   useEffect(() => {
@@ -70,7 +60,7 @@ export function TransportScreenView({
           setFavorites(JSON.parse(stored));
         }
       } catch (e) {
-        console.log('Failed to load favorites', e);
+        console.error('Failed to load favorites', e);
       }
     };
     void loadFavorites();
@@ -91,17 +81,22 @@ export function TransportScreenView({
     try {
       await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
     } catch (e) {
-      console.log('Failed to save favorites', e);
+      console.error('Failed to save favorites', e);
     }
   };
 
   const isFavorited = (stopName: string) => favorites.includes(stopName);
 
+  const isOverridden = useMemo(() => isScheduleOverridden(alerts), [alerts]);
+
   // Dynamic trips list evaluation based on dayTypeFilter
   const tripsWithStatus = useMemo(() => {
     if (!transport) return [];
 
-    const trips = getTripsForDayType(transport, calendar, dayTypeFilter);
+    const trips = isOverridden
+      ? getTripsForToday(transport, calendar, holidays, alerts, tempSchedule)
+      : getTripsForDayType(transport, calendar, dayTypeFilter);
+
     return trips.map((trip) => {
       const evalResult = evaluateTripStatus(trip);
       const stops = parseRouteStops(trip.route, trip.from, trip.to);
@@ -113,7 +108,7 @@ export function TransportScreenView({
       };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transport, calendar, dayTypeFilter, tick]);
+  }, [transport, calendar, holidays, alerts, tempSchedule, dayTypeFilter, tick, isOverridden]);
 
   const isDepartureFromCampus = (trip: TransportTrip) => {
     // The route group already knows its direction — trust that over
@@ -163,31 +158,71 @@ export function TransportScreenView({
     return { activeTrips: active, completedTrips: completed };
   }, [filteredTrips]);
 
+  const hasActiveAlert = useMemo(() => {
+    if (!alerts?.alerts) return false;
+    const now = new Date();
+    return alerts.alerts.some((a) => isAlertActive(a, now));
+  }, [alerts, tick]);
+
+  const headerRight = (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: AppSpacing.sm }}>
+      <Pressable
+        onPress={() => router.push('/search')}
+        hitSlop={10}
+        style={styles.headerButton}
+        accessibilityRole="button"
+        accessibilityLabel="Search"
+      >
+        <Ionicons name="search-outline" size={24} color={theme.text} />
+      </Pressable>
+      <Pressable
+        onPress={() => router.push('/transport-alerts')}
+        hitSlop={10}
+        style={styles.headerButton}
+        accessibilityRole="button"
+        accessibilityLabel="Notifications"
+      >
+        <Ionicons name="notifications-outline" size={24} color={theme.text} />
+        {hasActiveAlert && (
+          <View style={[styles.redDot, { backgroundColor: '#EF4444' }]} />
+        )}
+      </Pressable>
+    </View>
+  );
+
+  const matchingAlerts = useMemo(() => {
+    if (!searchQuery.trim() || !alerts?.alerts) return [];
+    const q = searchQuery.toLowerCase().trim();
+    const now = new Date();
+    return alerts.alerts.filter(
+      (a) =>
+        isAlertActive(a, now) &&
+        (a.title.toLowerCase().includes(q) || a.message.toLowerCase().includes(q))
+    );
+  }, [alerts, searchQuery, tick]);
+
   return (
     <ScreenShell
       title="Transport"
       subtitle="Campus shuttle schedules"
       onRefresh={onRefresh}
       refreshing={refreshing}
+      headerRight={headerRight}
     >
-      {/* Live Date/Time Banner */}
-      <View style={[styles.timeBanner, { backgroundColor: theme.surfaceMuted, borderColor: theme.border }]}>
-        <View>
-          <Text style={[styles.timeTitle, { color: theme.text }]}>{nowStr}</Text>
-          <Text style={[styles.dateSubtitle, { color: theme.textMuted }]}>{dayStr}</Text>
+      {isOverridden && (
+        <View style={[styles.overrideBanner, { backgroundColor: darkMode ? '#2A1818' : '#FDF2F2', borderColor: '#F8B4B4' }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: AppSpacing.xs, marginBottom: 4 }}>
+            <Ionicons name="warning" size={18} color="#EF4444" />
+            <Text style={{ fontSize: 14, fontWeight: '700', color: '#EF4444' }}>Special Transport Schedule</Text>
+          </View>
+          <Text style={{ fontSize: 13, color: darkMode ? '#FCA5A5' : '#9B1C1C', fontWeight: '500' }}>
+            Today&apos;s transport is operating on a temporary schedule.
+          </Text>
+          <Text style={{ fontSize: 12, color: darkMode ? '#F87171' : '#C81E1E', marginTop: 2 }}>
+            Please follow the schedule below.
+          </Text>
         </View>
-        <Pressable
-          onPress={onOpenMap}
-          style={({ pressed }) => [
-            styles.mapBtn,
-            { backgroundColor: theme.primary },
-            pressed && styles.pressed,
-          ]}
-        >
-          <Ionicons name="map" size={16} color={theme.onPrimary} />
-          <Text style={[styles.mapBtnText, { color: theme.onPrimary }]}>View Map</Text>
-        </Pressable>
-      </View>
+      )}
 
       {/* Dynamic Schedule Filter Tabs & Updates Banner */}
       <View style={styles.filterSection}>
@@ -235,64 +270,68 @@ export function TransportScreenView({
           </Pressable>
         </View>
 
-        {/* Row 2: Day Type Filter */}
-        <View style={styles.filterRow}>
-          <Pressable
-            onPress={() => setDayTypeFilter('mon-sat')}
-            style={[
-              styles.filterTab,
-              dayTypeFilter === 'mon-sat'
-                ? [styles.activeTab, { backgroundColor: theme.primary, borderColor: theme.primary }]
-                : [styles.inactiveTab, { backgroundColor: theme.chipBackground, borderColor: theme.border }],
-            ]}
-          >
-            <Text
+        {/* Row 2: Day Type Filter - Hide if overridden */}
+        {!isOverridden && (
+          <View style={styles.filterRow}>
+            <Pressable
+              onPress={() => setDayTypeFilter('mon-sat')}
               style={[
-                styles.filterTabText,
+                styles.filterTab,
                 dayTypeFilter === 'mon-sat'
-                  ? { color: theme.onPrimary, fontWeight: '700' }
-                  : { color: theme.textMuted },
+                  ? [styles.activeTab, { backgroundColor: theme.primary, borderColor: theme.primary }]
+                  : [styles.inactiveTab, { backgroundColor: theme.chipBackground, borderColor: theme.border }],
               ]}
             >
-              Mon-Sat
-            </Text>
-          </Pressable>
+              <Text
+                style={[
+                  styles.filterTabText,
+                  dayTypeFilter === 'mon-sat'
+                    ? { color: theme.onPrimary, fontWeight: '700' }
+                    : { color: theme.textMuted },
+                ]}
+              >
+                Mon-Sat
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setDayTypeFilter('sun-holiday')}
+              style={[
+                styles.filterTab,
+                dayTypeFilter === 'sun-holiday'
+                  ? [styles.activeTab, { backgroundColor: theme.primary, borderColor: theme.primary }]
+                  : [styles.inactiveTab, { backgroundColor: theme.chipBackground, borderColor: theme.border }],
+              ]}
+            >
+              <Text
+                style={[
+                  styles.filterTabText,
+                  dayTypeFilter === 'sun-holiday'
+                    ? { color: theme.onPrimary, fontWeight: '700' }
+                    : { color: theme.textMuted },
+                ]}
+              >
+                Sunday & Holidays
+              </Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* Web Link / Updates Banner - Hide if overridden */}
+        {!isOverridden && (
           <Pressable
-            onPress={() => setDayTypeFilter('sun-holiday')}
-            style={[
-              styles.filterTab,
-              dayTypeFilter === 'sun-holiday'
-                ? [styles.activeTab, { backgroundColor: theme.primary, borderColor: theme.primary }]
-                : [styles.inactiveTab, { backgroundColor: theme.chipBackground, borderColor: theme.border }],
+            onPress={() => void WebBrowser.openBrowserAsync('https://iitj.ac.in/office-of-security-transports/en/transport')}
+            style={({ pressed }) => [
+              styles.updatesBanner,
+              { backgroundColor: theme.primaryTint },
+              pressed && styles.pressed,
             ]}
           >
-            <Text
-              style={[
-                styles.filterTabText,
-                dayTypeFilter === 'sun-holiday'
-                  ? { color: theme.onPrimary, fontWeight: '700' }
-                  : { color: theme.textMuted },
-              ]}
-            >
-              Sunday & Holidays
+            <Ionicons name="information-circle-outline" size={16} color={theme.primary} />
+            <Text style={[styles.updatesText, { color: theme.primary }]}>
+              For latest official schedule updates, click here
             </Text>
           </Pressable>
-        </View>
-
-        {/* Web Link / Updates Banner */}
-        <Pressable
-          onPress={() => void WebBrowser.openBrowserAsync('https://iitj.ac.in/office-of-security-transports/en/transport')}
-          style={({ pressed }) => [
-            styles.updatesBanner,
-            { backgroundColor: theme.primaryTint },
-            pressed && styles.pressed,
-          ]}
-        >
-          <Ionicons name="information-circle-outline" size={16} color={theme.primary} />
-          <Text style={[styles.updatesText, { color: theme.primary }]}>
-            For latest official schedule updates, click here
-          </Text>
-        </Pressable>
+        )}
       </View>
 
       {/* Search Input */}
@@ -311,6 +350,49 @@ export function TransportScreenView({
           </Pressable>
         ) : null}
       </View>
+
+      {/* Search Alert Matches */}
+      {matchingAlerts.length > 0 && (
+        <View style={{ marginBottom: AppSpacing.sm }}>
+          <Text style={[styles.sectionTitle, { color: theme.textMuted, marginBottom: AppSpacing.xs }]}>
+            Matching Alerts
+          </Text>
+          <View style={{ gap: AppSpacing.xs }}>
+            {matchingAlerts.map((alert) => (
+              <Pressable
+                key={alert.id}
+                onPress={() => router.push('/transport-alerts')}
+                style={({ pressed }) => [
+                  {
+                    padding: AppSpacing.sm,
+                    backgroundColor: alert.priority === 'critical' 
+                      ? (darkMode ? '#331B1B' : '#FDF2F2') 
+                      : theme.surface,
+                    borderColor: alert.priority === 'critical' ? '#EF4444' : theme.border,
+                    borderWidth: 1,
+                    borderRadius: AppRadius.sm,
+                  },
+                  pressed && styles.pressed,
+                ]}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Ionicons
+                    name={alert.priority === 'critical' ? 'warning' : 'notifications'}
+                    size={16}
+                    color={alert.priority === 'critical' ? '#EF4444' : theme.primary}
+                  />
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: theme.text }}>
+                    {alert.title}
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }} numberOfLines={2}>
+                  {alert.message}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      )}
 
       {/* Favorite Stops List */}
       {favorites.length > 0 && (
@@ -417,35 +499,6 @@ export function TransportScreenView({
 }
 
 const styles = StyleSheet.create({
-  timeBanner: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: AppSpacing.md,
-    borderRadius: AppRadius.md,
-    borderWidth: 1,
-  },
-  timeTitle: {
-    ...AppTypography.display,
-    fontFamily: 'monospace',
-    lineHeight: 32,
-  },
-  dateSubtitle: {
-    ...AppTypography.caption,
-    marginTop: 2,
-  },
-  mapBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: AppSpacing.md,
-    paddingVertical: AppSpacing.sm,
-    borderRadius: AppRadius.sm,
-    gap: AppSpacing.xs,
-  },
-  mapBtnText: {
-    ...AppTypography.button,
-    fontSize: 12,
-  },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -543,5 +596,23 @@ const styles = StyleSheet.create({
     ...AppTypography.caption,
     fontWeight: '600',
     fontSize: 11,
+  },
+  headerButton: {
+    padding: 4,
+    position: 'relative',
+  },
+  redDot: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  overrideBanner: {
+    padding: AppSpacing.md,
+    borderRadius: AppRadius.md,
+    borderWidth: 1,
+    marginBottom: AppSpacing.sm,
   },
 });

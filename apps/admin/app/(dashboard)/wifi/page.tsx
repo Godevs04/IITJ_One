@@ -11,10 +11,19 @@ import { DEFAULT_WIFI_DOC, type WifiDoc, type WifiGuide } from '@iitj1/types';
 const emptyGuide = (): WifiGuide => ({
   title: '',
   description: '',
-  pdfUrl: 'https://',
+  pdfUrl: '',
   icon: 'document-outline',
   order: 0,
 });
+
+function isValidHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
 
 export default function WifiAdminPage() {
   const { push } = useToast();
@@ -57,6 +66,17 @@ export default function WifiAdminPage() {
   }
 
   async function save() {
+    for (let i = 0; i < guides.length; i++) {
+      const g = guides[i];
+      if (!g.title.trim() || !g.description.trim()) {
+        push('error', 'Incomplete guide', `Guide ${i + 1} needs a title and description.`);
+        return;
+      }
+      if (!isValidHttpUrl(g.pdfUrl)) {
+        push('error', 'Invalid PDF link', `Guide "${g.title}" needs a valid http(s) URL for its PDF.`);
+        return;
+      }
+    }
     const providers = providersText
       .split(',')
       .map((p) => p.trim())

@@ -19,6 +19,9 @@ import type {
   AdminDoc,
   AuditLogDoc,
   SuggestionDoc,
+  HolidaysDoc,
+  TransportAlertsDoc,
+  TemporaryTransportScheduleDoc,
 } from './types';
 
 let client: MongoClient | null = null;
@@ -34,8 +37,12 @@ export async function connectDb(): Promise<boolean> {
 
   try {
     client = new MongoClient(config.mongodbUri, {
-      serverSelectionTimeoutMS: 3000,
-      connectTimeoutMS: 3000,
+      // 3000ms was too tight for a real Atlas TLS handshake under normal
+      // network conditions (observed ~6.5s cold-connect during testing),
+      // causing the API to silently and permanently fall back to the
+      // non-persistent in-memory store on the very first slow connect.
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
     });
     await client.connect();
     db = client.db();
@@ -57,6 +64,28 @@ export async function connectDb(): Promise<boolean> {
     console.warn('[db] MongoDB unavailable — using in-memory fallback:', (err as Error).message);
     return false;
   }
+}
+
+let reconnectTimer: ReturnType<typeof setInterval> | null = null;
+
+/**
+ * A single failed connectDb() call used to strand the process on the
+ * in-memory fallback for its entire lifetime, with no way to recover short
+ * of a manual restart. Call this once after a failed initial connect to
+ * keep retrying in the background — connectDb() itself is a no-op once
+ * already connected, so this is safe to leave running indefinitely.
+ */
+export function startReconnectLoop(intervalMs = 15000): void {
+  if (reconnectTimer) return;
+  reconnectTimer = setInterval(() => {
+    if (isDbConnected()) {
+      if (reconnectTimer) clearInterval(reconnectTimer);
+      reconnectTimer = null;
+      return;
+    }
+    void connectDb();
+  }, intervalMs);
+  reconnectTimer.unref?.();
 }
 
 async function ensureIndexes(): Promise<void> {
@@ -88,6 +117,9 @@ async function ensureIndexes(): Promise<void> {
     'wifi',
     'erickshaw',
     'mealWindows',
+    'holidays',
+    'transportAlerts',
+    'temporaryTransportSchedule',
   ] as const) {
     await db.collection(name).createIndex(uniqueCampus, { unique: true });
   }
@@ -118,6 +150,9 @@ export const collections = {
   wifi: () => col<WifiDoc>('wifi'),
   erickshaw: () => col<ErickshawDoc>('erickshaw'),
   mealWindows: () => col<MealWindowsDoc>('mealWindows'),
+  holidays: () => col<HolidaysDoc>('holidays'),
+  transportAlerts: () => col<TransportAlertsDoc>('transportAlerts'),
+  temporaryTransportSchedule: () => col<TemporaryTransportScheduleDoc>('temporaryTransportSchedule'),
   admins: () => col<AdminDoc>('admins'),
   auditLog: () => col<AuditLogDoc>('auditLog'),
   suggestions: () => col<SuggestionDoc>('suggestions'),

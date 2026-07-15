@@ -21,6 +21,9 @@ import type {
   AuditLogDoc,
   SuggestionDoc,
   ModuleName,
+  HolidaysDoc,
+  TransportAlertsDoc,
+  TemporaryTransportScheduleDoc,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
 
@@ -40,6 +43,9 @@ interface FallbackState {
   wifi: WifiDoc;
   erickshaw: ErickshawDoc;
   mealWindows: MealWindowsDoc;
+  holidays: HolidaysDoc;
+  transportAlerts: TransportAlertsDoc;
+  temporaryTransportSchedule: TemporaryTransportScheduleDoc;
   admins: AdminDoc[];
   auditLog: AuditLogDoc[];
   suggestions: SuggestionDoc[];
@@ -277,6 +283,18 @@ function buildDefaultState(): FallbackState {
     mealWindows: {
       campusId,
       windows: { ...DEFAULT_MEAL_WINDOWS },
+    },
+    holidays: {
+      campusId,
+      holidays: [],
+    },
+    transportAlerts: {
+      campusId,
+      alerts: [],
+    },
+    temporaryTransportSchedule: {
+      campusId,
+      schedules: [],
     },
     admins: [],
     auditLog: [],

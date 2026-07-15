@@ -1,4 +1,4 @@
-import type { DayName, HostelId, LaundrySchedule } from '@iitj1/types';
+import type { DayName, HostelId } from '@iitj1/types';
 export type { DayName, LaundrySchedule } from '@iitj1/types';
 export type Hostel = HostelId;
 

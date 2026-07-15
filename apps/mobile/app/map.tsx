@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
+import { useLocalSearchParams } from 'expo-router';
 import { Alert, Share, StyleSheet, TextInput, View, FlatList, Pressable, Text, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenShell } from '@/components/ScreenShell';
@@ -150,7 +151,7 @@ function LocationDetailCard({
       )}
 
       <View style={styles.actionsRow}>
-        {(location.latitude || location.plusCode) && (
+        {((location.latitude && location.longitude) || location.plusCode) && (
           <Pressable
             onPress={handleOpenMaps}
             style={({ pressed }) => [
@@ -201,6 +202,7 @@ function LocationDetailCard({
 export default function MapScreen() {
   const theme = useThemeColors();
   const { revision } = useCampusData();
+  const { focus } = useLocalSearchParams<{ focus?: string }>();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<Set<LocationCategory>>(new Set());
@@ -216,6 +218,15 @@ export default function MapScreen() {
     void favoritesStore.getFavorites().then(setFavorites);
     void recentSearchesStore.getRecentSearches().then(setRecentSearches);
   }, []);
+
+  // Deep-linked from Global Search — prefill the search box with the target location.
+  useEffect(() => {
+    if (!focus) return;
+    const location = campusDirectoryServiceProvider.getLocationById(focus);
+    if (location) {
+      setSearchQuery(location.name);
+    }
+  }, [focus]);
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) {

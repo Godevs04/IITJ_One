@@ -66,6 +66,7 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${plexSans.variable} ${plexMono.variable} min-h-dvh font-sans antialiased`}
+        suppressHydrationWarning
       >
         <ToastProvider>
           {children}

@@ -12,7 +12,10 @@ export type ModuleName =
   | 'laundry'
   | 'wifi'
   | 'erickshaw'
-  | 'mealWindows';
+  | 'mealWindows'
+  | 'holidays'
+  | 'transportAlerts'
+  | 'temporaryTransportSchedule';
 
 export interface MetaVersions {
   menu: number;
@@ -29,7 +32,19 @@ export interface MetaVersions {
   wifi: number;
   erickshaw: number;
   mealWindows: number;
+  holidays: number;
+  transportAlerts: number;
+  temporaryTransportSchedule: number;
 }
+
+export type {
+  Holiday,
+  HolidaysDoc,
+  TransportAlert,
+  TransportAlertsDoc,
+  TemporaryTransportSchedule,
+  TemporaryTransportScheduleDoc,
+} from '@iitj1/types';
 
 export interface MetaDoc {
   campusId: string;

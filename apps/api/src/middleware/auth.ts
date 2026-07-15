@@ -2,12 +2,20 @@ import { Request, Response, NextFunction } from 'express';
 import jwt, { type SignOptions } from 'jsonwebtoken';
 import { config } from '../config';
 import type { JwtPayload } from '../types';
+import { findAdminByEmail } from '../store';
+import { asyncHandler } from './asyncHandler';
 
 export interface AuthRequest extends Request {
   admin?: JwtPayload;
 }
 
-export function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void {
+/**
+ * Verifies the JWT AND re-checks the admin's live active/tokenVersion state
+ * on every request. A signature-valid but revoked access token (account
+ * deactivated, or admin logged out elsewhere) would otherwise keep working
+ * for the full access-token TTL — this closes that window immediately.
+ */
+export const requireAuth = asyncHandler(async (req: AuthRequest, res: Response, next: NextFunction) => {
   const header = req.headers.authorization;
   if (!header?.startsWith('Bearer ')) {
     res.status(401).json({ error: 'Missing or invalid authorization header' });
@@ -15,18 +23,27 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
   }
 
   const token = header.slice(7);
+  let payload: JwtPayload;
   try {
-    const payload = jwt.verify(token, config.jwt.secret) as JwtPayload;
-    if (payload.type !== 'access') {
-      res.status(401).json({ error: 'Invalid token type' });
-      return;
-    }
-    req.admin = payload;
-    next();
+    payload = jwt.verify(token, config.jwt.secret) as JwtPayload;
   } catch {
     res.status(401).json({ error: 'Invalid or expired token' });
+    return;
   }
-}
+  if (payload.type !== 'access') {
+    res.status(401).json({ error: 'Invalid token type' });
+    return;
+  }
+
+  const admin = await findAdminByEmail(payload.email);
+  if (!admin || admin.active === false || payload.tokenVersion !== (admin.tokenVersion ?? 0)) {
+    res.status(401).json({ error: 'Session revoked — please log in again' });
+    return;
+  }
+
+  req.admin = payload;
+  next();
+});
 
 const accessSignOptions: SignOptions = { expiresIn: config.jwt.expiresIn as SignOptions['expiresIn'] };
 const refreshSignOptions: SignOptions = {

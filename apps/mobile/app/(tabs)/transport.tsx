@@ -1,28 +1,19 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { CalendarDoc, TransportDoc } from '@/types/campus';
+import { useCallback, useEffect, useState } from 'react';
+import { AppState } from 'react-native';
+import type { CalendarDoc, TransportDoc, HolidaysDoc, TransportAlertsDoc, TemporaryTransportScheduleDoc } from '@/types/campus';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
-import { useSwipeGesture } from '@/navigation/SwipeContext';
-import { getTripsWithStatus } from '@/transport/services/ScheduleEngine';
 import { TransportScreenView } from '@/transport/ui/TransportScreenView';
-import { CampusMapScreen } from '@/transport/ui/CampusMapScreen';
 
 export default function TransportScreen() {
   const { syncing, sync } = useCampusSync(false);
   const transport = useCampusModule<TransportDoc>('transport');
   const calendar = useCampusModule<CalendarDoc>('calendar');
-  const { lockSwipe, unlockSwipe } = useSwipeGesture();
+  const holidays = useCampusModule<HolidaysDoc>('holidays');
+  const alerts = useCampusModule<TransportAlertsDoc>('transportAlerts');
+  const tempSchedule = useCampusModule<TemporaryTransportScheduleDoc>('temporaryTransportSchedule');
 
   const [tick, setTick] = useState(0);
-  const [showMap, setShowMap] = useState(false);
-
-  // The embedded map has its own pan/zoom gestures — don't let the tab
-  // pager fight it for horizontal swipes while it's on screen.
-  useEffect(() => {
-    if (!showMap) return undefined;
-    lockSwipe();
-    return () => unlockSwipe();
-  }, [showMap, lockSwipe, unlockSwipe]);
 
   // Trigger recalculation of active/upcoming status countdowns periodically (every 10s)
   useEffect(() => {
@@ -30,30 +21,28 @@ export default function TransportScreen() {
     return () => clearInterval(timer);
   }, []);
 
-  const tripsWithStatus = useMemo(() => {
-    return getTripsWithStatus(transport, calendar);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transport, calendar, tick]);
+  // Re-evaluate on app foreground/resume
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        setTick((t) => t + 1);
+      }
+    });
+    return () => subscription.remove();
+  }, []);
 
   const onRefresh = useCallback(async () => {
     await sync();
   }, [sync]);
 
-  if (showMap) {
-    return (
-      <CampusMapScreen
-        tripsWithStatus={tripsWithStatus}
-        onBack={() => setShowMap(false)}
-      />
-    );
-  }
-
   return (
     <TransportScreenView
       transport={transport}
       calendar={calendar}
+      holidays={holidays}
+      alerts={alerts}
+      tempSchedule={tempSchedule}
       tick={tick}
-      onOpenMap={() => setShowMap(true)}
       onRefresh={onRefresh}
       refreshing={syncing}
     />

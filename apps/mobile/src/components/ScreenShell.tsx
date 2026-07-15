@@ -23,6 +23,8 @@ interface ScreenShellProps {
   hideTitle?: boolean;
   /** Manually override top safe area inclusion. Auto-detects based on header presence if undefined. */
   safeAreaTop?: boolean;
+  /** Custom element to render on the right of the title */
+  headerRight?: ReactNode;
 }
 
 export function ScreenShell({
@@ -33,6 +35,7 @@ export function ScreenShell({
   refreshing = false,
   hideTitle = false,
   safeAreaTop,
+  headerRight,
 }: ScreenShellProps) {
   const theme = useThemeColors();
   const segments = useSegments();
@@ -74,7 +77,9 @@ export function ScreenShell({
           <View style={styles.header}>
             <View style={styles.titleRow}>
               <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
-              {isHeaderHiddenTab ? (
+              {headerRight !== undefined ? (
+                headerRight
+              ) : isHeaderHiddenTab ? (
                 <Pressable
                   onPress={() => router.push('/search')}
                   hitSlop={10}

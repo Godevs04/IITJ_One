@@ -23,6 +23,7 @@ const NAV = [
     items: [
       { href: '/transport', label: 'Transport' },
       { href: '/calendar', label: 'Calendar' },
+      { href: '/holidays', label: 'Institute Holidays' },
       { href: '/portals', label: 'Portals' },
       { href: '/apps', label: 'Apps' },
       { href: '/map', label: 'Map' },

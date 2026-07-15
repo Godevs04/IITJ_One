@@ -7,6 +7,15 @@ export const API_BASE_URL =
   Constants.expoConfig?.extra?.apiUrl ??
   DEFAULT_API_URL;
 
+// Defense in depth: a release build talking to a plaintext http:// API would
+// send every request (and any future auth token) unencrypted. Local dev
+// legitimately uses http://localhost, so this only asserts in release builds.
+if (!__DEV__ && !API_BASE_URL.startsWith('https://')) {
+  throw new Error(
+    `Refusing to run a release build with a non-HTTPS API_BASE_URL: ${API_BASE_URL}`,
+  );
+}
+
 export const CAMPUS_ID =
   process.env.EXPO_PUBLIC_CAMPUS_ID ?? 'iitj';
 

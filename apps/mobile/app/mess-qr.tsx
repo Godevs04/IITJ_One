@@ -4,6 +4,7 @@ import { Stack, router, useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as Brightness from 'expo-brightness';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
+import { preventScreenCaptureAsync, allowScreenCaptureAsync } from 'expo-screen-capture';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { EmptyState } from '@/components/EmptyState';
@@ -96,7 +97,8 @@ export default function MessQrScreen() {
       if (mode !== 'viewing') return;
 
       void activateKeepAwakeAsync('mess-qr');
-      
+      void preventScreenCaptureAsync();
+
       let initialVal: number | null = null;
       void Brightness.getBrightnessAsync().then((val) => {
         initialVal = val;
@@ -107,6 +109,7 @@ export default function MessQrScreen() {
 
       return () => {
         deactivateKeepAwake('mess-qr');
+        void allowScreenCaptureAsync();
         if (initialVal !== null) {
           void Brightness.setBrightnessAsync(initialVal);
         } else {
