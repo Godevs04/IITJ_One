@@ -25,6 +25,7 @@ type RequestOptions = {
   body?: unknown;
   auth?: boolean;
   query?: Record<string, string | undefined>;
+  headers?: Record<string, string>;
 };
 
 let refreshPromise: Promise<boolean> | null = null;
@@ -119,6 +120,8 @@ async function rawFetch(path: string, options: RequestOptions = {}): Promise<Res
     if (token) headers.Authorization = `Bearer ${token}`;
   }
 
+  Object.assign(headers, options.headers);
+
   return fetch(buildUrl(path, options.query), {
     method: options.method ?? (options.body !== undefined ? 'POST' : 'GET'),
     headers,
@@ -202,9 +205,30 @@ export async function fetchCampusModule<T>(modulePath: string): Promise<T> {
   });
 }
 
-/** Admin write with JWT. */
-export async function putAdminModule(modulePath: string, body: unknown): Promise<void> {
-  await apiFetch(modulePath, { method: 'PUT', body });
+/** Current module version, for the optimistic-concurrency check on save. */
+export async function fetchModuleVersion(module: string): Promise<number | undefined> {
+  const manifest = await apiFetch<{ versions: Record<string, number> }>('/sync/manifest', {
+    auth: false,
+    query: { campus: campusId, _cb: Date.now().toString() },
+  });
+  return manifest.versions?.[module];
+}
+
+/**
+ * Admin whole-doc write with JWT. Pass the version fetched alongside the
+ * load — if another admin saved in the meantime, the server responds 409
+ * instead of silently overwriting their edit.
+ */
+export async function putAdminModule(
+  modulePath: string,
+  body: unknown,
+  expectedVersion?: number,
+): Promise<void> {
+  await apiFetch(modulePath, {
+    method: 'PUT',
+    body,
+    headers: expectedVersion == null ? undefined : { 'X-Expected-Version': String(expectedVersion) },
+  });
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
@@ -217,7 +241,12 @@ export async function login(email: string, password: string): Promise<LoginRespo
   return data;
 }
 
-export function logout(): void {
+export async function logout(): Promise<void> {
+  try {
+    await apiFetch('/admin/logout', { method: 'POST' });
+  } catch {
+    // Best-effort revocation — always clear the local session regardless.
+  }
   clearSession();
   if (typeof window !== 'undefined') {
     window.location.href = '/login';

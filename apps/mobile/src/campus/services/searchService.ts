@@ -1,6 +1,5 @@
 import type { CampusLocation } from '../types';
-import { CAMPUS_LOCATIONS } from '../data/locations';
-import { getLocationAliases } from '../data/aliases';
+import { campusDirectoryServiceProvider } from './campusDirectoryService';
 
 interface SearchResult {
   location: CampusLocation;
@@ -16,7 +15,6 @@ export interface SearchService {
 }
 
 class CampusSearchService implements SearchService {
-  private locations = CAMPUS_LOCATIONS;
   private readonly EXACT_MATCH_BONUS = 1000;
   private readonly ALIAS_MATCH_BONUS = 800;
   private readonly WORD_START_BONUS = 300;
@@ -67,15 +65,13 @@ class CampusSearchService implements SearchService {
       return [];
     }
 
+    // Always search the merged (synced + offline-fallback) directory so
+    // admin-added/edited locations and their aliases are searchable, not
+    // just browsable by category.
+    const locations = campusDirectoryServiceProvider.getAllLocations();
     const results: SearchResult[] = [];
-    const seenLocationIds = new Set<string>();
 
-    this.locations.forEach((location) => {
-      // Skip if already added
-      if (seenLocationIds.has(location.id)) {
-        return;
-      }
-
+    locations.forEach((location) => {
       let bestScore = 0;
       let bestMatchType: SearchResult['matchType'] = 'partial';
       let bestMatchedField: string | undefined;
@@ -88,9 +84,8 @@ class CampusSearchService implements SearchService {
         bestMatchedField = location.name;
       }
 
-      // 2. Check aliases
-      const aliases = getLocationAliases(location.id);
-      for (const alias of aliases) {
+      // 2. Check aliases (now carried directly on the merged location record)
+      for (const alias of location.aliases ?? []) {
         const aliasScore = this.calculateScore(normalizedQuery, alias, 'alias');
         if (aliasScore > bestScore) {
           bestScore = aliasScore;
@@ -139,7 +134,6 @@ class CampusSearchService implements SearchService {
 
       // Add result if there's a match
       if (bestScore > 0) {
-        seenLocationIds.add(location.id);
         results.push({
           location,
           score: bestScore,
@@ -166,25 +160,11 @@ class CampusSearchService implements SearchService {
       return [];
     }
 
-    const suggestions: CampusLocation[] = [];
-    const seenIds = new Set<string>();
-
-    // Get top matching results (exact/alias/word-start matches)
-    const results = this.search(query);
-
     // Return top 8 results as suggestions
-    const topResults = results
+    return this.search(query)
       .filter((r) => ['exact', 'alias', 'partial'].includes(r.matchType))
-      .slice(0, 8);
-
-    topResults.forEach((result) => {
-      if (!seenIds.has(result.location.id)) {
-        seenIds.add(result.location.id);
-        suggestions.push(result.location);
-      }
-    });
-
-    return suggestions;
+      .slice(0, 8)
+      .map((r) => r.location);
   }
 }
 

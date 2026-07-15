@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import {
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -7,7 +8,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useSegments } from 'expo-router';
+import { router, useSegments } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppSpacing, AppTypography } from '@/theme/tokens';
 
@@ -21,6 +23,8 @@ interface ScreenShellProps {
   hideTitle?: boolean;
   /** Manually override top safe area inclusion. Auto-detects based on header presence if undefined. */
   safeAreaTop?: boolean;
+  /** Custom element to render on the right of the title */
+  headerRight?: ReactNode;
 }
 
 export function ScreenShell({
@@ -31,6 +35,7 @@ export function ScreenShell({
   refreshing = false,
   hideTitle = false,
   safeAreaTop,
+  headerRight,
 }: ScreenShellProps) {
   const theme = useThemeColors();
   const segments = useSegments();
@@ -70,7 +75,22 @@ export function ScreenShell({
       >
         {!hideTitle && title ? (
           <View style={styles.header}>
-            <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
+            <View style={styles.titleRow}>
+              <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
+              {headerRight !== undefined ? (
+                headerRight
+              ) : isHeaderHiddenTab ? (
+                <Pressable
+                  onPress={() => router.push('/search')}
+                  hitSlop={10}
+                  style={styles.searchButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Search"
+                >
+                  <Ionicons name="search-outline" size={24} color={theme.text} />
+                </Pressable>
+              ) : null}
+            </View>
             {subtitle ? (
               <Text style={[styles.subtitle, { color: theme.textMuted }]}>
                 {subtitle}
@@ -99,6 +119,14 @@ const styles = StyleSheet.create({
   },
   header: {
     gap: AppSpacing.xs,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  searchButton: {
+    padding: 4,
   },
   title: {
     ...AppTypography.display,

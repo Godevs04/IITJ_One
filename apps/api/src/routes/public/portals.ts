@@ -3,13 +3,14 @@ import { validateQuery } from '../../middleware/validate';
 import { campusQuerySchema } from '../../models/schemas';
 import { cached, cacheKey } from '../../cache';
 import { getPortals } from '../../store';
+import { asyncHandler } from '../../middleware/asyncHandler';
 
 const router = Router();
 
 router.get(
   '/',
   validateQuery(campusQuerySchema),
-  async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const { campus } = (req as Request & { validatedQuery: { campus: string } }).validatedQuery;
     const data = await cached(cacheKey('portals', campus), () => getPortals(campus));
     if (!data) {
@@ -17,7 +18,7 @@ router.get(
       return;
     }
     res.json(data);
-  },
+  }),
 );
 
 export default router;

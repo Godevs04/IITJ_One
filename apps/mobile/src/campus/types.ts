@@ -1,18 +1,8 @@
 import type { ComponentProps } from 'react';
 import type { Ionicons } from '@expo/vector-icons';
-
-export type LocationCategory =
-  | 'academic'
-  | 'department'
-  | 'hostel'
-  | 'food'
-  | 'banking'
-  | 'health'
-  | 'sports'
-  | 'office'
-  | 'gate'
-  | 'service'
-  | 'landmark';
+import type { LocationCategory } from '@iitj1/types';
+export { LOCATION_CATEGORIES as LOCATION_CATEGORY_VALUES } from '@iitj1/types';
+export type { LocationCategory };
 
 export type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -28,6 +18,7 @@ export interface CampusLocation {
   phone?: string;
   email?: string;
   website?: string;
+  aliases?: string[];
   isFavorite?: boolean;
 }
 

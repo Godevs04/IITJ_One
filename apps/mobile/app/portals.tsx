@@ -8,6 +8,7 @@ import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
 import type { PortalsDoc } from '@/types/campus';
 import { AppSpacing } from '@/theme/tokens';
+import { isHttpUrl } from '@/utils/urlSafety';
 
 export default function PortalsScreen() {
   const { syncing, sync } = useCampusSync(false);
@@ -32,7 +33,9 @@ export default function PortalsScreen() {
               key={link.url}
               title={link.name}
               subtitle={link.url}
-              onPress={() => void WebBrowser.openBrowserAsync(link.url)}
+              onPress={() => {
+                if (isHttpUrl(link.url)) void WebBrowser.openBrowserAsync(link.url);
+              }}
             />
           ))}
         </View>

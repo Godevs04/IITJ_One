@@ -1,14 +1,26 @@
 import { Request, Response, NextFunction } from 'express';
+import { log } from '../utils/logger';
+import type { RequestWithId } from './requestId';
+import { VersionConflictError } from '../store';
 
 export function errorHandler(
   err: Error,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction,
 ): void {
-  console.error('[error]', err.message);
+  log.error(err.message, {
+    requestId: (req as RequestWithId).requestId,
+    method: req.method,
+    path: req.originalUrl,
+    stack: err.stack,
+  });
   if (err.message === 'Not allowed by CORS') {
     res.status(403).json({ error: 'CORS not allowed' });
+    return;
+  }
+  if (err instanceof VersionConflictError) {
+    res.status(409).json({ error: err.message });
     return;
   }
   res.status(500).json({ error: 'Internal server error' });

@@ -120,10 +120,8 @@ export interface AppsDoc {
   apps: CampusApp[];
 }
 
-export interface MapDoc {
-  campusId: string;
-  locations: { name: string; category: string; lat: number; lng: number }[];
-}
+export type { MapLocationsDoc as MapDoc, CampusLocation, LocationCategory } from '@iitj1/types';
+export { LOCATION_CATEGORIES } from '@iitj1/types';
 
 export interface ServicesDoc {
   campusId: string;

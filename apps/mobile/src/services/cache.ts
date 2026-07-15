@@ -10,6 +10,17 @@ const VERSION_PREFIX = 'version:';
 const CACHE_PREFIX = 'cache:';
 const SETTING_PREFIX = 'setting:';
 
+/**
+ * Local storage schema version. Bump this and add an entry to MIGRATIONS
+ * whenever a stored shape changes — migrations run once on next launch and
+ * never delete existing data, only transform/add to it.
+ */
+const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION_KEY = 'schemaVersion';
+
+/** Keyed by the version being migrated FROM. Empty today — ready for future entries. */
+const MIGRATIONS: Record<number, () => void | Promise<void>> = {};
+
 const memory = new Map<string, string>();
 let hydrated = false;
 let hydratePromise: Promise<void> | null = null;
@@ -28,6 +39,21 @@ function persistDelete(key: string): void {
   void AsyncStorage.removeItem(storageKey(key));
 }
 
+/** Runs any pending migrations in order, then persists the current schema version. Never deletes data. */
+async function runMigrations(): Promise<void> {
+  const storedVersion = getSetting<number>(SCHEMA_VERSION_KEY, 0);
+  if (storedVersion >= SCHEMA_VERSION) return;
+
+  for (let v = storedVersion; v < SCHEMA_VERSION; v++) {
+    const migrate = MIGRATIONS[v];
+    if (migrate) {
+      await migrate();
+    }
+  }
+
+  setSetting(SCHEMA_VERSION_KEY, SCHEMA_VERSION);
+}
+
 export async function initCache(): Promise<void> {
   if (hydrated) return;
   if (hydratePromise) return hydratePromise;
@@ -35,17 +61,15 @@ export async function initCache(): Promise<void> {
   hydratePromise = (async () => {
     const allKeys = await AsyncStorage.getAllKeys();
     const ours = allKeys.filter((key) => key.startsWith(STORAGE_PREFIX));
-    if (ours.length === 0) {
-      hydrated = true;
-      return;
-    }
-
-    const pairs = await AsyncStorage.multiGet(ours);
-    for (const [fullKey, value] of pairs) {
-      if (value != null) {
-        memory.set(fullKey.slice(STORAGE_PREFIX.length), value);
+    if (ours.length > 0) {
+      const pairs = await AsyncStorage.multiGet(ours);
+      for (const [fullKey, value] of pairs) {
+        if (value != null) {
+          memory.set(fullKey.slice(STORAGE_PREFIX.length), value);
+        }
       }
     }
+    await runMigrations();
     hydrated = true;
   })();
 

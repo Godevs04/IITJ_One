@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { requireAuth, AuthRequest } from '../../middleware/auth';
 import { adminCors } from '../../middleware/cors';
 import { requireMongoForAdminWrites } from '../../middleware/requireMongoWrite';
@@ -17,14 +17,23 @@ import laundryRouter from './laundry';
 import wifiRouter from './wifi';
 import erickshawRouter from './erickshaw';
 import mealWindowsRouter from './mealWindows';
+import holidaysRouter from './holidays';
+import transportAlertsRouter from './transportAlerts';
+import temporaryTransportScheduleRouter from './temporaryTransportSchedule';
 import pushRouter from './push';
 import auditRouter from './audit';
 import suggestionsRouter from './suggestions';
 import uploadsRouter from './uploads';
+import adminsRouter from './admins';
 
 const router = Router();
 
 router.use(adminCors);
+// Admin JSON is authenticated/sensitive — never let a browser or proxy cache it.
+router.use((_req: Request, res: Response, next: NextFunction) => {
+  res.setHeader('Cache-Control', 'private, no-store');
+  next();
+});
 router.use(authRouter);
 
 router.use(requireAuth);
@@ -56,8 +65,12 @@ router.use('/laundry', laundryRouter);
 router.use('/wifi', wifiRouter);
 router.use('/erickshaw', erickshawRouter);
 router.use('/mealWindows', mealWindowsRouter);
+router.use('/holidays', holidaysRouter);
+router.use('/transportAlerts', transportAlertsRouter);
+router.use('/temporaryTransportSchedule', temporaryTransportScheduleRouter);
 router.use('/push', pushRouter);
 router.use('/audit', auditRouter);
 router.use('/suggestions', suggestionsRouter);
+router.use('/admins', adminsRouter);
 
 export default router;

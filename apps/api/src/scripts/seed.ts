@@ -5,26 +5,9 @@ import { config } from '../config';
 import { connectDb, collections, disconnectDb } from '../db';
 import { loadMenuFromFiles, loadTransportFromFile } from '../services/parsers';
 import { initFallbackStore, getFallbackState } from '../store/fallback';
-import type { MetaVersions } from '../types';
+import { defaultVersions } from '../constants/defaultVersions';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-
-const defaultVersions = (): MetaVersions => ({
-  menu: 1,
-  notices: 1,
-  transport: 7,
-  calendar: 1,
-  portals: 1,
-  apps: 1,
-  map: 1,
-  services: 1,
-  emergency: 1,
-  about: 1,
-  laundry: 1,
-  wifi: 1,
-  erickshaw: 1,
-  mealWindows: 1,
-});
 
 async function seedMongo(): Promise<void> {
   const campusId = config.campusId;
@@ -86,7 +69,9 @@ async function seedMongo(): Promise<void> {
       email: config.adminBootstrap.email,
       passwordHash,
       name: config.adminBootstrap.name,
-      role: 'admin',
+      role: 'superadmin',
+      active: true,
+      tokenVersion: 0,
     });
     console.log(`[seed] Admin created: ${config.adminBootstrap.email}`);
   } else {
@@ -104,7 +89,9 @@ async function seedFallback(): Promise<void> {
     email: config.adminBootstrap.email,
     passwordHash,
     name: config.adminBootstrap.name,
-    role: 'admin',
+    role: 'superadmin',
+    active: true,
+    tokenVersion: 0,
   });
   console.log('[seed] Fallback in-memory store seeded (MongoDB unavailable)');
   console.log(`[seed] Admin: ${config.adminBootstrap.email}`);

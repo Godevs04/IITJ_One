@@ -13,6 +13,9 @@ export const MODULE_NAMES = [
   'wifi',
   'erickshaw',
   'mealWindows',
+  'holidays',
+  'transportAlerts',
+  'temporaryTransportSchedule',
 ] as const;
 
 export type ModuleName = (typeof MODULE_NAMES)[number];

@@ -8,6 +8,7 @@ import { useCampusModule } from '@/hooks/useCampusModule';
 import type { AppsDoc, CampusApp } from '@/types/campus';
 import { AppSpacing, AppRadius, AppTypography } from '@/theme/tokens';
 import { useThemeColors } from '@/theme/ThemeProvider';
+import { isHttpUrl, isSafeDeepLink } from '@/utils/urlSafety';
 
 export default function AppsScreen() {
   const { syncing, sync } = useCampusSync(false);
@@ -25,7 +26,7 @@ export default function AppsScreen() {
 
   // Smart launch flow: try deep link first, then fall back to platform app store, then website
   const handleLaunchApp = async (app: CampusApp) => {
-    if (app.deepLink) {
+    if (app.deepLink && isSafeDeepLink(app.deepLink)) {
       const canOpen = await Linking.canOpenURL(app.deepLink);
       if (canOpen) {
         void Linking.openURL(app.deepLink);
@@ -34,9 +35,9 @@ export default function AppsScreen() {
     }
 
     const storeUrl = Platform.OS === 'ios' ? app.iosUrl : app.androidUrl;
-    if (storeUrl) {
+    if (isHttpUrl(storeUrl)) {
       void Linking.openURL(storeUrl);
-    } else if (app.website) {
+    } else if (isHttpUrl(app.website)) {
       void Linking.openURL(app.website);
     }
   };
@@ -152,7 +153,7 @@ export default function AppsScreen() {
                 ) : null}
 
                 <View style={styles.buttonRow}>
-                  {app.website ? (
+                  {isHttpUrl(app.website) ? (
                     <Pressable
                       onPress={() => Linking.openURL(app.website!)}
                       style={({ pressed }) => [

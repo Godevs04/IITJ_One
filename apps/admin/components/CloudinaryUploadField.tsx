@@ -100,7 +100,7 @@ export function CloudinaryUploadField({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={value}
-            alt="Notice preview"
+            alt={`${label} preview`}
             className="mt-1 h-28 w-auto rounded-xl border border-border object-cover"
           />
         ) : null}

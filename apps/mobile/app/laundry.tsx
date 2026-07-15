@@ -100,6 +100,15 @@ export default function LaundryScreen() {
     [],
   );
 
+  // Re-sync scheduled notifications whenever campus data syncs (covers app
+  // restart / returning to the screen after the admin changed this hostel's
+  // schedule while a reminder was already enabled — cancel+recreate is cheap).
+  useEffect(() => {
+    const current = prefsRef.current;
+    if (!current.hostel || !current.reminderEnabled) return;
+    void applyReminders(current, current.hostel);
+  }, [revision, applyReminders]);
+
   const selectHostel = useCallback(
     (hostel: Hostel) => {
       setPickerOpen(false);
@@ -193,6 +202,8 @@ export default function LaundryScreen() {
             value={prefs.reminderEnabled}
             onValueChange={(v) => void toggleReminder(v)}
             trackColor={{ false: theme.border, true: theme.primary }}
+            thumbColor={prefs.reminderEnabled ? '#ffffff' : '#f4f3f4'}
+            ios_backgroundColor={theme.border}
             disabled={!prefs.hostel}
           />
         </View>

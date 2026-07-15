@@ -35,8 +35,12 @@ export default function NotesScreen() {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
-          await deleteNote(note.id);
-          await load();
+          try {
+            await deleteNote(note.id);
+            await load();
+          } catch {
+            Alert.alert('Could not delete', 'Something went wrong. Please try again.');
+          }
         },
       },
     ]);

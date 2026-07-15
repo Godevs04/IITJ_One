@@ -1,22 +1,69 @@
-import type { CalendarDoc, TransportDoc, TransportTrip } from '@/types/campus';
+import type {
+  CalendarDoc,
+  TransportDoc,
+  TransportTrip,
+  HolidaysDoc,
+  Holiday,
+  TransportAlertsDoc,
+  TransportAlert,
+  TemporaryTransportScheduleDoc,
+  TemporaryTransportSchedule,
+} from '@/types/campus';
 import { nowMinutes, parseTimeToMinutes, todayDayName } from '@/utils/date';
 import type { TripStatus, TripWithStatus } from '../models/BusTypes';
 import { parseRouteStops } from '../utils/coordinates';
 
-function isHolidayToday(calendar: CalendarDoc | null): boolean {
-  if (!calendar) return false;
-  const today = new Date().toISOString().slice(0, 10);
-  return calendar.events.some(
-    (e) =>
-      e.type === 'holiday' &&
-      today >= e.startDate.slice(0, 10) &&
-      today <= e.endDate.slice(0, 10),
-  );
+export function isAlertActive(alert: TransportAlert, now: Date = new Date()): boolean {
+  if (!alert.isActive) return false;
+  const start = new Date(alert.startDate);
+  const end = new Date(alert.endDate);
+  return now >= start && now <= end;
 }
 
-export function getScheduleKey(calendar: CalendarDoc | null): 'mon-sat' | 'sun-holiday' {
+export function isScheduleOverridden(alerts?: TransportAlertsDoc | null, now: Date = new Date()): boolean {
+  if (!alerts?.alerts) return false;
+  return alerts.alerts.some((a) => a.overrideSchedule && isAlertActive(a, now));
+}
+
+function mapTemporaryTrip(temp: TemporaryTransportSchedule): TransportTrip {
+  const startMin = parseTimeToMinutes(temp.departureTime);
+  const endMin = startMin + 40; // Default 40-minute duration
+  const formatMins = (totalMins: number): string => {
+    const mins = totalMins % 1440;
+    const hours = Math.floor(mins / 60);
+    const m = mins % 60;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(hours)}:${pad(m)}`;
+  };
+  const direction: 'departure' | 'arrival' = temp.to.toLowerCase().includes('iitj') ? 'arrival' : 'departure';
+
+  return {
+    bus: temp.busNumber,
+    startTime: temp.departureTime,
+    from: temp.from,
+    to: temp.to,
+    endTime: formatMins(endMin),
+    route: temp.route,
+    direction,
+  };
+}
+
+function isHolidayToday(holidays?: HolidaysDoc | null): boolean {
+  if (!holidays?.holidays) return false;
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const today = `${year}-${month}-${day}`;
+  return holidays.holidays.some((h: Holiday) => h.isActive && h.date === today);
+}
+
+export function getScheduleKey(
+  calendar: CalendarDoc | null,
+  holidays?: HolidaysDoc | null
+): 'mon-sat' | 'sun-holiday' {
   const day = new Date().getDay();
-  if (day === 0 || isHolidayToday(calendar)) return 'sun-holiday';
+  if (day === 0 || isHolidayToday(holidays)) return 'sun-holiday';
   return 'mon-sat';
 }
 
@@ -52,8 +99,21 @@ export function getTripsForDayType(
   return trips.sort((a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime));
 }
 
-export function getTripsForToday(transport: TransportDoc, calendar: CalendarDoc | null): TransportTrip[] {
-  const key = getScheduleKey(calendar);
+export function getTripsForToday(
+  transport: TransportDoc,
+  calendar: CalendarDoc | null,
+  holidays?: HolidaysDoc | null,
+  alerts?: TransportAlertsDoc | null,
+  tempSchedule?: TemporaryTransportScheduleDoc | null,
+): TransportTrip[] {
+  if (isScheduleOverridden(alerts)) {
+    if (!tempSchedule?.schedules) return [];
+    return tempSchedule.schedules
+      .filter((s) => s.enabled)
+      .map(mapTemporaryTrip)
+      .sort((a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime));
+  }
+  const key = getScheduleKey(calendar, holidays);
   return getTripsForDayType(transport, calendar, key);
 }
 
@@ -114,11 +174,14 @@ export function evaluateTripStatus(trip: TransportTrip): {
 
 export function getTripsWithStatus(
   transport: TransportDoc | null,
-  calendar: CalendarDoc | null
+  calendar: CalendarDoc | null,
+  holidays?: HolidaysDoc | null,
+  alerts?: TransportAlertsDoc | null,
+  tempSchedule?: TemporaryTransportScheduleDoc | null,
 ): TripWithStatus[] {
   if (!transport) return [];
 
-  const trips = getTripsForToday(transport, calendar);
+  const trips = getTripsForToday(transport, calendar, holidays, alerts, tempSchedule);
   return trips.map((trip) => {
     const evalResult = evaluateTripStatus(trip);
     const stops = parseRouteStops(trip.route, trip.from, trip.to);

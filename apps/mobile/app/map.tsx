@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
-import { Alert, Share, StyleSheet, TextInput, View, FlatList, Pressable, Text, ScrollView, Modal } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { Alert, Share, StyleSheet, TextInput, View, FlatList, Pressable, Text, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useThemeColors } from '@/theme/ThemeProvider';
@@ -150,7 +151,7 @@ function LocationDetailCard({
       )}
 
       <View style={styles.actionsRow}>
-        {(location.latitude || location.plusCode) && (
+        {((location.latitude && location.longitude) || location.plusCode) && (
           <Pressable
             onPress={handleOpenMaps}
             style={({ pressed }) => [
@@ -201,6 +202,7 @@ function LocationDetailCard({
 export default function MapScreen() {
   const theme = useThemeColors();
   const { revision } = useCampusData();
+  const { focus } = useLocalSearchParams<{ focus?: string }>();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<Set<LocationCategory>>(new Set());
@@ -216,6 +218,15 @@ export default function MapScreen() {
     void favoritesStore.getFavorites().then(setFavorites);
     void recentSearchesStore.getRecentSearches().then(setRecentSearches);
   }, []);
+
+  // Deep-linked from Global Search — prefill the search box with the target location.
+  useEffect(() => {
+    if (!focus) return;
+    const location = campusDirectoryServiceProvider.getLocationById(focus);
+    if (location) {
+      setSearchQuery(location.name);
+    }
+  }, [focus]);
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) {
@@ -307,38 +318,36 @@ export default function MapScreen() {
   return (
     <ScreenShell hideTitle subtitle="Campus Directory">
       {/* Search Bar */}
-      <View style={[styles.searchBar, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-        <Ionicons name="search-outline" size={18} color={theme.textMuted} />
-        <TextInput
-          placeholder="Search by name, alias, address..."
-          placeholderTextColor={theme.textMuted}
-          value={searchQuery}
-          onChangeText={handleSearch}
-          onFocus={() => setIsSearchFocused(true)}
-          onBlur={() => setIsSearchFocused(false)}
-          style={[styles.searchInput, { color: theme.text }]}
-        />
-        {searchQuery ? (
-          <Pressable onPress={() => setSearchQuery('')}>
-            <Ionicons name="close-outline" size={18} color={theme.textMuted} />
-          </Pressable>
-        ) : null}
-      </View>
-
-      {/* Search Suggestions Dropdown */}
-      {isSearchFocused && searchQuery.trim() && (
-        <Modal transparent visible animationType="none">
-          <Pressable
-            style={styles.modalOverlay}
-            onPress={() => setIsSearchFocused(false)}
+      <View style={styles.searchBarWrapper}>
+        <View style={[styles.searchBar, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <Ionicons name="search-outline" size={18} color={theme.textMuted} />
+          <TextInput
+            placeholder="Search by name, alias, address..."
+            placeholderTextColor={theme.textMuted}
+            value={searchQuery}
+            onChangeText={handleSearch}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
+            style={[styles.searchInput, { color: theme.text }]}
           />
+          {searchQuery ? (
+            <Pressable onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-outline" size={18} color={theme.textMuted} />
+            </Pressable>
+          ) : null}
+        </View>
+
+        {/* Search Suggestions Dropdown — anchored directly under the search bar */}
+        {isSearchFocused && searchQuery.trim() && searchSuggestions.length > 0 && (
           <View style={[styles.suggestionsDropdown, { backgroundColor: theme.surface, borderColor: theme.border }]}>
             <FlatList
               data={searchSuggestions}
               keyExtractor={(item) => item.id}
+              keyboardShouldPersistTaps="handled"
               renderItem={({ item }) => (
                 <Pressable
                   onPress={() => {
+                    handleSearch(item.name);
                     setIsSearchFocused(false);
                   }}
                   style={({ pressed }) => [
@@ -370,8 +379,8 @@ export default function MapScreen() {
               )}
             />
           </View>
-        </Modal>
-      )}
+        )}
+      </View>
 
       {/* Recent Searches */}
       {!isSearchActive && isSearchFocused && recentSearches.length > 0 && (
@@ -536,6 +545,10 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
+  searchBarWrapper: {
+    position: 'relative',
+    zIndex: 20,
+  },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -551,17 +564,21 @@ const styles = StyleSheet.create({
     ...AppTypography.body,
     paddingVertical: AppSpacing.xs,
   },
-  modalOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'transparent',
-  },
   suggestionsDropdown: {
-    marginHorizontal: AppSpacing.lg,
-    marginTop: AppSpacing.xs,
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    marginTop: -AppSpacing.sm,
     borderRadius: AppRadius.lg,
     borderWidth: 1,
     maxHeight: 300,
-    zIndex: 1000,
+    zIndex: 20,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
   },
   suggestionItem: {
     flexDirection: 'row',

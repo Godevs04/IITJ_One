@@ -4,12 +4,14 @@ import { calendarPutSchema } from '../../models/schemas';
 import { AuthRequest } from '../../middleware/auth';
 import { putCalendar } from '../../store';
 import type { CalendarDoc } from '../../types';
+import { asyncHandler } from '../../middleware/asyncHandler';
+import { readExpectedVersion } from '../../utils/expectedVersion';
 
 const router = Router();
 
-router.put('/', validateBody(calendarPutSchema), async (req: AuthRequest, res: Response) => {
-  await putCalendar(req.body as CalendarDoc, req.admin!.email);
+router.put('/', validateBody(calendarPutSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
+  await putCalendar(req.body as CalendarDoc, req.admin!.email, readExpectedVersion(req));
   res.json({ success: true });
-});
+}));
 
 export default router;

@@ -22,6 +22,9 @@ export const SYNC_MODULES = [
   'wifi',
   'erickshaw',
   'mealWindows',
+  'holidays',
+  'transportAlerts',
+  'temporaryTransportSchedule',
 ] as const;
 
 export type SyncModule = (typeof SYNC_MODULES)[number];
@@ -42,6 +45,9 @@ const VERSION_KEY: Record<SyncModule, string> = {
   wifi: 'wifi',
   erickshaw: 'erickshaw',
   mealWindows: 'mealWindows',
+  holidays: 'holidays',
+  transportAlerts: 'transportAlerts',
+  temporaryTransportSchedule: 'temporaryTransportSchedule',
 };
 
 export interface SyncResult {

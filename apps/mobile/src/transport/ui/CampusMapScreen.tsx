@@ -81,7 +81,7 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
         openStopInMaps(data.name, data.lat, data.lng);
       }
     } catch (e) {
-      console.log('Error parsing map message', e);
+      console.error('Error parsing map message', e);
     }
   };
 

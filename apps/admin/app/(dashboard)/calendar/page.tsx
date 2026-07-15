@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ApiError, apiFetch, campusId, fetchCampusModule } from '@/lib/api';
+import { ApiError, campusId, fetchCampusModule, fetchModuleVersion, putAdminModule } from '@/lib/api';
 import { asRecord, stripMeta } from '@/lib/sanitize';
 import { Button } from '@/components/Button';
 import { Field, Input, Select } from '@/components/Field';
@@ -26,16 +26,21 @@ export default function CalendarAdminPage() {
   const [saving, setSaving] = useState(false);
   const [semester, setSemester] = useState('');
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [version, setVersion] = useState<number | undefined>();
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchCampusModule<CalendarDoc>('/calendar');
+      const [data, moduleVersion] = await Promise.all([
+        fetchCampusModule<CalendarDoc>('/calendar'),
+        fetchModuleVersion('calendar'),
+      ]);
       const cleaned = asRecord(data)
         ? (stripMeta(data as unknown as Record<string, unknown>) as unknown as CalendarDoc)
         : null;
       setSemester(cleaned?.semester ?? '');
       setEvents(cleaned?.events?.length ? cleaned.events : []);
+      setVersion(moduleVersion);
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) {
         setSemester('');
@@ -84,10 +89,15 @@ export default function CalendarAdminPage() {
           endDate: e.endDate,
         })),
       };
-      await apiFetch('/admin/calendar', { method: 'PUT', body });
+      await putAdminModule('/admin/calendar', body, version);
       push('success', 'Calendar published', 'Mobile sync will pick up the new version.');
       await load();
     } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        push('error', 'Changed elsewhere', 'Someone else saved this in the meantime — reloaded the latest version.');
+        await load();
+        return;
+      }
       push(
         'error',
         'Save failed',

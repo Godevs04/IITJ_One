@@ -19,7 +19,6 @@ import {
 } from './fallback';
 import type {
   MetaDoc,
-  MetaVersions,
   MenuDoc,
   NoticeDoc,
   TransportDoc,
@@ -38,24 +37,11 @@ import type {
   WifiDoc,
   ErickshawDoc,
   MealWindowsDoc,
+  HolidaysDoc,
+  TransportAlertsDoc,
+  TemporaryTransportScheduleDoc,
 } from '../types';
-
-const defaultVersions = (): MetaVersions => ({
-  menu: 1,
-  notices: 1,
-  transport: 6,
-  calendar: 1,
-  portals: 1,
-  apps: 1,
-  map: 1,
-  services: 1,
-  emergency: 1,
-  about: 1,
-  laundry: 1,
-  wifi: 1,
-  erickshaw: 1,
-  mealWindows: 1,
-});
+import { defaultVersions } from '../constants/defaultVersions';
 
 export async function ensureMeta(campusId: string): Promise<MetaDoc> {
   if (isDbConnected()) {
@@ -67,6 +53,30 @@ export async function ensureMeta(campusId: string): Promise<MetaDoc> {
   }
   initFallbackStore();
   return fallbackGetMeta(campusId) ?? { campusId, versions: defaultVersions(), updatedAt: new Date() };
+}
+
+/**
+ * Audit entry for events that aren't a synced content module (admin account
+ * lifecycle, login/logout) — unlike bumpVersion, this never touches
+ * meta.versions or invalidates module caches.
+ */
+export async function logAudit(
+  adminEmail: string,
+  action: string,
+  diffSummary: string,
+  module = 'admin',
+): Promise<void> {
+  if (isDbConnected()) {
+    await collections.auditLog().insertOne({
+      adminEmail,
+      action,
+      module,
+      timestamp: new Date(),
+      diffSummary,
+    });
+  } else {
+    fallbackAddAudit({ adminEmail, action, module, timestamp: new Date(), diffSummary });
+  }
 }
 
 export async function bumpVersion(
@@ -102,6 +112,48 @@ export async function getMeta(campusId: string): Promise<MetaDoc> {
   return ensureMeta(campusId);
 }
 
+export class VersionConflictError extends Error {
+  constructor(module: ModuleName, reason: 'missing' | 'stale' = 'stale') {
+    super(
+      reason === 'missing'
+        ? `Missing X-Expected-Version header for ${module} — reload and try again.`
+        : `This ${module} document was changed by someone else — reload and try again.`,
+    );
+    this.name = 'VersionConflictError';
+  }
+}
+
+/**
+ * Optimistic-concurrency guard for whole-doc PUT modules: the caller must
+ * supply the version it loaded, and it must still match the current
+ * version, or the write is rejected instead of silently clobbering a
+ * concurrent edit. A missing header is treated as a conflict rather than
+ * "skip the check" for any module that already has a version — but a
+ * module can genuinely have no version yet: defaultVersions() only seeds
+ * every key for a brand-new campus's meta document, so a module added to
+ * the schema after a campus's meta doc already existed has no
+ * meta.versions[module] entry at all (verified live — 'holidays',
+ * 'transportAlerts', and 'temporaryTransportSchedule' had none on the
+ * existing seeded campus) until its first successful save. Blocking a
+ * missing header unconditionally would make that first save permanently
+ * impossible, since there's no version for a real client to have loaded.
+ */
+async function assertVersionMatches(
+  module: ModuleName,
+  campusId: string,
+  expectedVersion?: number,
+): Promise<void> {
+  const meta = await ensureMeta(campusId);
+  const currentVersion = meta.versions[module];
+  if (expectedVersion == null) {
+    if (currentVersion == null) return;
+    throw new VersionConflictError(module, 'missing');
+  }
+  if (currentVersion !== expectedVersion) {
+    throw new VersionConflictError(module, 'stale');
+  }
+}
+
 export async function getMenu(campusId: string): Promise<MenuDoc | null> {
   if (isDbConnected()) {
     return collections.menus().findOne({ campusId });
@@ -111,7 +163,12 @@ export async function getMenu(campusId: string): Promise<MenuDoc | null> {
   return s.menu.campusId === campusId ? s.menu : null;
 }
 
-export async function putMenu(doc: MenuDoc, adminEmail: string): Promise<void> {
+export async function putMenu(
+  doc: MenuDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('menu', doc.campusId, expectedVersion);
   if (isDbConnected()) {
     await collections.menus().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
   } else {
@@ -129,7 +186,12 @@ export async function getTransport(campusId: string): Promise<TransportDoc | nul
   return s.transport.campusId === campusId ? s.transport : null;
 }
 
-export async function putTransport(doc: TransportDoc, adminEmail: string): Promise<void> {
+export async function putTransport(
+  doc: TransportDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('transport', doc.campusId, expectedVersion);
   if (isDbConnected()) {
     await collections.transport().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
   } else {
@@ -158,20 +220,27 @@ export async function getNotices(campusId: string, category?: string): Promise<N
 }
 
 /** Admin list — includes scheduled, expired, and soft-deleted notices. */
-export async function getAllNotices(campusId: string, category?: string): Promise<NoticeDoc[]> {
+export async function getAllNotices(
+  campusId: string,
+  category?: string,
+  page = 1,
+  pageSize = 20,
+): Promise<{ items: NoticeDoc[]; total: number }> {
+  const skip = (page - 1) * pageSize;
   if (isDbConnected()) {
     const filter: Record<string, unknown> = { campusId };
     if (category) filter.category = category;
-    return collections
-      .notices()
-      .find(filter)
-      .sort({ publishedAt: -1 })
-      .toArray();
+    const [items, total] = await Promise.all([
+      collections.notices().find(filter).sort({ publishedAt: -1 }).skip(skip).limit(pageSize).toArray(),
+      collections.notices().countDocuments(filter),
+    ]);
+    return { items, total };
   }
   initFallbackStore();
-  return getFallbackState()
+  const all = getFallbackState()
     .notices.filter((n) => n.campusId === campusId && (!category || n.category === category))
     .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
+  return { items: all.slice(skip, skip + pageSize), total: all.length };
 }
 
 export async function createNotice(notice: NoticeDoc, adminEmail: string): Promise<NoticeDoc> {
@@ -251,7 +320,12 @@ export async function getCalendar(campusId: string): Promise<CalendarDoc | null>
   return getFallbackState().calendar;
 }
 
-export async function putCalendar(doc: CalendarDoc, adminEmail: string): Promise<void> {
+export async function putCalendar(
+  doc: CalendarDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('calendar', doc.campusId, expectedVersion);
   if (isDbConnected()) {
     await collections.calendar().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
   } else {
@@ -266,7 +340,12 @@ export async function getPortals(campusId: string): Promise<PortalsDoc | null> {
   return getFallbackState().portals;
 }
 
-export async function putPortals(doc: PortalsDoc, adminEmail: string): Promise<void> {
+export async function putPortals(
+  doc: PortalsDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('portals', doc.campusId, expectedVersion);
   if (isDbConnected()) {
     await collections.portals().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
   } else {
@@ -281,7 +360,12 @@ export async function getApps(campusId: string): Promise<AppsDoc | null> {
   return getFallbackState().apps;
 }
 
-export async function putApps(doc: AppsDoc, adminEmail: string): Promise<void> {
+export async function putApps(
+  doc: AppsDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('apps', doc.campusId, expectedVersion);
   if (isDbConnected()) {
     await collections.apps().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
   } else {
@@ -296,7 +380,12 @@ export async function getMap(campusId: string): Promise<MapLocationsDoc | null> 
   return getFallbackState().mapLocations;
 }
 
-export async function putMap(doc: MapLocationsDoc, adminEmail: string): Promise<void> {
+export async function putMap(
+  doc: MapLocationsDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('map', doc.campusId, expectedVersion);
   if (isDbConnected()) {
     await collections.mapLocations().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
   } else {
@@ -330,7 +419,12 @@ export async function getServices(
   return { ...doc, entries };
 }
 
-export async function putServices(doc: ServicesDoc, adminEmail: string): Promise<void> {
+export async function putServices(
+  doc: ServicesDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('services', doc.campusId, expectedVersion);
   if (isDbConnected()) {
     await collections.services().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
   } else {
@@ -345,7 +439,12 @@ export async function getEmergency(campusId: string): Promise<EmergencyDoc | nul
   return getFallbackState().emergency;
 }
 
-export async function putEmergency(doc: EmergencyDoc, adminEmail: string): Promise<void> {
+export async function putEmergency(
+  doc: EmergencyDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('emergency', doc.campusId, expectedVersion);
   if (isDbConnected()) {
     await collections.emergency().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
   } else {
@@ -360,7 +459,12 @@ export async function getAbout(campusId: string): Promise<AboutDoc | null> {
   return getFallbackState().about;
 }
 
-export async function putAbout(doc: AboutDoc, adminEmail: string): Promise<void> {
+export async function putAbout(
+  doc: AboutDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('about', doc.campusId, expectedVersion);
   if (isDbConnected()) {
     await collections.about().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
   } else {
@@ -375,7 +479,12 @@ export async function getLaundry(campusId: string): Promise<LaundryDoc | null> {
   return getFallbackState().laundry;
 }
 
-export async function putLaundry(doc: LaundryDoc, adminEmail: string): Promise<void> {
+export async function putLaundry(
+  doc: LaundryDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('laundry', doc.campusId, expectedVersion);
   if (isDbConnected()) {
     await collections.laundry().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
   } else {
@@ -390,7 +499,12 @@ export async function getWifi(campusId: string): Promise<WifiDoc | null> {
   return getFallbackState().wifi;
 }
 
-export async function putWifi(doc: WifiDoc, adminEmail: string): Promise<void> {
+export async function putWifi(
+  doc: WifiDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('wifi', doc.campusId, expectedVersion);
   if (isDbConnected()) {
     await collections.wifi().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
   } else {
@@ -405,7 +519,12 @@ export async function getErickshaw(campusId: string): Promise<ErickshawDoc | nul
   return getFallbackState().erickshaw;
 }
 
-export async function putErickshaw(doc: ErickshawDoc, adminEmail: string): Promise<void> {
+export async function putErickshaw(
+  doc: ErickshawDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('erickshaw', doc.campusId, expectedVersion);
   if (isDbConnected()) {
     await collections.erickshaw().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
   } else {
@@ -420,7 +539,12 @@ export async function getMealWindows(campusId: string): Promise<MealWindowsDoc |
   return getFallbackState().mealWindows;
 }
 
-export async function putMealWindows(doc: MealWindowsDoc, adminEmail: string): Promise<void> {
+export async function putMealWindows(
+  doc: MealWindowsDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('mealWindows', doc.campusId, expectedVersion);
   if (isDbConnected()) {
     await collections.mealWindows().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
   } else {
@@ -438,13 +562,22 @@ export async function addSuggestion(doc: SuggestionDoc): Promise<SuggestionDoc> 
   return fallbackAddSuggestion(withStatus);
 }
 
-export async function getSuggestions(status?: SuggestionDoc['status']): Promise<SuggestionDoc[]> {
+export async function getSuggestions(
+  status?: SuggestionDoc['status'],
+  page = 1,
+  pageSize = 20,
+): Promise<{ items: SuggestionDoc[]; total: number }> {
+  const skip = (page - 1) * pageSize;
   if (isDbConnected()) {
     const filter = status ? { status } : {};
-    return collections.suggestions().find(filter).sort({ submittedAt: -1 }).toArray();
+    const [items, total] = await Promise.all([
+      collections.suggestions().find(filter).sort({ submittedAt: -1 }).skip(skip).limit(pageSize).toArray(),
+      collections.suggestions().countDocuments(filter),
+    ]);
+    return { items, total };
   }
-  const all = fallbackGetSuggestions();
-  return status ? all.filter((s) => (s.status ?? 'new') === status) : all;
+  const all = fallbackGetSuggestions().filter((s) => !status || (s.status ?? 'new') === status);
+  return { items: all.slice(skip, skip + pageSize), total: all.length };
 }
 
 export async function updateSuggestionStatus(
@@ -469,11 +602,20 @@ export async function updateSuggestionStatus(
   return s.suggestions[idx];
 }
 
-export async function getAuditLog(limit = 100): Promise<AuditLogDoc[]> {
+export async function getAuditLog(
+  page = 1,
+  pageSize = 50,
+): Promise<{ items: AuditLogDoc[]; total: number }> {
+  const skip = (page - 1) * pageSize;
   if (isDbConnected()) {
-    return collections.auditLog().find().sort({ timestamp: -1 }).limit(limit).toArray();
+    const [items, total] = await Promise.all([
+      collections.auditLog().find().sort({ timestamp: -1 }).skip(skip).limit(pageSize).toArray(),
+      collections.auditLog().countDocuments(),
+    ]);
+    return { items, total };
   }
-  return fallbackGetAudit().slice(0, limit);
+  const all = fallbackGetAudit();
+  return { items: all.slice(skip, skip + pageSize), total: all.length };
 }
 
 export async function findAdminByEmail(email: string): Promise<AdminDoc | null> {
@@ -491,6 +633,100 @@ export async function upsertAdmin(admin: AdminDoc): Promise<void> {
   }
 }
 
+export async function getAdmins(): Promise<AdminDoc[]> {
+  if (isDbConnected()) {
+    return collections.admins().find().sort({ email: 1 }).toArray();
+  }
+  return [...getFallbackState().admins];
+}
+
+export async function bumpAdminTokenVersion(email: string): Promise<void> {
+  const admin = await findAdminByEmail(email);
+  if (!admin) return;
+  await upsertAdmin({ ...admin, tokenVersion: (admin.tokenVersion ?? 0) + 1 });
+}
+
+export async function setAdminActive(email: string, active: boolean): Promise<AdminDoc | null> {
+  const admin = await findAdminByEmail(email);
+  if (!admin) return null;
+  const updated: AdminDoc = {
+    ...admin,
+    active,
+    tokenVersion: active ? admin.tokenVersion ?? 0 : (admin.tokenVersion ?? 0) + 1,
+  };
+  await upsertAdmin(updated);
+  return updated;
+}
+
 export function getStorageMode(): 'mongodb' | 'fallback' {
   return isDbConnected() ? 'mongodb' : 'fallback';
+}
+
+export async function getHolidays(campusId: string): Promise<HolidaysDoc | null> {
+  if (isDbConnected()) {
+    return collections.holidays().findOne({ campusId });
+  }
+  initFallbackStore();
+  const s = getFallbackState();
+  return s.holidays?.campusId === campusId ? s.holidays : null;
+}
+
+export async function putHolidays(
+  doc: HolidaysDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('holidays', doc.campusId, expectedVersion);
+  if (isDbConnected()) {
+    await collections.holidays().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
+  } else {
+    getFallbackState().holidays = doc;
+  }
+  await bumpVersion('holidays', doc.campusId, adminEmail, 'update', 'Holidays updated');
+}
+
+export async function getTransportAlerts(campusId: string): Promise<TransportAlertsDoc | null> {
+  if (isDbConnected()) {
+    return collections.transportAlerts().findOne({ campusId });
+  }
+  initFallbackStore();
+  const s = getFallbackState();
+  return s.transportAlerts?.campusId === campusId ? s.transportAlerts : null;
+}
+
+export async function putTransportAlerts(
+  doc: TransportAlertsDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('transportAlerts', doc.campusId, expectedVersion);
+  if (isDbConnected()) {
+    await collections.transportAlerts().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
+  } else {
+    getFallbackState().transportAlerts = doc;
+  }
+  await bumpVersion('transportAlerts', doc.campusId, adminEmail, 'update', 'Transport alerts updated');
+}
+
+export async function getTemporaryTransportSchedule(campusId: string): Promise<TemporaryTransportScheduleDoc | null> {
+  if (isDbConnected()) {
+    return collections.temporaryTransportSchedule().findOne({ campusId });
+  }
+  initFallbackStore();
+  const s = getFallbackState();
+  return s.temporaryTransportSchedule?.campusId === campusId ? s.temporaryTransportSchedule : null;
+}
+
+export async function putTemporaryTransportSchedule(
+  doc: TemporaryTransportScheduleDoc,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<void> {
+  await assertVersionMatches('temporaryTransportSchedule', doc.campusId, expectedVersion);
+  if (isDbConnected()) {
+    await collections.temporaryTransportSchedule().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
+  } else {
+    getFallbackState().temporaryTransportSchedule = doc;
+  }
+  await bumpVersion('temporaryTransportSchedule', doc.campusId, adminEmail, 'update', 'Temporary transport schedule updated');
 }

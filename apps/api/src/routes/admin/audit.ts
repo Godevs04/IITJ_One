@@ -1,13 +1,17 @@
 import { Router, Response } from 'express';
-import { AuthRequest } from '../../middleware/auth';
+import { validateQuery } from '../../middleware/validate';
+import { adminAuditQuerySchema } from '../../models/schemas';
 import { getAuditLog } from '../../store';
+import { asyncHandler } from '../../middleware/asyncHandler';
 
 const router = Router();
 
-router.get('/', async (req: AuthRequest, res: Response) => {
-  const limit = parseInt((req.query.limit as string) ?? '100', 10);
-  const logs = await getAuditLog(limit);
-  res.json({ logs });
-});
+router.get('/', validateQuery(adminAuditQuerySchema), asyncHandler(async (req, res: Response) => {
+  const { page, limit } = (
+    req as typeof req & { validatedQuery: { page: number; limit: number } }
+  ).validatedQuery;
+  const { items, total } = await getAuditLog(page, limit);
+  res.json({ logs: items, total, page, pageSize: limit });
+}));
 
 export default router;

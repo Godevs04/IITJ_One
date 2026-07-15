@@ -1,4 +1,4 @@
-import type { CalendarDoc, TransportDoc, TransportTrip } from '@/types/campus';
+import type { CalendarDoc, TransportDoc, TransportTrip, HolidaysDoc, TransportAlertsDoc, TemporaryTransportScheduleDoc } from '@/types/campus';
 import { nowMinutes, parseTimeToMinutes } from './date';
 import { getTripsForToday } from '@/transport/services/ScheduleEngine';
 
@@ -15,10 +15,13 @@ export interface NextDeparture {
 export function getNextDeparture(
   transport: TransportDoc | null,
   calendar: CalendarDoc | null,
+  holidays?: HolidaysDoc | null,
+  alerts?: TransportAlertsDoc | null,
+  tempSchedule?: TemporaryTransportScheduleDoc | null,
 ): NextDeparture | null {
   if (!transport) return null;
 
-  const trips = getTripsForToday(transport, calendar).filter(
+  const trips = getTripsForToday(transport, calendar, holidays, alerts, tempSchedule).filter(
     (t) => t.direction !== 'arrival',
   );
   const now = nowMinutes();
@@ -40,10 +43,13 @@ export function getNextDeparture(
 export function getNextArrival(
   transport: TransportDoc | null,
   calendar: CalendarDoc | null,
+  holidays?: HolidaysDoc | null,
+  alerts?: TransportAlertsDoc | null,
+  tempSchedule?: TemporaryTransportScheduleDoc | null,
 ): NextDeparture | null {
   if (!transport) return null;
 
-  const trips = getTripsForToday(transport, calendar).filter(
+  const trips = getTripsForToday(transport, calendar, holidays, alerts, tempSchedule).filter(
     (t) => t.direction === 'arrival',
   );
   const now = nowMinutes();

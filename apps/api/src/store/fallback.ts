@@ -1,9 +1,8 @@
-import { DEFAULT_LAUNDRY_SCHEDULES, DEFAULT_WIFI_DOC, DEFAULT_ERICKSHAW_DOC, DEFAULT_MEAL_WINDOWS } from '@iitj1/types';
+import { DEFAULT_LAUNDRY_SCHEDULES, DEFAULT_WIFI_DOC, DEFAULT_ERICKSHAW_DOC, DEFAULT_MEAL_WINDOWS, DEFAULT_CAMPUS_LOCATIONS } from '@iitj1/types';
 import { config } from '../config';
 import { loadMenuFromFiles, loadTransportFromFile } from '../services/parsers';
 import type {
   MetaDoc,
-  MetaVersions,
   MenuDoc,
   NoticeDoc,
   TransportDoc,
@@ -22,24 +21,11 @@ import type {
   AuditLogDoc,
   SuggestionDoc,
   ModuleName,
+  HolidaysDoc,
+  TransportAlertsDoc,
+  TemporaryTransportScheduleDoc,
 } from '../types';
-
-const defaultVersions = (): MetaVersions => ({
-  menu: 1,
-  notices: 1,
-  transport: 7,
-  calendar: 1,
-  portals: 1,
-  apps: 1,
-  map: 1,
-  services: 1,
-  emergency: 1,
-  about: 1,
-  laundry: 1,
-  wifi: 1,
-  erickshaw: 1,
-  mealWindows: 1,
-});
+import { defaultVersions } from '../constants/defaultVersions';
 
 interface FallbackState {
   meta: MetaDoc;
@@ -57,6 +43,9 @@ interface FallbackState {
   wifi: WifiDoc;
   erickshaw: ErickshawDoc;
   mealWindows: MealWindowsDoc;
+  holidays: HolidaysDoc;
+  transportAlerts: TransportAlertsDoc;
+  temporaryTransportSchedule: TemporaryTransportScheduleDoc;
   admins: AdminDoc[];
   auditLog: AuditLogDoc[];
   suggestions: SuggestionDoc[];
@@ -211,13 +200,7 @@ function buildDefaultState(): FallbackState {
     },
     mapLocations: {
       campusId,
-      locations: [
-        { name: 'Main Gate', category: 'gate', lat: 26.471, lng: 73.115 },
-        { name: 'Academic Block', category: 'academic', lat: 26.472, lng: 73.116 },
-        { name: 'Central Library', category: 'library', lat: 26.473, lng: 73.117 },
-        { name: 'Old Mess', category: 'mess', lat: 26.470, lng: 73.114 },
-        { name: 'Sports Complex', category: 'sports', lat: 26.474, lng: 73.118 },
-      ],
+      locations: DEFAULT_CAMPUS_LOCATIONS,
     },
     services: {
       campusId,
@@ -300,6 +283,18 @@ function buildDefaultState(): FallbackState {
     mealWindows: {
       campusId,
       windows: { ...DEFAULT_MEAL_WINDOWS },
+    },
+    holidays: {
+      campusId,
+      holidays: [],
+    },
+    transportAlerts: {
+      campusId,
+      alerts: [],
+    },
+    temporaryTransportSchedule: {
+      campusId,
+      schedules: [],
     },
     admins: [],
     auditLog: [],
@@ -389,15 +384,6 @@ export function fallbackSoftDeleteNotice(id: string): NoticeDoc | null {
 
 export function fallbackRestoreNotice(id: string): NoticeDoc | null {
   return fallbackUpdateNotice(id, { deletedAt: null });
-}
-
-/** @deprecated Prefer soft-delete; kept for rare hard purge. */
-export function fallbackDeleteNotice(id: string): boolean {
-  const s = getFallbackState();
-  const idx = s.notices.findIndex((n) => n._id === id);
-  if (idx < 0) return false;
-  s.notices.splice(idx, 1);
-  return true;
 }
 
 export function fallbackGetSuggestions(): SuggestionDoc[] {

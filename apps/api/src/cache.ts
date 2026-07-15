@@ -18,13 +18,6 @@ export function invalidateModule(module: string, campusId: string): void {
   }
 }
 
-export function invalidateAll(campusId: string): void {
-  const keys = cache.keys().filter((k) => k.includes(`:${campusId}`));
-  if (keys.length > 0) {
-    cache.del(keys);
-  }
-}
-
 export async function cached<T>(
   key: string,
   fetcher: () => Promise<T>,

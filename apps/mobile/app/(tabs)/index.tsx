@@ -3,12 +3,13 @@ import { router, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { HomeHeader } from '@/components/HomeHeader';
+import { MessQrCard } from '@/components/MessQrCard';
 import { QuickAccessTile, type QuickAccessVariant } from '@/components/QuickAccessTile';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
 import { listTimetableEntries } from '@/services/localDb';
-import type { CalendarDoc, MenuDoc, TransportDoc } from '@/types/campus';
+import type { CalendarDoc, MenuDoc, TransportDoc, HolidaysDoc, TransportAlertsDoc, TemporaryTransportScheduleDoc } from '@/types/campus';
 import {
   expirySeconds,
   formatExpiryLabel,
@@ -34,7 +35,6 @@ const QUICK_LINKS: {
   route: Href;
   variant?: QuickAccessVariant;
 }[] = [
-  { title: 'My Mess QR', icon: 'qr-code-outline', route: '/mess-qr', variant: 'prominent' },
   { title: 'Timetable', icon: 'calendar-outline', route: '/timetable' },
   { title: 'Notes', icon: 'document-text-outline', route: '/notes' },
   { title: 'Map', icon: 'map-outline', route: '/map' },
@@ -42,6 +42,7 @@ const QUICK_LINKS: {
   { title: 'Services', icon: 'construct-outline', route: '/services' },
   { title: 'Laundry', icon: 'shirt-outline', route: '/laundry' },
   { title: 'Cabs & Autos', icon: 'car-outline', route: '/cabs-autos' },
+  { title: 'E-Rickshaw', icon: 'car-sport-outline', route: '/e-rickshaw' },
 ];
 
 interface CachedNotice {
@@ -51,23 +52,6 @@ interface CachedNotice {
   isImportant: boolean;
   expiryDate: string;
   publishedAt?: string;
-}
-
-function formatCountdown(totalSeconds: number): { value: string; unit: string } {
-  const safe = Math.max(0, totalSeconds);
-  const hours = Math.floor(safe / 3600);
-  const minutes = Math.floor((safe % 3600) / 60);
-  const seconds = safe % 60;
-  if (hours > 0) {
-    return {
-      value: `${hours}h ${String(minutes).padStart(2, '0')}m`,
-      unit: 'left',
-    };
-  }
-  return {
-    value: `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`,
-    unit: 'mins left',
-  };
 }
 
 function to12Hour(time: string): { value: string; meridiem: string } {
@@ -182,97 +166,122 @@ function TransportWidget({
   arrival,
   theme,
   onPress,
+  hasCriticalAlert = false,
 }: {
   departure: NextDeparture | null;
   arrival: NextDeparture | null;
   theme: any;
   onPress: () => void;
+  hasCriticalAlert?: boolean;
 }) {
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
-        { backgroundColor: theme.surface, borderColor: theme.border },
+        {
+          backgroundColor: hasCriticalAlert ? (theme.dark ? '#2A1818' : '#FDF2F2') : theme.surface,
+          borderColor: hasCriticalAlert ? '#EF4444' : theme.border,
+        },
         pressed && styles.pressed,
       ]}
     >
       {/* Title Header */}
-      <View style={styles.cardTopRow}>
-        <View style={styles.cardTopText}>
-          <Text style={[styles.cardLabel, { color: theme.textMuted }]}>
-            Transport
-          </Text>
-        </View>
-        <Ionicons name="bus-outline" size={24} color={theme.secondary} />
+      <View style={[styles.cardTopRow, { justifyContent: 'flex-start', alignItems: 'center', gap: AppSpacing.xs }]}>
+        <Ionicons
+          name={hasCriticalAlert ? 'warning' : 'bus-outline'}
+          size={20}
+          color={hasCriticalAlert ? '#EF4444' : theme.secondary}
+        />
+        <Text
+          style={[
+            styles.cardLabel,
+            { color: hasCriticalAlert ? '#EF4444' : theme.textMuted, fontWeight: hasCriticalAlert ? '700' : 'normal' },
+          ]}
+        >
+          {hasCriticalAlert ? 'Transport Service Update' : 'Transport'}
+        </Text>
       </View>
 
-      {/* From Campus Section */}
-      <View style={styles.widgetSection}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-          <Ionicons name="arrow-up-circle-outline" size={16} color={theme.secondary} />
-          <Text style={[styles.sectionHeadingLabel, { color: theme.secondary }]}>
-            From Campus
+      {hasCriticalAlert ? (
+        <View style={{ marginTop: AppSpacing.sm, gap: 2 }}>
+          <Text style={{ fontSize: 15, fontWeight: '700', color: theme.text }}>
+            Bus services have changed today.
+          </Text>
+          <Text style={{ fontSize: 13, color: theme.textMuted, marginTop: 2 }}>
+            Tap to read the latest transport update.
           </Text>
         </View>
-        {departure ? (
-          <View style={styles.widgetContent}>
-            <View style={styles.widgetMainRow}>
-              <Text style={[styles.widgetBusText, { color: theme.text }]}>
-                {departure.trip.bus} • {departure.trip.startTime}
-              </Text>
-              <Text style={[styles.widgetCountdown, { color: theme.secondary }]}>
-                {formatCountdownText(departure.secondsUntil)}
+      ) : (
+        <>
+          {/* From Campus Section */}
+          <View style={styles.widgetSection}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+              <Ionicons name="arrow-up-circle-outline" size={16} color={theme.secondary} />
+              <Text style={[styles.sectionHeadingLabel, { color: theme.secondary }]}>
+                From Campus
               </Text>
             </View>
-            <Text style={[styles.widgetRouteText, { color: theme.text }]}>
-              From: <Text style={{ color: theme.textMuted }}>{departure.trip.from}</Text>
-            </Text>
-            <Text style={[styles.widgetRouteText, { color: theme.text }]}>
-              To: <Text style={{ color: theme.textMuted }}>{departure.trip.to}</Text>
-            </Text>
-          </View>
-        ) : (
-          <Text style={[styles.widgetEmptyText, { color: theme.textMuted }]}>
-            No more departures from campus today
-          </Text>
-        )}
-      </View>
-
-      {/* Divider */}
-      <View style={[styles.widgetDivider, { backgroundColor: theme.border }]} />
-
-      {/* To Campus Section */}
-      <View style={styles.widgetSection}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-          <Ionicons name="arrow-down-circle-outline" size={16} color={theme.primary} />
-          <Text style={[styles.sectionHeadingLabel, { color: theme.primary }]}>
-            To Campus
-          </Text>
-        </View>
-        {arrival ? (
-          <View style={styles.widgetContent}>
-            <View style={styles.widgetMainRow}>
-              <Text style={[styles.widgetBusText, { color: theme.text }]}>
-                {arrival.trip.bus} • {arrival.trip.startTime}
+            {departure ? (
+              <View style={styles.widgetContent}>
+                <View style={styles.widgetMainRow}>
+                  <Text style={[styles.widgetBusText, { color: theme.text }]}>
+                    {departure.trip.bus} • {departure.trip.startTime}
+                  </Text>
+                  <Text style={[styles.widgetCountdown, { color: theme.secondary }]}>
+                    {formatCountdownText(departure.secondsUntil)}
+                  </Text>
+                </View>
+                <Text style={[styles.widgetRouteText, { color: theme.text }]}>
+                  From: <Text style={{ color: theme.textMuted }}>{departure.trip.from}</Text>
+                </Text>
+                <Text style={[styles.widgetRouteText, { color: theme.text }]}>
+                  To: <Text style={{ color: theme.textMuted }}>{departure.trip.to}</Text>
+                </Text>
+              </View>
+            ) : (
+              <Text style={[styles.widgetEmptyText, { color: theme.textMuted }]}>
+                No more departures from campus today
               </Text>
-              <Text style={[styles.widgetCountdown, { color: theme.primary }]}>
-                {formatCountdownText(arrival.secondsUntil)}
+            )}
+          </View>
+
+          {/* Divider */}
+          <View style={[styles.widgetDivider, { backgroundColor: theme.border }]} />
+
+          {/* To Campus Section */}
+          <View style={styles.widgetSection}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+              <Ionicons name="arrow-down-circle-outline" size={16} color={theme.primary} />
+              <Text style={[styles.sectionHeadingLabel, { color: theme.primary }]}>
+                To Campus
               </Text>
             </View>
-            <Text style={[styles.widgetRouteText, { color: theme.text }]}>
-              From: <Text style={{ color: theme.textMuted }}>{arrival.trip.from}</Text>
-            </Text>
-            <Text style={[styles.widgetRouteText, { color: theme.text }]}>
-              To: <Text style={{ color: theme.textMuted }}>{arrival.trip.to === 'IITJ' ? 'IIT Jodhpur' : arrival.trip.to}</Text>
-            </Text>
+            {arrival ? (
+              <View style={styles.widgetContent}>
+                <View style={styles.widgetMainRow}>
+                  <Text style={[styles.widgetBusText, { color: theme.text }]}>
+                    {arrival.trip.bus} • {arrival.trip.startTime}
+                  </Text>
+                  <Text style={[styles.widgetCountdown, { color: theme.primary }]}>
+                    {formatCountdownText(arrival.secondsUntil)}
+                  </Text>
+                </View>
+                <Text style={[styles.widgetRouteText, { color: theme.text }]}>
+                  From: <Text style={{ color: theme.textMuted }}>{arrival.trip.from}</Text>
+                </Text>
+                <Text style={[styles.widgetRouteText, { color: theme.text }]}>
+                  To: <Text style={{ color: theme.textMuted }}>{arrival.trip.to === 'IITJ' ? 'IIT Jodhpur' : arrival.trip.to}</Text>
+                </Text>
+              </View>
+            ) : (
+              <Text style={[styles.widgetEmptyText, { color: theme.textMuted }]}>
+                No more departures to campus today
+              </Text>
+            )}
           </View>
-        ) : (
-          <Text style={[styles.widgetEmptyText, { color: theme.textMuted }]}>
-            No more departures to campus today
-          </Text>
-        )}
-      </View>
+        </>
+      )}
     </Pressable>
   );
 }
@@ -340,7 +349,10 @@ export default function HomeScreen() {
   const menu = useCampusModule<MenuDoc>('menu');
   const transport = useCampusModule<TransportDoc>('transport');
   const calendar = useCampusModule<CalendarDoc>('calendar');
+  const holidays = useCampusModule<HolidaysDoc>('holidays');
   const notices = useCampusModule<CachedNotice[]>('notices');
+  const alerts = useCampusModule<TransportAlertsDoc>('transportAlerts');
+  const tempSchedule = useCampusModule<TemporaryTransportScheduleDoc>('temporaryTransportSchedule');
 
   const { mealKey, targetDay } = (() => {
     const now = nowMinutes();
@@ -378,13 +390,25 @@ export default function HomeScreen() {
 
   const activeMenu = menu?.days.find((d) => d.dayName === targetDay);
   const meal = activeMenu?.[mealKey];
+
+  const hasCriticalAlert = useMemo(() => {
+    if (!alerts?.alerts) return false;
+    const nowTime = now.getTime();
+    return alerts.alerts.some((a) => {
+      if (!a.isActive || a.priority !== 'critical') return false;
+      const start = new Date(a.startDate).getTime();
+      const end = new Date(a.endDate).getTime();
+      return nowTime >= start && nowTime <= end;
+    });
+  }, [alerts, now]);
+
   const nextDeparture = useMemo(() => {
-    return getNextDeparture(transport, calendar);
-  }, [transport, calendar, now]);
+    return getNextDeparture(transport, calendar, holidays, alerts, tempSchedule);
+  }, [transport, calendar, holidays, alerts, tempSchedule, now]);
 
   const nextArrival = useMemo(() => {
-    return getNextArrival(transport, calendar);
-  }, [transport, calendar, now]);
+    return getNextArrival(transport, calendar, holidays, alerts, tempSchedule);
+  }, [transport, calendar, holidays, alerts, tempSchedule, now]);
 
   const [showClassWidget, setShowClassWidget] = useState(false);
 
@@ -449,6 +473,7 @@ export default function HomeScreen() {
         arrival={nextArrival}
         theme={theme}
         onPress={() => router.push('/(tabs)/transport')}
+        hasCriticalAlert={hasCriticalAlert}
       />
 
       {showClassWidget && nextClass && classTime ? (
@@ -574,6 +599,8 @@ export default function HomeScreen() {
         </Pressable>
       ) : null}
 
+      <MessQrCard />
+
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
           University services
@@ -688,6 +715,8 @@ const styles = StyleSheet.create({
   },
   cardLabel: {
     ...AppTypography.sectionLabel,
+    fontSize: 14,
+    lineHeight: 18,
   },
   cardHeadline: {
     ...AppTypography.h2,

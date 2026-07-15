@@ -1,7 +1,7 @@
+import { DEFAULT_CAMPUS_LOCATIONS, LOCATION_CATEGORIES as VALID_CATEGORIES } from '@iitj1/types';
 import type { CampusLocation, LocationCategory } from '../types';
-import { CAMPUS_LOCATIONS } from '../data/locations';
 import { readCachedModule } from '@/services/sync';
-import type { MapDoc } from '@/types/campus';
+import type { MapDoc, MapLocation } from '@/types/campus';
 
 export interface CampusDirectoryServiceProvider {
   getAllLocations(): CampusLocation[];
@@ -11,78 +11,42 @@ export interface CampusDirectoryServiceProvider {
   getLocationsByMultipleCategories(categories: LocationCategory[]): CampusLocation[];
 }
 
-const CATEGORY_ALIASES: Record<string, LocationCategory> = {
-  academic: 'academic',
-  department: 'department',
-  hostel: 'hostel',
-  food: 'food',
-  mess: 'food',
-  banking: 'banking',
-  health: 'health',
-  sports: 'sports',
-  office: 'office',
-  gate: 'gate',
-  service: 'service',
-  landmark: 'landmark',
-  library: 'academic',
-};
+const VALID_CATEGORY_SET = new Set<string>(VALID_CATEGORIES);
 
+/** Defensive guard for stale pre-migration caches; the API now validates category server-side. */
 function normalizeCategory(raw: string): LocationCategory {
-  const key = raw.trim().toLowerCase();
-  return CATEGORY_ALIASES[key] ?? 'landmark';
+  return (VALID_CATEGORY_SET.has(raw) ? raw : 'landmark') as LocationCategory;
 }
 
-function slugId(name: string, index: number): string {
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-  return `api-${slug || 'loc'}-${index}`;
-}
-
-function mapApiLocations(doc: MapDoc | null): CampusLocation[] {
-  if (!doc?.locations?.length) return [];
-  return doc.locations.map((loc, index) => ({
-    id: slugId(loc.name, index),
+function toCampusLocation(loc: MapLocation): CampusLocation {
+  return {
+    id: loc.id,
     name: loc.name,
     category: normalizeCategory(loc.category),
+    description: loc.description,
+    address: loc.address,
     latitude: loc.lat,
     longitude: loc.lng,
-  }));
+    plusCode: loc.plusCode,
+    phone: loc.phone,
+    email: loc.email,
+    website: loc.website,
+    aliases: loc.aliases,
+  };
 }
 
 /**
- * Prefer synced API map locations; fall back to / merge with bundled directory
- * so offline devices still have a full campus list.
+ * Prefer synced API locations; fall back to the bundled curated directory
+ * (same offline-first pattern as Laundry/Wi-Fi/E-Rickshaw) so offline
+ * devices still have a full campus directory before the first sync.
  */
 export class CampusDirectoryServiceProviderImpl implements CampusDirectoryServiceProvider {
   private mergeLocations(): CampusLocation[] {
-    const apiLocs = mapApiLocations(readCachedModule<MapDoc>('map'));
-    if (apiLocs.length === 0) {
-      return [...CAMPUS_LOCATIONS];
+    const doc = readCachedModule<MapDoc>('map');
+    if (!doc?.locations?.length) {
+      return DEFAULT_CAMPUS_LOCATIONS.map(toCampusLocation);
     }
-
-    const byName = new Map<string, CampusLocation>();
-    for (const loc of CAMPUS_LOCATIONS) {
-      byName.set(loc.name.toLowerCase(), loc);
-    }
-    for (const loc of apiLocs) {
-      const key = loc.name.toLowerCase();
-      const existing = byName.get(key);
-      if (existing) {
-        byName.set(key, {
-          ...existing,
-          ...loc,
-          id: existing.id,
-          plusCode: existing.plusCode,
-          address: existing.address ?? loc.description,
-          description: existing.description,
-        });
-      } else {
-        byName.set(key, loc);
-      }
-    }
-    return Array.from(byName.values());
+    return doc.locations.map(toCampusLocation);
   }
 
   getAllLocations(): CampusLocation[] {
@@ -106,7 +70,8 @@ export class CampusDirectoryServiceProviderImpl implements CampusDirectoryServic
       (loc) =>
         loc.name.toLowerCase().includes(q) ||
         loc.description?.toLowerCase().includes(q) ||
-        loc.address?.toLowerCase().includes(q),
+        loc.address?.toLowerCase().includes(q) ||
+        loc.aliases?.some((alias) => alias.toLowerCase().includes(q)),
     );
   }
 
@@ -115,4 +80,5 @@ export class CampusDirectoryServiceProviderImpl implements CampusDirectoryServic
   }
 }
 
-export const campusDirectoryServiceProvider = new CampusDirectoryServiceProviderImpl();
+export const campusDirectoryServiceProvider: CampusDirectoryServiceProvider =
+  new CampusDirectoryServiceProviderImpl();

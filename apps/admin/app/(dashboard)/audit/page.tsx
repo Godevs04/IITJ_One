@@ -7,6 +7,7 @@ import {
   EmptyState,
   LoadingBlock,
   PageHeader,
+  Pagination,
   StatusPill,
 } from '@/components/ui';
 import { useToast } from '@/components/Toast';
@@ -16,20 +17,25 @@ export default function AuditAdminPage() {
   const { push } = useToast();
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 50;
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiFetch<{ logs: AuditLogEntry[] }>(
-        '/admin/audit?limit=150',
+      const data = await apiFetch<{ logs: AuditLogEntry[]; total: number }>(
+        '/admin/audit',
+        { query: { page: String(page), limit: String(pageSize) } },
       );
       setLogs(data.logs ?? []);
+      setTotal(data.total ?? 0);
     } catch (err) {
       push('error', 'Load failed', err instanceof Error ? err.message : '');
     } finally {
       setLoading(false);
     }
-  }, [push]);
+  }, [push, page]);
 
   useEffect(() => {
     void load();
@@ -89,6 +95,8 @@ export default function AuditAdminPage() {
           </div>
         </div>
       )}
+
+      <Pagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import express from 'express';
 import helmet from 'helmet';
 import { assertProductionSecrets, config } from './config';
-import { connectDb, disconnectDb } from './db';
+import { connectDb, disconnectDb, startReconnectLoop } from './db';
 import { initFallbackStore } from './store/fallback';
 import { publicRateLimiter } from './middleware/rateLimit';
 import { etagMiddleware } from './middleware/etag';
@@ -17,12 +17,22 @@ async function bootstrap(): Promise<void> {
   assertProductionSecrets();
   initFallbackStore();
 
+  // Defense-in-depth for async code outside the Express request cycle
+  // (route handlers themselves are wrapped via middleware/asyncHandler).
+  process.on('unhandledRejection', (reason) => {
+    log.error('Unhandled promise rejection', {
+      reason: reason instanceof Error ? reason.message : String(reason),
+      stack: reason instanceof Error ? reason.stack : undefined,
+    });
+  });
+
   const dbConnected = await connectDb();
   if (!dbConnected) {
     log.warn('Running in fallback mode — campus data served from in-memory seed');
     if (config.nodeEnv === 'production') {
       log.warn('Production + fallback: admin writes are disabled until MongoDB is available');
     }
+    startReconnectLoop();
   }
 
   const app = express();
@@ -59,7 +69,16 @@ async function bootstrap(): Promise<void> {
   app.use(express.json({ limit: '2mb' }));
   app.use(etagMiddleware);
   // CORS is applied per-router: open on public, locked on /admin
-  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+  app.use(
+    '/uploads',
+    express.static(path.join(process.cwd(), 'uploads'), {
+      setHeaders: (res) => {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', '*');
+      },
+    }),
+  );
   app.use('/api/v1', publicRateLimiter, routes);
   app.use(notFoundHandler);
   app.use(errorHandler);

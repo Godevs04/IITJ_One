@@ -105,19 +105,40 @@ export function TripCard({ item, isFavorited, onToggleFavorite }: TripCardProps)
           const coords = getStopCoords(stop);
           const favorited = isFavorited(stop);
 
-          // Determine highlighting
-          let isCurrentHighlight = false;
-          let isNextHighlight = false;
+          // Determine highlighting and labels
+          let stopLabel = '';
+          let labelColor = theme.textMuted;
+          let isStopActive = false;
+          let isStopNext = false;
+          let isStopPassed = false;
 
-          if (isTransit || isBoarding) {
-            if (index === currentStopIdx) isCurrentHighlight = true;
-            else if (index === nextStopIdx) isNextHighlight = true;
+          if (isTransit) {
+            if (index <= currentStopIdx) {
+              stopLabel = index === 0 ? '(Bus started)' : '(Bus left)';
+              labelColor = theme.textMuted;
+              isStopPassed = true;
+            } else if (index === nextStopIdx) {
+              stopLabel = `(ETA ~${nextStopEtaMinutes}m)`;
+              labelColor = theme.secondary;
+              isStopNext = true;
+            }
+          } else if (isBoarding) {
+            if (index === 0) {
+              stopLabel = '(Boarding)';
+              labelColor = theme.accent;
+              isStopActive = true;
+            } else if (index === 1) {
+              stopLabel = `(ETA ~${nextStopEtaMinutes}m)`;
+              labelColor = theme.secondary;
+              isStopNext = true;
+            }
           }
 
           const getDotColor = () => {
             if (isCompleted) return theme.textMuted;
-            if (isCurrentHighlight) return theme.accent;
-            if (isNextHighlight) return theme.secondary;
+            if (isStopActive) return theme.accent;
+            if (isStopNext) return theme.secondary;
+            if (isStopPassed) return theme.textMuted;
             return theme.border;
           };
 
@@ -130,7 +151,7 @@ export function TripCard({ item, isFavorited, onToggleFavorite }: TripCardProps)
                     styles.dot,
                     {
                       backgroundColor: getDotColor(),
-                      transform: [{ scale: isCurrentHighlight ? 1.3 : 1 }],
+                      transform: [{ scale: isStopActive ? 1.3 : 1 }],
                     },
                   ]}
                 />
@@ -152,23 +173,19 @@ export function TripCard({ item, isFavorited, onToggleFavorite }: TripCardProps)
                     style={[
                       styles.stopName,
                       { color: theme.text },
-                      isCurrentHighlight && { color: theme.accent, fontWeight: '700' },
-                      isNextHighlight && { color: theme.secondary, fontWeight: '600' },
+                      isStopActive && { color: theme.accent, fontWeight: '700' },
+                      isStopNext && { color: theme.secondary, fontWeight: '600' },
+                      isStopPassed && { color: theme.textMuted },
                     ]}
                   >
                     {stop}
                   </Text>
                   <Ionicons name="map-outline" size={14} color={theme.iconMuted} />
-                  {isCurrentHighlight && (
-                    <Text style={[styles.etaLabel, { color: theme.accent }]}>
-                      (Operating here)
+                  {stopLabel ? (
+                    <Text style={[styles.etaLabel, { color: labelColor }]}>
+                      {stopLabel}
                     </Text>
-                  )}
-                  {isNextHighlight && (
-                    <Text style={[styles.etaLabel, { color: theme.secondary }]}>
-                      (ETA ~{nextStopEtaMinutes}m)
-                    </Text>
-                  )}
+                  ) : null}
                 </Pressable>
 
                 {/* Favorite Toggle */}

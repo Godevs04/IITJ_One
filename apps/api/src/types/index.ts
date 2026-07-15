@@ -12,7 +12,10 @@ export type ModuleName =
   | 'laundry'
   | 'wifi'
   | 'erickshaw'
-  | 'mealWindows';
+  | 'mealWindows'
+  | 'holidays'
+  | 'transportAlerts'
+  | 'temporaryTransportSchedule';
 
 export interface MetaVersions {
   menu: number;
@@ -29,7 +32,19 @@ export interface MetaVersions {
   wifi: number;
   erickshaw: number;
   mealWindows: number;
+  holidays: number;
+  transportAlerts: number;
+  temporaryTransportSchedule: number;
 }
+
+export type {
+  Holiday,
+  HolidaysDoc,
+  TransportAlert,
+  TransportAlertsDoc,
+  TemporaryTransportSchedule,
+  TemporaryTransportScheduleDoc,
+} from '@iitj1/types';
 
 export interface MetaDoc {
   campusId: string;
@@ -158,18 +173,6 @@ export interface AppsDoc {
   apps: CampusApp[];
 }
 
-export interface MapLocation {
-  name: string;
-  category: string;
-  lat: number;
-  lng: number;
-}
-
-export interface MapLocationsDoc {
-  campusId: string;
-  locations: MapLocation[];
-}
-
 export interface ServiceEntry {
   name: string;
   category: string;
@@ -213,6 +216,9 @@ export type {
   WifiGuide,
   ErickshawDoc,
   MealWindowsDoc,
+  MapLocationsDoc,
+  CampusLocation,
+  LocationCategory,
 } from '@iitj1/types';
 
 export interface AdminDoc {
@@ -221,6 +227,8 @@ export interface AdminDoc {
   passwordHash: string;
   name: string;
   role: string;
+  active: boolean;
+  tokenVersion: number;
 }
 
 export interface AuditLogDoc {
@@ -247,4 +255,5 @@ export interface JwtPayload {
   name: string;
   role: string;
   type: 'access' | 'refresh';
+  tokenVersion: number;
 }

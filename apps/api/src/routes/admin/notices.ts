@@ -1,11 +1,12 @@
 import { Router, Response } from 'express';
 import { validateBody, validateQuery } from '../../middleware/validate';
-import { noticeCreateSchema, noticePatchSchema, noticesQuerySchema } from '../../models/schemas';
+import { noticeCreateSchema, noticePatchSchema, adminNoticesQuerySchema } from '../../models/schemas';
 import { AuthRequest } from '../../middleware/auth';
 import { createNotice, updateNotice, deleteNotice, restoreNotice, getAllNotices } from '../../store';
 import { isDbConnected } from '../../db';
 import { isStrictObjectId } from '../../utils/objectId';
 import type { NoticeDoc } from '../../types';
+import { asyncHandler } from '../../middleware/asyncHandler';
 
 const router = Router();
 
@@ -25,15 +26,17 @@ function assertNoticeId(id: string, res: Response): boolean {
   return true;
 }
 
-router.get('/', validateQuery(noticesQuerySchema), async (req, res: Response) => {
-  const { campus, category } = (
-    req as typeof req & { validatedQuery: { campus: string; category?: string } }
+router.get('/', validateQuery(adminNoticesQuerySchema), asyncHandler(async (req, res: Response) => {
+  const { campus, category, page, limit } = (
+    req as typeof req & {
+      validatedQuery: { campus: string; category?: string; page: number; limit: number };
+    }
   ).validatedQuery;
-  const notices = await getAllNotices(campus, category);
-  res.json({ campusId: campus, notices });
-});
+  const { items, total } = await getAllNotices(campus, category, page, limit);
+  res.json({ campusId: campus, notices: items, total, page, pageSize: limit });
+}));
 
-router.post('/', validateBody(noticeCreateSchema), async (req: AuthRequest, res: Response) => {
+router.post('/', validateBody(noticeCreateSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
   const body = req.body as Omit<NoticeDoc, 'publishedAt'>;
   const notice: NoticeDoc = {
     ...body,
@@ -45,9 +48,9 @@ router.post('/', validateBody(noticeCreateSchema), async (req: AuthRequest, res:
   };
   const saved = await createNotice(notice, req.admin!.email);
   res.status(201).json(saved);
-});
+}));
 
-router.patch('/:id', validateBody(noticePatchSchema), async (req: AuthRequest, res: Response) => {
+router.patch('/:id', validateBody(noticePatchSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = String(req.params.id);
   if (!assertNoticeId(id, res)) return;
 
@@ -60,9 +63,9 @@ router.patch('/:id', validateBody(noticePatchSchema), async (req: AuthRequest, r
     return;
   }
   res.json(saved);
-});
+}));
 
-router.delete('/:id', async (req: AuthRequest, res: Response) => {
+router.delete('/:id', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = String(req.params.id);
   if (!assertNoticeId(id, res)) return;
 
@@ -72,9 +75,9 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
     return;
   }
   res.json({ success: true });
-});
+}));
 
-router.post('/:id/restore', async (req: AuthRequest, res: Response) => {
+router.post('/:id/restore', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = String(req.params.id);
   if (!assertNoticeId(id, res)) return;
 
@@ -84,6 +87,6 @@ router.post('/:id/restore', async (req: AuthRequest, res: Response) => {
     return;
   }
   res.json(saved);
-});
+}));
 
 export default router;

@@ -1,7 +1,9 @@
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
+import { Pressable } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Ionicons } from '@expo/vector-icons';
 import {
   IBMPlexSans_400Regular,
   IBMPlexSans_500Medium,
@@ -11,6 +13,7 @@ import {
 } from '@expo-google-fonts/ibm-plex-sans';
 import * as SplashScreen from 'expo-splash-screen';
 import { initCache } from '@/services/cache';
+import '@/services/search/registerBuiltInProviders';
 import { CampusDataProvider } from '@/state/CampusDataProvider';
 import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
 
@@ -60,9 +63,21 @@ function RootNavigator() {
           headerTitleStyle: { fontWeight: '600', fontFamily: 'IBMPlexSans_600SemiBold' },
           headerBackTitle: 'Back',
           contentStyle: { backgroundColor: colors.background },
+          headerRight: () => (
+            <Pressable
+              onPress={() => router.push('/search')}
+              hitSlop={10}
+              style={{ padding: 4 }}
+              accessibilityRole="button"
+              accessibilityLabel="Search"
+            >
+              <Ionicons name="search-outline" size={22} color={colors.headerTint} />
+            </Pressable>
+          ),
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="search" options={{ headerShown: false }} />
         <Stack.Screen name="map" options={{ title: 'Campus Directory' }} />
         <Stack.Screen name="portals" options={{ title: 'Essential Portals' }} />
         <Stack.Screen name="apps" options={{ title: 'Campus Apps' }} />
