@@ -70,6 +70,29 @@ If deploying admin and API to different hosts, either keep the proxy rewrite (se
 
 ---
 
+## Website (`apps/web`)
+
+Standard Next.js production build, same shape as admin — deployable to Vercel, or any Node host:
+
+```bash
+cd apps/web
+npm run build
+npm start          # next start -p 3002
+```
+
+### Required production environment variables
+
+| Variable | Notes |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | `/backend/api/v1` if using the same-origin proxy rewrite (recommended — avoids CORS on the anonymous support/feedback form, the only endpoint this site calls), or a direct API URL |
+| `API_PROXY_TARGET` | Server-side only — where the `/backend` rewrite proxies to |
+| `NEXT_PUBLIC_SITE_URL` | The website's own public URL — used for `metadataBase`, the sitemap, and OG tags |
+| `NEXT_PUBLIC_PLAY_STORE_URL` / `NEXT_PUBLIC_APP_STORE_URL` | Leave empty for a "coming soon" state on `/download`; set once published |
+
+This is a marketing site — it does not display live campus data or expose the API in any form (see memory: project_not_open_source.md). The only API call it makes is the anonymous support form's `POST /suggestions`.
+
+---
+
 ## Mobile (`apps/mobile`)
 
 Built and distributed via EAS — see [SETUP.md § EAS builds](./SETUP.md#eas-builds) for the local setup. Release steps:
@@ -113,6 +136,13 @@ Before the **first** production build: replace the placeholder `EXPO_PUBLIC_EAS_
 - [ ] Production Firebase config files in place, `EXPO_PUBLIC_ENABLE_ANALYTICS`/`EXPO_PUBLIC_ENABLE_CRASH_REPORTING=true`
 - [ ] `EXPO_PUBLIC_API_URL` (in `eas.json`'s `production` profile) points at the production API
 - [ ] Smoke-tested a production build (not just Expo Go) on both platforms before submitting
+
+**Website**
+- [ ] `npm run build` succeeds, `npm run lint` clean
+- [ ] `API_BASE_URL` / `NEXT_PUBLIC_API_URL` point at the production API
+- [ ] `NEXT_PUBLIC_SITE_URL` set to the real production domain (sitemap/OG tags depend on it)
+- [ ] `/sitemap.xml` and `/robots.txt` resolve correctly against the production domain
+- [ ] The mandatory non-affiliation disclaimer is visible in the footer
 
 ---
 

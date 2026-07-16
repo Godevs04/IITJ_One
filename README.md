@@ -1,6 +1,6 @@
 # IITJ One — Campus Utility Companion App
 
-A campus companion for IIT Jodhpur: an Expo/React Native mobile app, an Express + MongoDB API, and a Next.js admin panel — no student accounts, campus data cached offline-first on the device.
+A campus companion for IIT Jodhpur: an Expo/React Native mobile app, an Express + MongoDB API, a Next.js admin panel, and a public Next.js website — no student accounts, campus data cached offline-first on the device.
 
 ## Key features
 
@@ -9,6 +9,7 @@ A campus companion for IIT Jodhpur: an Expo/React Native mobile app, an Express 
 - **Firebase-backed observability** — Analytics, Crashlytics, Performance Monitoring, Remote Config, extended (not replaced) by a **custom backend analytics dashboard** for live usage data the Firebase Console can't give you in real time
 - **Anonymous by design** — no end-user accounts anywhere in the app; personal data (Mess QR, notes, laundry hostel) never leaves the device
 - **Admin panel** — content CRUD for every campus data module, push composer with delivery history, live analytics dashboard, audit log
+- **Public website (`apps/web`)** — marketing site, live campus data (mess/transport/notices, etc.), developer/API docs, and a download center, reading the same public API the mobile app uses
 
 ## Screenshots
 
@@ -19,10 +20,11 @@ _Add screenshots here — mobile home screen, admin dashboard, analytics page._
 ```
 apps/mobile (Expo)  ──┐
                        ├──►  apps/api (Express + MongoDB)  ◄── Firebase (Analytics, Crashlytics, FCM, ...)
-apps/admin (Next.js) ──┘
+apps/admin (Next.js) ──┤
+apps/web (Next.js)   ──┘
 ```
 
-Mobile and admin both talk to the same Express API over REST; the API is the only shared dependency between them. See **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** for the full breakdown — data flow diagrams, caching, sync engine, notification flow, and the database schema.
+Mobile, admin, and the public website all talk to the same Express API over REST; the API is the only shared dependency between them. See **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** for the full breakdown — data flow diagrams, caching, sync engine, notification flow, and the database schema.
 
 ## Tech stack
 
@@ -31,8 +33,9 @@ Mobile and admin both talk to the same Express API over REST; the API is the onl
 | Mobile | Expo SDK 54, React Native 0.81, Expo Router, TypeScript, `@react-native-firebase/*` |
 | Backend | Express 4, TypeScript, MongoDB (native driver, in-memory fallback for local dev), Zod, JWT |
 | Admin | Next.js 15 (App Router), Tailwind CSS, TypeScript |
+| Website | Next.js 15 (App Router), Tailwind CSS, Framer Motion, TypeScript — public marketing site + live campus data + developer docs |
 | Shared | `@iitj1/types` — Zod schemas shared across API and admin |
-| Infra | npm workspaces monorepo, Docker (API), EAS (mobile builds) |
+| Infra | npm workspaces monorepo, Docker (API), EAS (mobile builds), Vercel (admin + website) |
 
 ## Folder structure
 
@@ -41,7 +44,8 @@ IITJ_One/
 ├── apps/
 │   ├── api/       # Express + TypeScript API (:6002)
 │   ├── mobile/    # Expo React Native app (:6001)
-│   └── admin/     # Next.js admin dashboard (:3000, proxies /backend → API)
+│   ├── admin/     # Next.js admin dashboard (:3000, proxies /backend → API)
+│   └── web/       # Next.js public website (:3002, proxies /backend → API)
 ├── packages/
 │   └── types/     # Shared @iitj1/types (Zod schemas + laundry/wifi defaults)
 ├── docs/          # Documentation (this index below) + specs (FinalDoc) + audits/suggestions
@@ -68,11 +72,15 @@ npm run dev:mobile
 
 # Terminal 3 — Admin
 npm run dev:admin
+
+# Terminal 4 — Website
+npm run dev:web
 ```
 
 - Health: `http://localhost:6002/api/v1/health`
 - API docs (Scalar): `http://localhost:6002/api/v1/docs`
 - Admin: `http://localhost:3000` (login uses `ADMIN_BOOTSTRAP_*` from `apps/api/.env` — run `npm run seed` first)
+- Website: `http://localhost:3002`
 
 **Full walkthrough, including Firebase/EAS setup:** [docs/SETUP.md](docs/SETUP.md).
 
@@ -80,10 +88,11 @@ npm run dev:admin
 
 | Command (repo root) | Does |
 |---|---|
-| `npm run dev:api` / `dev:mobile` / `dev:admin` | Start each app's dev server |
+| `npm run dev:api` / `dev:mobile` / `dev:admin` / `dev:web` | Start each app's dev server |
 | `npm run seed` | Seed MongoDB with campus data + bootstrap admin |
 | `npm run test:api` | Run API integration tests (requires the API dev server running) |
-| `npm run typecheck` | Typecheck `@iitj1/types`, API, and admin |
+| `npm run typecheck` | Typecheck `@iitj1/types`, API, admin, and website |
+| `npm run build:web` | Production build of the website |
 
 Per-app commands (`npm run <script> -w <workspace>`, or `cd` into the app): `build`, `lint` — see each `apps/*/package.json`.
 
@@ -94,6 +103,7 @@ Each app has its own `.env` (copy from `.env.example`):
 cp apps/api/.env.example apps/api/.env
 cp apps/admin/.env.example apps/admin/.env
 cp apps/mobile/.env.example apps/mobile/.env
+cp apps/web/.env.example apps/web/.env.local
 ```
 Full variable reference and what's required vs. optional: [docs/SETUP.md § Environment variables](docs/SETUP.md#2-environment-variables).
 
@@ -106,7 +116,7 @@ Full variable reference and what's required vs. optional: [docs/SETUP.md § Envi
 | [docs/API.md](docs/API.md) | Endpoints, auth, rate limits, request/response examples |
 | [docs/FIREBASE.md](docs/FIREBASE.md) | Analytics, Crashlytics, Performance, Remote Config, FCM |
 | [docs/ANALYTICS.md](docs/ANALYTICS.md) | The custom backend analytics pipeline and admin dashboard |
-| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Release steps, env vars per environment, checklists, rollback |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Release steps, env vars per environment, checklists, rollback — includes the [website's deploy section](docs/DEPLOYMENT.md#website-appsweb) |
 | [docs/Knowledge/](docs/Knowledge/) | Internal notes — why things are built the way they are |
 | [docs/suggestions/](docs/suggestions/) | Product/engineering audit findings and their implementation status |
 

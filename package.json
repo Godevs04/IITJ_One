@@ -8,10 +8,12 @@
   "scripts": {
     "dev:api": "npm run dev -w @iitj1/api",
     "dev:admin": "npm run dev -w @iitj1/admin",
+    "dev:web": "npm run dev -w @iitj1/web",
     "dev:mobile": "npm run start -w @iitj1/mobile",
     "seed": "npm run seed -w @iitj1/api",
     "test:api": "npm run test -w @iitj1/api",
-    "typecheck": "npm run typecheck -w @iitj1/types && npm run typecheck -w @iitj1/api && npm run typecheck -w @iitj1/admin"
+    "build:web": "npm run build -w @iitj1/web",
+    "typecheck": "npm run typecheck -w @iitj1/types && npm run typecheck -w @iitj1/api && npm run typecheck -w @iitj1/admin && npm run typecheck -w @iitj1/web"
   },
   "engines": {
     "node": ">=20"
