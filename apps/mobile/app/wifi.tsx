@@ -104,7 +104,7 @@ function GuideCard({ guide }: { guide: WifiGuide }) {
 
 export default function WifiScreen() {
   const theme = useThemeColors();
-  const { syncing, sync } = useCampusSync(false);
+  const { syncing, sync, error } = useCampusSync(false);
   const wifi = useCampusModule<WifiDoc>('wifi');
 
   const providers = wifi?.providers?.length ? wifi.providers : DEFAULT_WIFI_DOC.providers;
@@ -127,6 +127,7 @@ export default function WifiScreen() {
       subtitle="Official WPA2-Enterprise setup guides"
       onRefresh={onRefresh}
       refreshing={syncing}
+      error={error}
     >
       <View
         style={[styles.infoCard, { backgroundColor: theme.surface, borderColor: theme.border }]}

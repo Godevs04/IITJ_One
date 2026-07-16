@@ -10,9 +10,15 @@ import { AppSpacing } from '@/theme/tokens';
 
 export default function NotesScreen() {
   const [notes, setNotes] = useState<Note[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setNotes(await listNotes());
+    try {
+      setNotes(await listNotes());
+      setLoadError(null);
+    } catch {
+      setLoadError('Could not load your notes.');
+    }
   }, []);
 
   useFocusEffect(
@@ -47,7 +53,7 @@ export default function NotesScreen() {
   };
 
   return (
-    <ScreenShell hideTitle subtitle="Stored only on this device">
+    <ScreenShell hideTitle subtitle="Stored only on this device" error={loadError}>
       <PrimaryButton label="New note" onPress={() => openNote()} />
 
       {notes.length > 0 ? (

@@ -46,6 +46,8 @@ export function DirectoryRow({
           onPress={() => Linking.openURL(`tel:${phone}`)}
           style={[styles.iconButton, { backgroundColor: theme.primaryTint }]}
           hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={`Call ${title}`}
         >
           <Ionicons name="call-outline" size={20} color={theme.primary} />
         </Pressable>

@@ -35,7 +35,7 @@ function splitDishes(value: string): string[] {
 
 export default function MenuScreen() {
   const theme = useThemeColors();
-  const { syncing, sync } = useCampusSync(false);
+  const { syncing, sync, error } = useCampusSync(false);
   const { lockSwipe, unlockSwipe } = useSwipeGesture();
   const menu = useCampusModule<MenuDoc>('menu');
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
@@ -132,6 +132,7 @@ export default function MenuScreen() {
       subtitle={`Month: ${formattedMonth}`}
       onRefresh={onRefresh}
       refreshing={syncing}
+      error={error}
     >
       {menu ? (
         <ScrollView
@@ -355,7 +356,7 @@ export default function MenuScreen() {
                   return (
                     <View key={idx} style={styles.dishGridItem}>
                       <View style={styles.dishRow}>
-                        <View style={[styles.dishDot, { backgroundColor: '#3B8E4C' }]} />
+                        <View style={[styles.dishDot, { backgroundColor: dietPreference === 'veg' ? theme.veg : theme.nonVeg }]} />
                         <View style={styles.dishTextContainer}>
                           <Text style={[styles.dishText, { color: theme.text }]}>
                             {dish}
@@ -405,6 +406,8 @@ export default function MenuScreen() {
                 onPress={() => setShowCharges(false)}
                 style={styles.modalCloseButton}
                 hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Close"
               >
                 <Ionicons name="close" size={24} color={theme.textMuted} />
               </Pressable>

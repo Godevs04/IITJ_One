@@ -9,7 +9,7 @@ import type { EmergencyDoc } from '@/types/campus';
 import { AppSpacing } from '@/theme/tokens';
 
 export default function EmergencyScreen() {
-  const { syncing, sync } = useCampusSync(false);
+  const { syncing, sync, error } = useCampusSync(false);
   const emergency = useCampusModule<EmergencyDoc>('emergency');
   const synced = emergency?.contacts ?? [];
   const contacts = (
@@ -30,6 +30,7 @@ export default function EmergencyScreen() {
       }
       onRefresh={onRefresh}
       refreshing={syncing}
+      error={error}
     >
       <View style={{ gap: AppSpacing.sm }}>
         {contacts.map((c) => (

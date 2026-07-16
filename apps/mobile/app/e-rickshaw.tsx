@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenShell } from '@/components/ScreenShell';
+import { EmptyState } from '@/components/EmptyState';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { erickshawServiceProvider } from '@/erickshaw/services/erickshawService';
@@ -183,11 +184,19 @@ export default function ERickshawScreen() {
         <Text style={[styles.sectionLabel, { color: theme.textMuted }]}>
           Driver Contacts
         </Text>
-        <View style={styles.driversContainer}>
-          {drivers.map((driver) => (
-            <DriverCard key={driver.id} driver={driver} theme={theme} />
-          ))}
-        </View>
+        {drivers.length > 0 ? (
+          <View style={styles.driversContainer}>
+            {drivers.map((driver) => (
+              <DriverCard key={driver.id} driver={driver} theme={theme} />
+            ))}
+          </View>
+        ) : (
+          <EmptyState
+            icon="people-outline"
+            title="No drivers listed"
+            message="Pull down to sync the latest driver contacts."
+          />
+        )}
       </View>
 
       <FareCard fares={service.fares} theme={theme} />

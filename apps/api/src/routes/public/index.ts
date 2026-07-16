@@ -21,6 +21,8 @@ import holidaysRouter from './holidays';
 import transportAlertsRouter from './transportAlerts';
 import temporaryTransportScheduleRouter from './temporaryTransportSchedule';
 import suggestionsRouter from './suggestions';
+import devicesRouter from './devices';
+import analyticsRouter from './analytics';
 import docsRouter from './docs';
 
 const router = Router();
@@ -49,5 +51,7 @@ router.use('/holidays', holidaysRouter);
 router.use('/transportAlerts', transportAlertsRouter);
 router.use('/temporaryTransportSchedule', temporaryTransportScheduleRouter);
 router.use('/suggestions', suggestionsRouter);
+router.use('/devices', devicesRouter);
+router.use('/analytics', analyticsRouter);
 
 export default router;

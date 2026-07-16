@@ -68,6 +68,7 @@ export async function scheduleClassNotifications(entry: TimetableEntry): Promise
         weekday,
         hour,
         minute,
+        channelId: 'class-reminders',
       },
     });
   }

@@ -9,7 +9,10 @@ import { useEffect, useState } from 'react';
 const NAV = [
   {
     label: 'Overview',
-    items: [{ href: '/', label: 'Dashboard' }],
+    items: [
+      { href: '/', label: 'Dashboard' },
+      { href: '/analytics', label: 'Analytics' },
+    ],
   },
   {
     label: 'Content',

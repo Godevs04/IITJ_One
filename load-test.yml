@@ -1,0 +1,84 @@
+config:
+  target: "http://localhost:6002"
+  phases:
+    # Warm up phase
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm up"
+    # Normal load phase
+    - duration: 60
+      arrivalRate: 50
+      name: "Normal load"
+    # Peak load phase
+    - duration: 60
+      arrivalRate: 100
+      name: "Peak load"
+    # Cool down phase
+    - duration: 30
+      arrivalRate: 10
+      name: "Cool down"
+
+  processor: "./load-test-processor.js"
+  variables:
+    baseUrl: "http://localhost:6002"
+
+  # Performance thresholds
+  defaults:
+    headers:
+      User-Agent: "IITJ-One-LoadTest/1.0"
+      Accept: "application/json"
+
+scenarios:
+  - name: "Mixed Traffic"
+    description: "Simulate realistic user traffic patterns"
+    weight: 50
+    flow:
+      # Public API calls
+      - get:
+          url: "/api/v1/health"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/api/v1/notices?page=1&limit=20"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/api/v1/menu"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/api/v1/transport"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/api/v1/services"
+          expect:
+            - statusCode: 200
+      - think: 5
+
+  - name: "Notices Heavy Traffic"
+    description: "Heavy notices API usage"
+    weight: 30
+    flow:
+      - loop:
+          - get:
+              url: "/api/v1/notices?page={{ $randomNumber(1, 10) }}&limit=20"
+              expect:
+                - statusCode: 200
+              capture:
+                - json: "$.data[0].id"
+                  as: "noticeId"
+        count: 10
+      - think: 3
+
+  - name: "Search Queries"
+    description: "Search API load"
+    weight: 20
+    flow:
+      - loop:
+          - get:
+              url: "/api/v1/services?q={{ $randomString(3, 5) }}"
+              expect:
+                - statusCode: 200
+        count: 5
+      - think: 2

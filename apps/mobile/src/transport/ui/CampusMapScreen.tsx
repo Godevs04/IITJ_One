@@ -314,7 +314,13 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
     <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
       {/* Header Bar */}
       <View style={[styles.header, { borderBottomColor: theme.border }]}>
-        <Pressable onPress={onBack} style={styles.backButton} hitSlop={12}>
+        <Pressable
+          onPress={onBack}
+          style={styles.backButton}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+        >
           <Ionicons name="arrow-back" size={24} color={theme.text} />
         </Pressable>
         <Text style={[styles.title, { color: theme.text }]}>IITJ Transport Map</Text>

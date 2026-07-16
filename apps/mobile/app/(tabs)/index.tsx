@@ -9,6 +9,7 @@ import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
 import { listTimetableEntries } from '@/services/localDb';
+import { Analytics, AppEvents } from '@/services/firebase';
 import type { CalendarDoc, MenuDoc, TransportDoc, HolidaysDoc, TransportAlertsDoc, TemporaryTransportScheduleDoc } from '@/types/campus';
 import {
   expirySeconds,
@@ -180,8 +181,8 @@ function TransportWidget({
       style={({ pressed }) => [
         styles.card,
         {
-          backgroundColor: hasCriticalAlert ? (theme.dark ? '#2A1818' : '#FDF2F2') : theme.surface,
-          borderColor: hasCriticalAlert ? '#EF4444' : theme.border,
+          backgroundColor: hasCriticalAlert ? theme.errorTint : theme.surface,
+          borderColor: hasCriticalAlert ? theme.error : theme.border,
         },
         pressed && styles.pressed,
       ]}
@@ -191,12 +192,12 @@ function TransportWidget({
         <Ionicons
           name={hasCriticalAlert ? 'warning' : 'bus-outline'}
           size={20}
-          color={hasCriticalAlert ? '#EF4444' : theme.secondary}
+          color={hasCriticalAlert ? theme.error : theme.secondary}
         />
         <Text
           style={[
             styles.cardLabel,
-            { color: hasCriticalAlert ? '#EF4444' : theme.textMuted, fontWeight: hasCriticalAlert ? '700' : 'normal' },
+            { color: hasCriticalAlert ? theme.error : theme.textMuted, fontWeight: hasCriticalAlert ? '700' : 'normal' },
           ]}
         >
           {hasCriticalAlert ? 'Transport Service Update' : 'Transport'}
@@ -346,6 +347,8 @@ export default function HomeScreen() {
   const [now, setNow] = useState(() => new Date());
   const [nextClass, setNextClass] = useState<NextClass | null>(null);
 
+  useEffect(() => { Analytics.trackEvent(AppEvents.HOME_OPENED); }, []);
+
   const menu = useCampusModule<MenuDoc>('menu');
   const transport = useCampusModule<TransportDoc>('transport');
   const calendar = useCampusModule<CalendarDoc>('calendar');
@@ -467,7 +470,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.screen}>
       <HomeHeader />
-      <ScreenShell onRefresh={onRefresh} refreshing={syncing}>
+      <ScreenShell onRefresh={onRefresh} refreshing={syncing} error={syncError}>
       <TransportWidget
         departure={nextDeparture}
         arrival={nextArrival}
@@ -654,12 +657,6 @@ export default function HomeScreen() {
             </Pressable>
           ))}
         </View>
-      ) : null}
-
-      {syncError ? (
-        <Text style={[styles.syncError, { color: theme.error }]}>
-          Sync issue: {syncError}
-        </Text>
       ) : null}
 
       {topNotices.length > 0 ? (
@@ -895,9 +892,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   eventDate: {
-    ...AppTypography.caption,
-  },
-  syncError: {
     ...AppTypography.caption,
   },
   widgetSection: {

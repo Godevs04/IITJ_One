@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Switch, Text, View } from 'react-native';
+import { Linking, Switch, Text, View } from 'react-native';
 import { DirectoryRow } from '@/components/DirectoryRow';
 import { ScreenShell } from '@/components/ScreenShell';
 import {
@@ -10,7 +10,11 @@ import {
   type PushRegistration,
 } from '@/services/pushTopics';
 import { useTheme } from '@/theme/ThemeProvider';
+import { Analytics, AppEvents } from '@/services/firebase';
 import { AppSpacing, AppTypography } from '@/theme/tokens';
+import { isHttpUrl } from '@/utils/urlSafety';
+
+const PRIVACY_POLICY_URL = process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL;
 
 const NOTIFICATION_TOPICS = [
   { key: 'iitj_all', label: 'All campus updates' },
@@ -31,6 +35,7 @@ export default function SettingsScreen() {
 
   const toggleDark = (value: boolean) => {
     setDarkMode(value);
+    Analytics.trackEvent(AppEvents.THEME_CHANGED, { theme: value ? 'dark' : 'light' });
   };
 
   return (
@@ -97,7 +102,13 @@ export default function SettingsScreen() {
           onPress={() => router.push('/notes')}
         />
         <DirectoryRow title="Suggest Something" onPress={() => router.push('/suggest')} />
-        <DirectoryRow title="About IITJ" onPress={() => router.push('/about')} />
+        <DirectoryRow title="About IITJ One" onPress={() => router.push('/about')} />
+        {isHttpUrl(PRIVACY_POLICY_URL) ? (
+          <DirectoryRow
+            title="Privacy Policy"
+            onPress={() => void Linking.openURL(PRIVACY_POLICY_URL)}
+          />
+        ) : null}
       </View>
     </ScreenShell>
   );

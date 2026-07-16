@@ -87,6 +87,7 @@ export async function scheduleLaundryNotifications(
         weekday,
         hour,
         minute,
+        channelId: 'laundry-reminders',
       },
     });
   }

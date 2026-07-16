@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { GlobalSearchResultCard } from '@/components/GlobalSearchResultCard';
 import { globalRecentSearchesStore } from '@/services/search/recentSearchesStore';
 import { globalSearchService, type GlobalSearchResult } from '@/services/search/searchService';
+import { Analytics, AppEvents, FirebaseCrashlytics } from '@/services/firebase';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
@@ -28,14 +29,17 @@ export default function GlobalSearchScreen() {
   const commitSearch = useCallback((value: string) => {
     const trimmed = value.trim();
     if (!trimmed) return;
+    Analytics.trackEvent(AppEvents.GLOBAL_SEARCH, { result_count: results.length });
+    void FirebaseCrashlytics.log('Search executed');
     void globalRecentSearchesStore.addSearch(trimmed).then(() =>
       globalRecentSearchesStore.get().then(setRecentSearches),
     );
-  }, []);
+  }, [results.length]);
 
   const handleResultPress = useCallback(
     (result: GlobalSearchResult) => {
       commitSearch(query);
+      Analytics.trackEvent(AppEvents.SEARCH_RESULT_CLICKED, { category: result.entry.category });
       router.push(result.entry.route);
     },
     [commitSearch, query],
@@ -109,7 +113,12 @@ export default function GlobalSearchScreen() {
                     <Text style={[styles.recentText, { color: theme.text }]} numberOfLines={1}>
                       {q}
                     </Text>
-                    <Pressable onPress={() => handleRemoveRecent(q)} hitSlop={10}>
+                    <Pressable
+                      onPress={() => handleRemoveRecent(q)}
+                      hitSlop={10}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Remove "${q}" from recent searches`}
+                    >
                       <Ionicons name="close-outline" size={16} color={theme.textMuted} />
                     </Pressable>
                   </Pressable>

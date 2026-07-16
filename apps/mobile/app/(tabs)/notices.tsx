@@ -1,17 +1,17 @@
 import { useCallback, useMemo } from 'react';
 import * as WebBrowser from 'expo-web-browser';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { EmptyState } from '@/components/EmptyState';
 import { NoticeCard } from '@/components/NoticeCard';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
+import { Analytics, AppEvents, FirebaseCrashlytics } from '@/services/firebase';
 import { loadTopicPrefs } from '@/services/pushTopics';
 import type { NoticeDoc } from '@/types/campus';
 import { expirySeconds, formatExpiryLabel } from '@/utils/date';
 import { isHttpUrl } from '@/utils/urlSafety';
-import { useThemeColors } from '@/theme/ThemeProvider';
-import { AppSpacing, AppTypography } from '@/theme/tokens';
+import { AppSpacing } from '@/theme/tokens';
 
 /** Map notice category → mute topic key (Settings). */
 const CATEGORY_TOPIC: Record<string, string> = {
@@ -22,7 +22,6 @@ const CATEGORY_TOPIC: Record<string, string> = {
 };
 
 export default function NoticesScreen() {
-  const theme = useThemeColors();
   const { syncing, sync, error } = useCampusSync(false);
   const notices = useCampusModule<NoticeDoc[]>('notices');
   const topicPrefs = loadTopicPrefs();
@@ -51,12 +50,8 @@ export default function NoticesScreen() {
       subtitle="Campus announcements"
       onRefresh={onRefresh}
       refreshing={syncing}
+      error={error}
     >
-      {error ? (
-        <Text style={{ ...AppTypography.caption, color: theme.error, marginBottom: AppSpacing.sm }}>
-          Sync issue: {error}
-        </Text>
-      ) : null}
       {activeNotices.length > 0 ? (
         <View style={{ gap: AppSpacing.md }}>
           {activeNotices.map((n, i) => (
@@ -70,6 +65,8 @@ export default function NoticesScreen() {
               imageUrl={n.imageUrl}
               hasLink={isHttpUrl(n.link)}
               onPress={() => {
+                Analytics.trackEvent(AppEvents.NOTICE_OPENED, { category: n.category });
+                void FirebaseCrashlytics.log(`Notice opened: ${n.category}`);
                 if (isHttpUrl(n.link)) void WebBrowser.openBrowserAsync(n.link);
               }}
             />

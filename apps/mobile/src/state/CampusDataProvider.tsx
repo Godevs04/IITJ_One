@@ -1,3 +1,9 @@
+/**
+ * Campus data context provider.
+ * Wraps the SyncEngine and exposes reactive state to all screens.
+ * Maintains backward compatibility with existing useCampusData/useCampusModule hooks.
+ */
+
 import {
   createContext,
   useCallback,
@@ -7,18 +13,23 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { getCachedJson } from '@/services/cache';
 import {
-  readCachedModule,
-  syncCampusData,
+  syncEngine,
+  type SyncEngineState,
   type SyncModule,
   type SyncResult,
-} from '@/services/sync';
+  SYNC_MODULES,
+} from '@/services/syncEngine';
+import { Analytics, AppEvents } from '@/services/firebase';
 
 type CampusDataContextValue = {
   revision: number;
   syncing: boolean;
   lastSync: SyncResult | null;
   error: string | null;
+  isOnline: boolean;
+  lastSyncedAt: number | null;
   sync: () => Promise<SyncResult>;
 };
 
@@ -29,35 +40,47 @@ export function CampusDataProvider({ children }: { children: ReactNode }) {
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<SyncResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState(true);
+  const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
 
-  const sync = useCallback(async () => {
-    setSyncing(true);
-    setError(null);
-    try {
-      const result = await syncCampusData();
-      setLastSync(result);
-      setRevision((r) => r + 1);
-      const errorKeys = Object.keys(result.errors);
-      if (errorKeys.length > 0 && result.updated.length === 0) {
-        setError(result.errors[errorKeys[0] as SyncModule] ?? 'Sync failed');
+  // Subscribe to sync engine state changes
+  useEffect(() => {
+    const unsub = syncEngine.subscribe((state: SyncEngineState) => {
+      setSyncing(state.globalStatus === 'syncing');
+      setIsOnline(state.isOnline);
+      setLastSyncedAt(state.lastFullSyncAt);
+
+      if (state.globalStatus === 'failed') {
+        setError('Sync failed — using cached data');
+      } else if (state.globalStatus === 'offline') {
+        setError(null); // Offline is not an error — app works from cache
+      } else if (state.globalStatus === 'success') {
+        setError(null);
+        setRevision((r) => r + 1); // Trigger re-reads across all screens
+        Analytics.trackEvent(AppEvents.SYNC_COMPLETED);
       }
-      return result;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Sync failed';
-      setError(message);
-      throw err;
-    } finally {
-      setSyncing(false);
-    }
+    });
+    return unsub;
   }, []);
 
+  // Start the sync engine (runs initial sync)
   useEffect(() => {
-    void sync();
-  }, [sync]);
+    syncEngine.start();
+    return () => syncEngine.stop();
+  }, []);
+
+  const sync = useCallback(async (): Promise<SyncResult> => {
+    const result = await syncEngine.sync();
+    setLastSync(result);
+    if (result.updated.length > 0) {
+      setRevision((r) => r + 1);
+    }
+    return result;
+  }, []);
 
   const value = useMemo(
-    () => ({ revision, syncing, lastSync, error, sync }),
-    [revision, syncing, lastSync, error, sync],
+    () => ({ revision, syncing, lastSync, error, isOnline, lastSyncedAt, sync }),
+    [revision, syncing, lastSync, error, isOnline, lastSyncedAt, sync],
   );
 
   return (
@@ -78,6 +101,6 @@ export function useCampusModule<T>(module: SyncModule): T | null {
   const { revision } = useCampusData();
   return useMemo(() => {
     void revision;
-    return readCachedModule<T>(module);
+    return getCachedJson<T>(module);
   }, [module, revision]);
 }

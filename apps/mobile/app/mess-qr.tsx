@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { PrimaryButton, SecondaryButton } from '@/components/Buttons';
 import { ImageCropEditor } from '@/components/ImageCropEditor';
 import { messQrStore, MessQrStorageError, type MessQR } from '@/services/qrStorage';
+import { Analytics, AppEvents, FirebaseCrashlytics } from '@/services/firebase';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
@@ -63,6 +64,10 @@ export default function MessQrScreen() {
       setQr(value);
       setMode(value ? 'viewing' : 'empty');
       setLoading(false);
+      if (value) {
+        Analytics.trackEvent(AppEvents.MESS_QR_OPENED);
+        void FirebaseCrashlytics.log('Mess QR viewed');
+      }
     });
     return () => {
       active = false;

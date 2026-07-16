@@ -25,6 +25,7 @@ import auditRouter from './audit';
 import suggestionsRouter from './suggestions';
 import uploadsRouter from './uploads';
 import adminsRouter from './admins';
+import analyticsRouter from './analytics';
 
 const router = Router();
 
@@ -72,5 +73,6 @@ router.use('/push', pushRouter);
 router.use('/audit', auditRouter);
 router.use('/suggestions', suggestionsRouter);
 router.use('/admins', adminsRouter);
+router.use('/analytics', analyticsRouter);
 
 export default router;

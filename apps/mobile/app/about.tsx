@@ -92,7 +92,7 @@ function ContactRow({
 
 export default function AboutScreen() {
   const theme = useThemeColors();
-  const { syncing, sync } = useCampusSync(false);
+  const { syncing, sync, error } = useCampusSync(false);
   const about = useCampusModule<AboutDoc>('about');
   const syncedSections = about?.sections ?? [];
   const sections = syncedSections.length > 0 ? syncedSections : INSTITUTE_DETAILS;
@@ -107,6 +107,7 @@ export default function AboutScreen() {
       subtitle="Campus information"
       onRefresh={onRefresh}
       refreshing={syncing}
+      error={error}
     >
       <View style={[styles.disclaimer, { backgroundColor: theme.primaryTint }]}>
         <Text style={[styles.disclaimerText, { color: theme.primary }]}>

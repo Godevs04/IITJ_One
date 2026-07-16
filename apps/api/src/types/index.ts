@@ -249,6 +249,78 @@ export interface SuggestionDoc {
   status?: SuggestionStatus;
 }
 
+export interface DeviceDoc {
+  _id?: string;
+  deviceId: string;
+  token: string;
+  platform: 'ios' | 'android' | 'web';
+  appVersion?: string;
+  topics: string[];
+  active: boolean;
+  failureCount: number;
+  lastSeen: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type AnalyticsPlatform = 'ios' | 'android' | 'web';
+export type AnalyticsTheme = 'light' | 'dark';
+
+export interface AnalyticsEventDoc {
+  _id?: string;
+  event: string;
+  timestamp: Date;
+  sessionId: string;
+  platform: AnalyticsPlatform;
+  appVersion: string;
+  hostel: string | null;
+  theme: AnalyticsTheme;
+  params?: Record<string, string | number | boolean>;
+  receivedAt: Date;
+}
+
+/** One document per campus-day. sessionIds is a deduplicated set so WAU/MAU can be
+ *  computed as a union over N days without ever re-scanning analyticsEvents. */
+export interface AnalyticsDailyDoc {
+  _id?: string;
+  campusId: string;
+  date: string; // YYYY-MM-DD, UTC
+  sessionIds: string[];
+  sessions: number;
+  screenViews: Record<string, number>;
+  featureUsage: Record<string, number>;
+  notificationOpens: number;
+  notificationReceived: number;
+  searches: number;
+  syncs: number;
+  crashes: number;
+  platforms: Record<string, number>;
+  themes: Record<string, number>;
+  hostels: Record<string, number>;
+  appVersions: Record<string, number>;
+  totalEvents: number;
+  /** Approximation: (last event timestamp - first event timestamp) per session, averaged. There's no explicit session-end event, so this is a proxy, not a true session-duration measurement. */
+  avgSessionDurationMs: number;
+  updatedAt: Date;
+}
+
+export interface PushHistoryDoc {
+  _id?: string;
+  title: string;
+  body: string;
+  topic: string;
+  data?: Record<string, string>;
+  imageUrl?: string;
+  sentBy: string;
+  sentAt: Date;
+  successCount: number;
+  failureCount: number;
+  firebaseMessageIds: string[];
+  errors: string[];
+  configured: boolean;
+  retryOf?: string;
+}
+
 export interface JwtPayload {
   sub: string;
   email: string;

@@ -24,6 +24,10 @@ import type {
   HolidaysDoc,
   TransportAlertsDoc,
   TemporaryTransportScheduleDoc,
+  DeviceDoc,
+  PushHistoryDoc,
+  AnalyticsEventDoc,
+  AnalyticsDailyDoc,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
 
@@ -49,6 +53,10 @@ interface FallbackState {
   admins: AdminDoc[];
   auditLog: AuditLogDoc[];
   suggestions: SuggestionDoc[];
+  devices: DeviceDoc[];
+  pushHistory: PushHistoryDoc[];
+  analyticsEvents: AnalyticsEventDoc[];
+  analyticsDaily: AnalyticsDailyDoc[];
 }
 
 let state: FallbackState | null = null;
@@ -299,6 +307,10 @@ function buildDefaultState(): FallbackState {
     admins: [],
     auditLog: [],
     suggestions: [],
+    devices: [],
+    pushHistory: [],
+    analyticsEvents: [],
+    analyticsDaily: [],
   };
 }
 
@@ -388,6 +400,109 @@ export function fallbackRestoreNotice(id: string): NoticeDoc | null {
 
 export function fallbackGetSuggestions(): SuggestionDoc[] {
   return getFallbackState().suggestions;
+}
+
+export function fallbackUpsertDevice(
+  deviceId: string,
+  token: string,
+  platform: DeviceDoc['platform'],
+  appVersion: string | undefined,
+  topics: string[] | undefined,
+  now: Date,
+): DeviceDoc {
+  const s = getFallbackState();
+  const byDeviceIdIdx = s.devices.findIndex((d) => d.deviceId === deviceId);
+  const baseIdx = byDeviceIdIdx >= 0 ? byDeviceIdIdx : s.devices.findIndex((d) => d.token === token);
+  const base = baseIdx >= 0 ? s.devices[baseIdx] : undefined;
+
+  const merged: DeviceDoc = {
+    _id: base?._id ?? nextId(),
+    deviceId,
+    token,
+    platform,
+    appVersion: appVersion ?? base?.appVersion,
+    topics: topics && topics.length > 0 ? topics : (base?.topics ?? ['iitj_all']),
+    active: true,
+    failureCount: 0,
+    lastSeen: now,
+    createdAt: base?.createdAt ?? now,
+    updatedAt: now,
+  };
+
+  if (baseIdx >= 0) {
+    s.devices[baseIdx] = merged;
+  } else {
+    s.devices.push(merged);
+  }
+
+  // Stale-token cleanup — same rule as the Mongo path.
+  s.devices = s.devices.filter((d) => !(d.token === token && d.deviceId !== deviceId));
+
+  return merged;
+}
+
+export function fallbackGetDevicesByTopic(topic: string): DeviceDoc[] {
+  return getFallbackState().devices.filter((d) => d.active && d.topics.includes(topic));
+}
+
+export function fallbackUpdateDeviceByToken(token: string, patch: Partial<DeviceDoc>): void {
+  const s = getFallbackState();
+  const idx = s.devices.findIndex((d) => d.token === token);
+  if (idx >= 0) s.devices[idx] = { ...s.devices[idx], ...patch };
+}
+
+export function fallbackAddPushHistory(doc: Omit<PushHistoryDoc, '_id'>): PushHistoryDoc {
+  const s = getFallbackState();
+  const saved: PushHistoryDoc = { ...doc, _id: nextId() };
+  s.pushHistory.unshift(saved);
+  return saved;
+}
+
+export function fallbackGetPushHistoryById(id: string): PushHistoryDoc | undefined {
+  return getFallbackState().pushHistory.find((p) => p._id === id);
+}
+
+export function fallbackGetPushHistory(): PushHistoryDoc[] {
+  return getFallbackState().pushHistory;
+}
+
+export function fallbackInsertAnalyticsEvents(events: AnalyticsEventDoc[]): void {
+  const s = getFallbackState();
+  for (const e of events) {
+    s.analyticsEvents.push({ ...e, _id: nextId() });
+  }
+}
+
+export function fallbackGetAnalyticsEventsInRange(start: Date, end: Date): AnalyticsEventDoc[] {
+  return getFallbackState().analyticsEvents.filter(
+    (e) => e.timestamp >= start && e.timestamp < end,
+  );
+}
+
+export function fallbackGetRecentSessionIds(since: Date): string[] {
+  const ids = new Set(
+    getFallbackState()
+      .analyticsEvents.filter((e) => e.timestamp >= since)
+      .map((e) => e.sessionId),
+  );
+  return [...ids];
+}
+
+export function fallbackUpsertAnalyticsDaily(doc: AnalyticsDailyDoc): AnalyticsDailyDoc {
+  const s = getFallbackState();
+  const idx = s.analyticsDaily.findIndex(
+    (d) => d.campusId === doc.campusId && d.date === doc.date,
+  );
+  const saved = { ...doc, _id: idx >= 0 ? s.analyticsDaily[idx]._id : nextId() };
+  if (idx >= 0) s.analyticsDaily[idx] = saved;
+  else s.analyticsDaily.push(saved);
+  return saved;
+}
+
+export function fallbackGetAnalyticsDaily(campusId: string, dates: string[]): AnalyticsDailyDoc[] {
+  return getFallbackState().analyticsDaily.filter(
+    (d) => d.campusId === campusId && dates.includes(d.date),
+  );
 }
 
 export function fallbackGetAudit(): AuditLogDoc[] {

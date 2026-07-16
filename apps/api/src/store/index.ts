@@ -15,6 +15,12 @@ import {
   fallbackRestoreNotice,
   fallbackGetSuggestions,
   fallbackGetAudit,
+  fallbackUpsertDevice,
+  fallbackGetDevicesByTopic,
+  fallbackUpdateDeviceByToken,
+  fallbackAddPushHistory,
+  fallbackGetPushHistoryById,
+  fallbackGetPushHistory,
   getFallbackState,
 } from './fallback';
 import type {
@@ -40,6 +46,8 @@ import type {
   HolidaysDoc,
   TransportAlertsDoc,
   TemporaryTransportScheduleDoc,
+  DeviceDoc,
+  PushHistoryDoc,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
 
@@ -729,4 +737,176 @@ export async function putTemporaryTransportSchedule(
     getFallbackState().temporaryTransportSchedule = doc;
   }
   await bumpVersion('temporaryTransportSchedule', doc.campusId, adminEmail, 'update', 'Temporary transport schedule updated');
+}
+
+// ─── Devices (FCM) ──────────────────────────────────────────────────────────
+
+/** Upsert by token — re-registering an existing token (app relaunch, token refresh) updates it in place rather than creating a duplicate. */
+/**
+ * deviceId is the durable key (stable per-install, persisted client-side);
+ * token is not, since FCM rotates it on refresh, reinstall, or backup
+ * restore. Matching by deviceId first means a token refresh updates the
+ * SAME document in place rather than creating a second one.
+ *
+ * Also handles devices registered before deviceId existed (matched only by
+ * token, no deviceId set): the legacy row is adopted (deviceId attached to
+ * it) instead of leaving it as an orphan duplicate. And if this deviceId's
+ * old token now belongs to some other stray row (shouldn't normally happen,
+ * but data can drift), that row is deleted immediately rather than lingering
+ * as a stale duplicate — this is the "clean up stale tokens on refresh" step.
+ */
+export async function upsertDevice(
+  deviceId: string,
+  token: string,
+  platform: DeviceDoc['platform'],
+  appVersion?: string,
+  topics?: string[],
+): Promise<DeviceDoc> {
+  const now = new Date();
+
+  if (isDbConnected()) {
+    const byDeviceId = await collections.devices().findOne({ deviceId });
+    const base = byDeviceId ?? (await collections.devices().findOne({ token }));
+
+    const merged: DeviceDoc = {
+      deviceId,
+      token,
+      platform,
+      appVersion: appVersion ?? base?.appVersion,
+      topics: topics && topics.length > 0 ? topics : (base?.topics ?? ['iitj_all']),
+      active: true,
+      failureCount: 0,
+      lastSeen: now,
+      createdAt: base?.createdAt ?? now,
+      updatedAt: now,
+    };
+
+    if (base?._id) {
+      await collections.devices().updateOne({ _id: new ObjectId(base._id) } as never, { $set: merged });
+    } else {
+      await collections.devices().insertOne(merged);
+    }
+
+    // Stale-token cleanup: if some other row (legacy or otherwise) still
+    // holds this exact token, remove it now rather than waiting for the
+    // next failed-delivery cycle to catch it.
+    await collections.devices().deleteMany({ token, deviceId: { $ne: deviceId } });
+
+    return merged;
+  }
+
+  return fallbackUpsertDevice(deviceId, token, platform, appVersion, topics, now);
+}
+
+export async function getDevicesByTopic(topic: string): Promise<DeviceDoc[]> {
+  if (isDbConnected()) {
+    return collections.devices().find({ topics: topic, active: true }).toArray();
+  }
+  return fallbackGetDevicesByTopic(topic);
+}
+
+/**
+ * Applies per-token FCM delivery results back onto the devices collection:
+ * a successful delivery resets failureCount and refreshes lastSeen; a
+ * definitively-invalid token (Firebase's "not registered" error) is marked
+ * inactive immediately; any other failure increments failureCount and the
+ * device is marked inactive once it crosses INACTIVE_AFTER_FAILURES —
+ * transient errors alone don't deactivate a device.
+ */
+const INACTIVE_AFTER_FAILURES = 5;
+
+export async function recordDeviceDeliveryResults(
+  results: Array<{ token: string; success: boolean; invalid: boolean; previousFailureCount: number }>,
+): Promise<void> {
+  const now = new Date();
+  for (const r of results) {
+    const patch: Partial<DeviceDoc> = r.success
+      ? { lastSeen: now, failureCount: 0, updatedAt: now }
+      : {
+          failureCount: r.previousFailureCount + 1,
+          updatedAt: now,
+          ...(r.invalid || r.previousFailureCount + 1 >= INACTIVE_AFTER_FAILURES ? { active: false } : {}),
+        };
+    if (isDbConnected()) {
+      await collections.devices().updateOne({ token: r.token }, { $set: patch });
+    } else {
+      fallbackUpdateDeviceByToken(r.token, patch);
+    }
+  }
+}
+
+// ─── Push History ───────────────────────────────────────────────────────────
+
+export async function addPushHistory(doc: Omit<PushHistoryDoc, '_id'>): Promise<PushHistoryDoc> {
+  if (isDbConnected()) {
+    const result = await collections.pushHistory().insertOne(doc);
+    return { ...doc, _id: result.insertedId.toString() };
+  }
+  return fallbackAddPushHistory(doc);
+}
+
+export async function getPushHistory(
+  page = 1,
+  pageSize = 20,
+  filter?: { topic?: string; search?: string },
+  sort: 'asc' | 'desc' = 'desc',
+): Promise<{ items: PushHistoryDoc[]; total: number }> {
+  const skip = (page - 1) * pageSize;
+  if (isDbConnected()) {
+    const query: Record<string, unknown> = {};
+    if (filter?.topic) query.topic = filter.topic;
+    if (filter?.search) {
+      query.$or = [
+        { title: { $regex: filter.search, $options: 'i' } },
+        { body: { $regex: filter.search, $options: 'i' } },
+      ];
+    }
+    const [items, total] = await Promise.all([
+      collections
+        .pushHistory()
+        .find(query)
+        .sort({ sentAt: sort === 'asc' ? 1 : -1 })
+        .skip(skip)
+        .limit(pageSize)
+        .toArray(),
+      collections.pushHistory().countDocuments(query),
+    ]);
+    return { items, total };
+  }
+  let all = fallbackGetPushHistory();
+  if (filter?.topic) all = all.filter((p) => p.topic === filter.topic);
+  if (filter?.search) {
+    const q = filter.search.toLowerCase();
+    all = all.filter((p) => p.title.toLowerCase().includes(q) || p.body.toLowerCase().includes(q));
+  }
+  all = [...all].sort((a, b) =>
+    sort === 'asc' ? a.sentAt.getTime() - b.sentAt.getTime() : b.sentAt.getTime() - a.sentAt.getTime(),
+  );
+  return { items: all.slice(skip, skip + pageSize), total: all.length };
+}
+
+export async function getPushHistoryById(id: string): Promise<PushHistoryDoc | null> {
+  if (isDbConnected()) {
+    const result = await collections.pushHistory().findOne({ _id: new ObjectId(id) } as never);
+    if (!result) return null;
+    return { ...result, _id: result._id?.toString() };
+  }
+  return fallbackGetPushHistoryById(id) ?? null;
+}
+
+/** Sum of successCount across pushes sent since `since` — for the analytics dashboard's notification stats. Aggregated in the DB rather than paginating the full history client-side. */
+export async function getNotificationsSentSince(since: Date): Promise<number> {
+  if (isDbConnected()) {
+    const [result] = await collections
+      .pushHistory()
+      .aggregate<{ total: number }>([
+        { $match: { sentAt: { $gte: since } } },
+        { $group: { _id: null, total: { $sum: '$successCount' } } },
+      ])
+      .toArray();
+    return result?.total ?? 0;
+  }
+  return fallbackGetPushHistory()
+    .filter((p) => p.sentAt >= since)
+    .reduce((sum, p) => sum + p.successCount, 0);
 }

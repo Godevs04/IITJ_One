@@ -11,7 +11,7 @@ import { AppSpacing } from '@/theme/tokens';
 import { isHttpUrl } from '@/utils/urlSafety';
 
 export default function PortalsScreen() {
-  const { syncing, sync } = useCampusSync(false);
+  const { syncing, sync, error } = useCampusSync(false);
   const portals = useCampusModule<PortalsDoc>('portals');
   const links = [...(portals?.links ?? [])].sort((a, b) => a.order - b.order);
 
@@ -25,6 +25,7 @@ export default function PortalsScreen() {
       subtitle="Official IITJ links"
       onRefresh={onRefresh}
       refreshing={syncing}
+      error={error}
     >
       {links.length > 0 ? (
         <View style={{ gap: AppSpacing.sm }}>
