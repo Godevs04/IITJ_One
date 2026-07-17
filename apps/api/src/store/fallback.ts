@@ -630,3 +630,9 @@ export function fallbackPublishTransportScheduleException(
 export function fallbackSoftDeleteTransportScheduleException(id: string): TransportScheduleExceptionDoc | null {
   return fallbackUpdateTransportScheduleException(id, { deletedAt: new Date() });
 }
+
+export function fallbackListScheduleExceptionRevisions(scheduleId: string): TransportScheduleExceptionRevisionDoc[] {
+  return getFallbackState()
+    .transportScheduleExceptionRevisions.filter((r) => r.scheduleId === scheduleId)
+    .sort((a, b) => b.revisionNumber - a.revisionNumber);
+}

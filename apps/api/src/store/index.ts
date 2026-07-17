@@ -31,6 +31,7 @@ import {
   fallbackFindOverlappingPublishedException,
   fallbackPublishTransportScheduleException,
   fallbackSoftDeleteTransportScheduleException,
+  fallbackListScheduleExceptionRevisions,
   getFallbackState,
 } from './fallback';
 import type {
@@ -1088,6 +1089,21 @@ export async function deleteTransportScheduleException(id: string, adminEmail: s
     await bumpVersion('transportScheduleExceptions', existing.campusId, adminEmail, 'delete', `Schedule exception "${existing.title}" deleted`);
   }
   return !!saved;
+}
+
+/** Read-only — lists the immutable snapshots written on each publish, newest first. No restore yet (Phase 6). */
+export async function listScheduleExceptionRevisions(
+  scheduleId: string,
+): Promise<TransportScheduleExceptionRevisionDoc[]> {
+  if (isDbConnected()) {
+    const items = await collections
+      .transportScheduleExceptionRevisions()
+      .find({ scheduleId })
+      .sort({ revisionNumber: -1 })
+      .toArray();
+    return items.map((r) => ({ ...r, _id: r._id?.toString() }));
+  }
+  return fallbackListScheduleExceptionRevisions(scheduleId);
 }
 
 // ─── Devices (FCM) ──────────────────────────────────────────────────────────
