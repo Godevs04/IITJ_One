@@ -61,6 +61,42 @@ export interface TransportDoc {
   scheduleOverrides: ScheduleOverride[];
 }
 
+export type ScheduleExceptionPriority = 'low' | 'normal' | 'high' | 'critical';
+export type ComputedScheduleExceptionStatus = 'draft' | 'scheduled' | 'active' | 'expired' | 'archived';
+
+export interface ScheduleExceptionAttachment {
+  id: string;
+  name: string;
+  type: 'pdf' | 'image';
+  url: string;
+}
+
+export interface TransportScheduleException {
+  _id?: string;
+  campusId: string;
+  title: string;
+  reason: string;
+  description: string;
+  effectiveFrom: string;
+  effectiveUntil: string;
+  priority: ScheduleExceptionPriority;
+  affectedBuses: string[];
+  trips: TransportTrip[];
+  showBanner: boolean;
+  attachments: ScheduleExceptionAttachment[];
+  status: ComputedScheduleExceptionStatus;
+}
+
+/** Response shape of GET /transport/temporary/active — self-describing so the
+ *  client needs no extra branching beyond checking `hasTemporarySchedule`. */
+export interface ActiveScheduleExceptionResponse {
+  hasTemporarySchedule: boolean;
+  status: ComputedScheduleExceptionStatus | null;
+  priority: ScheduleExceptionPriority | null;
+  banner: boolean;
+  schedule: TransportScheduleException | null;
+}
+
 export interface CalendarEvent {
   title: string;
   type: string;

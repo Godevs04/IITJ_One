@@ -6,8 +6,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
 import { useTheme } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
-import type { CalendarDoc, TransportDoc, TransportTrip, HolidaysDoc, TransportAlertsDoc, TemporaryTransportScheduleDoc } from '@/types/campus';
-import { getScheduleKey, getTripsForDayType, evaluateTripStatus, isScheduleOverridden, isAlertActive, getTripsForToday } from '../services/ScheduleEngine';
+import type {
+  CalendarDoc,
+  TransportDoc,
+  TransportTrip,
+  HolidaysDoc,
+  TransportAlertsDoc,
+  TemporaryTransportScheduleDoc,
+  ActiveScheduleExceptionResponse,
+  ScheduleExceptionPriority,
+} from '@/types/campus';
+import { getScheduleKey, getTripsForDayType, evaluateTripStatus, isScheduleOverridden, isAlertActive, isExceptionActive, getTripsForToday } from '../services/ScheduleEngine';
 import { parseRouteStops } from '../utils/coordinates';
 import { TripCard } from '../widgets/TripCard';
 import { EmptyState } from '@/components/EmptyState';
@@ -19,10 +28,21 @@ interface TransportScreenViewProps {
   holidays: HolidaysDoc | null;
   alerts: TransportAlertsDoc | null;
   tempSchedule: TemporaryTransportScheduleDoc | null;
+  activeException: ActiveScheduleExceptionResponse | null;
   tick: number;
   onRefresh: () => Promise<void>;
   refreshing: boolean;
 }
+
+const PRIORITY_STYLES: Record<
+  ScheduleExceptionPriority,
+  { light: string; lightBorder: string; dark: string; darkBorder: string; accent: string; icon: keyof typeof Ionicons.glyphMap }
+> = {
+  critical: { light: '#FDF2F2', lightBorder: '#F8B4B4', dark: '#2A1818', darkBorder: '#5B2323', accent: '#EF4444', icon: 'warning' },
+  high: { light: '#FFF7ED', lightBorder: '#FDBA74', dark: '#2A1F12', darkBorder: '#5B3D1F', accent: '#F97316', icon: 'alert-circle' },
+  normal: { light: '#EFF6FF', lightBorder: '#93C5FD', dark: '#131C2A', darkBorder: '#1F3A5B', accent: '#3B82F6', icon: 'information-circle' },
+  low: { light: '#F3F4F6', lightBorder: '#D1D5DB', dark: '#1B1F24', darkBorder: '#33383F', accent: '#6B7280', icon: 'information-circle-outline' },
+};
 
 const FAVORITES_KEY = '@iitj1/favorite_stops';
 
@@ -32,6 +52,7 @@ export function TransportScreenView({
   holidays,
   alerts,
   tempSchedule,
+  activeException,
   tick,
   onRefresh,
   refreshing,
@@ -87,15 +108,20 @@ export function TransportScreenView({
 
   const isFavorited = (stopName: string) => favorites.includes(stopName);
 
-  const isOverridden = useMemo(() => isScheduleOverridden(alerts), [alerts]);
+  const isExceptionLive = useMemo(() => isExceptionActive(activeException), [activeException]);
+  // Legacy alert-triggered override — a dated schedule exception takes
+  // priority over this when both are present (see ScheduleEngine).
+  const isOverridden = useMemo(() => !isExceptionLive && isScheduleOverridden(alerts), [alerts, isExceptionLive]);
+  const exceptionSchedule = isExceptionLive ? activeException!.schedule! : null;
 
   // Dynamic trips list evaluation based on dayTypeFilter
   const tripsWithStatus = useMemo(() => {
-    if (!transport) return [];
+    if (!transport && !isExceptionLive) return [];
 
-    const trips = isOverridden
-      ? getTripsForToday(transport, calendar, holidays, alerts, tempSchedule)
-      : getTripsForDayType(transport, calendar, dayTypeFilter);
+    const trips =
+      isExceptionLive || isOverridden
+        ? getTripsForToday(transport, calendar, holidays, alerts, tempSchedule, activeException)
+        : getTripsForDayType(transport!, calendar, dayTypeFilter);
 
     return trips.map((trip) => {
       const evalResult = evaluateTripStatus(trip);
@@ -108,7 +134,7 @@ export function TransportScreenView({
       };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transport, calendar, holidays, alerts, tempSchedule, dayTypeFilter, tick, isOverridden]);
+  }, [transport, calendar, holidays, alerts, tempSchedule, activeException, dayTypeFilter, tick, isOverridden, isExceptionLive]);
 
   const isDepartureFromCampus = (trip: TransportTrip) => {
     // The route group already knows its direction — trust that over
@@ -209,7 +235,56 @@ export function TransportScreenView({
       refreshing={refreshing}
       headerRight={headerRight}
     >
-      {isOverridden && (
+      {isExceptionLive && exceptionSchedule && exceptionSchedule.showBanner ? (
+        (() => {
+          const style = PRIORITY_STYLES[exceptionSchedule.priority];
+          return (
+            <View
+              style={[
+                styles.overrideBanner,
+                { backgroundColor: darkMode ? style.dark : style.light, borderColor: darkMode ? style.darkBorder : style.lightBorder },
+              ]}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: AppSpacing.xs, marginBottom: 4 }}>
+                <Ionicons name={style.icon} size={18} color={style.accent} />
+                <Text style={{ fontSize: 14, fontWeight: '700', color: style.accent }}>{exceptionSchedule.title}</Text>
+              </View>
+              <Text style={{ fontSize: 13, color: theme.text, fontWeight: '500' }}>{exceptionSchedule.reason}</Text>
+              {exceptionSchedule.description ? (
+                <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>{exceptionSchedule.description}</Text>
+              ) : null}
+              <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 6 }}>
+                {new Date(exceptionSchedule.effectiveFrom).toLocaleString()} → {new Date(exceptionSchedule.effectiveUntil).toLocaleString()}
+              </Text>
+              {exceptionSchedule.affectedBuses.length > 0 ? (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                  {exceptionSchedule.affectedBuses.map((bus) => (
+                    <View key={bus} style={[styles.busChip, { borderColor: style.accent }]}>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: style.accent }}>{bus}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+              {exceptionSchedule.attachments.length > 0 ? (
+                <View style={{ marginTop: 8, gap: 4 }}>
+                  {exceptionSchedule.attachments.map((att) => (
+                    <Pressable
+                      key={att.id}
+                      onPress={() => void WebBrowser.openBrowserAsync(att.url)}
+                      style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 4 }, pressed && styles.pressed]}
+                    >
+                      <Ionicons name="document-attach-outline" size={14} color={style.accent} />
+                      <Text style={{ fontSize: 12, color: style.accent, textDecorationLine: 'underline' }}>
+                        {att.name || 'Official attachment'}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
+            </View>
+          );
+        })()
+      ) : isOverridden ? (
         <View style={[styles.overrideBanner, { backgroundColor: darkMode ? '#2A1818' : '#FDF2F2', borderColor: '#F8B4B4' }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: AppSpacing.xs, marginBottom: 4 }}>
             <Ionicons name="warning" size={18} color="#EF4444" />
@@ -222,7 +297,7 @@ export function TransportScreenView({
             Please follow the schedule below.
           </Text>
         </View>
-      )}
+      ) : null}
 
       {/* Dynamic Schedule Filter Tabs & Updates Banner */}
       <View style={styles.filterSection}>
@@ -271,7 +346,7 @@ export function TransportScreenView({
         </View>
 
         {/* Row 2: Day Type Filter - Hide if overridden */}
-        {!isOverridden && (
+        {!isOverridden && !isExceptionLive && (
           <View style={styles.filterRow}>
             <Pressable
               onPress={() => setDayTypeFilter('mon-sat')}
@@ -317,7 +392,7 @@ export function TransportScreenView({
         )}
 
         {/* Web Link / Updates Banner - Hide if overridden */}
-        {!isOverridden && (
+        {!isOverridden && !isExceptionLive && (
           <Pressable
             onPress={() => void WebBrowser.openBrowserAsync('https://iitj.ac.in/office-of-security-transports/en/transport')}
             style={({ pressed }) => [
@@ -614,5 +689,11 @@ const styles = StyleSheet.create({
     borderRadius: AppRadius.md,
     borderWidth: 1,
     marginBottom: AppSpacing.sm,
+  },
+  busChip: {
+    borderWidth: 1,
+    borderRadius: AppRadius.full,
+    paddingHorizontal: AppSpacing.sm,
+    paddingVertical: 2,
   },
 });

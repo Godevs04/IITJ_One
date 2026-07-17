@@ -24,5 +24,6 @@ export function defaultVersions(): MetaVersions {
     holidays: 1,
     transportAlerts: 1,
     temporaryTransportSchedule: 1,
+    transportScheduleExceptions: 1,
   };
 }

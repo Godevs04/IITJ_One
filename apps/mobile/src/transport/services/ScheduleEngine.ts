@@ -8,6 +8,7 @@ import type {
   TransportAlert,
   TemporaryTransportScheduleDoc,
   TemporaryTransportSchedule,
+  ActiveScheduleExceptionResponse,
 } from '@/types/campus';
 import { nowMinutes, parseTimeToMinutes, todayDayName } from '@/utils/date';
 import type { TripStatus, TripWithStatus } from '../models/BusTypes';
@@ -23,6 +24,13 @@ export function isAlertActive(alert: TransportAlert, now: Date = new Date()): bo
 export function isScheduleOverridden(alerts?: TransportAlertsDoc | null, now: Date = new Date()): boolean {
   if (!alerts?.alerts) return false;
   return alerts.alerts.some((a) => a.overrideSchedule && isAlertActive(a, now));
+}
+
+/** A dated schedule exception takes priority over the legacy alert-triggered
+ *  override — it's the source of truth going forward, but the legacy path
+ *  stays intact as a fallback for campuses/admins not yet using it. */
+export function isExceptionActive(exception?: ActiveScheduleExceptionResponse | null): boolean {
+  return !!exception?.hasTemporarySchedule && exception.status === 'active' && !!exception.schedule;
 }
 
 function mapTemporaryTrip(temp: TemporaryTransportSchedule): TransportTrip {
@@ -100,12 +108,17 @@ export function getTripsForDayType(
 }
 
 export function getTripsForToday(
-  transport: TransportDoc,
+  transport: TransportDoc | null,
   calendar: CalendarDoc | null,
   holidays?: HolidaysDoc | null,
   alerts?: TransportAlertsDoc | null,
   tempSchedule?: TemporaryTransportScheduleDoc | null,
+  activeException?: ActiveScheduleExceptionResponse | null,
 ): TransportTrip[] {
+  if (isExceptionActive(activeException)) {
+    const trips = activeException!.schedule!.trips;
+    return [...trips].sort((a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime));
+  }
   if (isScheduleOverridden(alerts)) {
     if (!tempSchedule?.schedules) return [];
     return tempSchedule.schedules
@@ -113,6 +126,7 @@ export function getTripsForToday(
       .map(mapTemporaryTrip)
       .sort((a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime));
   }
+  if (!transport) return [];
   const key = getScheduleKey(calendar, holidays);
   return getTripsForDayType(transport, calendar, key);
 }
@@ -178,10 +192,11 @@ export function getTripsWithStatus(
   holidays?: HolidaysDoc | null,
   alerts?: TransportAlertsDoc | null,
   tempSchedule?: TemporaryTransportScheduleDoc | null,
+  activeException?: ActiveScheduleExceptionResponse | null,
 ): TripWithStatus[] {
-  if (!transport) return [];
+  if (!transport && !isExceptionActive(activeException)) return [];
 
-  const trips = getTripsForToday(transport, calendar, holidays, alerts, tempSchedule);
+  const trips = getTripsForToday(transport, calendar, holidays, alerts, tempSchedule, activeException);
   return trips.map((trip) => {
     const evalResult = evaluateTripStatus(trip);
     const stops = parseRouteStops(trip.route, trip.from, trip.to);

@@ -24,12 +24,15 @@ import type {
   HolidaysDoc,
   TransportAlertsDoc,
   TemporaryTransportScheduleDoc,
+  TransportScheduleExceptionDoc,
+  TransportScheduleExceptionRevisionDoc,
   DeviceDoc,
   PushHistoryDoc,
   AnalyticsEventDoc,
   AnalyticsDailyDoc,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
+import { busesConflict, dateRangesOverlap } from '../services/transportScheduleExceptionStatus';
 
 interface FallbackState {
   meta: MetaDoc;
@@ -50,6 +53,8 @@ interface FallbackState {
   holidays: HolidaysDoc;
   transportAlerts: TransportAlertsDoc;
   temporaryTransportSchedule: TemporaryTransportScheduleDoc;
+  transportScheduleExceptions: TransportScheduleExceptionDoc[];
+  transportScheduleExceptionRevisions: TransportScheduleExceptionRevisionDoc[];
   admins: AdminDoc[];
   auditLog: AuditLogDoc[];
   suggestions: SuggestionDoc[];
@@ -304,6 +309,8 @@ function buildDefaultState(): FallbackState {
       campusId,
       schedules: [],
     },
+    transportScheduleExceptions: [],
+    transportScheduleExceptionRevisions: [],
     admins: [],
     auditLog: [],
     suggestions: [],
@@ -507,4 +514,119 @@ export function fallbackGetAnalyticsDaily(campusId: string, dates: string[]): An
 
 export function fallbackGetAudit(): AuditLogDoc[] {
   return getFallbackState().auditLog;
+}
+
+export function fallbackListTransportScheduleExceptions(
+  campusId: string,
+  lifecycleState?: 'draft' | 'published' | 'archived',
+  page = 1,
+  pageSize = 20,
+): { items: TransportScheduleExceptionDoc[]; total: number } {
+  const skip = (page - 1) * pageSize;
+  const all = getFallbackState()
+    .transportScheduleExceptions.filter(
+      (e) => e.campusId === campusId && (!lifecycleState || e.lifecycleState === lifecycleState),
+    )
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  return { items: all.slice(skip, skip + pageSize), total: all.length };
+}
+
+export function fallbackGetTransportScheduleExceptionById(id: string): TransportScheduleExceptionDoc | undefined {
+  return getFallbackState().transportScheduleExceptions.find((e) => e._id === id);
+}
+
+export function fallbackGetActiveTransportScheduleException(
+  campusId: string,
+  now: Date,
+): TransportScheduleExceptionDoc | null {
+  const matches = getFallbackState()
+    .transportScheduleExceptions.filter(
+      (e) =>
+        e.campusId === campusId &&
+        e.lifecycleState === 'published' &&
+        !e.deletedAt &&
+        e.effectiveFrom <= now &&
+        e.effectiveUntil > now,
+    )
+    .sort((a, b) => b.effectiveFrom.getTime() - a.effectiveFrom.getTime());
+  if (matches.length > 1) {
+    console.warn(
+      `[fallback] Multiple active schedule exceptions for campus ${campusId}: ${matches
+        .map((m) => m._id)
+        .join(', ')} — using most recent effectiveFrom`,
+    );
+  }
+  return matches[0] ?? null;
+}
+
+export function fallbackCreateTransportScheduleException(
+  doc: Omit<TransportScheduleExceptionDoc, '_id'>,
+): TransportScheduleExceptionDoc {
+  const s = getFallbackState();
+  const saved = { ...doc, _id: nextId() };
+  s.transportScheduleExceptions.unshift(saved);
+  return saved;
+}
+
+export function fallbackUpdateTransportScheduleException(
+  id: string,
+  patch: Partial<TransportScheduleExceptionDoc>,
+): TransportScheduleExceptionDoc | null {
+  const s = getFallbackState();
+  const idx = s.transportScheduleExceptions.findIndex((e) => e._id === id);
+  if (idx < 0) return null;
+  s.transportScheduleExceptions[idx] = { ...s.transportScheduleExceptions[idx], ...patch };
+  return s.transportScheduleExceptions[idx];
+}
+
+export function fallbackFindOverlappingPublishedException(
+  campusId: string,
+  effectiveFrom: Date,
+  effectiveUntil: Date,
+  affectedBuses: string[],
+  excludeId: string,
+): TransportScheduleExceptionDoc | null {
+  const conflict = getFallbackState().transportScheduleExceptions.find(
+    (e) =>
+      e.campusId === campusId &&
+      e.lifecycleState === 'published' &&
+      !e.deletedAt &&
+      e._id !== excludeId &&
+      dateRangesOverlap(effectiveFrom, effectiveUntil, e.effectiveFrom, e.effectiveUntil) &&
+      busesConflict(affectedBuses, e.affectedBuses),
+  );
+  return conflict ?? null;
+}
+
+export function fallbackPublishTransportScheduleException(
+  id: string,
+  adminEmail: string,
+  now: Date,
+): TransportScheduleExceptionDoc | null {
+  const s = getFallbackState();
+  const idx = s.transportScheduleExceptions.findIndex((e) => e._id === id);
+  if (idx < 0) return null;
+  const updated: TransportScheduleExceptionDoc = {
+    ...s.transportScheduleExceptions[idx],
+    lifecycleState: 'published',
+    publishedAt: now,
+    updatedAt: now,
+  };
+  s.transportScheduleExceptions[idx] = updated;
+
+  const revisionNumber = s.transportScheduleExceptionRevisions.filter((r) => r.scheduleId === id).length + 1;
+  s.transportScheduleExceptionRevisions.push({
+    _id: nextId(),
+    scheduleId: id,
+    revisionNumber,
+    snapshot: updated,
+    publishedAt: now,
+    publishedBy: adminEmail,
+  });
+
+  return updated;
+}
+
+export function fallbackSoftDeleteTransportScheduleException(id: string): TransportScheduleExceptionDoc | null {
+  return fallbackUpdateTransportScheduleException(id, { deletedAt: new Date() });
 }

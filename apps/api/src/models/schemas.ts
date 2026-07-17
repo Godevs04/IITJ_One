@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { transportTripSchema } from '@iitj1/types';
+
+export { transportTripSchema };
 
 export const campusQuerySchema = z.object({
   campus: z.string().min(1).default('iitj'),
@@ -84,16 +87,6 @@ export const noticeCreateSchema = z.object({
 });
 
 export const noticePatchSchema = noticeCreateSchema.partial();
-
-export const transportTripSchema = z.object({
-  bus: z.string(),
-  startTime: z.string(),
-  from: z.string(),
-  endTime: z.string(),
-  to: z.string(),
-  route: z.string(),
-  direction: z.enum(['departure', 'arrival']).optional(),
-});
 
 export const transportPutSchema = z.object({
   campusId: z.string().min(1),
@@ -281,3 +274,14 @@ export const menuImportSchema = z.object({
 });
 
 export { holidaysPutSchema, transportAlertsPutSchema, temporaryTransportSchedulePutSchema } from '@iitj1/types';
+
+export {
+  transportScheduleExceptionCreateSchema,
+  transportScheduleExceptionUpdateSchema,
+} from '@iitj1/types';
+
+export const adminTransportScheduleExceptionsQuerySchema = campusQuerySchema.merge(paginationQuerySchema).extend({
+  lifecycleState: z.enum(['draft', 'published', 'archived']).optional(),
+});
+
+export const activeTransportScheduleExceptionQuerySchema = campusQuerySchema;

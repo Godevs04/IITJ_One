@@ -15,7 +15,8 @@ export type ModuleName =
   | 'mealWindows'
   | 'holidays'
   | 'transportAlerts'
-  | 'temporaryTransportSchedule';
+  | 'temporaryTransportSchedule'
+  | 'transportScheduleExceptions';
 
 export interface MetaVersions {
   menu: number;
@@ -35,6 +36,7 @@ export interface MetaVersions {
   holidays: number;
   transportAlerts: number;
   temporaryTransportSchedule: number;
+  transportScheduleExceptions: number;
 }
 
 export type {
@@ -115,6 +117,50 @@ export interface TransportDoc {
   shuttle: unknown[];
   liveTrackingUrl: string | null;
   scheduleOverrides: ScheduleOverride[];
+}
+
+export type { ScheduleExceptionPriority, ScheduleExceptionSource, ScheduleExceptionAttachment } from '@iitj1/types';
+
+export interface TransportScheduleExceptionDoc {
+  _id?: string | ObjectId;
+  campusId: string;
+  title: string;
+  reason: string;
+  description: string;
+  effectiveFrom: Date;
+  effectiveUntil: Date;
+  priority: 'low' | 'normal' | 'high' | 'critical';
+  affectedBuses: string[];
+  trips: TransportTrip[];
+  showBanner: boolean;
+  sendPush: boolean;
+  createNotice: boolean;
+  source: {
+    type: 'manual' | 'email' | 'ai_import' | 'csv' | 'api';
+    reference?: string;
+  };
+  attachments: {
+    id: string;
+    name: string;
+    type: 'pdf' | 'image';
+    url: string;
+  }[];
+  lifecycleState: 'draft' | 'published' | 'archived';
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+  publishedAt?: Date;
+  archivedAt?: Date;
+  deletedAt?: Date | null;
+}
+
+export interface TransportScheduleExceptionRevisionDoc {
+  _id?: string | ObjectId;
+  scheduleId: string;
+  revisionNumber: number;
+  snapshot: TransportScheduleExceptionDoc;
+  publishedAt: Date;
+  publishedBy: string;
 }
 
 export interface CalendarEvent {

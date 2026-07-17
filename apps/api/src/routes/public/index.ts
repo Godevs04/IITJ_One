@@ -20,6 +20,7 @@ import mealWindowsRouter from './mealWindows';
 import holidaysRouter from './holidays';
 import transportAlertsRouter from './transportAlerts';
 import temporaryTransportScheduleRouter from './temporaryTransportSchedule';
+import transportScheduleExceptionsRouter from './transportScheduleExceptions';
 import suggestionsRouter from './suggestions';
 import devicesRouter from './devices';
 import analyticsRouter from './analytics';
@@ -35,6 +36,9 @@ router.use('/sync', syncRouter);
 router.use('/home', homeRouter);
 router.use('/menu', menuRouter);
 router.use('/notices', noticesRouter);
+// More-specific mount registered before '/transport' as a defensive convention —
+// doesn't rely on transportRouter's fallthrough behavior for sub-paths.
+router.use('/transport/temporary', transportScheduleExceptionsRouter);
 router.use('/transport', transportRouter);
 router.use('/calendar', calendarRouter);
 router.use('/portals', portalsRouter);

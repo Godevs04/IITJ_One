@@ -73,6 +73,43 @@ export interface TransportDoc {
   }[];
 }
 
+export type ScheduleExceptionPriority = 'low' | 'normal' | 'high' | 'critical';
+export type ScheduleExceptionLifecycleState = 'draft' | 'published' | 'archived';
+export type ComputedScheduleExceptionStatus = 'draft' | 'scheduled' | 'active' | 'expired' | 'archived';
+
+export interface ScheduleExceptionAttachment {
+  id: string;
+  name: string;
+  type: 'pdf' | 'image';
+  url: string;
+}
+
+export interface TransportScheduleException {
+  _id?: string;
+  campusId: string;
+  title: string;
+  reason: string;
+  description: string;
+  effectiveFrom: string;
+  effectiveUntil: string;
+  priority: ScheduleExceptionPriority;
+  affectedBuses: string[];
+  trips: TransportTrip[];
+  showBanner: boolean;
+  sendPush: boolean;
+  createNotice: boolean;
+  source: { type: 'manual' | 'email' | 'ai_import' | 'csv' | 'api'; reference?: string };
+  attachments: ScheduleExceptionAttachment[];
+  lifecycleState: ScheduleExceptionLifecycleState;
+  status: ComputedScheduleExceptionStatus;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  archivedAt?: string;
+  deletedAt?: string | null;
+}
+
 export interface CalendarDoc {
   campusId: string;
   semester: string;

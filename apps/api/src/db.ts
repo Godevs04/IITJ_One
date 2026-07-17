@@ -22,6 +22,8 @@ import type {
   HolidaysDoc,
   TransportAlertsDoc,
   TemporaryTransportScheduleDoc,
+  TransportScheduleExceptionDoc,
+  TransportScheduleExceptionRevisionDoc,
   DeviceDoc,
   PushHistoryDoc,
   AnalyticsEventDoc,
@@ -136,6 +138,13 @@ async function ensureIndexes(): Promise<void> {
 
   await db.collection('analyticsDaily').createIndex({ campusId: 1, date: 1 }, { unique: true });
 
+  // transportScheduleExceptions is genuinely multi-document per campus (unlike the
+  // singleton modules below) — no unique campusId index here.
+  await db.collection('transportScheduleExceptions').createIndex({ campusId: 1, lifecycleState: 1 });
+  await db.collection('transportScheduleExceptions').createIndex({ campusId: 1, effectiveFrom: 1, effectiveUntil: 1 });
+  await db.collection('transportScheduleExceptions').createIndex({ campusId: 1, createdAt: -1 });
+  await db.collection('transportScheduleExceptionRevisions').createIndex({ scheduleId: 1, revisionNumber: -1 });
+
   // One document per campus for singleton modules
   const uniqueCampus = { campusId: 1 } as const;
   for (const name of [
@@ -165,6 +174,12 @@ export function getDb(): Db {
   return db;
 }
 
+/** Shared client handle for callers that need a session/transaction (e.g. multi-write publish flows). */
+export function getMongoClient(): MongoClient {
+  if (!client) throw new Error('Database not connected');
+  return client;
+}
+
 export function col<T extends Document = Document>(name: string): Collection<T> {
   return getDb().collection<T>(name);
 }
@@ -188,6 +203,9 @@ export const collections = {
   holidays: () => col<HolidaysDoc>('holidays'),
   transportAlerts: () => col<TransportAlertsDoc>('transportAlerts'),
   temporaryTransportSchedule: () => col<TemporaryTransportScheduleDoc>('temporaryTransportSchedule'),
+  transportScheduleExceptions: () => col<TransportScheduleExceptionDoc>('transportScheduleExceptions'),
+  transportScheduleExceptionRevisions: () =>
+    col<TransportScheduleExceptionRevisionDoc>('transportScheduleExceptionRevisions'),
   admins: () => col<AdminDoc>('admins'),
   auditLog: () => col<AuditLogDoc>('auditLog'),
   suggestions: () => col<SuggestionDoc>('suggestions'),

@@ -25,6 +25,7 @@ const NAV = [
     label: 'Campus data',
     items: [
       { href: '/transport', label: 'Transport' },
+      { href: '/transport/schedule-exceptions', label: 'Temporary Schedules' },
       { href: '/calendar', label: 'Calendar' },
       { href: '/holidays', label: 'Institute Holidays' },
       { href: '/portals', label: 'Portals' },

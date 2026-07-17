@@ -1,4 +1,6 @@
-import { isDbConnected, collections, ObjectId } from '../db';
+import type { ClientSession } from 'mongodb';
+import { isDbConnected, collections, ObjectId, getMongoClient } from '../db';
+import { busesConflict } from '../services/transportScheduleExceptionStatus';
 import { invalidateModule } from '../cache';
 import {
   initFallbackStore,
@@ -21,6 +23,14 @@ import {
   fallbackAddPushHistory,
   fallbackGetPushHistoryById,
   fallbackGetPushHistory,
+  fallbackListTransportScheduleExceptions,
+  fallbackGetTransportScheduleExceptionById,
+  fallbackGetActiveTransportScheduleException,
+  fallbackCreateTransportScheduleException,
+  fallbackUpdateTransportScheduleException,
+  fallbackFindOverlappingPublishedException,
+  fallbackPublishTransportScheduleException,
+  fallbackSoftDeleteTransportScheduleException,
   getFallbackState,
 } from './fallback';
 import type {
@@ -46,6 +56,8 @@ import type {
   HolidaysDoc,
   TransportAlertsDoc,
   TemporaryTransportScheduleDoc,
+  TransportScheduleExceptionDoc,
+  TransportScheduleExceptionRevisionDoc,
   DeviceDoc,
   PushHistoryDoc,
 } from '../types';
@@ -93,20 +105,24 @@ export async function bumpVersion(
   adminEmail: string,
   action: string,
   diffSummary: string,
+  session?: ClientSession,
 ): Promise<void> {
   if (isDbConnected()) {
     await collections.meta().updateOne(
       { campusId },
       { $inc: { [`versions.${module}`]: 1 }, $set: { updatedAt: new Date() } },
-      { upsert: true },
+      { upsert: true, session },
     );
-    await collections.auditLog().insertOne({
-      adminEmail,
-      action,
-      module,
-      timestamp: new Date(),
-      diffSummary,
-    });
+    await collections.auditLog().insertOne(
+      {
+        adminEmail,
+        action,
+        module,
+        timestamp: new Date(),
+        diffSummary,
+      },
+      { session },
+    );
   } else {
     fallbackBumpVersion(module, campusId);
     fallbackAddAudit({ adminEmail, action, module, timestamp: new Date(), diffSummary });
@@ -737,6 +753,341 @@ export async function putTemporaryTransportSchedule(
     getFallbackState().temporaryTransportSchedule = doc;
   }
   await bumpVersion('temporaryTransportSchedule', doc.campusId, adminEmail, 'update', 'Temporary transport schedule updated');
+}
+
+// ─── Transport Schedule Exceptions ──────────────────────────────────────────
+
+export class ScheduleExceptionArchivedError extends Error {
+  constructor() {
+    super('This schedule exception is archived and can no longer be edited.');
+    this.name = 'ScheduleExceptionArchivedError';
+  }
+}
+
+export interface ScheduleExceptionConflict {
+  conflictingScheduleId: string;
+  conflictingTitle: string;
+  effectiveFrom: Date;
+  effectiveUntil: Date;
+}
+
+export type PublishScheduleExceptionResult =
+  | { ok: true; doc: TransportScheduleExceptionDoc }
+  | { ok: false; reason: 'not_found' }
+  | { ok: false; reason: 'archived' }
+  | { ok: false; reason: 'validation'; errors: string[] }
+  | { ok: false; reason: 'conflict'; conflict: ScheduleExceptionConflict };
+
+export type UnpublishScheduleExceptionResult =
+  | { ok: true; doc: TransportScheduleExceptionDoc }
+  | { ok: false; reason: 'not_found' }
+  | { ok: false; reason: 'invalid_transition' };
+
+function validatePublishFields(
+  doc: Pick<TransportScheduleExceptionDoc, 'title' | 'effectiveFrom' | 'effectiveUntil' | 'affectedBuses' | 'trips'>,
+): string[] {
+  const errors: string[] = [];
+  if (!doc.title?.trim()) errors.push('Title is required');
+  if (!(doc.effectiveFrom < doc.effectiveUntil)) errors.push('Effective From must be before Effective Until');
+  if (!doc.affectedBuses || doc.affectedBuses.length === 0) errors.push('At least one affected bus is required');
+  if (!doc.trips || doc.trips.length === 0) errors.push('At least one trip is required');
+  return errors;
+}
+
+function withStringId(doc: TransportScheduleExceptionDoc): TransportScheduleExceptionDoc {
+  return { ...doc, _id: doc._id?.toString() };
+}
+
+export async function listTransportScheduleExceptions(
+  campusId: string,
+  lifecycleState?: 'draft' | 'published' | 'archived',
+  page = 1,
+  pageSize = 20,
+): Promise<{ items: TransportScheduleExceptionDoc[]; total: number }> {
+  const skip = (page - 1) * pageSize;
+  if (isDbConnected()) {
+    const filter: Record<string, unknown> = { campusId };
+    if (lifecycleState) filter.lifecycleState = lifecycleState;
+    const [items, total] = await Promise.all([
+      collections
+        .transportScheduleExceptions()
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(pageSize)
+        .toArray(),
+      collections.transportScheduleExceptions().countDocuments(filter),
+    ]);
+    return { items: items.map(withStringId), total };
+  }
+  return fallbackListTransportScheduleExceptions(campusId, lifecycleState, page, pageSize);
+}
+
+export async function getTransportScheduleExceptionById(id: string): Promise<TransportScheduleExceptionDoc | null> {
+  if (isDbConnected()) {
+    const result = await collections.transportScheduleExceptions().findOne({ _id: new ObjectId(id) } as never);
+    return result ? withStringId(result) : null;
+  }
+  return fallbackGetTransportScheduleExceptionById(id) ?? null;
+}
+
+export async function getActiveTransportScheduleException(
+  campusId: string,
+  now: Date = new Date(),
+): Promise<TransportScheduleExceptionDoc | null> {
+  if (isDbConnected()) {
+    const matches = await collections
+      .transportScheduleExceptions()
+      .find({
+        campusId,
+        lifecycleState: 'published',
+        $or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
+        effectiveFrom: { $lte: now },
+        effectiveUntil: { $gt: now },
+      })
+      .sort({ effectiveFrom: -1 })
+      .limit(2)
+      .toArray();
+    if (matches.length > 1) {
+      console.warn(
+        `[transportScheduleExceptions] Multiple active schedules for campus ${campusId}: ${matches
+          .map((m) => String(m._id))
+          .join(', ')} — using most recent effectiveFrom`,
+      );
+    }
+    return matches.length > 0 ? withStringId(matches[0]) : null;
+  }
+  return fallbackGetActiveTransportScheduleException(campusId, now);
+}
+
+export async function createTransportScheduleException(
+  input: Omit<TransportScheduleExceptionDoc, '_id' | 'lifecycleState' | 'createdAt' | 'updatedAt' | 'createdBy' | 'deletedAt'>,
+  adminEmail: string,
+): Promise<TransportScheduleExceptionDoc> {
+  const now = new Date();
+  const doc: Omit<TransportScheduleExceptionDoc, '_id'> = {
+    ...input,
+    lifecycleState: 'draft',
+    createdBy: adminEmail,
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
+  };
+  if (isDbConnected()) {
+    const result = await collections.transportScheduleExceptions().insertOne(doc as TransportScheduleExceptionDoc);
+    await bumpVersion('transportScheduleExceptions', doc.campusId, adminEmail, 'create', `Schedule exception "${doc.title}" created`);
+    return { ...doc, _id: result.insertedId.toString() };
+  }
+  const saved = fallbackCreateTransportScheduleException(doc);
+  await bumpVersion('transportScheduleExceptions', doc.campusId, adminEmail, 'create', `Schedule exception "${doc.title}" created`);
+  return saved;
+}
+
+export async function updateTransportScheduleException(
+  id: string,
+  patch: Partial<TransportScheduleExceptionDoc>,
+  adminEmail: string,
+): Promise<TransportScheduleExceptionDoc | null> {
+  const existing = await getTransportScheduleExceptionById(id);
+  if (!existing) return null;
+  if (existing.lifecycleState === 'archived') throw new ScheduleExceptionArchivedError();
+
+  const withUpdatedAt = { ...patch, updatedAt: new Date() };
+  if (isDbConnected()) {
+    const result = await collections
+      .transportScheduleExceptions()
+      .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: withUpdatedAt }, { returnDocument: 'after' });
+    if (!result) return null;
+    await bumpVersion('transportScheduleExceptions', result.campusId, adminEmail, 'update', `Schedule exception "${result.title}" updated`);
+    return withStringId(result);
+  }
+  const saved = fallbackUpdateTransportScheduleException(id, withUpdatedAt);
+  if (saved) {
+    await bumpVersion('transportScheduleExceptions', saved.campusId, adminEmail, 'update', `Schedule exception "${saved.title}" updated`);
+  }
+  return saved;
+}
+
+export async function findOverlappingPublishedException(
+  campusId: string,
+  effectiveFrom: Date,
+  effectiveUntil: Date,
+  affectedBuses: string[],
+  excludeId: string,
+): Promise<TransportScheduleExceptionDoc | null> {
+  if (isDbConnected()) {
+    const candidates = await collections
+      .transportScheduleExceptions()
+      .find({
+        campusId,
+        lifecycleState: 'published',
+        $or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
+        effectiveFrom: { $lt: effectiveUntil },
+        effectiveUntil: { $gt: effectiveFrom },
+        _id: { $ne: new ObjectId(excludeId) },
+      })
+      .toArray();
+    const conflict = candidates.find((c) => busesConflict(affectedBuses, c.affectedBuses));
+    return conflict ? withStringId(conflict) : null;
+  }
+  return fallbackFindOverlappingPublishedException(campusId, effectiveFrom, effectiveUntil, affectedBuses, excludeId);
+}
+
+/** Mongo-only — inserts the immutable snapshot as part of the publish transaction. */
+async function insertScheduleExceptionRevision(
+  doc: TransportScheduleExceptionDoc,
+  adminEmail: string,
+  session: ClientSession,
+): Promise<void> {
+  const scheduleId = String(doc._id);
+  const count = await collections
+    .transportScheduleExceptionRevisions()
+    .countDocuments({ scheduleId }, { session });
+  await collections.transportScheduleExceptionRevisions().insertOne(
+    {
+      scheduleId,
+      revisionNumber: count + 1,
+      snapshot: doc,
+      publishedAt: doc.publishedAt ?? new Date(),
+      publishedBy: adminEmail,
+    } as TransportScheduleExceptionRevisionDoc,
+    { session },
+  );
+}
+
+export async function publishTransportScheduleException(
+  id: string,
+  adminEmail: string,
+): Promise<PublishScheduleExceptionResult> {
+  const existing = await getTransportScheduleExceptionById(id);
+  if (!existing || existing.deletedAt) return { ok: false, reason: 'not_found' };
+  if (existing.lifecycleState === 'archived') return { ok: false, reason: 'archived' };
+
+  const errors = validatePublishFields(existing);
+  if (errors.length > 0) return { ok: false, reason: 'validation', errors };
+
+  const conflict = await findOverlappingPublishedException(
+    existing.campusId,
+    existing.effectiveFrom,
+    existing.effectiveUntil,
+    existing.affectedBuses,
+    id,
+  );
+  if (conflict) {
+    return {
+      ok: false,
+      reason: 'conflict',
+      conflict: {
+        conflictingScheduleId: String(conflict._id),
+        conflictingTitle: conflict.title,
+        effectiveFrom: conflict.effectiveFrom,
+        effectiveUntil: conflict.effectiveUntil,
+      },
+    };
+  }
+
+  const now = new Date();
+  const diffSummary = `Schedule exception "${existing.title}" published`;
+
+  if (isDbConnected()) {
+    // Publish, revision snapshot, and version bump must succeed or fail together —
+    // a partially-applied publish (state flipped but no matching revision) would
+    // silently break Phase 6's restore-from-snapshot guarantee.
+    const session = getMongoClient().startSession();
+    let published: TransportScheduleExceptionDoc | null = null;
+    try {
+      await session.withTransaction(async () => {
+        const updated = await collections.transportScheduleExceptions().findOneAndUpdate(
+          { _id: new ObjectId(id) } as never,
+          { $set: { lifecycleState: 'published', publishedAt: now, updatedAt: now } },
+          { returnDocument: 'after', session },
+        );
+        if (!updated) throw new Error('Schedule exception disappeared during publish');
+        published = withStringId(updated);
+        await insertScheduleExceptionRevision(published, adminEmail, session);
+        await bumpVersion('transportScheduleExceptions', existing.campusId, adminEmail, 'publish', diffSummary, session);
+      });
+    } finally {
+      await session.endSession();
+    }
+    return { ok: true, doc: published! };
+  }
+
+  const saved = fallbackPublishTransportScheduleException(id, adminEmail, now);
+  if (!saved) return { ok: false, reason: 'not_found' };
+  await bumpVersion('transportScheduleExceptions', saved.campusId, adminEmail, 'publish', diffSummary);
+  return { ok: true, doc: saved };
+}
+
+export async function unpublishTransportScheduleException(
+  id: string,
+  adminEmail: string,
+): Promise<UnpublishScheduleExceptionResult> {
+  const existing = await getTransportScheduleExceptionById(id);
+  if (!existing) return { ok: false, reason: 'not_found' };
+  if (existing.lifecycleState !== 'published') return { ok: false, reason: 'invalid_transition' };
+
+  const now = new Date();
+  if (isDbConnected()) {
+    const result = await collections.transportScheduleExceptions().findOneAndUpdate(
+      { _id: new ObjectId(id) } as never,
+      { $set: { lifecycleState: 'draft', updatedAt: now }, $unset: { publishedAt: '' } },
+      { returnDocument: 'after' },
+    );
+    if (!result) return { ok: false, reason: 'not_found' };
+    await bumpVersion('transportScheduleExceptions', result.campusId, adminEmail, 'unpublish', `Schedule exception "${result.title}" unpublished`);
+    return { ok: true, doc: withStringId(result) };
+  }
+  const saved = fallbackUpdateTransportScheduleException(id, { lifecycleState: 'draft', updatedAt: now, publishedAt: undefined });
+  if (!saved) return { ok: false, reason: 'not_found' };
+  await bumpVersion('transportScheduleExceptions', saved.campusId, adminEmail, 'unpublish', `Schedule exception "${saved.title}" unpublished`);
+  return { ok: true, doc: saved };
+}
+
+export async function archiveTransportScheduleException(
+  id: string,
+  adminEmail: string,
+): Promise<TransportScheduleExceptionDoc | null> {
+  const existing = await getTransportScheduleExceptionById(id);
+  if (!existing) return null;
+  if (existing.lifecycleState === 'archived') return existing;
+
+  const now = new Date();
+  if (isDbConnected()) {
+    const result = await collections.transportScheduleExceptions().findOneAndUpdate(
+      { _id: new ObjectId(id) } as never,
+      { $set: { lifecycleState: 'archived', archivedAt: now, updatedAt: now } },
+      { returnDocument: 'after' },
+    );
+    if (!result) return null;
+    await bumpVersion('transportScheduleExceptions', result.campusId, adminEmail, 'archive', `Schedule exception "${result.title}" archived`);
+    return withStringId(result);
+  }
+  const saved = fallbackUpdateTransportScheduleException(id, { lifecycleState: 'archived', archivedAt: now, updatedAt: now });
+  if (saved) {
+    await bumpVersion('transportScheduleExceptions', saved.campusId, adminEmail, 'archive', `Schedule exception "${saved.title}" archived`);
+  }
+  return saved;
+}
+
+export async function deleteTransportScheduleException(id: string, adminEmail: string): Promise<boolean> {
+  const existing = await getTransportScheduleExceptionById(id);
+  if (!existing || existing.deletedAt) return false;
+
+  const now = new Date();
+  if (isDbConnected()) {
+    await collections.transportScheduleExceptions().updateOne(
+      { _id: new ObjectId(id) } as never,
+      { $set: { deletedAt: now, updatedAt: now } },
+    );
+    await bumpVersion('transportScheduleExceptions', existing.campusId, adminEmail, 'delete', `Schedule exception "${existing.title}" deleted`);
+    return true;
+  }
+  const saved = fallbackSoftDeleteTransportScheduleException(id);
+  if (saved) {
+    await bumpVersion('transportScheduleExceptions', existing.campusId, adminEmail, 'delete', `Schedule exception "${existing.title}" deleted`);
+  }
+  return !!saved;
 }
 
 // ─── Devices (FCM) ──────────────────────────────────────────────────────────
