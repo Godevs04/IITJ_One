@@ -9,7 +9,7 @@ export function DownloadCtaBand() {
         <AmbientGlow />
         <h2 className="text-2xl font-semibold tracking-tight text-sand sm:text-3xl">{TAGLINE}</h2>
         <p className="mx-auto mt-3 max-w-xl text-balance text-sm text-sand/80 sm:text-base">
-          Free for every IIT Jodhpur student, forever. No account, no ads, no catch.
+          Free for every IIT Jodhpur student, forever.
         </p>
         <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
           <LinkButton

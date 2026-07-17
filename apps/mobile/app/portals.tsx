@@ -9,8 +9,10 @@ import { useCampusModule } from '@/hooks/useCampusModule';
 import type { PortalsDoc } from '@/types/campus';
 import { AppSpacing } from '@/theme/tokens';
 import { isHttpUrl } from '@/utils/urlSafety';
+import { usePostHog } from 'posthog-react-native';
 
 export default function PortalsScreen() {
+  const posthog = usePostHog();
   const { syncing, sync, error } = useCampusSync(false);
   const portals = useCampusModule<PortalsDoc>('portals');
   const links = [...(portals?.links ?? [])].sort((a, b) => a.order - b.order);
@@ -35,7 +37,10 @@ export default function PortalsScreen() {
               title={link.name}
               subtitle={link.url}
               onPress={() => {
-                if (isHttpUrl(link.url)) void WebBrowser.openBrowserAsync(link.url);
+                if (isHttpUrl(link.url)) {
+                  posthog.capture('portal_link_opened', { portal_name: link.name });
+                  void WebBrowser.openBrowserAsync(link.url);
+                }
               }}
             />
           ))}

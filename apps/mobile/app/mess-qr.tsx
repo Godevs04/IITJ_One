@@ -14,6 +14,7 @@ import { messQrStore, MessQrStorageError, type MessQR } from '@/services/qrStora
 import { Analytics, AppEvents, FirebaseCrashlytics } from '@/services/firebase';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { usePostHog } from 'posthog-react-native';
 
 type Mode = 'empty' | 'cropping' | 'viewing';
 
@@ -35,6 +36,7 @@ function friendlyErrorMessage(err: unknown): string {
 
 export default function MessQrScreen() {
   const theme = useThemeColors();
+  const posthog = usePostHog();
   const [qr, setQr] = useState<MessQR | null>(null);
   const [mode, setMode] = useState<Mode>('empty');
   const [pendingImageUri, setPendingImageUri] = useState<string | null>(null);
@@ -152,6 +154,7 @@ export default function MessQrScreen() {
   const pickImage = useCallback(async (useCamera: boolean) => {
     const granted = await requestPermissionOrPrompt(useCamera);
     if (!granted) return;
+    posthog.capture('mess_qr_upload_started', { source: useCamera ? 'camera' : 'gallery' });
 
     try {
       const result = useCamera
@@ -165,7 +168,7 @@ export default function MessQrScreen() {
     } catch {
       Alert.alert('Something went wrong', 'Could not open the image picker. Please try again.');
     }
-  }, []);
+  }, [posthog]);
 
   const openReCrop = useCallback(() => {
     if (!qr) return;

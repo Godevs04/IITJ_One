@@ -13,6 +13,7 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { Analytics, AppEvents } from '@/services/firebase';
 import { AppSpacing, AppTypography } from '@/theme/tokens';
 import { isHttpUrl } from '@/utils/urlSafety';
+import { usePostHog } from 'posthog-react-native';
 
 const PRIVACY_POLICY_URL = process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL;
 
@@ -25,6 +26,7 @@ const NOTIFICATION_TOPICS = [
 ] as const;
 
 export default function SettingsScreen() {
+  const posthog = usePostHog();
   const { darkMode, setDarkMode, colors } = useTheme();
   const [topicPrefs, setTopicPrefs] = useState(loadTopicPrefs());
   const [pushInfo, setPushInfo] = useState<PushRegistration | null>(null);
@@ -80,6 +82,10 @@ export default function SettingsScreen() {
               const next = { ...topicPrefs, [topic.key]: topicPrefs[topic.key] === false };
               setTopicPrefs(next);
               saveTopicPrefs(next);
+              posthog.capture('notification_topic_toggled', {
+                topic: topic.key,
+                enabled: next[topic.key] !== false,
+              });
             }}
           />
         ))}

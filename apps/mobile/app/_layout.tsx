@@ -1,9 +1,11 @@
-import { router, Stack } from 'expo-router';
+import { router, Stack, usePathname, useGlobalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { PostHogProvider } from 'posthog-react-native';
+import { posthog } from '@/config/posthog';
 import { Ionicons } from '@expo/vector-icons';
 import {
   IBMPlexSans_400Regular,
@@ -71,7 +73,17 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <ThemeProvider>
           <CampusDataProvider>
-            <RootNavigator />
+            <PostHogProvider
+              client={posthog}
+              autocapture={{
+                captureScreens: false,
+                captureTouches: true,
+                propsToCapture: ['testID'],
+                maxElementsCaptured: 20,
+              }}
+            >
+              <RootNavigator />
+            </PostHogProvider>
           </CampusDataProvider>
         </ThemeProvider>
       </SafeAreaProvider>
@@ -82,6 +94,17 @@ export default function RootLayout() {
 function RootNavigator() {
   const { scheme, colors } = useTheme();
   const isDark = scheme === 'dark';
+  const pathname = usePathname();
+  const params = useGlobalSearchParams();
+  const previousPathname = useRef<string | undefined>(undefined);
+
+  // Manual PostHog screen tracking for Expo Router
+  useEffect(() => {
+    if (previousPathname.current !== pathname) {
+      posthog.screen(pathname, { previous_screen: previousPathname.current ?? null, ...params });
+      previousPathname.current = pathname;
+    }
+  }, [pathname, params]);
 
   // Auto-track every screen transition
   useScreenTracking();

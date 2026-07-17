@@ -17,6 +17,33 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, 'node_modules'),
 ];
 
+// Force a single copy of React and its store shim to avoid the
+// "Invalid hook call" crash caused by posthog-react-native / @react-navigation
+// packages each hoisting their own react / use-sync-external-store instance.
+config.resolver.extraNodeModules = {
+  react: path.resolve(projectRoot, 'node_modules/react'),
+  'react-native': path.resolve(projectRoot, 'node_modules/react-native'),
+  'use-sync-external-store': path.resolve(projectRoot, 'node_modules/use-sync-external-store'),
+};
+
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === 'react') {
+    return context.resolveRequest(
+      context,
+      path.resolve(projectRoot, 'node_modules/react'),
+      platform
+    );
+  }
+  if (moduleName === 'react-native') {
+    return context.resolveRequest(
+      context,
+      path.resolve(projectRoot, 'node_modules/react-native'),
+      platform
+    );
+  }
+  return context.resolveRequest(context, moduleName, platform);
+};
+
 // Next.js (Admin) rewrites apps/admin/.next on every dev-server restart or
 // rebuild. Since watchFolders covers the whole workspace root, Metro's
 // watcher used to race those writes on Windows — Next mid-write to

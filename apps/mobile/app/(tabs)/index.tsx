@@ -10,6 +10,7 @@ import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
 import { listTimetableEntries } from '@/services/localDb';
 import { Analytics, AppEvents } from '@/services/firebase';
+import { usePostHog } from 'posthog-react-native';
 import type { CalendarDoc, MenuDoc, TransportDoc, HolidaysDoc, TransportAlertsDoc, TemporaryTransportScheduleDoc } from '@/types/campus';
 import {
   expirySeconds,
@@ -343,6 +344,7 @@ function NoticeRow({
 
 export default function HomeScreen() {
   const theme = useThemeColors();
+  const posthog = usePostHog();
   const { syncing, sync, error: syncError } = useCampusSync();
   const [now, setNow] = useState(() => new Date());
   const [nextClass, setNextClass] = useState<NextClass | null>(null);
@@ -615,7 +617,10 @@ export default function HomeScreen() {
               title={item.title}
               icon={item.icon}
               variant={item.variant}
-              onPress={() => router.push(item.route)}
+              onPress={() => {
+                posthog.capture('quick_link_tapped', { link_title: item.title });
+                router.push(item.route);
+              }}
             />
           ))}
         </View>

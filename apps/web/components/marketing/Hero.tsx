@@ -14,8 +14,7 @@ function HeroStatCard() {
       <div className="mt-4 grid grid-cols-2 gap-3">
         <StatTile value={FEATURES.length} label="Campus essentials" />
         <StatTile value={100} suffix="%" label="Offline-first" />
-        <StatTile value={0} label="Accounts required" />
-        <StatTile value={0} label="Ads, ever" />
+        <StatTile value={0} label="Accounts required" className="col-span-2" />
       </div>
     </div>
   );

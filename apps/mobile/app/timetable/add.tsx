@@ -25,6 +25,7 @@ import {
 import { useThemeColors } from '@/theme/ThemeProvider';
 import type { ThemeColors } from '@/theme/tokens';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { usePostHog } from 'posthog-react-native';
 
 const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 const CLASS_TYPES: ClassType[] = ['lecture', 'lab', 'tutorial'];
@@ -35,6 +36,7 @@ function uuid(): string {
 
 export default function AddClassScreen() {
   const theme = useThemeColors();
+  const posthog = usePostHog();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const isEdit = Boolean(id);
 
@@ -95,16 +97,32 @@ export default function AddClassScreen() {
 
     await saveTimetableEntry(entry);
     if (reminderEnabled) await rescheduleClassNotifications(entry);
+    if (id) {
+      posthog.capture('timetable_class_updated', {
+        class_type: classType,
+        days_count: daysOfWeek.length,
+        reminder_enabled: reminderEnabled,
+        show_on_home: showOnHome,
+      });
+    } else {
+      posthog.capture('timetable_class_added', {
+        class_type: classType,
+        days_count: daysOfWeek.length,
+        reminder_enabled: reminderEnabled,
+        show_on_home: showOnHome,
+      });
+    }
     router.back();
-  }, [className, startTime, endTime, classType, daysOfWeek, room, reminderEnabled, showOnHome, id]);
+  }, [className, startTime, endTime, classType, daysOfWeek, room, reminderEnabled, showOnHome, id, posthog]);
 
   const remove = useCallback(async () => {
     if (!id) return;
     const old = await getTimetableEntry(String(id));
     if (old) await cancelClassNotifications(old.id, old.daysOfWeek);
     await deleteTimetableEntry(String(id));
+    posthog.capture('timetable_class_deleted', { class_type: old?.classType ?? null });
     router.back();
-  }, [id]);
+  }, [id, posthog]);
 
   const inputStyle = [
     styles.input,

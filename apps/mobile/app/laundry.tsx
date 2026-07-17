@@ -34,6 +34,7 @@ import {
 import { useCampusData } from '@/state/CampusDataProvider';
 import { Analytics, AppEvents } from '@/services/firebase';
 import { useCampusSync } from '@/hooks/useCampusSync';
+import { usePostHog } from 'posthog-react-native';
 
 const DAY_LABELS: Record<string, string> = {
   monday: 'Monday',
@@ -47,6 +48,7 @@ const DAY_LABELS: Record<string, string> = {
 
 export default function LaundryScreen() {
   const theme = useThemeColors();
+  const posthog = usePostHog();
   const { revision } = useCampusData();
   const { syncing, sync, error } = useCampusSync(false);
   const [prefs, setPrefs] = useState<LaundryPreferences>(DEFAULT_LAUNDRY_PREFERENCES);
@@ -123,8 +125,9 @@ export default function LaundryScreen() {
       const next: LaundryPreferences = { ...prefs, hostel };
       persist(next);
       void applyReminders(next, previousHostel);
+      posthog.capture('laundry_hostel_selected', { hostel });
     },
-    [prefs, persist, applyReminders],
+    [prefs, persist, applyReminders, posthog],
   );
 
   const toggleReminder = useCallback(

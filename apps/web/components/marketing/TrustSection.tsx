@@ -7,7 +7,6 @@ const stats = [
   { value: FEATURES.length, suffix: '', label: 'Campus essentials' },
   { value: 100, suffix: '%', label: 'Offline-first' },
   { value: 0, suffix: '', label: 'Accounts required' },
-  { value: 0, suffix: '', label: 'Ads, ever' },
 ];
 
 export function TrustSection() {
@@ -16,7 +15,7 @@ export function TrustSection() {
       <h2 id="trust-heading" className="sr-only">
         Why IITJ One
       </h2>
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {stats.map((stat, index) => (
           <Reveal key={stat.label} delay={index * 0.06}>
             <Card className="text-center">

@@ -3,15 +3,16 @@
  * Ensures Firebase is initialized exactly once and respects feature flags.
  */
 
-import { Platform } from 'react-native';
+import { Platform, NativeModules } from 'react-native';
 
 const ANALYTICS_ENABLED =
   process.env.EXPO_PUBLIC_ENABLE_ANALYTICS !== 'false';
 const CRASHLYTICS_ENABLED =
   process.env.EXPO_PUBLIC_ENABLE_CRASH_REPORTING !== 'false';
 
-/** True when running in a native EAS build (not Expo Go, not web). */
+/** True when running on mobile. */
 const IS_NATIVE = Platform.OS === 'ios' || Platform.OS === 'android';
+const HAS_NATIVE_FIREBASE = IS_NATIVE && !!NativeModules.RNFBAppModule;
 
 let initialized = false;
 
@@ -23,7 +24,7 @@ let initialized = false;
  * - Firebase native modules are unavailable (Expo Go)
  */
 export async function initFirebase(): Promise<void> {
-  if (initialized || !IS_NATIVE) return;
+  if (initialized || !HAS_NATIVE_FIREBASE) return;
   initialized = true;
 
   try {

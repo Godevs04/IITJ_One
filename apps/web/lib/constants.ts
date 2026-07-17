@@ -13,7 +13,7 @@
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3002';
 
 export const BRAND_NAME = 'IITJ One';
-export const TAGLINE = 'One app. All of IIT Jodhpur.';
+export const TAGLINE = 'The Smartest Way to Navigate IIT Jodhpur.';
 export const MISSION =
   'IITJ One helps every new IIT Jodhpur student quickly find essential campus information from a single app — a campus companion, not a social platform.';
 
