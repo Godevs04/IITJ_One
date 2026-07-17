@@ -16,6 +16,7 @@ import { isHttpUrl } from '@/utils/urlSafety';
 import { usePostHog } from 'posthog-react-native';
 
 const PRIVACY_POLICY_URL = process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL;
+const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL;
 
 const NOTIFICATION_TOPICS = [
   { key: 'iitj_all', label: 'All campus updates' },
@@ -113,6 +114,12 @@ export default function SettingsScreen() {
           <DirectoryRow
             title="Privacy Policy"
             onPress={() => void Linking.openURL(PRIVACY_POLICY_URL)}
+          />
+        ) : null}
+        {isHttpUrl(TERMS_URL) ? (
+          <DirectoryRow
+            title="Terms of Use"
+            onPress={() => void Linking.openURL(TERMS_URL)}
           />
         ) : null}
       </View>
