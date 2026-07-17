@@ -15,6 +15,7 @@
  */
 
 import { Platform, NativeModules } from 'react-native';
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { isFirebaseReady, isNativeBuild } from './firebase';
 import { Analytics } from './trackingApi';
@@ -389,7 +390,8 @@ export function clearHistory(): void {
  * NOTE: This must be called outside of any component/effect — at module load time.
  */
 export function registerBackgroundHandler(): void {
-  if (!isNativeBuild() || !NativeModules.RNFBAppModule) return;
+  const isExpoGo = Constants.executionEnvironment === 'storeClient';
+  if (!isNativeBuild() || isExpoGo || !NativeModules.RNFBAppModule) return;
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const m = require('@react-native-firebase/messaging').default;

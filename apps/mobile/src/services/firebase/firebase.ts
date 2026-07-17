@@ -4,6 +4,7 @@
  */
 
 import { Platform, NativeModules } from 'react-native';
+import Constants from 'expo-constants';
 
 const ANALYTICS_ENABLED =
   process.env.EXPO_PUBLIC_ENABLE_ANALYTICS !== 'false';
@@ -12,7 +13,8 @@ const CRASHLYTICS_ENABLED =
 
 /** True when running on mobile. */
 const IS_NATIVE = Platform.OS === 'ios' || Platform.OS === 'android';
-const HAS_NATIVE_FIREBASE = IS_NATIVE && !!NativeModules.RNFBAppModule;
+const IS_EXPO_GO = Constants.executionEnvironment === 'storeClient';
+const HAS_NATIVE_FIREBASE = IS_NATIVE && !IS_EXPO_GO && !!NativeModules.RNFBAppModule;
 
 let initialized = false;
 
