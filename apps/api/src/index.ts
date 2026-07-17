@@ -3,6 +3,7 @@ import helmet from 'helmet';
 import { assertProductionSecrets, config } from './config';
 import { connectDb, disconnectDb, startReconnectLoop } from './db';
 import { initFallbackStore } from './store/fallback';
+import { startAnalyticsAggregationScheduler } from './services/analytics';
 import { publicRateLimiter } from './middleware/rateLimit';
 import { etagMiddleware } from './middleware/etag';
 import { requestIdMiddleware } from './middleware/requestId';
@@ -34,6 +35,8 @@ async function bootstrap(): Promise<void> {
     }
     startReconnectLoop();
   }
+
+  startAnalyticsAggregationScheduler();
 
   const app = express();
 

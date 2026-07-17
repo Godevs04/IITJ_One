@@ -24,7 +24,7 @@ const WebViewComponent = WebView as any;
 export default function CalendarScreen() {
   const theme = useThemeColors();
   const insets = useSafeAreaInsets();
-  const { syncing, sync } = useCampusSync(false);
+  const { syncing, sync, error } = useCampusSync(false);
   const calendar = useCampusModule<CalendarDoc>('calendar');
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('all');
   const [showPdf, setShowPdf] = useState(false);
@@ -133,6 +133,7 @@ export default function CalendarScreen() {
       subtitle={calendar?.semester || 'Semester events'}
       onRefresh={onRefresh}
       refreshing={syncing}
+      error={error}
     >
       <Stack.Screen
         options={{

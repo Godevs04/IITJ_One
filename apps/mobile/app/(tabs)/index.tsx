@@ -9,6 +9,8 @@ import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
 import { listTimetableEntries } from '@/services/localDb';
+import { Analytics, AppEvents } from '@/services/firebase';
+import { usePostHog } from 'posthog-react-native';
 import type { CalendarDoc, MenuDoc, TransportDoc, HolidaysDoc, TransportAlertsDoc, TemporaryTransportScheduleDoc } from '@/types/campus';
 import {
   expirySeconds,
@@ -180,8 +182,8 @@ function TransportWidget({
       style={({ pressed }) => [
         styles.card,
         {
-          backgroundColor: hasCriticalAlert ? (theme.dark ? '#2A1818' : '#FDF2F2') : theme.surface,
-          borderColor: hasCriticalAlert ? '#EF4444' : theme.border,
+          backgroundColor: hasCriticalAlert ? theme.errorTint : theme.surface,
+          borderColor: hasCriticalAlert ? theme.error : theme.border,
         },
         pressed && styles.pressed,
       ]}
@@ -191,12 +193,12 @@ function TransportWidget({
         <Ionicons
           name={hasCriticalAlert ? 'warning' : 'bus-outline'}
           size={20}
-          color={hasCriticalAlert ? '#EF4444' : theme.secondary}
+          color={hasCriticalAlert ? theme.error : theme.secondary}
         />
         <Text
           style={[
             styles.cardLabel,
-            { color: hasCriticalAlert ? '#EF4444' : theme.textMuted, fontWeight: hasCriticalAlert ? '700' : 'normal' },
+            { color: hasCriticalAlert ? theme.error : theme.textMuted, fontWeight: hasCriticalAlert ? '700' : 'normal' },
           ]}
         >
           {hasCriticalAlert ? 'Transport Service Update' : 'Transport'}
@@ -342,9 +344,12 @@ function NoticeRow({
 
 export default function HomeScreen() {
   const theme = useThemeColors();
+  const posthog = usePostHog();
   const { syncing, sync, error: syncError } = useCampusSync();
   const [now, setNow] = useState(() => new Date());
   const [nextClass, setNextClass] = useState<NextClass | null>(null);
+
+  useEffect(() => { Analytics.trackEvent(AppEvents.HOME_OPENED); }, []);
 
   const menu = useCampusModule<MenuDoc>('menu');
   const transport = useCampusModule<TransportDoc>('transport');
@@ -467,7 +472,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.screen}>
       <HomeHeader />
-      <ScreenShell onRefresh={onRefresh} refreshing={syncing}>
+      <ScreenShell onRefresh={onRefresh} refreshing={syncing} error={syncError}>
       <TransportWidget
         departure={nextDeparture}
         arrival={nextArrival}
@@ -612,7 +617,10 @@ export default function HomeScreen() {
               title={item.title}
               icon={item.icon}
               variant={item.variant}
-              onPress={() => router.push(item.route)}
+              onPress={() => {
+                posthog.capture('quick_link_tapped', { link_title: item.title });
+                router.push(item.route);
+              }}
             />
           ))}
         </View>
@@ -654,12 +662,6 @@ export default function HomeScreen() {
             </Pressable>
           ))}
         </View>
-      ) : null}
-
-      {syncError ? (
-        <Text style={[styles.syncError, { color: theme.error }]}>
-          Sync issue: {syncError}
-        </Text>
       ) : null}
 
       {topNotices.length > 0 ? (
@@ -895,9 +897,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   eventDate: {
-    ...AppTypography.caption,
-  },
-  syncError: {
     ...AppTypography.caption,
   },
   widgetSection: {

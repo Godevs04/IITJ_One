@@ -25,6 +25,8 @@ interface ScreenShellProps {
   safeAreaTop?: boolean;
   /** Custom element to render on the right of the title */
   headerRight?: ReactNode;
+  /** Shows a dismissible-by-retry banner when the last sync failed — pass through `useCampusSync().error`. */
+  error?: string | null;
 }
 
 export function ScreenShell({
@@ -36,6 +38,7 @@ export function ScreenShell({
   hideTitle = false,
   safeAreaTop,
   headerRight,
+  error,
 }: ScreenShellProps) {
   const theme = useThemeColors();
   const segments = useSegments();
@@ -102,6 +105,14 @@ export function ScreenShell({
             {subtitle}
           </Text>
         ) : null}
+        {error ? (
+          <View style={[styles.errorBanner, { backgroundColor: theme.errorTint, borderColor: theme.error }]}>
+            <Ionicons name="alert-circle-outline" size={16} color={theme.error} />
+            <Text style={[styles.errorText, { color: theme.error }]}>
+              Sync issue: {error}
+            </Text>
+          </View>
+        ) : null}
         {children}
       </ScrollView>
     </SafeAreaView>
@@ -137,5 +148,18 @@ const styles = StyleSheet.create({
   subtitleOnly: {
     ...AppTypography.body,
     marginBottom: AppSpacing.xs,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.xs,
+    borderWidth: 1,
+    borderRadius: AppSpacing.sm,
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: AppSpacing.sm,
+  },
+  errorText: {
+    ...AppTypography.caption,
+    flex: 1,
   },
 });

@@ -9,7 +9,10 @@ import { useEffect, useState } from 'react';
 const NAV = [
   {
     label: 'Overview',
-    items: [{ href: '/', label: 'Dashboard' }],
+    items: [
+      { href: '/', label: 'Dashboard' },
+      { href: '/analytics', label: 'Analytics' },
+    ],
   },
   {
     label: 'Content',
@@ -22,6 +25,7 @@ const NAV = [
     label: 'Campus data',
     items: [
       { href: '/transport', label: 'Transport' },
+      { href: '/transport/schedule-exceptions', label: 'Temporary Schedules' },
       { href: '/calendar', label: 'Calendar' },
       { href: '/holidays', label: 'Institute Holidays' },
       { href: '/portals', label: 'Portals' },

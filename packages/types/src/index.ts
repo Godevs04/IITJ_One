@@ -6,3 +6,5 @@ export * from './mealWindows';
 export * from './campus';
 export * from './transportAlerts';
 export * from './temporaryTransportSchedule';
+export * from './transport';
+export * from './transportScheduleException';

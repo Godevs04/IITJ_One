@@ -6,6 +6,7 @@ import { ScreenShell } from '@/components/ScreenShell';
 import { getNote, saveNote } from '@/services/localDb';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { usePostHog } from 'posthog-react-native';
 
 function uuid(): string {
   return `note-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -13,6 +14,7 @@ function uuid(): string {
 
 export default function NoteEditScreen() {
   const theme = useThemeColors();
+  const posthog = usePostHog();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -36,8 +38,13 @@ export default function NoteEditScreen() {
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     });
+    posthog.capture('note_saved', {
+      is_new: !id,
+      has_title: title.trim().length > 0,
+      body_length: body.trim().length,
+    });
     router.back();
-  }, [id, title, body]);
+  }, [id, title, body, posthog]);
 
   const fieldStyle = {
     backgroundColor: theme.inputBackground,

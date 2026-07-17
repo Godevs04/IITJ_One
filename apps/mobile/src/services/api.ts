@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import type { ActiveScheduleExceptionResponse } from '@/types/campus';
 
 const DEFAULT_API_URL = 'http://localhost:6002/api/v1';
 
@@ -95,6 +96,19 @@ export function getManifest(campusId = CAMPUS_ID) {
 
 export function getModule<T>(module: string, campusId = CAMPUS_ID) {
   return apiGet<T>(`/${module}`, { campus: campusId });
+}
+
+/**
+ * Deliberately NOT part of the version-cached SYNC_MODULES system: activation
+ * and expiry of a schedule exception happen purely from wall-clock time
+ * against dates already saved on the server, with no admin action (and thus
+ * no meta.version bump) at the exact boundary. Caching this behind the sync
+ * manifest would mean the app never notices a schedule flip from
+ * scheduled -> active or active -> expired until something else happens to
+ * change its version. Always fetch fresh.
+ */
+export function getActiveScheduleException(campusId = CAMPUS_ID) {
+  return apiGet<ActiveScheduleExceptionResponse>('/transport/temporary/active', { campus: campusId });
 }
 
 export function submitSuggestion(message: string) {

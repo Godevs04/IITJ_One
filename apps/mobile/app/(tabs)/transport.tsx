@@ -3,6 +3,7 @@ import { AppState } from 'react-native';
 import type { CalendarDoc, TransportDoc, HolidaysDoc, TransportAlertsDoc, TemporaryTransportScheduleDoc } from '@/types/campus';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
+import { useActiveScheduleException } from '@/hooks/useActiveScheduleException';
 import { TransportScreenView } from '@/transport/ui/TransportScreenView';
 
 export default function TransportScreen() {
@@ -12,6 +13,7 @@ export default function TransportScreen() {
   const holidays = useCampusModule<HolidaysDoc>('holidays');
   const alerts = useCampusModule<TransportAlertsDoc>('transportAlerts');
   const tempSchedule = useCampusModule<TemporaryTransportScheduleDoc>('temporaryTransportSchedule');
+  const { data: activeException, refetch: refetchException } = useActiveScheduleException();
 
   const [tick, setTick] = useState(0);
 
@@ -32,8 +34,8 @@ export default function TransportScreen() {
   }, []);
 
   const onRefresh = useCallback(async () => {
-    await sync();
-  }, [sync]);
+    await Promise.all([sync(), refetchException()]);
+  }, [sync, refetchException]);
 
   return (
     <TransportScreenView
@@ -42,6 +44,7 @@ export default function TransportScreen() {
       holidays={holidays}
       alerts={alerts}
       tempSchedule={tempSchedule}
+      activeException={activeException}
       tick={tick}
       onRefresh={onRefresh}
       refreshing={syncing}

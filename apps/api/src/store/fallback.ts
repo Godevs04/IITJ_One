@@ -24,8 +24,15 @@ import type {
   HolidaysDoc,
   TransportAlertsDoc,
   TemporaryTransportScheduleDoc,
+  TransportScheduleExceptionDoc,
+  TransportScheduleExceptionRevisionDoc,
+  DeviceDoc,
+  PushHistoryDoc,
+  AnalyticsEventDoc,
+  AnalyticsDailyDoc,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
+import { busesConflict, dateRangesOverlap } from '../services/transportScheduleExceptionStatus';
 
 interface FallbackState {
   meta: MetaDoc;
@@ -46,9 +53,15 @@ interface FallbackState {
   holidays: HolidaysDoc;
   transportAlerts: TransportAlertsDoc;
   temporaryTransportSchedule: TemporaryTransportScheduleDoc;
+  transportScheduleExceptions: TransportScheduleExceptionDoc[];
+  transportScheduleExceptionRevisions: TransportScheduleExceptionRevisionDoc[];
   admins: AdminDoc[];
   auditLog: AuditLogDoc[];
   suggestions: SuggestionDoc[];
+  devices: DeviceDoc[];
+  pushHistory: PushHistoryDoc[];
+  analyticsEvents: AnalyticsEventDoc[];
+  analyticsDaily: AnalyticsDailyDoc[];
 }
 
 let state: FallbackState | null = null;
@@ -296,9 +309,15 @@ function buildDefaultState(): FallbackState {
       campusId,
       schedules: [],
     },
+    transportScheduleExceptions: [],
+    transportScheduleExceptionRevisions: [],
     admins: [],
     auditLog: [],
     suggestions: [],
+    devices: [],
+    pushHistory: [],
+    analyticsEvents: [],
+    analyticsDaily: [],
   };
 }
 
@@ -390,6 +409,224 @@ export function fallbackGetSuggestions(): SuggestionDoc[] {
   return getFallbackState().suggestions;
 }
 
+export function fallbackUpsertDevice(
+  deviceId: string,
+  token: string,
+  platform: DeviceDoc['platform'],
+  appVersion: string | undefined,
+  topics: string[] | undefined,
+  now: Date,
+): DeviceDoc {
+  const s = getFallbackState();
+  const byDeviceIdIdx = s.devices.findIndex((d) => d.deviceId === deviceId);
+  const baseIdx = byDeviceIdIdx >= 0 ? byDeviceIdIdx : s.devices.findIndex((d) => d.token === token);
+  const base = baseIdx >= 0 ? s.devices[baseIdx] : undefined;
+
+  const merged: DeviceDoc = {
+    _id: base?._id ?? nextId(),
+    deviceId,
+    token,
+    platform,
+    appVersion: appVersion ?? base?.appVersion,
+    topics: topics && topics.length > 0 ? topics : (base?.topics ?? ['iitj_all']),
+    active: true,
+    failureCount: 0,
+    lastSeen: now,
+    createdAt: base?.createdAt ?? now,
+    updatedAt: now,
+  };
+
+  if (baseIdx >= 0) {
+    s.devices[baseIdx] = merged;
+  } else {
+    s.devices.push(merged);
+  }
+
+  // Stale-token cleanup — same rule as the Mongo path.
+  s.devices = s.devices.filter((d) => !(d.token === token && d.deviceId !== deviceId));
+
+  return merged;
+}
+
+export function fallbackGetDevicesByTopic(topic: string): DeviceDoc[] {
+  return getFallbackState().devices.filter((d) => d.active && d.topics.includes(topic));
+}
+
+export function fallbackUpdateDeviceByToken(token: string, patch: Partial<DeviceDoc>): void {
+  const s = getFallbackState();
+  const idx = s.devices.findIndex((d) => d.token === token);
+  if (idx >= 0) s.devices[idx] = { ...s.devices[idx], ...patch };
+}
+
+export function fallbackAddPushHistory(doc: Omit<PushHistoryDoc, '_id'>): PushHistoryDoc {
+  const s = getFallbackState();
+  const saved: PushHistoryDoc = { ...doc, _id: nextId() };
+  s.pushHistory.unshift(saved);
+  return saved;
+}
+
+export function fallbackGetPushHistoryById(id: string): PushHistoryDoc | undefined {
+  return getFallbackState().pushHistory.find((p) => p._id === id);
+}
+
+export function fallbackGetPushHistory(): PushHistoryDoc[] {
+  return getFallbackState().pushHistory;
+}
+
+export function fallbackInsertAnalyticsEvents(events: AnalyticsEventDoc[]): void {
+  const s = getFallbackState();
+  for (const e of events) {
+    s.analyticsEvents.push({ ...e, _id: nextId() });
+  }
+}
+
+export function fallbackGetAnalyticsEventsInRange(start: Date, end: Date): AnalyticsEventDoc[] {
+  return getFallbackState().analyticsEvents.filter(
+    (e) => e.timestamp >= start && e.timestamp < end,
+  );
+}
+
+export function fallbackGetRecentSessionIds(since: Date): string[] {
+  const ids = new Set(
+    getFallbackState()
+      .analyticsEvents.filter((e) => e.timestamp >= since)
+      .map((e) => e.sessionId),
+  );
+  return [...ids];
+}
+
+export function fallbackUpsertAnalyticsDaily(doc: AnalyticsDailyDoc): AnalyticsDailyDoc {
+  const s = getFallbackState();
+  const idx = s.analyticsDaily.findIndex(
+    (d) => d.campusId === doc.campusId && d.date === doc.date,
+  );
+  const saved = { ...doc, _id: idx >= 0 ? s.analyticsDaily[idx]._id : nextId() };
+  if (idx >= 0) s.analyticsDaily[idx] = saved;
+  else s.analyticsDaily.push(saved);
+  return saved;
+}
+
+export function fallbackGetAnalyticsDaily(campusId: string, dates: string[]): AnalyticsDailyDoc[] {
+  return getFallbackState().analyticsDaily.filter(
+    (d) => d.campusId === campusId && dates.includes(d.date),
+  );
+}
+
 export function fallbackGetAudit(): AuditLogDoc[] {
   return getFallbackState().auditLog;
+}
+
+export function fallbackListTransportScheduleExceptions(
+  campusId: string,
+  lifecycleState?: 'draft' | 'published' | 'archived',
+  page = 1,
+  pageSize = 20,
+): { items: TransportScheduleExceptionDoc[]; total: number } {
+  const skip = (page - 1) * pageSize;
+  const all = getFallbackState()
+    .transportScheduleExceptions.filter(
+      (e) => e.campusId === campusId && (!lifecycleState || e.lifecycleState === lifecycleState),
+    )
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  return { items: all.slice(skip, skip + pageSize), total: all.length };
+}
+
+export function fallbackGetTransportScheduleExceptionById(id: string): TransportScheduleExceptionDoc | undefined {
+  return getFallbackState().transportScheduleExceptions.find((e) => e._id === id);
+}
+
+export function fallbackGetActiveTransportScheduleException(
+  campusId: string,
+  now: Date,
+): TransportScheduleExceptionDoc | null {
+  const matches = getFallbackState()
+    .transportScheduleExceptions.filter(
+      (e) =>
+        e.campusId === campusId &&
+        e.lifecycleState === 'published' &&
+        !e.deletedAt &&
+        e.effectiveFrom <= now &&
+        e.effectiveUntil > now,
+    )
+    .sort((a, b) => b.effectiveFrom.getTime() - a.effectiveFrom.getTime());
+  if (matches.length > 1) {
+    console.warn(
+      `[fallback] Multiple active schedule exceptions for campus ${campusId}: ${matches
+        .map((m) => m._id)
+        .join(', ')} — using most recent effectiveFrom`,
+    );
+  }
+  return matches[0] ?? null;
+}
+
+export function fallbackCreateTransportScheduleException(
+  doc: Omit<TransportScheduleExceptionDoc, '_id'>,
+): TransportScheduleExceptionDoc {
+  const s = getFallbackState();
+  const saved = { ...doc, _id: nextId() };
+  s.transportScheduleExceptions.unshift(saved);
+  return saved;
+}
+
+export function fallbackUpdateTransportScheduleException(
+  id: string,
+  patch: Partial<TransportScheduleExceptionDoc>,
+): TransportScheduleExceptionDoc | null {
+  const s = getFallbackState();
+  const idx = s.transportScheduleExceptions.findIndex((e) => e._id === id);
+  if (idx < 0) return null;
+  s.transportScheduleExceptions[idx] = { ...s.transportScheduleExceptions[idx], ...patch };
+  return s.transportScheduleExceptions[idx];
+}
+
+export function fallbackFindOverlappingPublishedException(
+  campusId: string,
+  effectiveFrom: Date,
+  effectiveUntil: Date,
+  affectedBuses: string[],
+  excludeId: string,
+): TransportScheduleExceptionDoc | null {
+  const conflict = getFallbackState().transportScheduleExceptions.find(
+    (e) =>
+      e.campusId === campusId &&
+      e.lifecycleState === 'published' &&
+      !e.deletedAt &&
+      e._id !== excludeId &&
+      dateRangesOverlap(effectiveFrom, effectiveUntil, e.effectiveFrom, e.effectiveUntil) &&
+      busesConflict(affectedBuses, e.affectedBuses),
+  );
+  return conflict ?? null;
+}
+
+export function fallbackPublishTransportScheduleException(
+  id: string,
+  adminEmail: string,
+  now: Date,
+): TransportScheduleExceptionDoc | null {
+  const s = getFallbackState();
+  const idx = s.transportScheduleExceptions.findIndex((e) => e._id === id);
+  if (idx < 0) return null;
+  const updated: TransportScheduleExceptionDoc = {
+    ...s.transportScheduleExceptions[idx],
+    lifecycleState: 'published',
+    publishedAt: now,
+    updatedAt: now,
+  };
+  s.transportScheduleExceptions[idx] = updated;
+
+  const revisionNumber = s.transportScheduleExceptionRevisions.filter((r) => r.scheduleId === id).length + 1;
+  s.transportScheduleExceptionRevisions.push({
+    _id: nextId(),
+    scheduleId: id,
+    revisionNumber,
+    snapshot: updated,
+    publishedAt: now,
+    publishedBy: adminEmail,
+  });
+
+  return updated;
+}
+
+export function fallbackSoftDeleteTransportScheduleException(id: string): TransportScheduleExceptionDoc | null {
+  return fallbackUpdateTransportScheduleException(id, { deletedAt: new Date() });
 }

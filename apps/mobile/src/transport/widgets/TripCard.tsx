@@ -192,7 +192,9 @@ export function TripCard({ item, isFavorited, onToggleFavorite }: TripCardProps)
                 <Pressable
                   onPress={() => onToggleFavorite(stop)}
                   style={styles.favoriteButton}
-                  hitSlop={8}
+                  hitSlop={12}
+                  accessibilityRole="button"
+                  accessibilityLabel={favorited ? `Remove ${stop} from favorite stops` : `Add ${stop} to favorite stops`}
                 >
                   <Ionicons
                     name={favorited ? 'star' : 'star-outline'}

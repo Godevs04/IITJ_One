@@ -73,6 +73,43 @@ export interface TransportDoc {
   }[];
 }
 
+export type ScheduleExceptionPriority = 'low' | 'normal' | 'high' | 'critical';
+export type ScheduleExceptionLifecycleState = 'draft' | 'published' | 'archived';
+export type ComputedScheduleExceptionStatus = 'draft' | 'scheduled' | 'active' | 'expired' | 'archived';
+
+export interface ScheduleExceptionAttachment {
+  id: string;
+  name: string;
+  type: 'pdf' | 'image';
+  url: string;
+}
+
+export interface TransportScheduleException {
+  _id?: string;
+  campusId: string;
+  title: string;
+  reason: string;
+  description: string;
+  effectiveFrom: string;
+  effectiveUntil: string;
+  priority: ScheduleExceptionPriority;
+  affectedBuses: string[];
+  trips: TransportTrip[];
+  showBanner: boolean;
+  sendPush: boolean;
+  createNotice: boolean;
+  source: { type: 'manual' | 'email' | 'ai_import' | 'csv' | 'api'; reference?: string };
+  attachments: ScheduleExceptionAttachment[];
+  lifecycleState: ScheduleExceptionLifecycleState;
+  status: ComputedScheduleExceptionStatus;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  archivedAt?: string;
+  deletedAt?: string | null;
+}
+
 export interface CalendarDoc {
   campusId: string;
   semester: string;
@@ -178,6 +215,23 @@ export interface SuggestionDoc {
   status?: 'new' | 'read' | 'archived';
 }
 
+export interface PushHistoryDoc {
+  _id?: string;
+  title: string;
+  body: string;
+  topic: string;
+  data?: Record<string, string>;
+  imageUrl?: string;
+  sentBy: string;
+  sentAt: string;
+  successCount: number;
+  failureCount: number;
+  firebaseMessageIds: string[];
+  errors: string[];
+  configured: boolean;
+  retryOf?: string;
+}
+
 export interface AuditLogEntry {
   _id?: string;
   adminEmail: string;
@@ -191,4 +245,71 @@ export interface MetaDoc {
   campusId: string;
   versions: Record<string, number>;
   updatedAt?: string;
+}
+
+// Analytics dashboard (GET /admin/analytics/*) — shapes mirror
+// apps/api/src/routes/admin/analytics.ts response bodies exactly.
+
+export interface AnalyticsOverview {
+  todayUsers: number;
+  weekUsers: number;
+  monthUsers: number;
+  sessions: number;
+  avgSessionMs: number;
+  topScreen: string | null;
+  topScreenViews: number;
+  topFeature: string | null;
+  topFeatureCount: number;
+  crashFreeRate: number;
+  syncsToday: number;
+  syncsWeek: number;
+  crashesWeek: number;
+}
+
+export interface AnalyticsScreens {
+  screens: { screen: string; views: number; trend: number }[];
+  days: number;
+}
+
+export interface AnalyticsFeatures {
+  features: { feature: string; count: number }[];
+  days: number;
+}
+
+export interface AnalyticsSearch {
+  searchCount: number;
+  successRate: number;
+  noResultRate: number;
+  clickThroughRate: number;
+  days: number;
+}
+
+export interface AnalyticsNotifications {
+  sent: number;
+  opened: number;
+  received: number;
+  ctr: number;
+  topCategory: string | null;
+  categoryBreakdown: Record<string, number>;
+  days: number;
+}
+
+export interface AnalyticsLive {
+  liveUsers: number;
+  windowSeconds: number;
+}
+
+export interface AnalyticsDevices {
+  platforms: Record<string, number>;
+  appVersions: Record<string, number>;
+  themes: Record<string, number>;
+  hostels: Record<string, number>;
+  androidVersions: null;
+  days: number;
+}
+
+export interface AnalyticsTrends {
+  series: { date: string; dau: number; sessions: number; events: number }[];
+  growth: number;
+  days: number;
 }

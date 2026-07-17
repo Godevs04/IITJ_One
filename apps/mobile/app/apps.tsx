@@ -5,13 +5,14 @@ import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
+import { Analytics, AppEvents, FirebaseCrashlytics } from '@/services/firebase';
 import type { AppsDoc, CampusApp } from '@/types/campus';
 import { AppSpacing, AppRadius, AppTypography } from '@/theme/tokens';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { isHttpUrl, isSafeDeepLink } from '@/utils/urlSafety';
 
 export default function AppsScreen() {
-  const { syncing, sync } = useCampusSync(false);
+  const { syncing, sync, error } = useCampusSync(false);
   const theme = useThemeColors();
   const appsDoc = useCampusModule<AppsDoc>('apps');
 
@@ -26,6 +27,9 @@ export default function AppsScreen() {
 
   // Smart launch flow: try deep link first, then fall back to platform app store, then website
   const handleLaunchApp = async (app: CampusApp) => {
+    Analytics.trackEvent(AppEvents.CAMPUS_APP_OPENED, { app_name: app.name });
+    void FirebaseCrashlytics.log(`Campus app launched: ${app.name}`);
+
     if (app.deepLink && isSafeDeepLink(app.deepLink)) {
       const canOpen = await Linking.canOpenURL(app.deepLink);
       if (canOpen) {
@@ -87,10 +91,10 @@ export default function AppsScreen() {
   // Resolve logo source: temporarily hardcode Isthara & Cravee to bundled assets, otherwise support remote URLs or placeholders
   const getLogoSource = (name: string, logo: string) => {
     if (name.toLowerCase() === 'isthara') {
-      return require('../assets/isthara.png');
+      return require('../assets/vendor/isthara.png');
     }
     if (name.toLowerCase() === 'cravee') {
-      return require('../assets/cravee.webp');
+      return require('../assets/vendor/cravee.webp');
     }
     if (logo && (logo.startsWith('http://') || logo.startsWith('https://'))) {
       return { uri: logo };
@@ -104,6 +108,7 @@ export default function AppsScreen() {
       subtitle="Useful apps for IITJ"
       onRefresh={onRefresh}
       refreshing={syncing}
+      error={error}
     >
       {apps.length > 0 ? (
         <View style={{ gap: AppSpacing.md }}>

@@ -5,6 +5,7 @@ import {
   setCachedJson,
   setCachedVersion,
 } from './cache';
+import { FirebasePerformance, TraceNames } from '@/services/firebase';
 import type { HomeBundle } from '@/types/campus';
 
 export const SYNC_MODULES = [
@@ -61,6 +62,8 @@ export async function syncCampusData(
   const updated: SyncModule[] = [];
   const errors: Partial<Record<SyncModule, string>> = {};
 
+  const trace = await FirebasePerformance.startTrace(TraceNames.SYNC_DATA);
+
   try {
     const manifest = await getManifest(CAMPUS_ID);
 
@@ -92,6 +95,10 @@ export async function syncCampusData(
       }
     });
   }
+
+  trace.putMetric('modules_updated', updated.length);
+  trace.putMetric('modules_errored', Object.keys(errors).length);
+  await trace.stop();
 
   return { updated, errors };
 }

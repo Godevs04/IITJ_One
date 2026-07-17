@@ -22,6 +22,12 @@ import type {
   HolidaysDoc,
   TransportAlertsDoc,
   TemporaryTransportScheduleDoc,
+  TransportScheduleExceptionDoc,
+  TransportScheduleExceptionRevisionDoc,
+  DeviceDoc,
+  PushHistoryDoc,
+  AnalyticsEventDoc,
+  AnalyticsDailyDoc,
 } from './types';
 
 let client: MongoClient | null = null;
@@ -101,6 +107,44 @@ async function ensureIndexes(): Promise<void> {
   await db.collection('suggestions').createIndex({ submittedAt: -1 });
   await db.collection('suggestions').createIndex({ status: 1, submittedAt: -1 });
 
+  // deviceId (not token) is the durable key — a token changes on refresh, deviceId doesn't.
+  // Drop the old unique index on token from before this migration; createIndex would otherwise
+  // throw IndexOptionsConflict trying to recreate it as non-unique. Safe no-op on a fresh DB.
+  try {
+    await db.collection('devices').dropIndex('token_1');
+  } catch {
+    // Didn't exist — fine
+  }
+  await db.collection('devices').createIndex({ token: 1 });
+  await db.collection('devices').createIndex({ deviceId: 1 }, { unique: true, sparse: true });
+  await db.collection('devices').createIndex({ topics: 1, active: 1 });
+  await db.collection('pushHistory').createIndex({ sentAt: -1 });
+  await db.collection('pushHistory').createIndex({ topic: 1, sentAt: -1 });
+
+  await db.collection('analyticsEvents').createIndex({ timestamp: -1 });
+  await db.collection('analyticsEvents').createIndex({ event: 1 });
+  await db.collection('analyticsEvents').createIndex({ sessionId: 1 });
+  await db.collection('analyticsEvents').createIndex({ platform: 1 });
+  await db.collection('analyticsEvents').createIndex({ appVersion: 1 });
+  await db.collection('analyticsEvents').createIndex({ hostel: 1 });
+  // Compound index for the aggregation job's actual query shape (one event type over a day range).
+  await db.collection('analyticsEvents').createIndex({ event: 1, timestamp: -1 });
+  // TTL: raw events are only the aggregation job's input: analyticsDaily is the
+  // durable record. 180 days is generous headroom for re-aggregation/debugging.
+  await db.collection('analyticsEvents').createIndex(
+    { receivedAt: 1 },
+    { expireAfterSeconds: 180 * 24 * 60 * 60 },
+  );
+
+  await db.collection('analyticsDaily').createIndex({ campusId: 1, date: 1 }, { unique: true });
+
+  // transportScheduleExceptions is genuinely multi-document per campus (unlike the
+  // singleton modules below) — no unique campusId index here.
+  await db.collection('transportScheduleExceptions').createIndex({ campusId: 1, lifecycleState: 1 });
+  await db.collection('transportScheduleExceptions').createIndex({ campusId: 1, effectiveFrom: 1, effectiveUntil: 1 });
+  await db.collection('transportScheduleExceptions').createIndex({ campusId: 1, createdAt: -1 });
+  await db.collection('transportScheduleExceptionRevisions').createIndex({ scheduleId: 1, revisionNumber: -1 });
+
   // One document per campus for singleton modules
   const uniqueCampus = { campusId: 1 } as const;
   for (const name of [
@@ -130,6 +174,12 @@ export function getDb(): Db {
   return db;
 }
 
+/** Shared client handle for callers that need a session/transaction (e.g. multi-write publish flows). */
+export function getMongoClient(): MongoClient {
+  if (!client) throw new Error('Database not connected');
+  return client;
+}
+
 export function col<T extends Document = Document>(name: string): Collection<T> {
   return getDb().collection<T>(name);
 }
@@ -153,9 +203,16 @@ export const collections = {
   holidays: () => col<HolidaysDoc>('holidays'),
   transportAlerts: () => col<TransportAlertsDoc>('transportAlerts'),
   temporaryTransportSchedule: () => col<TemporaryTransportScheduleDoc>('temporaryTransportSchedule'),
+  transportScheduleExceptions: () => col<TransportScheduleExceptionDoc>('transportScheduleExceptions'),
+  transportScheduleExceptionRevisions: () =>
+    col<TransportScheduleExceptionRevisionDoc>('transportScheduleExceptionRevisions'),
   admins: () => col<AdminDoc>('admins'),
   auditLog: () => col<AuditLogDoc>('auditLog'),
   suggestions: () => col<SuggestionDoc>('suggestions'),
+  devices: () => col<DeviceDoc>('devices'),
+  pushHistory: () => col<PushHistoryDoc>('pushHistory'),
+  analyticsEvents: () => col<AnalyticsEventDoc>('analyticsEvents'),
+  analyticsDaily: () => col<AnalyticsDailyDoc>('analyticsDaily'),
 };
 
 export async function disconnectDb(): Promise<void> {

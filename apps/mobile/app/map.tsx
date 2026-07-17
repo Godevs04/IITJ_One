@@ -5,6 +5,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { Alert, Share, StyleSheet, TextInput, View, FlatList, Pressable, Text, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenShell } from '@/components/ScreenShell';
+import { Analytics, AppEvents, FirebaseCrashlytics } from '@/services/firebase';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { campusDirectoryServiceProvider } from '@/campus/services/campusDirectoryService';
@@ -30,6 +31,8 @@ function LocationDetailCard({
   const categoryInfo = LOCATION_CATEGORIES[location.category];
 
   const handleOpenMaps = () => {
+    Analytics.trackEvent(AppEvents.LOCATION_NAVIGATION, { category: location.category });
+    void FirebaseCrashlytics.log(`Map navigation: ${location.category}`);
     if (location.latitude && location.longitude) {
       const url = `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}(${encodeURIComponent(location.name)})`;
       void Linking.openURL(url);
@@ -85,6 +88,9 @@ function LocationDetailCard({
             { backgroundColor: isFavorite ? theme.primaryTint : theme.surfaceMuted },
             pressed && { opacity: 0.8 },
           ]}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={isFavorite ? `Remove ${location.name} from favorites` : `Add ${location.name} to favorites`}
         >
           <Ionicons
             name={isFavorite ? 'heart' : 'heart-outline'}
@@ -331,7 +337,12 @@ export default function MapScreen() {
             style={[styles.searchInput, { color: theme.text }]}
           />
           {searchQuery ? (
-            <Pressable onPress={() => setSearchQuery('')}>
+            <Pressable
+              onPress={() => setSearchQuery('')}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Clear search"
+            >
               <Ionicons name="close-outline" size={18} color={theme.textMuted} />
             </Pressable>
           ) : null}
@@ -410,7 +421,12 @@ export default function MapScreen() {
                 <Text style={[styles.recentSearchText, { color: theme.text }]} numberOfLines={1}>
                   {query}
                 </Text>
-                <Pressable onPress={() => handleRemoveRecentSearch(query)}>
+                <Pressable
+                  onPress={() => handleRemoveRecentSearch(query)}
+                  hitSlop={12}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Remove "${query}" from recent searches`}
+                >
                   <Ionicons name="close-outline" size={14} color={theme.textMuted} />
                 </Pressable>
               </Pressable>

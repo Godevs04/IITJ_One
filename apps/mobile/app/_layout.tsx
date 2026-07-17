@@ -1,8 +1,11 @@
-import { router, Stack } from 'expo-router';
+import { router, Stack, usePathname, useGlobalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { PostHogProvider } from 'posthog-react-native';
+import { posthog } from '@/config/posthog';
 import { Ionicons } from '@expo/vector-icons';
 import {
   IBMPlexSans_400Regular,
@@ -13,9 +16,24 @@ import {
 } from '@expo-google-fonts/ibm-plex-sans';
 import * as SplashScreen from 'expo-splash-screen';
 import { initCache } from '@/services/cache';
+import { ensureNotificationChannelsAsync } from '@/services/notificationChannels';
+import { initBackendAnalytics, teardownBackendAnalytics } from '@/services/analytics/backendAnalytics';
 import '@/services/search/registerBuiltInProviders';
 import { CampusDataProvider } from '@/state/CampusDataProvider';
 import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import {
+  initFirebase,
+  useScreenTracking,
+  setDefaultUserProperties,
+  fetchRemoteConfig,
+  initFCM,
+  teardownFCM,
+  registerBackgroundHandler,
+} from '@/services/firebase';
+
+// Register background notification handler at module level (required by Firebase)
+registerBackgroundHandler();
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -29,7 +47,17 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    void initCache().finally(() => setReady(true));
+    async function bootstrap() {
+      await initCache();
+      initBackendAnalytics();
+      await initFirebase();
+      setDefaultUserProperties();
+      void fetchRemoteConfig();
+      void initFCM();
+    }
+    void bootstrap().finally(() => setReady(true));
+    void ensureNotificationChannelsAsync();
+    return () => { teardownFCM(); teardownBackendAnalytics(); };
   }, []);
 
   useEffect(() => {
@@ -41,17 +69,45 @@ export default function RootLayout() {
   if (!ready || !fontsLoaded) return null;
 
   return (
-    <ThemeProvider>
-      <CampusDataProvider>
-        <RootNavigator />
-      </CampusDataProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <CampusDataProvider>
+            <PostHogProvider
+              client={posthog}
+              autocapture={{
+                captureScreens: false,
+                captureTouches: true,
+                propsToCapture: ['testID'],
+                maxElementsCaptured: 20,
+              }}
+            >
+              <RootNavigator />
+            </PostHogProvider>
+          </CampusDataProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
 
 function RootNavigator() {
   const { scheme, colors } = useTheme();
   const isDark = scheme === 'dark';
+  const pathname = usePathname();
+  const params = useGlobalSearchParams();
+  const previousPathname = useRef<string | undefined>(undefined);
+
+  // Manual PostHog screen tracking for Expo Router
+  useEffect(() => {
+    if (previousPathname.current !== pathname) {
+      posthog.screen(pathname, { previous_screen: previousPathname.current ?? null, ...params });
+      previousPathname.current = pathname;
+    }
+  }, [pathname, params]);
+
+  // Auto-track every screen transition
+  useScreenTracking();
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -88,7 +144,7 @@ function RootNavigator() {
         <Stack.Screen name="cabs-autos" options={{ title: 'Cabs & Autos' }} />
         <Stack.Screen name="wifi" options={{ title: 'Internet & Wi-Fi' }} />
         <Stack.Screen name="emergency" options={{ title: 'Emergency Contacts' }} />
-        <Stack.Screen name="about" options={{ title: 'About IITJ' }} />
+        <Stack.Screen name="about" options={{ title: 'About IITJ One' }} />
         <Stack.Screen name="settings" options={{ title: 'Settings' }} />
         <Stack.Screen name="mess-qr" options={{ title: 'My Mess QR' }} />
         <Stack.Screen name="timetable" options={{ headerShown: false }} />

@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { transportTripSchema } from '@iitj1/types';
+
+export { transportTripSchema };
 
 export const campusQuerySchema = z.object({
   campus: z.string().min(1).default('iitj'),
@@ -84,16 +87,6 @@ export const noticeCreateSchema = z.object({
 });
 
 export const noticePatchSchema = noticeCreateSchema.partial();
-
-export const transportTripSchema = z.object({
-  bus: z.string(),
-  startTime: z.string(),
-  from: z.string(),
-  endTime: z.string(),
-  to: z.string(),
-  route: z.string(),
-  direction: z.enum(['departure', 'arrival']).optional(),
-});
 
 export const transportPutSchema = z.object({
   campusId: z.string().min(1),
@@ -225,6 +218,52 @@ export const pushBodySchema = z.object({
   title: z.string().min(1).max(200),
   body: z.string().min(1).max(1000),
   data: z.record(z.string()).optional(),
+  imageUrl: z.string().url().optional().or(z.literal('')),
+});
+
+export const deviceRegisterSchema = z.object({
+  deviceId: z.string().min(1),
+  token: z.string().min(1),
+  platform: z.enum(['ios', 'android', 'web']),
+  appVersion: z.string().optional(),
+  topics: z.array(z.string()).optional(),
+});
+
+export const pushHistoryQuerySchema = paginationQuerySchema.extend({
+  topic: z.string().optional(),
+  search: z.string().optional(),
+  sort: z.enum(['asc', 'desc']).default('desc'),
+});
+
+/** Loose param values only — object/array values are rejected by zod before they
+ *  ever reach the PII-key redaction pass, closing off nested-object smuggling. */
+const analyticsParamsSchema = z
+  .record(z.union([z.string().max(200), z.number(), z.boolean()]))
+  .optional();
+
+export const analyticsEventSchema = z.object({
+  event: z.string().min(1).max(100),
+  timestamp: z.string().datetime().or(z.string().min(1)),
+  sessionId: z.string().min(1).max(100),
+  platform: z.enum(['ios', 'android', 'web']),
+  appVersion: z.string().min(1).max(30),
+  hostel: z.string().max(50).nullable().optional(),
+  theme: z.enum(['light', 'dark']),
+  params: analyticsParamsSchema,
+});
+
+export const analyticsBatchSchema = z.object({
+  events: z.array(analyticsEventSchema).min(1).max(50),
+});
+
+export const analyticsPingSchema = z.object({
+  sessionId: z.string().min(1).max(100),
+  platform: z.enum(['ios', 'android', 'web']),
+  appVersion: z.string().min(1).max(30).optional(),
+});
+
+export const analyticsDateRangeQuerySchema = z.object({
+  days: z.coerce.number().int().min(1).max(90).default(30),
 });
 
 export const menuImportSchema = z.object({
@@ -235,3 +274,14 @@ export const menuImportSchema = z.object({
 });
 
 export { holidaysPutSchema, transportAlertsPutSchema, temporaryTransportSchedulePutSchema } from '@iitj1/types';
+
+export {
+  transportScheduleExceptionCreateSchema,
+  transportScheduleExceptionUpdateSchema,
+} from '@iitj1/types';
+
+export const adminTransportScheduleExceptionsQuerySchema = campusQuerySchema.merge(paginationQuerySchema).extend({
+  lifecycleState: z.enum(['draft', 'published', 'archived']).optional(),
+});
+
+export const activeTransportScheduleExceptionQuerySchema = campusQuerySchema;

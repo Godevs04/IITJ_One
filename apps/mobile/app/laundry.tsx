@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
@@ -31,7 +32,9 @@ import {
   rescheduleLaundryNotifications,
 } from '@/laundry/services/laundryNotifications';
 import { useCampusData } from '@/state/CampusDataProvider';
+import { Analytics, AppEvents } from '@/services/firebase';
 import { useCampusSync } from '@/hooks/useCampusSync';
+import { usePostHog } from 'posthog-react-native';
 
 const DAY_LABELS: Record<string, string> = {
   monday: 'Monday',
@@ -45,8 +48,9 @@ const DAY_LABELS: Record<string, string> = {
 
 export default function LaundryScreen() {
   const theme = useThemeColors();
+  const posthog = usePostHog();
   const { revision } = useCampusData();
-  const { syncing, sync } = useCampusSync(false);
+  const { syncing, sync, error } = useCampusSync(false);
   const [prefs, setPrefs] = useState<LaundryPreferences>(DEFAULT_LAUNDRY_PREFERENCES);
   const [pickerOpen, setPickerOpen] = useState(false);
   const prefsRef = useRef(prefs);
@@ -66,7 +70,12 @@ export default function LaundryScreen() {
   const persist = useCallback((next: LaundryPreferences) => {
     setPrefs(next);
     laundryPreferencesStore.save(next);
-  }, []);
+    if (next.reminderEnabled && !prefs.reminderEnabled) {
+      Analytics.trackEvent(AppEvents.LAUNDRY_REMINDER_ENABLED);
+    } else if (!next.reminderEnabled && prefs.reminderEnabled) {
+      Analytics.trackEvent(AppEvents.LAUNDRY_REMINDER_DISABLED);
+    }
+  }, [prefs.reminderEnabled]);
 
   const onRefresh = useCallback(async () => {
     await sync();
@@ -116,8 +125,9 @@ export default function LaundryScreen() {
       const next: LaundryPreferences = { ...prefs, hostel };
       persist(next);
       void applyReminders(next, previousHostel);
+      posthog.capture('laundry_hostel_selected', { hostel });
     },
-    [prefs, persist, applyReminders],
+    [prefs, persist, applyReminders, posthog],
   );
 
   const toggleReminder = useCallback(
@@ -165,6 +175,7 @@ export default function LaundryScreen() {
       subtitle="Laundry collection reminders"
       onRefresh={onRefresh}
       refreshing={syncing}
+      error={error}
     >
       <Section title="Hostel Selection" theme={theme}>
         <Pressable
@@ -336,17 +347,26 @@ function HostelPickerModal({
 }) {
   const boys = HOSTELS.filter((h) => h.category === 'boys');
   const girls = HOSTELS.filter((h) => h.category === 'girls');
+  const insets = useSafeAreaInsets();
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={styles.modalBackdrop} onPress={onClose}>
         <Pressable
-          style={[styles.modalSheet, { backgroundColor: theme.background }]}
+          style={[
+            styles.modalSheet,
+            { backgroundColor: theme.background, paddingBottom: AppSpacing.lg + insets.bottom },
+          ]}
           onPress={(e) => e.stopPropagation()}
         >
           <View style={styles.modalHeader}>
             <Text style={[styles.modalTitle, { color: theme.text }]}>Select Hostel</Text>
-            <Pressable onPress={onClose} hitSlop={12}>
+            <Pressable
+              onPress={onClose}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+            >
               <Ionicons name="close" size={22} color={theme.iconMuted} />
             </Pressable>
           </View>

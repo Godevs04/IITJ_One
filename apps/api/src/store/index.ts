@@ -1,4 +1,6 @@
-import { isDbConnected, collections, ObjectId } from '../db';
+import type { ClientSession } from 'mongodb';
+import { isDbConnected, collections, ObjectId, getMongoClient } from '../db';
+import { busesConflict } from '../services/transportScheduleExceptionStatus';
 import { invalidateModule } from '../cache';
 import {
   initFallbackStore,
@@ -15,6 +17,20 @@ import {
   fallbackRestoreNotice,
   fallbackGetSuggestions,
   fallbackGetAudit,
+  fallbackUpsertDevice,
+  fallbackGetDevicesByTopic,
+  fallbackUpdateDeviceByToken,
+  fallbackAddPushHistory,
+  fallbackGetPushHistoryById,
+  fallbackGetPushHistory,
+  fallbackListTransportScheduleExceptions,
+  fallbackGetTransportScheduleExceptionById,
+  fallbackGetActiveTransportScheduleException,
+  fallbackCreateTransportScheduleException,
+  fallbackUpdateTransportScheduleException,
+  fallbackFindOverlappingPublishedException,
+  fallbackPublishTransportScheduleException,
+  fallbackSoftDeleteTransportScheduleException,
   getFallbackState,
 } from './fallback';
 import type {
@@ -40,6 +56,10 @@ import type {
   HolidaysDoc,
   TransportAlertsDoc,
   TemporaryTransportScheduleDoc,
+  TransportScheduleExceptionDoc,
+  TransportScheduleExceptionRevisionDoc,
+  DeviceDoc,
+  PushHistoryDoc,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
 
@@ -85,20 +105,24 @@ export async function bumpVersion(
   adminEmail: string,
   action: string,
   diffSummary: string,
+  session?: ClientSession,
 ): Promise<void> {
   if (isDbConnected()) {
     await collections.meta().updateOne(
       { campusId },
       { $inc: { [`versions.${module}`]: 1 }, $set: { updatedAt: new Date() } },
-      { upsert: true },
+      { upsert: true, session },
     );
-    await collections.auditLog().insertOne({
-      adminEmail,
-      action,
-      module,
-      timestamp: new Date(),
-      diffSummary,
-    });
+    await collections.auditLog().insertOne(
+      {
+        adminEmail,
+        action,
+        module,
+        timestamp: new Date(),
+        diffSummary,
+      },
+      { session },
+    );
   } else {
     fallbackBumpVersion(module, campusId);
     fallbackAddAudit({ adminEmail, action, module, timestamp: new Date(), diffSummary });
@@ -729,4 +753,511 @@ export async function putTemporaryTransportSchedule(
     getFallbackState().temporaryTransportSchedule = doc;
   }
   await bumpVersion('temporaryTransportSchedule', doc.campusId, adminEmail, 'update', 'Temporary transport schedule updated');
+}
+
+// ─── Transport Schedule Exceptions ──────────────────────────────────────────
+
+export class ScheduleExceptionArchivedError extends Error {
+  constructor() {
+    super('This schedule exception is archived and can no longer be edited.');
+    this.name = 'ScheduleExceptionArchivedError';
+  }
+}
+
+export interface ScheduleExceptionConflict {
+  conflictingScheduleId: string;
+  conflictingTitle: string;
+  effectiveFrom: Date;
+  effectiveUntil: Date;
+}
+
+export type PublishScheduleExceptionResult =
+  | { ok: true; doc: TransportScheduleExceptionDoc }
+  | { ok: false; reason: 'not_found' }
+  | { ok: false; reason: 'archived' }
+  | { ok: false; reason: 'validation'; errors: string[] }
+  | { ok: false; reason: 'conflict'; conflict: ScheduleExceptionConflict };
+
+export type UnpublishScheduleExceptionResult =
+  | { ok: true; doc: TransportScheduleExceptionDoc }
+  | { ok: false; reason: 'not_found' }
+  | { ok: false; reason: 'invalid_transition' };
+
+function validatePublishFields(
+  doc: Pick<TransportScheduleExceptionDoc, 'title' | 'effectiveFrom' | 'effectiveUntil' | 'affectedBuses' | 'trips'>,
+): string[] {
+  const errors: string[] = [];
+  if (!doc.title?.trim()) errors.push('Title is required');
+  if (!(doc.effectiveFrom < doc.effectiveUntil)) errors.push('Effective From must be before Effective Until');
+  if (!doc.affectedBuses || doc.affectedBuses.length === 0) errors.push('At least one affected bus is required');
+  if (!doc.trips || doc.trips.length === 0) errors.push('At least one trip is required');
+  return errors;
+}
+
+function withStringId(doc: TransportScheduleExceptionDoc): TransportScheduleExceptionDoc {
+  return { ...doc, _id: doc._id?.toString() };
+}
+
+export async function listTransportScheduleExceptions(
+  campusId: string,
+  lifecycleState?: 'draft' | 'published' | 'archived',
+  page = 1,
+  pageSize = 20,
+): Promise<{ items: TransportScheduleExceptionDoc[]; total: number }> {
+  const skip = (page - 1) * pageSize;
+  if (isDbConnected()) {
+    const filter: Record<string, unknown> = { campusId };
+    if (lifecycleState) filter.lifecycleState = lifecycleState;
+    const [items, total] = await Promise.all([
+      collections
+        .transportScheduleExceptions()
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(pageSize)
+        .toArray(),
+      collections.transportScheduleExceptions().countDocuments(filter),
+    ]);
+    return { items: items.map(withStringId), total };
+  }
+  return fallbackListTransportScheduleExceptions(campusId, lifecycleState, page, pageSize);
+}
+
+export async function getTransportScheduleExceptionById(id: string): Promise<TransportScheduleExceptionDoc | null> {
+  if (isDbConnected()) {
+    const result = await collections.transportScheduleExceptions().findOne({ _id: new ObjectId(id) } as never);
+    return result ? withStringId(result) : null;
+  }
+  return fallbackGetTransportScheduleExceptionById(id) ?? null;
+}
+
+export async function getActiveTransportScheduleException(
+  campusId: string,
+  now: Date = new Date(),
+): Promise<TransportScheduleExceptionDoc | null> {
+  if (isDbConnected()) {
+    const matches = await collections
+      .transportScheduleExceptions()
+      .find({
+        campusId,
+        lifecycleState: 'published',
+        $or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
+        effectiveFrom: { $lte: now },
+        effectiveUntil: { $gt: now },
+      })
+      .sort({ effectiveFrom: -1 })
+      .limit(2)
+      .toArray();
+    if (matches.length > 1) {
+      console.warn(
+        `[transportScheduleExceptions] Multiple active schedules for campus ${campusId}: ${matches
+          .map((m) => String(m._id))
+          .join(', ')} — using most recent effectiveFrom`,
+      );
+    }
+    return matches.length > 0 ? withStringId(matches[0]) : null;
+  }
+  return fallbackGetActiveTransportScheduleException(campusId, now);
+}
+
+export async function createTransportScheduleException(
+  input: Omit<TransportScheduleExceptionDoc, '_id' | 'lifecycleState' | 'createdAt' | 'updatedAt' | 'createdBy' | 'deletedAt'>,
+  adminEmail: string,
+): Promise<TransportScheduleExceptionDoc> {
+  const now = new Date();
+  const doc: Omit<TransportScheduleExceptionDoc, '_id'> = {
+    ...input,
+    lifecycleState: 'draft',
+    createdBy: adminEmail,
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
+  };
+  if (isDbConnected()) {
+    const result = await collections.transportScheduleExceptions().insertOne(doc as TransportScheduleExceptionDoc);
+    await bumpVersion('transportScheduleExceptions', doc.campusId, adminEmail, 'create', `Schedule exception "${doc.title}" created`);
+    return { ...doc, _id: result.insertedId.toString() };
+  }
+  const saved = fallbackCreateTransportScheduleException(doc);
+  await bumpVersion('transportScheduleExceptions', doc.campusId, adminEmail, 'create', `Schedule exception "${doc.title}" created`);
+  return saved;
+}
+
+export async function updateTransportScheduleException(
+  id: string,
+  patch: Partial<TransportScheduleExceptionDoc>,
+  adminEmail: string,
+): Promise<TransportScheduleExceptionDoc | null> {
+  const existing = await getTransportScheduleExceptionById(id);
+  if (!existing) return null;
+  if (existing.lifecycleState === 'archived') throw new ScheduleExceptionArchivedError();
+
+  const withUpdatedAt = { ...patch, updatedAt: new Date() };
+  if (isDbConnected()) {
+    const result = await collections
+      .transportScheduleExceptions()
+      .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: withUpdatedAt }, { returnDocument: 'after' });
+    if (!result) return null;
+    await bumpVersion('transportScheduleExceptions', result.campusId, adminEmail, 'update', `Schedule exception "${result.title}" updated`);
+    return withStringId(result);
+  }
+  const saved = fallbackUpdateTransportScheduleException(id, withUpdatedAt);
+  if (saved) {
+    await bumpVersion('transportScheduleExceptions', saved.campusId, adminEmail, 'update', `Schedule exception "${saved.title}" updated`);
+  }
+  return saved;
+}
+
+export async function findOverlappingPublishedException(
+  campusId: string,
+  effectiveFrom: Date,
+  effectiveUntil: Date,
+  affectedBuses: string[],
+  excludeId: string,
+): Promise<TransportScheduleExceptionDoc | null> {
+  if (isDbConnected()) {
+    const candidates = await collections
+      .transportScheduleExceptions()
+      .find({
+        campusId,
+        lifecycleState: 'published',
+        $or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
+        effectiveFrom: { $lt: effectiveUntil },
+        effectiveUntil: { $gt: effectiveFrom },
+        _id: { $ne: new ObjectId(excludeId) },
+      })
+      .toArray();
+    const conflict = candidates.find((c) => busesConflict(affectedBuses, c.affectedBuses));
+    return conflict ? withStringId(conflict) : null;
+  }
+  return fallbackFindOverlappingPublishedException(campusId, effectiveFrom, effectiveUntil, affectedBuses, excludeId);
+}
+
+/** Mongo-only — inserts the immutable snapshot as part of the publish transaction. */
+async function insertScheduleExceptionRevision(
+  doc: TransportScheduleExceptionDoc,
+  adminEmail: string,
+  session: ClientSession,
+): Promise<void> {
+  const scheduleId = String(doc._id);
+  const count = await collections
+    .transportScheduleExceptionRevisions()
+    .countDocuments({ scheduleId }, { session });
+  await collections.transportScheduleExceptionRevisions().insertOne(
+    {
+      scheduleId,
+      revisionNumber: count + 1,
+      snapshot: doc,
+      publishedAt: doc.publishedAt ?? new Date(),
+      publishedBy: adminEmail,
+    } as TransportScheduleExceptionRevisionDoc,
+    { session },
+  );
+}
+
+export async function publishTransportScheduleException(
+  id: string,
+  adminEmail: string,
+): Promise<PublishScheduleExceptionResult> {
+  const existing = await getTransportScheduleExceptionById(id);
+  if (!existing || existing.deletedAt) return { ok: false, reason: 'not_found' };
+  if (existing.lifecycleState === 'archived') return { ok: false, reason: 'archived' };
+
+  const errors = validatePublishFields(existing);
+  if (errors.length > 0) return { ok: false, reason: 'validation', errors };
+
+  const conflict = await findOverlappingPublishedException(
+    existing.campusId,
+    existing.effectiveFrom,
+    existing.effectiveUntil,
+    existing.affectedBuses,
+    id,
+  );
+  if (conflict) {
+    return {
+      ok: false,
+      reason: 'conflict',
+      conflict: {
+        conflictingScheduleId: String(conflict._id),
+        conflictingTitle: conflict.title,
+        effectiveFrom: conflict.effectiveFrom,
+        effectiveUntil: conflict.effectiveUntil,
+      },
+    };
+  }
+
+  const now = new Date();
+  const diffSummary = `Schedule exception "${existing.title}" published`;
+
+  if (isDbConnected()) {
+    // Publish, revision snapshot, and version bump must succeed or fail together —
+    // a partially-applied publish (state flipped but no matching revision) would
+    // silently break Phase 6's restore-from-snapshot guarantee.
+    const session = getMongoClient().startSession();
+    let published: TransportScheduleExceptionDoc | null = null;
+    try {
+      await session.withTransaction(async () => {
+        const updated = await collections.transportScheduleExceptions().findOneAndUpdate(
+          { _id: new ObjectId(id) } as never,
+          { $set: { lifecycleState: 'published', publishedAt: now, updatedAt: now } },
+          { returnDocument: 'after', session },
+        );
+        if (!updated) throw new Error('Schedule exception disappeared during publish');
+        published = withStringId(updated);
+        await insertScheduleExceptionRevision(published, adminEmail, session);
+        await bumpVersion('transportScheduleExceptions', existing.campusId, adminEmail, 'publish', diffSummary, session);
+      });
+    } finally {
+      await session.endSession();
+    }
+    return { ok: true, doc: published! };
+  }
+
+  const saved = fallbackPublishTransportScheduleException(id, adminEmail, now);
+  if (!saved) return { ok: false, reason: 'not_found' };
+  await bumpVersion('transportScheduleExceptions', saved.campusId, adminEmail, 'publish', diffSummary);
+  return { ok: true, doc: saved };
+}
+
+export async function unpublishTransportScheduleException(
+  id: string,
+  adminEmail: string,
+): Promise<UnpublishScheduleExceptionResult> {
+  const existing = await getTransportScheduleExceptionById(id);
+  if (!existing) return { ok: false, reason: 'not_found' };
+  if (existing.lifecycleState !== 'published') return { ok: false, reason: 'invalid_transition' };
+
+  const now = new Date();
+  if (isDbConnected()) {
+    const result = await collections.transportScheduleExceptions().findOneAndUpdate(
+      { _id: new ObjectId(id) } as never,
+      { $set: { lifecycleState: 'draft', updatedAt: now }, $unset: { publishedAt: '' } },
+      { returnDocument: 'after' },
+    );
+    if (!result) return { ok: false, reason: 'not_found' };
+    await bumpVersion('transportScheduleExceptions', result.campusId, adminEmail, 'unpublish', `Schedule exception "${result.title}" unpublished`);
+    return { ok: true, doc: withStringId(result) };
+  }
+  const saved = fallbackUpdateTransportScheduleException(id, { lifecycleState: 'draft', updatedAt: now, publishedAt: undefined });
+  if (!saved) return { ok: false, reason: 'not_found' };
+  await bumpVersion('transportScheduleExceptions', saved.campusId, adminEmail, 'unpublish', `Schedule exception "${saved.title}" unpublished`);
+  return { ok: true, doc: saved };
+}
+
+export async function archiveTransportScheduleException(
+  id: string,
+  adminEmail: string,
+): Promise<TransportScheduleExceptionDoc | null> {
+  const existing = await getTransportScheduleExceptionById(id);
+  if (!existing) return null;
+  if (existing.lifecycleState === 'archived') return existing;
+
+  const now = new Date();
+  if (isDbConnected()) {
+    const result = await collections.transportScheduleExceptions().findOneAndUpdate(
+      { _id: new ObjectId(id) } as never,
+      { $set: { lifecycleState: 'archived', archivedAt: now, updatedAt: now } },
+      { returnDocument: 'after' },
+    );
+    if (!result) return null;
+    await bumpVersion('transportScheduleExceptions', result.campusId, adminEmail, 'archive', `Schedule exception "${result.title}" archived`);
+    return withStringId(result);
+  }
+  const saved = fallbackUpdateTransportScheduleException(id, { lifecycleState: 'archived', archivedAt: now, updatedAt: now });
+  if (saved) {
+    await bumpVersion('transportScheduleExceptions', saved.campusId, adminEmail, 'archive', `Schedule exception "${saved.title}" archived`);
+  }
+  return saved;
+}
+
+export async function deleteTransportScheduleException(id: string, adminEmail: string): Promise<boolean> {
+  const existing = await getTransportScheduleExceptionById(id);
+  if (!existing || existing.deletedAt) return false;
+
+  const now = new Date();
+  if (isDbConnected()) {
+    await collections.transportScheduleExceptions().updateOne(
+      { _id: new ObjectId(id) } as never,
+      { $set: { deletedAt: now, updatedAt: now } },
+    );
+    await bumpVersion('transportScheduleExceptions', existing.campusId, adminEmail, 'delete', `Schedule exception "${existing.title}" deleted`);
+    return true;
+  }
+  const saved = fallbackSoftDeleteTransportScheduleException(id);
+  if (saved) {
+    await bumpVersion('transportScheduleExceptions', existing.campusId, adminEmail, 'delete', `Schedule exception "${existing.title}" deleted`);
+  }
+  return !!saved;
+}
+
+// ─── Devices (FCM) ──────────────────────────────────────────────────────────
+
+/** Upsert by token — re-registering an existing token (app relaunch, token refresh) updates it in place rather than creating a duplicate. */
+/**
+ * deviceId is the durable key (stable per-install, persisted client-side);
+ * token is not, since FCM rotates it on refresh, reinstall, or backup
+ * restore. Matching by deviceId first means a token refresh updates the
+ * SAME document in place rather than creating a second one.
+ *
+ * Also handles devices registered before deviceId existed (matched only by
+ * token, no deviceId set): the legacy row is adopted (deviceId attached to
+ * it) instead of leaving it as an orphan duplicate. And if this deviceId's
+ * old token now belongs to some other stray row (shouldn't normally happen,
+ * but data can drift), that row is deleted immediately rather than lingering
+ * as a stale duplicate — this is the "clean up stale tokens on refresh" step.
+ */
+export async function upsertDevice(
+  deviceId: string,
+  token: string,
+  platform: DeviceDoc['platform'],
+  appVersion?: string,
+  topics?: string[],
+): Promise<DeviceDoc> {
+  const now = new Date();
+
+  if (isDbConnected()) {
+    const byDeviceId = await collections.devices().findOne({ deviceId });
+    const base = byDeviceId ?? (await collections.devices().findOne({ token }));
+
+    const merged: DeviceDoc = {
+      deviceId,
+      token,
+      platform,
+      appVersion: appVersion ?? base?.appVersion,
+      topics: topics && topics.length > 0 ? topics : (base?.topics ?? ['iitj_all']),
+      active: true,
+      failureCount: 0,
+      lastSeen: now,
+      createdAt: base?.createdAt ?? now,
+      updatedAt: now,
+    };
+
+    if (base?._id) {
+      await collections.devices().updateOne({ _id: new ObjectId(base._id) } as never, { $set: merged });
+    } else {
+      await collections.devices().insertOne(merged);
+    }
+
+    // Stale-token cleanup: if some other row (legacy or otherwise) still
+    // holds this exact token, remove it now rather than waiting for the
+    // next failed-delivery cycle to catch it.
+    await collections.devices().deleteMany({ token, deviceId: { $ne: deviceId } });
+
+    return merged;
+  }
+
+  return fallbackUpsertDevice(deviceId, token, platform, appVersion, topics, now);
+}
+
+export async function getDevicesByTopic(topic: string): Promise<DeviceDoc[]> {
+  if (isDbConnected()) {
+    return collections.devices().find({ topics: topic, active: true }).toArray();
+  }
+  return fallbackGetDevicesByTopic(topic);
+}
+
+/**
+ * Applies per-token FCM delivery results back onto the devices collection:
+ * a successful delivery resets failureCount and refreshes lastSeen; a
+ * definitively-invalid token (Firebase's "not registered" error) is marked
+ * inactive immediately; any other failure increments failureCount and the
+ * device is marked inactive once it crosses INACTIVE_AFTER_FAILURES —
+ * transient errors alone don't deactivate a device.
+ */
+const INACTIVE_AFTER_FAILURES = 5;
+
+export async function recordDeviceDeliveryResults(
+  results: Array<{ token: string; success: boolean; invalid: boolean; previousFailureCount: number }>,
+): Promise<void> {
+  const now = new Date();
+  for (const r of results) {
+    const patch: Partial<DeviceDoc> = r.success
+      ? { lastSeen: now, failureCount: 0, updatedAt: now }
+      : {
+          failureCount: r.previousFailureCount + 1,
+          updatedAt: now,
+          ...(r.invalid || r.previousFailureCount + 1 >= INACTIVE_AFTER_FAILURES ? { active: false } : {}),
+        };
+    if (isDbConnected()) {
+      await collections.devices().updateOne({ token: r.token }, { $set: patch });
+    } else {
+      fallbackUpdateDeviceByToken(r.token, patch);
+    }
+  }
+}
+
+// ─── Push History ───────────────────────────────────────────────────────────
+
+export async function addPushHistory(doc: Omit<PushHistoryDoc, '_id'>): Promise<PushHistoryDoc> {
+  if (isDbConnected()) {
+    const result = await collections.pushHistory().insertOne(doc);
+    return { ...doc, _id: result.insertedId.toString() };
+  }
+  return fallbackAddPushHistory(doc);
+}
+
+export async function getPushHistory(
+  page = 1,
+  pageSize = 20,
+  filter?: { topic?: string; search?: string },
+  sort: 'asc' | 'desc' = 'desc',
+): Promise<{ items: PushHistoryDoc[]; total: number }> {
+  const skip = (page - 1) * pageSize;
+  if (isDbConnected()) {
+    const query: Record<string, unknown> = {};
+    if (filter?.topic) query.topic = filter.topic;
+    if (filter?.search) {
+      query.$or = [
+        { title: { $regex: filter.search, $options: 'i' } },
+        { body: { $regex: filter.search, $options: 'i' } },
+      ];
+    }
+    const [items, total] = await Promise.all([
+      collections
+        .pushHistory()
+        .find(query)
+        .sort({ sentAt: sort === 'asc' ? 1 : -1 })
+        .skip(skip)
+        .limit(pageSize)
+        .toArray(),
+      collections.pushHistory().countDocuments(query),
+    ]);
+    return { items, total };
+  }
+  let all = fallbackGetPushHistory();
+  if (filter?.topic) all = all.filter((p) => p.topic === filter.topic);
+  if (filter?.search) {
+    const q = filter.search.toLowerCase();
+    all = all.filter((p) => p.title.toLowerCase().includes(q) || p.body.toLowerCase().includes(q));
+  }
+  all = [...all].sort((a, b) =>
+    sort === 'asc' ? a.sentAt.getTime() - b.sentAt.getTime() : b.sentAt.getTime() - a.sentAt.getTime(),
+  );
+  return { items: all.slice(skip, skip + pageSize), total: all.length };
+}
+
+export async function getPushHistoryById(id: string): Promise<PushHistoryDoc | null> {
+  if (isDbConnected()) {
+    const result = await collections.pushHistory().findOne({ _id: new ObjectId(id) } as never);
+    if (!result) return null;
+    return { ...result, _id: result._id?.toString() };
+  }
+  return fallbackGetPushHistoryById(id) ?? null;
+}
+
+/** Sum of successCount across pushes sent since `since` — for the analytics dashboard's notification stats. Aggregated in the DB rather than paginating the full history client-side. */
+export async function getNotificationsSentSince(since: Date): Promise<number> {
+  if (isDbConnected()) {
+    const [result] = await collections
+      .pushHistory()
+      .aggregate<{ total: number }>([
+        { $match: { sentAt: { $gte: since } } },
+        { $group: { _id: null, total: { $sum: '$successCount' } } },
+      ])
+      .toArray();
+    return result?.total ?? 0;
+  }
+  return fallbackGetPushHistory()
+    .filter((p) => p.sentAt >= since)
+    .reduce((sum, p) => sum + p.successCount, 0);
 }

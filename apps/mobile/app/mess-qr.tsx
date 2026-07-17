@@ -11,8 +11,10 @@ import { EmptyState } from '@/components/EmptyState';
 import { PrimaryButton, SecondaryButton } from '@/components/Buttons';
 import { ImageCropEditor } from '@/components/ImageCropEditor';
 import { messQrStore, MessQrStorageError, type MessQR } from '@/services/qrStorage';
+import { Analytics, AppEvents, FirebaseCrashlytics } from '@/services/firebase';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { usePostHog } from 'posthog-react-native';
 
 type Mode = 'empty' | 'cropping' | 'viewing';
 
@@ -34,6 +36,7 @@ function friendlyErrorMessage(err: unknown): string {
 
 export default function MessQrScreen() {
   const theme = useThemeColors();
+  const posthog = usePostHog();
   const [qr, setQr] = useState<MessQR | null>(null);
   const [mode, setMode] = useState<Mode>('empty');
   const [pendingImageUri, setPendingImageUri] = useState<string | null>(null);
@@ -63,6 +66,10 @@ export default function MessQrScreen() {
       setQr(value);
       setMode(value ? 'viewing' : 'empty');
       setLoading(false);
+      if (value) {
+        Analytics.trackEvent(AppEvents.MESS_QR_OPENED);
+        void FirebaseCrashlytics.log('Mess QR viewed');
+      }
     });
     return () => {
       active = false;
@@ -147,6 +154,7 @@ export default function MessQrScreen() {
   const pickImage = useCallback(async (useCamera: boolean) => {
     const granted = await requestPermissionOrPrompt(useCamera);
     if (!granted) return;
+    posthog.capture('mess_qr_upload_started', { source: useCamera ? 'camera' : 'gallery' });
 
     try {
       const result = useCamera
@@ -160,7 +168,7 @@ export default function MessQrScreen() {
     } catch {
       Alert.alert('Something went wrong', 'Could not open the image picker. Please try again.');
     }
-  }, []);
+  }, [posthog]);
 
   const openReCrop = useCallback(() => {
     if (!qr) return;

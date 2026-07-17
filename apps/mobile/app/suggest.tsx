@@ -6,9 +6,11 @@ import { ScreenShell } from '@/components/ScreenShell';
 import { submitSuggestion } from '@/services/api';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { usePostHog } from 'posthog-react-native';
 
 export default function SuggestScreen() {
   const theme = useThemeColors();
+  const posthog = usePostHog();
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,13 +25,16 @@ export default function SuggestScreen() {
     try {
       await submitSuggestion(trimmed);
       setMessage('');
+      posthog.capture('suggestion_submitted', { message_length: trimmed.length });
       Alert.alert('Thanks — we got it', 'Your suggestion was sent anonymously.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not send');
+      const errorMessage = err instanceof Error ? err.message : 'Could not send';
+      posthog.capture('suggestion_failed', { error: errorMessage });
+      setError(errorMessage);
     } finally {
       setSending(false);
     }
-  }, [canSend, trimmed]);
+  }, [canSend, trimmed, posthog]);
 
   return (
     <ScreenShell hideTitle subtitle="Anonymous feedback for admins">

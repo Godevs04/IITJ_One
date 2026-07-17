@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 import { getSetting, setSetting } from '@/services/cache';
 import { getThemeColors, type ColorScheme, type ThemeColors } from './tokens';
+import { updateUserProperty } from '@/services/firebase';
 
 interface ThemeContextValue {
   scheme: ColorScheme;
@@ -24,6 +25,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       setDarkMode: (next: boolean) => {
         setDarkModeState(next);
         setSetting('darkMode', next);
+        updateUserProperty('theme', next ? 'dark' : 'light');
       },
     }),
     [scheme, colors, darkMode],

@@ -17,9 +17,15 @@ export default function TimetableScreen() {
   const theme = useThemeColors();
   const [entries, setEntries] = useState<TimetableEntry[]>([]);
   const [selectedDay, setSelectedDay] = useState(todayDayShort());
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setEntries(await listTimetableEntries());
+    try {
+      setEntries(await listTimetableEntries());
+      setLoadError(null);
+    } catch {
+      setLoadError('Could not load your timetable.');
+    }
   }, []);
 
   useEffect(() => {
@@ -29,7 +35,7 @@ export default function TimetableScreen() {
   const dayClasses = getClassesForDay(entries, selectedDay);
 
   return (
-    <ScreenShell hideTitle subtitle="Stored only on this device">
+    <ScreenShell hideTitle subtitle="Stored only on this device" error={loadError}>
       <View style={styles.dayStrip}>
         {DAYS.map((d) => {
           const active = selectedDay === d;

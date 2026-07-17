@@ -31,7 +31,11 @@ function storageKey(key: string): string {
 
 function persistSet(key: string, value: string): void {
   memory.set(key, value);
-  void AsyncStorage.setItem(storageKey(key), value);
+  AsyncStorage.setItem(storageKey(key), value).catch(() => {
+    // Write failed — remove from memory to stay consistent with disk
+    // Next read will return fallback; sync engine will re-fetch module data
+    memory.delete(key);
+  });
 }
 
 function persistDelete(key: string): void {
@@ -78,7 +82,9 @@ export async function initCache(): Promise<void> {
 
 export function getCachedVersion(module: string): number {
   const raw = memory.get(`${VERSION_PREFIX}${module}`);
-  return raw !== undefined ? Number(raw) : 0;
+  if (raw === undefined) return 0;
+  const num = Number(raw);
+  return Number.isFinite(num) ? num : 0;
 }
 
 export function setCachedVersion(module: string, version: number): void {

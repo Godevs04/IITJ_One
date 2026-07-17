@@ -12,7 +12,7 @@ import { AppRadius, AppSpacing } from '@/theme/tokens';
 
 export default function ServicesScreen() {
   const theme = useThemeColors();
-  const { syncing, sync } = useCampusSync(false);
+  const { syncing, sync, error } = useCampusSync(false);
   const services = useCampusModule<ServicesDoc>('services');
   const [query, setQuery] = useState('');
 
@@ -38,6 +38,7 @@ export default function ServicesScreen() {
       subtitle="Directory of useful services"
       onRefresh={onRefresh}
       refreshing={syncing}
+      error={error}
     >
       <TextInput
         placeholder="Search services..."
