@@ -2,6 +2,10 @@ node_modules/
 .expo/
 dist/
 web-build/
+
+# CNG: EAS/prebuild generates these; keep them out of git and local uploads
+/android
+/ios
 *.jks
 *.p8
 *.p12
