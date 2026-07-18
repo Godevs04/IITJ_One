@@ -1,0 +1,25 @@
+# Render Blueprint — IITJ One API
+# https://render.com/docs/blueprint-spec
+#
+# Matches a service with Root Directory = apps/api (common dashboard setup).
+# After pushing, either connect this Blueprint or paste the commands into Settings.
+
+services:
+  - type: web
+    name: iitj1-api
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: apps/api
+    envVars:
+      - key: NODE_VERSION
+        value: "20.18.1"
+      - key: NODE_ENV
+        value: production
+      # Set secrets in the Render dashboard:
+      # MONGODB_URI, JWT_SECRET, JWT_REFRESH_SECRET, CORS_ORIGIN,
+      # API_BASE_URL, FCM_*, CLOUDINARY_*, ADMIN_BOOTSTRAP_*
+    # IMPORTANT: use npm, not yarn (no yarn.lock in this repo)
+    buildCommand: node scripts/render-build.cjs
+    startCommand: npm start
+    healthCheckPath: /api/v1/health

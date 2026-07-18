@@ -20,12 +20,30 @@ Or via Compose (also starts a local MongoDB container):
 cd apps/api && docker compose up -d
 ```
 
-**Without Docker:**
+**Without Docker (from monorepo root — required because of `@iitj1/types`):**
 ```bash
-cd apps/api
-npm run build     # tsc → dist/
-npm start          # node dist/index.js
+npm ci --workspace=@iitj1/types --workspace=@iitj1/api --include-workspace-root=false
+npm run build -w @iitj1/types
+npm run build -w @iitj1/api
+npm run start -w @iitj1/api
 ```
+
+### Render (native Node)
+
+Repo includes [`render.yaml`](../render.yaml). Paste these into the service **Settings** (Build & Deploy):
+
+| Setting | Value |
+|---|---|
+| **Root Directory** | `apps/api` |
+| **Environment** | Node |
+| **Node version** | `20.18.1` (env var `NODE_VERSION=20.18.1`) |
+| **Build Command** | `node scripts/render-build.cjs` |
+| **Start Command** | `npm start` |
+| **Health Check Path** | `/api/v1/health` |
+
+Do **not** use Yarn (`yarn` / `yarn start`). This repo is npm-only (`package-lock.json`). Yarn’s install does not compile TypeScript, which is why you get `Cannot find module '.../dist/index.js'`.
+
+`npm start` runs a `prestart` safety net that compiles if `dist/` is missing, but the Build Command above is still required for a reliable deploy.
 
 ### Required production environment variables
 
