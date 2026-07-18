@@ -6,6 +6,7 @@ import type { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs
 import { useSegments } from 'expo-router';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing } from '@/theme/tokens';
+import { debugListKeys } from '@/debug/listDebug';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -34,6 +35,8 @@ export function BottomTabBar({ state, descriptors, navigation }: MaterialTopTabB
     if (fromSegments) return fromSegments;
     return state.routes[state.index]?.name ?? 'index';
   }, [segments, state.index, state.routes]);
+
+  debugListKeys('BottomTabBar', 'routes', state.routes, (route) => route.key);
 
   return (
     <View

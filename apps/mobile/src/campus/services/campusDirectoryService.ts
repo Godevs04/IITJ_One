@@ -19,6 +19,9 @@ function normalizeCategory(raw: string): LocationCategory {
 }
 
 function toCampusLocation(loc: MapLocation): CampusLocation {
+  if (__DEV__ && !loc.id) {
+    console.error('[CampusDirectory] Missing id', loc);
+  }
   return {
     id: loc.id,
     name: loc.name,
@@ -36,6 +39,22 @@ function toCampusLocation(loc: MapLocation): CampusLocation {
 }
 
 /**
+ * Duplicate ids reach FlatList `keyExtractor`s as duplicate React keys (the
+ * "Each child in a list should have a unique key prop" warning) and produce
+ * unpredictable list behavior. The API now rejects duplicate ids at publish
+ * time (see `mapPutSchema` in packages/types), but this also guards already-
+ * cached/synced data from before that check existed, or any other feed
+ * (bundled defaults, future data sources) that might repeat an id.
+ */
+function dedupeById(locations: CampusLocation[]): CampusLocation[] {
+  const byId = new Map<string, CampusLocation>();
+  for (const loc of locations) {
+    byId.set(loc.id, loc);
+  }
+  return [...byId.values()];
+}
+
+/**
  * Prefer synced API locations; fall back to the bundled curated directory
  * (same offline-first pattern as Laundry/Wi-Fi/E-Rickshaw) so offline
  * devices still have a full campus directory before the first sync.
@@ -43,10 +62,16 @@ function toCampusLocation(loc: MapLocation): CampusLocation {
 export class CampusDirectoryServiceProviderImpl implements CampusDirectoryServiceProvider {
   private mergeLocations(): CampusLocation[] {
     const doc = readCachedModule<MapDoc>('map');
-    if (!doc?.locations?.length) {
-      return DEFAULT_CAMPUS_LOCATIONS.map(toCampusLocation);
+    if (__DEV__) {
+      const sportsComplex = doc?.locations?.find(l => l.name === 'Sports Complex');
+      if (sportsComplex) {
+        console.log('📍 [CampusDirectory Debug] Found Sports Complex in cache:', sportsComplex);
+      }
     }
-    return doc.locations.map(toCampusLocation);
+    if (!doc?.locations?.length) {
+      return dedupeById(DEFAULT_CAMPUS_LOCATIONS.map(toCampusLocation));
+    }
+    return dedupeById(doc.locations.map(toCampusLocation));
   }
 
   getAllLocations(): CampusLocation[] {

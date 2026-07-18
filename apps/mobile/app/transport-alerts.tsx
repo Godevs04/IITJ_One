@@ -10,6 +10,7 @@ import { useCampusSync } from '@/hooks/useCampusSync';
 import type { TransportAlertsDoc, TransportAlert } from '@/types/campus';
 import { isAlertActive } from '@/transport/services/ScheduleEngine';
 import { isHttpUrl } from '@/utils/urlSafety';
+import { debugListKeys } from '@/debug/listDebug';
 
 const CategoryLabels: Record<string, string> = {
   service_update: 'Service Update',
@@ -39,6 +40,8 @@ export default function TransportAlertsScreen() {
       .filter((a) => isAlertActive(a, now))
       .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
   }, [alertsDoc, now]);
+
+  debugListKeys('TransportAlertsScreen', 'activeAlerts', activeAlerts, (alert) => alert.id);
 
   const handleOpenLink = async (url: string) => {
     if (!isHttpUrl(url)) return;

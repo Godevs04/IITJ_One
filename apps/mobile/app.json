@@ -4,13 +4,13 @@
     "slug": "iitj-one",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/branding/logo.png",
     "scheme": "iitj1",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/branding/logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1D3F5E"
+      "backgroundColor": "#022543"
     },
     "ios": {
       "supportsTablet": true,
@@ -19,8 +19,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1D3F5E"
+        "foregroundImage": "./assets/branding/logo.png",
+        "backgroundColor": "#022543"
       },
       "package": "app.iitjone",
       "googleServicesFile": "./google-services.json"
@@ -28,7 +28,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/icons/favicon.png"
     },
     "plugins": [
       "expo-router",

@@ -8,6 +8,7 @@ import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { erickshawServiceProvider } from '@/erickshaw/services/erickshawService';
 import type { Driver, FareStructure } from '@/erickshaw/types';
 import { useCampusData } from '@/state/CampusDataProvider';
+import { debugListKeys } from '@/debug/listDebug';
 import { useCampusSync } from '@/hooks/useCampusSync';
 
 function ServiceInfoCard({
@@ -124,6 +125,10 @@ function FareCard({
     });
     return grouped;
   }, [fares]);
+  debugListKeys('ERickshawScreen', 'fareRoutes', Object.entries(groupedFares), ([route]) => route);
+  Object.entries(groupedFares).forEach(([route, routeFares]) => {
+    debugListKeys('ERickshawScreen', `${route}FareItems`, routeFares, (fare, index) => `${fare.route}-${index}`);
+  });
 
   return (
     <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -170,6 +175,8 @@ export default function ERickshawScreen() {
   const onRefresh = useCallback(async () => {
     await sync();
   }, [sync]);
+  debugListKeys('ERickshawScreen', 'vehicleTypes', service.service.vehicles, (vehicle) => vehicle.type);
+  debugListKeys('ERickshawScreen', 'drivers', drivers, (driver) => driver.id);
 
   return (
     <ScreenShell

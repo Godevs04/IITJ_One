@@ -5,6 +5,7 @@ import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import type { TripWithStatus } from '../models/BusTypes';
 import { getStopCoords, openStopInMaps } from '../utils/coordinates';
 import { nowMinutes, parseTimeToMinutes } from '@/utils/date';
+import { debugListKeys } from '@/debug/listDebug';
 
 interface TripCardProps {
   item: TripWithStatus;
@@ -19,6 +20,8 @@ export function TripCard({ item, isFavorited, onToggleFavorite }: TripCardProps)
   const isCompleted = status === 'completed';
   const isTransit = status === 'transit';
   const isBoarding = status === 'boarding';
+
+  debugListKeys('TripCard', 'stops', stops, (stop, index) => `${stop}-${index}`);
 
   // Estimate current/next stop for transit
   let currentStopIdx = 0;

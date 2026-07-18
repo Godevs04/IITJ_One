@@ -21,6 +21,7 @@ import { parseRouteStops } from '../utils/coordinates';
 import { TripCard } from '../widgets/TripCard';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
+import { debugListKeys } from '@/debug/listDebug';
 
 interface TransportScreenViewProps {
   transport: TransportDoc | null;
@@ -226,6 +227,12 @@ export function TransportScreenView({
         (a.title.toLowerCase().includes(q) || a.message.toLowerCase().includes(q))
     );
   }, [alerts, searchQuery, tick]);
+  debugListKeys('TransportScreenView', 'exceptionAffectedBuses', exceptionSchedule?.affectedBuses ?? [], (bus) => bus);
+  debugListKeys('TransportScreenView', 'exceptionAttachments', exceptionSchedule?.attachments ?? [], (att) => att.id);
+  debugListKeys('TransportScreenView', 'matchingAlerts', matchingAlerts, (alert) => alert.id);
+  debugListKeys('TransportScreenView', 'favorites', favorites, (stop) => stop);
+  debugListKeys('TransportScreenView', 'activeTrips', activeTrips, (item) => `${item.trip.bus}-${item.trip.startTime}`);
+  debugListKeys('TransportScreenView', 'completedTrips', completedTrips, (item) => `${item.trip.bus}-${item.trip.startTime}`);
 
   return (
     <ScreenShell

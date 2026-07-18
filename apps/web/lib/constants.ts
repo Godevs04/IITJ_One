@@ -20,6 +20,9 @@ export const MISSION =
 export const DISCLAIMER =
   'IITJ One is a student-developed application for the IIT Jodhpur community. It is not affiliated with, or officially endorsed by, the Indian Institute of Technology Jodhpur.';
 
+export const SUPPORT_EMAIL = 'iitjoneofficial@gmail.com';
+export const SUPPORT_URL = `${SITE_URL}/support`;
+
 export const PLAY_STORE_URL = process.env.NEXT_PUBLIC_PLAY_STORE_URL || '';
 export const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL || '';
 

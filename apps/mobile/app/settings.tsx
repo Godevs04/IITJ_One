@@ -13,9 +13,12 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { Analytics, AppEvents } from '@/services/firebase';
 import { AppSpacing, AppTypography } from '@/theme/tokens';
 import { isHttpUrl } from '@/utils/urlSafety';
+import { debugListKeys } from '@/debug/listDebug';
 import { usePostHog } from 'posthog-react-native';
 
 const PRIVACY_POLICY_URL = process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL;
+const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL;
+const SUPPORT_URL = process.env.EXPO_PUBLIC_SUPPORT_URL;
 
 const NOTIFICATION_TOPICS = [
   { key: 'iitj_all', label: 'All campus updates' },
@@ -30,6 +33,7 @@ export default function SettingsScreen() {
   const { darkMode, setDarkMode, colors } = useTheme();
   const [topicPrefs, setTopicPrefs] = useState(loadTopicPrefs());
   const [pushInfo, setPushInfo] = useState<PushRegistration | null>(null);
+  debugListKeys('SettingsScreen', 'notificationTopics', NOTIFICATION_TOPICS, (topic) => topic.key);
 
   useEffect(() => {
     void registerForPushNotifications().then(setPushInfo);
@@ -109,10 +113,22 @@ export default function SettingsScreen() {
         />
         <DirectoryRow title="Suggest Something" onPress={() => router.push('/suggest')} />
         <DirectoryRow title="About IITJ One" onPress={() => router.push('/about')} />
+        {isHttpUrl(SUPPORT_URL) ? (
+          <DirectoryRow
+            title="Help & Support"
+            onPress={() => void Linking.openURL(SUPPORT_URL)}
+          />
+        ) : null}
         {isHttpUrl(PRIVACY_POLICY_URL) ? (
           <DirectoryRow
             title="Privacy Policy"
             onPress={() => void Linking.openURL(PRIVACY_POLICY_URL)}
+          />
+        ) : null}
+        {isHttpUrl(TERMS_URL) ? (
+          <DirectoryRow
+            title="Terms of Use"
+            onPress={() => void Linking.openURL(TERMS_URL)}
           />
         ) : null}
       </View>

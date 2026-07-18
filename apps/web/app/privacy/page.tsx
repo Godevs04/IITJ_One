@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { PageHeader } from '@/components/ui/Card';
+import { SUPPORT_EMAIL } from '@/lib/constants';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
@@ -124,7 +125,11 @@ export default function PrivacyPage() {
             <a href="/support" className="text-indigo hover:underline">
               Support
             </a>{' '}
-            page or the official IITJ One support email.
+            page or at{' '}
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="text-indigo hover:underline">
+              {SUPPORT_EMAIL}
+            </a>
+            .
           </p>
         </section>
       </div>

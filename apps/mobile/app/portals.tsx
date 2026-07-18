@@ -10,12 +10,15 @@ import type { PortalsDoc } from '@/types/campus';
 import { AppSpacing } from '@/theme/tokens';
 import { isHttpUrl } from '@/utils/urlSafety';
 import { usePostHog } from 'posthog-react-native';
+import { debugListKeys } from '@/debug/listDebug';
 
 export default function PortalsScreen() {
   const posthog = usePostHog();
   const { syncing, sync, error } = useCampusSync(false);
   const portals = useCampusModule<PortalsDoc>('portals');
   const links = [...(portals?.links ?? [])].sort((a, b) => a.order - b.order);
+
+  debugListKeys('PortalsScreen', 'links', links, (link) => link.url);
 
   const onRefresh = useCallback(async () => {
     await sync();

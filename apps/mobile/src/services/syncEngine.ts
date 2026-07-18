@@ -18,7 +18,7 @@
 
 import { AppState, type AppStateStatus } from 'react-native';
 import * as Network from 'expo-network';
-import { CAMPUS_ID, getManifest, getModule } from './api';
+import { ApiError, CAMPUS_ID, getManifest, getModule } from './api';
 import {
   getCachedJson,
   getCachedVersion,
@@ -64,11 +64,36 @@ export interface SyncResult {
 
 type SyncListener = (state: SyncEngineState) => void;
 
+type FetchModuleResult =
+  | { outcome: 'success'; data: unknown }
+  | { outcome: 'not_found' } // valid "nothing published yet" state — not an error
+  | { outcome: 'failed'; error: string };
+
 // ─── Constants ──────────────────────────────────────────────────────────────────
 
 const RETRY_DELAYS = [1000, 2000, 4000, 8000, 16000]; // max 5 retries
 const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 min periodic sync
 const LAST_SYNC_KEY = 'syncEngine:lastFullSync';
+
+// A 4xx here means the request itself is permanently wrong (bad campus query,
+// no auth, no such resource) — retrying changes nothing and just delays the
+// user. 429/5xx are the server's own signal that a fresh attempt may succeed.
+const NON_RETRYABLE_STATUSES = new Set([400, 401, 403, 404, 422]);
+const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
+
+function isRetryableError(error: unknown): boolean {
+  if (error instanceof ApiError) {
+    if (RETRYABLE_STATUSES.has(error.status)) return true;
+    if (NON_RETRYABLE_STATUSES.has(error.status)) return false;
+    // Unrecognized status: treat as non-retryable — an unexpected 4xx is a
+    // client-side problem no retry fixes, and successful responses never
+    // reach this catch block in the first place.
+    return false;
+  }
+  // No ApiError means fetch() itself never got an HTTP response at all —
+  // timeout, ECONNRESET, ECONNREFUSED, DNS failure, offline. All transient.
+  return true;
+}
 
 // ─── Module version keys (match API meta.versions) ──────────────────────────────
 
@@ -252,10 +277,19 @@ class SyncEngine {
           this.updateModuleStatus(module, 'syncing', null);
           const result = await this.fetchModuleWithRetry(module);
 
-          if (result.success) {
+          if (result.outcome === 'success') {
             setCachedJson(module, result.data);
             setCachedVersion(module, serverVersion);
             updated.push(module);
+            this.state.modules[module].lastSyncedAt = Date.now();
+            this.updateModuleStatus(module, 'success', null);
+          } else if (result.outcome === 'not_found') {
+            // Nothing published for this module/campus yet. Advance the
+            // local version marker (without touching any cached data) so
+            // this fetch isn't re-attempted every sync cycle forever — the
+            // next real publish bumps the server version again and
+            // triggers exactly one fresh attempt.
+            setCachedVersion(module, serverVersion);
             this.state.modules[module].lastSyncedAt = Date.now();
             this.updateModuleStatus(module, 'success', null);
           } else {
@@ -265,6 +299,9 @@ class SyncEngine {
         }),
       );
     } catch (error) {
+      if (__DEV__) {
+        console.error('🔄 [SyncEngine] Manifest fetch failed:', error);
+      }
       const msg = error instanceof Error ? error.message : 'Manifest fetch failed';
       Analytics.trackEvent('sync_failed', { reason: msg });
       void FirebaseCrashlytics.log(`Sync failed: ${msg}`);
@@ -280,9 +317,7 @@ class SyncEngine {
     return { updated, errors };
   }
 
-  private async fetchModuleWithRetry(
-    module: SyncModule,
-  ): Promise<{ success: true; data: unknown } | { success: false; error: string }> {
+  private async fetchModuleWithRetry(module: SyncModule): Promise<FetchModuleResult> {
     let lastError = '';
 
     for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
@@ -290,10 +325,39 @@ class SyncEngine {
         const raw = await getModule<unknown>(module, CAMPUS_ID);
         const data = normalizeModuleData(module, raw);
         this.state.modules[module].retryCount = 0;
-        return { success: true, data };
+        return { outcome: 'success', data };
       } catch (error) {
+        // 404 means this module has never been published for this campus —
+        // a valid, terminal state (not every campus configures Holidays /
+        // Transport Alerts / the legacy Temporary Schedule), not a failure.
+        // No retry, no error log, no Crashlytics noise.
+        if (error instanceof ApiError && error.status === 404) {
+          this.state.modules[module].retryCount = 0;
+          return { outcome: 'not_found' };
+        }
+
         lastError = error instanceof Error ? error.message : 'Network error';
         this.state.modules[module].retryCount = attempt + 1;
+
+        if (!isRetryableError(error)) {
+          // Non-retryable client error (400/401/403/422/validation) — fail
+          // immediately. Retrying a request that can never succeed only
+          // delays the user and spams the logs.
+          if (__DEV__) {
+            console.error(`🔄 [SyncEngine] Fetching module "${module}" failed (non-retryable):`, error);
+          }
+          void FirebaseCrashlytics.log(`Sync failed (non-retryable): ${module}, error: ${lastError}`);
+          return { outcome: 'failed', error: lastError };
+        }
+
+        if (__DEV__) {
+          console.error(
+            `🔄 [SyncEngine] Fetching module "${module}" failed (attempt ${attempt + 1}/${
+              RETRY_DELAYS.length + 1
+            }):`,
+            error,
+          );
+        }
 
         void FirebaseCrashlytics.log(
           `Sync retry: ${module} attempt ${attempt + 1}, error: ${lastError}`,
@@ -305,7 +369,7 @@ class SyncEngine {
       }
     }
 
-    return { success: false, error: lastError };
+    return { outcome: 'failed', error: lastError };
   }
 
   // ─── Connectivity ───────────────────────────────────────────────────────────

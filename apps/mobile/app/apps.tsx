@@ -10,6 +10,7 @@ import type { AppsDoc, CampusApp } from '@/types/campus';
 import { AppSpacing, AppRadius, AppTypography } from '@/theme/tokens';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { isHttpUrl, isSafeDeepLink } from '@/utils/urlSafety';
+import { debugListKeys } from '@/debug/listDebug';
 
 export default function AppsScreen() {
   const { syncing, sync, error } = useCampusSync(false);
@@ -20,6 +21,7 @@ export default function AppsScreen() {
   const apps = (appsDoc?.apps ?? [])
     .filter((app) => app.isEnabled !== false)
     .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+  debugListKeys('AppsScreen', 'apps', apps, (app) => app.name);
 
   const onRefresh = useCallback(async () => {
     await sync();

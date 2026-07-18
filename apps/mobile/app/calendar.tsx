@@ -11,6 +11,7 @@ import { useCampusModule } from '@/hooks/useCampusModule';
 import type { CalendarDoc, CalendarEvent } from '@/types/campus';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { debugListKeys } from '@/debug/listDebug';
 
 const FILTERS = ['all', 'holiday', 'exam', 'academic', 'event'] as const;
 
@@ -36,6 +37,9 @@ export default function CalendarScreen() {
     if (filter === 'all') return list;
     return list.filter((e) => e.type.toLowerCase() === filter);
   }, [calendar, filter]);
+
+  debugListKeys('CalendarScreen', 'filters', FILTERS, (value) => value);
+  debugListKeys('CalendarScreen', 'events', events, (event, index) => `${event.title}-${index}`);
 
   const onRefresh = useCallback(async () => {
     await sync();

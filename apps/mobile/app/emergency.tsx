@@ -7,6 +7,7 @@ import { useCampusModule } from '@/hooks/useCampusModule';
 import { BUNDLED_EMERGENCY_CONTACTS } from '@/data/emergencyFallback';
 import type { EmergencyDoc } from '@/types/campus';
 import { AppSpacing } from '@/theme/tokens';
+import { debugListKeys } from '@/debug/listDebug';
 
 export default function EmergencyScreen() {
   const { syncing, sync, error } = useCampusSync(false);
@@ -15,6 +16,8 @@ export default function EmergencyScreen() {
   const contacts = (
     synced.length > 0 ? synced : [...BUNDLED_EMERGENCY_CONTACTS]
   ).sort((a, b) => a.order - b.order);
+
+  debugListKeys('EmergencyScreen', 'contacts', contacts, (contact) => `${contact.label}-${contact.phone}`);
 
   const onRefresh = useCallback(async () => {
     await sync();

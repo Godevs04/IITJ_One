@@ -9,6 +9,7 @@ import { useCampusModule } from '@/hooks/useCampusModule';
 import type { ServicesDoc } from '@/types/campus';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing } from '@/theme/tokens';
+import { debugListKeys } from '@/debug/listDebug';
 
 export default function ServicesScreen() {
   const theme = useThemeColors();
@@ -27,6 +28,8 @@ export default function ServicesScreen() {
         (e.description?.toLowerCase().includes(q) ?? false),
     );
   }, [services, query]);
+
+  debugListKeys('ServicesScreen', 'entries', entries, (entry) => `${entry.name}-${entry.category}`);
 
   const onRefresh = useCallback(async () => {
     await sync();

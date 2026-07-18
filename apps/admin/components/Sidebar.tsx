@@ -6,7 +6,24 @@ import { getStoredAdmin } from '@/lib/auth';
 import { logout } from '@/lib/api';
 import { useEffect, useState } from 'react';
 
-const NAV = [
+interface NavLeaf {
+  href: string;
+  label: string;
+  superadminOnly?: boolean;
+}
+
+interface NavBranch {
+  label: string;
+  children: NavLeaf[];
+}
+
+type NavItem = NavLeaf | NavBranch;
+
+function isBranch(item: NavItem): item is NavBranch {
+  return 'children' in item;
+}
+
+const NAV: { label: string; items: NavItem[] }[] = [
   {
     label: 'Overview',
     items: [
@@ -24,8 +41,15 @@ const NAV = [
   {
     label: 'Campus data',
     items: [
-      { href: '/transport', label: 'Transport' },
-      { href: '/transport/schedule-exceptions', label: 'Temporary Schedules' },
+      {
+        label: 'Transport',
+        children: [
+          { href: '/transport', label: 'Weekday Schedule' },
+          { href: '/transport/schedule-exceptions', label: 'Temporary Schedules' },
+          { href: '/transport/alerts', label: 'Transport Alerts' },
+          { href: '/transport/live-tracking', label: 'Live Tracking' },
+        ],
+      },
       { href: '/calendar', label: 'Calendar' },
       { href: '/holidays', label: 'Institute Holidays' },
       { href: '/portals', label: 'Portals' },
@@ -49,11 +73,90 @@ const NAV = [
       { href: '/admins', label: 'Admins', superadminOnly: true },
     ],
   },
-] as const;
+];
 
 function navActive(pathname: string, href: string): boolean {
   if (href === '/') return pathname === '/';
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function NavLink({
+  item,
+  active,
+  onNavigate,
+  indent = false,
+}: {
+  item: NavLeaf;
+  active: boolean;
+  onNavigate?: () => void;
+  indent?: boolean;
+}) {
+  return (
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      className={`group relative flex items-center rounded-xl py-2 text-sm transition duration-200 ${indent ? 'pl-6 pr-3' : 'px-3'} ${
+        active
+          ? 'bg-white/12 font-medium text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]'
+          : 'text-white/65 hover:bg-white/6 hover:text-white'
+      }`}
+    >
+      {active ? (
+        <span
+          aria-hidden
+          className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-sandstone"
+        />
+      ) : null}
+      <span className="truncate">{item.label}</span>
+    </Link>
+  );
+}
+
+function NavBranchItem({
+  branch,
+  pathname,
+  onNavigate,
+}: {
+  branch: NavBranch;
+  pathname: string;
+  onNavigate?: () => void;
+}) {
+  const hasActiveChild = branch.children.some((c) => navActive(pathname, c.href));
+  const [expanded, setExpanded] = useState(hasActiveChild);
+
+  useEffect(() => {
+    if (hasActiveChild) setExpanded(true);
+  }, [hasActiveChild]);
+
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={() => setExpanded((e) => !e)}
+        className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm transition duration-200 ${
+          hasActiveChild ? 'font-medium text-white' : 'text-white/65 hover:bg-white/6 hover:text-white'
+        }`}
+        aria-expanded={expanded}
+      >
+        <span className="truncate">{branch.label}</span>
+        <span
+          aria-hidden
+          className={`text-[10px] text-white/40 transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
+        >
+          ▶
+        </span>
+      </button>
+      {expanded ? (
+        <ul className="mt-0.5 space-y-0.5">
+          {branch.children.map((child) => (
+            <li key={child.href}>
+              <NavLink item={child} active={navActive(pathname, child.href)} onNavigate={onNavigate} indent />
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </li>
+  );
 }
 
 export function Sidebar({
@@ -102,31 +205,16 @@ export function Sidebar({
             </p>
             <ul className="space-y-0.5">
               {group.items
-                .filter((item) => !('superadminOnly' in item && item.superadminOnly) || isSuperadmin)
-                .map((item) => {
-                const active = navActive(pathname, item.href);
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      onClick={onNavigate}
-                      className={`group relative flex items-center rounded-xl px-3 py-2 text-sm transition duration-200 ${
-                        active
-                          ? 'bg-white/12 font-medium text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]'
-                          : 'text-white/65 hover:bg-white/6 hover:text-white'
-                      }`}
-                    >
-                      {active ? (
-                        <span
-                          aria-hidden
-                          className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-sandstone"
-                        />
-                      ) : null}
-                      <span className="truncate">{item.label}</span>
-                    </Link>
-                  </li>
-                );
-              })}
+                .filter((item) => isBranch(item) || !item.superadminOnly || isSuperadmin)
+                .map((item) =>
+                  isBranch(item) ? (
+                    <NavBranchItem key={item.label} branch={item} pathname={pathname} onNavigate={onNavigate} />
+                  ) : (
+                    <li key={item.href}>
+                      <NavLink item={item} active={navActive(pathname, item.href)} onNavigate={onNavigate} />
+                    </li>
+                  ),
+                )}
             </ul>
           </div>
         ))}

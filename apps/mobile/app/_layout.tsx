@@ -22,6 +22,7 @@ import '@/services/search/registerBuiltInProviders';
 import { CampusDataProvider } from '@/state/CampusDataProvider';
 import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { setRuntimeDebugContext } from '@/debug/listDebug';
 import {
   initFirebase,
   useScreenTracking,
@@ -30,6 +31,7 @@ import {
   initFCM,
   teardownFCM,
   registerBackgroundHandler,
+  pathnameToScreenName,
 } from '@/services/firebase';
 
 // Register background notification handler at module level (required by Firebase)
@@ -98,6 +100,13 @@ function RootNavigator() {
   const params = useGlobalSearchParams();
   const previousPathname = useRef<string | undefined>(undefined);
 
+  if (__DEV__) {
+    setRuntimeDebugContext({
+      route: pathname,
+      screen: pathnameToScreenName(pathname),
+    });
+  }
+
   // Manual PostHog screen tracking for Expo Router
   useEffect(() => {
     if (previousPathname.current !== pathname) {
@@ -108,6 +117,38 @@ function RootNavigator() {
 
   // Auto-track every screen transition
   useScreenTracking();
+
+  useEffect(() => {
+    if (!__DEV__) return;
+
+    const originalError = console.error;
+    console.error = (...args: unknown[]) => {
+      const firstArg = args[0];
+      const message =
+        typeof firstArg === 'string'
+          ? firstArg
+          : firstArg instanceof Error
+            ? firstArg.message
+            : '';
+
+      if (message.includes('Each child in a list should have a unique "key" prop')) {
+        const context = globalThis.__IITJ_ONE_RUNTIME_DEBUG_CONTEXT__;
+        console.group('🔑 React Key Warning');
+        console.log('Current pathname:', pathname);
+        console.log('Current screen:', pathnameToScreenName(pathname));
+        console.log('Context route/screen:', context);
+        console.trace('JavaScript stack');
+        originalError.apply(console, args as never);
+        console.groupEnd();
+      } else {
+        originalError.apply(console, args as never);
+      }
+    };
+
+    return () => {
+      console.error = originalError;
+    };
+  }, [pathname]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

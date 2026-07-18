@@ -15,6 +15,7 @@ import {
   publishTransportScheduleException,
   unpublishTransportScheduleException,
   archiveTransportScheduleException,
+  listScheduleExceptionRevisions,
   ScheduleExceptionArchivedError,
 } from '../../store';
 import { isDbConnected } from '../../db';
@@ -180,6 +181,17 @@ router.post(
       return;
     }
     res.json(withStatus(saved));
+  }),
+);
+
+router.get(
+  '/:id/revisions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const id = String(req.params.id);
+    if (!assertScheduleExceptionId(id, res)) return;
+
+    const revisions = await listScheduleExceptionRevisions(id);
+    res.json({ revisions });
   }),
 );
 

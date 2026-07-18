@@ -110,6 +110,15 @@ export interface TransportScheduleException {
   deletedAt?: string | null;
 }
 
+export interface ScheduleExceptionRevision {
+  _id?: string;
+  scheduleId: string;
+  revisionNumber: number;
+  snapshot: TransportScheduleException;
+  publishedAt: string;
+  publishedBy: string;
+}
+
 export interface CalendarDoc {
   campusId: string;
   semester: string;

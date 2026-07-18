@@ -11,7 +11,7 @@ export * as RemoteConfig from './remoteConfig';
 export { Analytics } from './trackingApi';
 export { TraceNames } from './performance';
 export { AppEvents, type AppEventName } from './events';
-export { useScreenTracking } from './screenTracker';
+export { useScreenTracking, pathnameToScreenName } from './screenTracker';
 export { setDefaultUserProperties, updateUserProperty } from './userProperties';
 export { fetchRemoteConfig, getBoolean, getString, getNumber } from './remoteConfig';
 export {

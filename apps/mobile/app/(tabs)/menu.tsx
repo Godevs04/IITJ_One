@@ -10,6 +10,7 @@ import type { MenuDoc } from '@/types/campus';
 import { getMealTimeStatus, getMealWindows } from '@/utils/date';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { debugListKeys } from '@/debug/listDebug';
 
 const MEALS = ['breakfast', 'lunch', 'snacks', 'dinner'] as const;
 const MEAL_LABELS: Record<string, string> = {
@@ -91,6 +92,14 @@ export default function MenuScreen() {
     }
     return list;
   }, []);
+
+  debugListKeys('MenuScreen', 'dayStrip', scrollDays, (day) => day.toISOString());
+  debugListKeys('MenuScreen', 'mealCharges', [
+    { meal: 'Breakfast', veg: '₹45', nonVeg: '₹45' },
+    { meal: 'Lunch', veg: '₹75', nonVeg: '₹80' },
+    { meal: 'Snacks', veg: '₹35', nonVeg: '₹35' },
+    { meal: 'Dinner', veg: '₹75', nonVeg: '₹80' },
+  ], (item) => item.meal);
 
   const isSelectedToday = useMemo(() => isDateToday(selectedDate), [selectedDate, isDateToday]);
 
@@ -286,6 +295,8 @@ export default function MenuScreen() {
           const items = dayMenu[meal];
           const dishesStr = dietPreference === 'veg' ? items.veg : items.nonVeg;
           const dishes = splitDishes(dishesStr);
+
+          debugListKeys('MenuScreen', `${meal}Dishes`, dishes, (_, index) => `${index}`);
 
           const isToday = isSelectedToday;
           const timeStatus = isToday ? getMealTimeStatus(meal) : null;

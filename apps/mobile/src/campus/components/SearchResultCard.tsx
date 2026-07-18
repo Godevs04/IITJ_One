@@ -6,6 +6,7 @@ import { LOCATION_CATEGORIES } from '../types';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { highlightText } from '../utils/highlightText';
 import type { ThemeColors } from '@/theme/tokens';
+import { debugListKeys } from '@/debug/listDebug';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -44,6 +45,8 @@ export function SearchResultCard({
 }: SearchResultCardProps) {
   const categoryInfo = LOCATION_CATEGORIES[location.category];
   const highlightedSegments = matchedField ? highlightText(matchedField, query) : [];
+
+  debugListKeys('SearchResultCard', 'highlightedSegments', highlightedSegments, (segment, index) => `${segment.text}-${index}`);
 
   return (
     <View style={[styles.container, { borderColor: theme.border }]}>

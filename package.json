@@ -12,8 +12,10 @@
     "dev:mobile": "npm run start -w @iitj1/mobile",
     "seed": "npm run seed -w @iitj1/api",
     "test:api": "npm run test -w @iitj1/api",
+    "build:types": "npm run build -w @iitj1/types",
     "build:web": "npm run build -w @iitj1/web",
-    "typecheck": "npm run typecheck -w @iitj1/types && npm run typecheck -w @iitj1/api && npm run typecheck -w @iitj1/admin && npm run typecheck -w @iitj1/web"
+    "typecheck": "npm run typecheck -w @iitj1/types && npm run build -w @iitj1/types && npm run typecheck -w @iitj1/api && npm run typecheck -w @iitj1/admin && npm run typecheck -w @iitj1/web",
+    "prepare": "npm run build -w @iitj1/types"
   },
   "engines": {
     "node": ">=20"

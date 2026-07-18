@@ -6,6 +6,7 @@ import { QuickAccessTile, type QuickAccessVariant } from '@/components/QuickAcce
 import { ScreenShell } from '@/components/ScreenShell';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppSpacing, AppTypography } from '@/theme/tokens';
+import { debugListKeys } from '@/debug/listDebug';
 
 interface MoreLink {
   title: string;
@@ -55,6 +56,11 @@ const SECTIONS: MoreSection[] = [
 
 export default function MoreScreen() {
   const theme = useThemeColors();
+
+  debugListKeys('MoreScreen', 'sections', SECTIONS, (section) => section.title);
+  SECTIONS.forEach((section) => {
+    debugListKeys('MoreScreen', `${section.title}Links`, section.links, (item) => item.title);
+  });
 
   return (
     <ScreenShell title="More" subtitle="Campus tools and settings">

@@ -5,6 +5,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ComponentProps } from 'react';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
+import { debugListKeys } from '@/debug/listDebug';
 import { useCampusModule } from '@/hooks/useCampusModule';
 import { DEFAULT_WIFI_DOC, type WifiGuide } from '@iitj1/types';
 import type { WifiDoc } from '@/types/campus';
@@ -120,6 +121,8 @@ export default function WifiScreen() {
   const onRefresh = useCallback(async () => {
     await sync();
   }, [sync]);
+  debugListKeys('WifiScreen', 'providers', providers, (provider) => provider);
+  debugListKeys('WifiScreen', 'guides', guides, (guide) => `${guide.title}-${guide.pdfUrl}`);
 
   return (
     <ScreenShell
