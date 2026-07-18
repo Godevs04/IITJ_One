@@ -67,6 +67,22 @@
       "@react-native-firebase/crashlytics",
       "@react-native-firebase/perf",
       [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static",
+            "forceStaticLinking": [
+              "RNFBApp",
+              "RNFBAnalytics",
+              "RNFBCrashlytics",
+              "RNFBMessaging",
+              "RNFBPerf",
+              "RNFBRemoteConfig"
+            ]
+          }
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#022543",
