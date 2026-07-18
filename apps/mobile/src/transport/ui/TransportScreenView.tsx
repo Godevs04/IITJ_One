@@ -64,7 +64,10 @@ export function TransportScreenView({
   const [selectedFavoriteFilter, setSelectedFavoriteFilter] = useState<string | null>(null);
   const [showCompleted, setShowCompleted] = useState(false);
 
-  const defaultDayType = useMemo(() => getScheduleKey(calendar, holidays), [calendar, holidays, tick]);
+  const defaultDayType = useMemo(() => {
+    void tick; // day-type can flip at midnight while the screen stays open
+    return getScheduleKey(calendar, holidays);
+  }, [calendar, holidays, tick]);
   const [dayTypeFilter, setDayTypeFilter] = useState<'mon-sat' | 'sun-holiday'>(defaultDayType);
   const [directionFilter, setDirectionFilter] = useState<'departure' | 'arrival'>('departure');
 
@@ -186,6 +189,7 @@ export function TransportScreenView({
   }, [filteredTrips]);
 
   const hasActiveAlert = useMemo(() => {
+    void tick; // alert windows are time-bound; refresh on the transport tick
     if (!alerts?.alerts) return false;
     const now = new Date();
     return alerts.alerts.some((a) => isAlertActive(a, now));
@@ -218,6 +222,7 @@ export function TransportScreenView({
   );
 
   const matchingAlerts = useMemo(() => {
+    void tick; // alert windows are time-bound; refresh on the transport tick
     if (!searchQuery.trim() || !alerts?.alerts) return [];
     const q = searchQuery.toLowerCase().trim();
     const now = new Date();

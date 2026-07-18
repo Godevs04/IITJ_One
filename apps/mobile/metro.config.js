@@ -7,10 +7,9 @@ const workspaceRoot = path.resolve(projectRoot, '../..');
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(projectRoot);
 
-// Monorepo: watch workspace root so Metro's HasteFS knows about
-// workspaceRoot/node_modules and can resolve @iitj1/types (which is a
-// workspace junction to packages/types).
-config.watchFolders = [workspaceRoot];
+// Monorepo: keep Expo defaults, then also watch the workspace root so
+// Metro can resolve @iitj1/types (workspace package under packages/types).
+config.watchFolders = [...new Set([...(config.watchFolders ?? [projectRoot]), workspaceRoot])];
 
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),

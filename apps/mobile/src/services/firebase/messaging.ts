@@ -202,7 +202,7 @@ async function registerToken(token: string): Promise<void> {
       }
 
       throw new Error(`HTTP ${response.status}`);
-    } catch (error) {
+    } catch {
       if (attempt < RETRY_DELAYS.length) {
         await new Promise((r) => setTimeout(r, RETRY_DELAYS[attempt]));
       }

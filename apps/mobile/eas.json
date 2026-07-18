@@ -8,19 +8,26 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
+        "APP_VARIANT": "development",
         "EXPO_PUBLIC_API_URL": "http://YOUR_LAN_IP:6002/api/v1"
       }
     },
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.iitjone.app/api/v1"
+        "APP_VARIANT": "preview",
+        "EXPO_PUBLIC_API_URL": "https://api.iitjone.app/api/v1",
+        "EXPO_PUBLIC_ENABLE_ANALYTICS": "true",
+        "EXPO_PUBLIC_ENABLE_CRASH_REPORTING": "true"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.iitjone.app/api/v1"
+        "APP_VARIANT": "production",
+        "EXPO_PUBLIC_API_URL": "https://api.iitjone.app/api/v1",
+        "EXPO_PUBLIC_ENABLE_ANALYTICS": "true",
+        "EXPO_PUBLIC_ENABLE_CRASH_REPORTING": "true"
       }
     }
   },

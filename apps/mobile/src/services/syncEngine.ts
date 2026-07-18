@@ -27,7 +27,7 @@ import {
   setSetting,
   getSetting,
 } from './cache';
-import { Analytics, AppEvents, FirebaseCrashlytics, FirebasePerformance, TraceNames } from '@/services/firebase';
+import { Analytics, FirebaseCrashlytics, FirebasePerformance, TraceNames } from '@/services/firebase';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 

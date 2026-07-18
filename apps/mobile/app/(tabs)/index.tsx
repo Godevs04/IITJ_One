@@ -409,10 +409,12 @@ export default function HomeScreen() {
   }, [alerts, now]);
 
   const nextDeparture = useMemo(() => {
+    void now; // recompute when the home clock tick advances
     return getNextDeparture(transport, calendar, holidays, alerts, tempSchedule);
   }, [transport, calendar, holidays, alerts, tempSchedule, now]);
 
   const nextArrival = useMemo(() => {
+    void now; // recompute when the home clock tick advances
     return getNextArrival(transport, calendar, holidays, alerts, tempSchedule);
   }, [transport, calendar, holidays, alerts, tempSchedule, now]);
 

@@ -19,7 +19,6 @@ import {
   type SyncEngineState,
   type SyncModule,
   type SyncResult,
-  SYNC_MODULES,
 } from '@/services/syncEngine';
 import { Analytics, AppEvents } from '@/services/firebase';
 
