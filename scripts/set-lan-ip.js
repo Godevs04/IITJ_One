@@ -74,10 +74,13 @@ const API_ENV = path.join(REPO_ROOT, 'apps', 'api', '.env');
 const API_ENV_EXAMPLE = path.join(REPO_ROOT, 'apps', 'api', '.env.example');
 const ADMIN_ENV = path.join(REPO_ROOT, 'apps', 'admin', '.env');
 const ADMIN_ENV_EXAMPLE = path.join(REPO_ROOT, 'apps', 'admin', '.env.example');
+const WEB_ENV = path.join(REPO_ROOT, 'apps', 'web', '.env');
+const WEB_ENV_EXAMPLE = path.join(REPO_ROOT, 'apps', 'web', '.env.example');
 
 const API_PORT = process.env.API_PORT || '6002';
 const METRO_PORT = process.env.METRO_PORT || '6001';
 const ADMIN_PORT = process.env.ADMIN_PORT || '3000';
+const WEB_PORT = process.env.WEB_PORT || '3002';
 
 function ensureEnvFile(target, example, label) {
   if (!fs.existsSync(target)) {
@@ -133,9 +136,11 @@ if (!LAN_IP) {
 ensureEnvFile(MOBILE_ENV, MOBILE_ENV_EXAMPLE, 'apps/mobile/.env');
 ensureEnvFile(API_ENV, API_ENV_EXAMPLE, 'apps/api/.env');
 ensureEnvFile(ADMIN_ENV, ADMIN_ENV_EXAMPLE, 'apps/admin/.env');
+ensureEnvFile(WEB_ENV, WEB_ENV_EXAMPLE, 'apps/web/.env');
 
 const API_URL = `http://${LAN_IP}:${API_PORT}/api/v1`;
 const API_BASE = `http://${LAN_IP}:${API_PORT}`;
+const WEB_SITE_URL = `http://${LAN_IP}:${WEB_PORT}`;
 
 // Expo / Metro (mobile)
 setEnvVar('EXPO_PUBLIC_API_URL', API_URL, MOBILE_ENV);
@@ -146,13 +151,25 @@ setEnvVar('EXPO_PUBLIC_DEV_PORT', METRO_PORT, MOBILE_ENV);
 setEnvVar('NEXT_PUBLIC_API_URL', API_URL, ADMIN_ENV);
 setEnvVar('NEXT_PUBLIC_CAMPUS_ID', 'iitj', ADMIN_ENV);
 
+// Marketing website (Next.js) — same-origin /backend proxy; site URL uses LAN for device testing
+setEnvVar('NEXT_PUBLIC_API_URL', '/backend/api/v1', WEB_ENV);
+setEnvVar('API_PROXY_TARGET', `http://127.0.0.1:${API_PORT}`, WEB_ENV);
+setEnvVar('NEXT_PUBLIC_SITE_URL', WEB_SITE_URL, WEB_ENV);
+
 // API server
 setEnvVar('HOST', '0.0.0.0', API_ENV);
 setEnvVar('PORT', API_PORT, API_ENV);
 setEnvVar('API_BASE_URL', API_BASE, API_ENV);
 
-// CORS: Expo dev server (6001) + admin panel (3000), localhost + LAN
-const CORS_ORIGINS = `http://localhost:${METRO_PORT},http://${LAN_IP}:${METRO_PORT},http://localhost:${ADMIN_PORT},http://${LAN_IP}:${ADMIN_PORT}`;
+// CORS: Expo (6001) + admin (3000) + web (3002), localhost + LAN
+const CORS_ORIGINS = [
+  `http://localhost:${METRO_PORT}`,
+  `http://${LAN_IP}:${METRO_PORT}`,
+  `http://localhost:${ADMIN_PORT}`,
+  `http://${LAN_IP}:${ADMIN_PORT}`,
+  `http://localhost:${WEB_PORT}`,
+  `http://${LAN_IP}:${WEB_PORT}`,
+].join(',');
 setEnvVar('CORS_ORIGIN', CORS_ORIGINS, API_ENV);
 
 console.log(`[set-lan-ip] LAN IP: ${LAN_IP}`);
@@ -165,6 +182,12 @@ console.log('');
 console.log('[admin]');
 console.log(`  NEXT_PUBLIC_API_URL=${API_URL}`);
 console.log(`  Dev: http://localhost:${ADMIN_PORT}`);
+console.log('');
+console.log('[web]');
+console.log('  NEXT_PUBLIC_API_URL=/backend/api/v1');
+console.log(`  API_PROXY_TARGET=http://127.0.0.1:${API_PORT}`);
+console.log(`  NEXT_PUBLIC_SITE_URL=${WEB_SITE_URL}`);
+console.log(`  Dev: http://localhost:${WEB_PORT}  |  LAN: ${WEB_SITE_URL}`);
 console.log('');
 console.log('[api]');
 console.log('  HOST=0.0.0.0');

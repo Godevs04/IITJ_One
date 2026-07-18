@@ -8,14 +8,19 @@
     "scheme": "iitj1",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/branding/logo.png",
-      "resizeMode": "contain",
+      "image": "./assets/branding/marketing/ios-splash.png",
+      "resizeMode": "cover",
       "backgroundColor": "#022543"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "app.iitjone",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "splash": {
+        "image": "./assets/branding/marketing/ios-splash.png",
+        "resizeMode": "cover",
+        "backgroundColor": "#022543"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +28,12 @@
         "backgroundColor": "#022543"
       },
       "package": "app.iitjone",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "splash": {
+        "image": "./assets/branding/marketing/android-splash.png",
+        "resizeMode": "cover",
+        "backgroundColor": "#022543"
+      }
     },
     "web": {
       "bundler": "metro",
@@ -35,6 +45,24 @@
       "@react-native-firebase/app",
       "@react-native-firebase/crashlytics",
       "@react-native-firebase/perf",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#022543",
+          "resizeMode": "cover",
+          "ios": {
+            "image": "./assets/branding/marketing/ios-splash.png",
+            "resizeMode": "cover",
+            "backgroundColor": "#022543",
+            "enableFullScreenImage_legacy": true
+          },
+          "android": {
+            "image": "./assets/branding/marketing/android-splash.png",
+            "resizeMode": "cover",
+            "backgroundColor": "#022543"
+          }
+        }
+      ],
       [
         "expo-notifications",
         {
