@@ -21,7 +21,6 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "app.iitjone",
-      "buildNumber": "1",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -35,7 +34,6 @@
     },
     "android": {
       "package": "app.iitjone",
-      "versionCode": 1,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/branding/logo.png",
@@ -61,6 +59,7 @@
       "favicon": "./assets/icons/favicon.png"
     },
     "plugins": [
+      "./plugins/withFirebaseMessagingManifestFix.js",
       "expo-router",
       "@react-native-firebase/app",
       "@react-native-firebase/crashlytics",

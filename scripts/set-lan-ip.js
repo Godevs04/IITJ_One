@@ -69,6 +69,7 @@ function getLanIp() {
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 const MOBILE_ENV = path.join(REPO_ROOT, 'apps', 'mobile', '.env');
+const MOBILE_ENV_LOCAL = path.join(REPO_ROOT, 'apps', 'mobile', '.env.local');
 const MOBILE_ENV_EXAMPLE = path.join(REPO_ROOT, 'apps', 'mobile', '.env.example');
 const API_ENV = path.join(REPO_ROOT, 'apps', 'api', '.env');
 const API_ENV_EXAMPLE = path.join(REPO_ROOT, 'apps', 'api', '.env.example');
@@ -125,6 +126,16 @@ function setEnvVar(key, value, file) {
   fs.writeFileSync(file, content, 'utf8');
 }
 
+/** Remove a key from an env file (used when moving machine-local vars to .env.local). */
+function removeEnvVar(key, file) {
+  if (!fs.existsSync(file)) return;
+  const lines = fs.readFileSync(file, 'utf8').split(/\r?\n/);
+  const next = lines.filter((line) => !line.trim().startsWith(`${key}=`));
+  if (next.length !== lines.length) {
+    fs.writeFileSync(file, next.join('\n'), 'utf8');
+  }
+}
+
 const LAN_IP = getLanIp();
 
 if (!LAN_IP) {
@@ -144,8 +155,14 @@ const WEB_SITE_URL = `http://${LAN_IP}:${WEB_PORT}`;
 
 // Expo / Metro (mobile)
 setEnvVar('EXPO_PUBLIC_API_URL', API_URL, MOBILE_ENV);
-setEnvVar('REACT_NATIVE_PACKAGER_HOSTNAME', LAN_IP, MOBILE_ENV);
 setEnvVar('EXPO_PUBLIC_DEV_PORT', METRO_PORT, MOBILE_ENV);
+// Machine-local only — Expo refuses this key in committed-style .env files
+if (!fs.existsSync(MOBILE_ENV_LOCAL)) {
+  fs.writeFileSync(MOBILE_ENV_LOCAL, '');
+  console.log('[set-lan-ip] Created apps/mobile/.env.local');
+}
+setEnvVar('REACT_NATIVE_PACKAGER_HOSTNAME', LAN_IP, MOBILE_ENV_LOCAL);
+removeEnvVar('REACT_NATIVE_PACKAGER_HOSTNAME', MOBILE_ENV);
 
 // Admin panel (Next.js)
 setEnvVar('NEXT_PUBLIC_API_URL', API_URL, ADMIN_ENV);

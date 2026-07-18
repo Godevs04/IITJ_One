@@ -9,11 +9,14 @@ const path = require('path');
  *   - preview     → production identity, staging/prod API via EAS env
  *   - production  → store identity
  *
- * Google services files are only attached when present on disk so config
- * validation / lint still pass in CI or fresh clones without secrets.
+ * Firebase config files are gitignored. On EAS, upload them as file secrets
+ * named GOOGLE_SERVICES_JSON / GOOGLE_SERVICES_PLIST — those env vars become
+ * absolute paths during the build. Locally we fall back to ./google-services.json
+ * and ./GoogleService-Info.plist when present.
  *
  * IMPORTANT: always return an object that spreads `config` so Expo's
  * internal "static config was used" Symbol is preserved (expo-doctor).
+ * Never delete googleServicesFile — @react-native-firebase requires the field.
  */
 
 const VARIANT =
@@ -26,16 +29,22 @@ const IS_PROD = VARIANT === 'production';
 
 const PROJECT_ROOT = __dirname;
 
-function resolveAsset(relativePath) {
+function resolveLocal(relativePath) {
   const absolute = path.join(PROJECT_ROOT, relativePath);
   return fs.existsSync(absolute) ? relativePath : undefined;
 }
 
+/** Prefer EAS file-secret path, then a local file, then the conventional path. */
+function resolveGoogleServices(envKey, relativePath) {
+  const fromEas = process.env[envKey];
+  if (fromEas && fs.existsSync(fromEas)) {
+    return fromEas;
+  }
+  return resolveLocal(relativePath) ?? relativePath;
+}
+
 /** @param {{ config: import('expo/config').ExpoConfig }} ctx */
 module.exports = ({ config }) => {
-  const androidGoogleServices = resolveAsset('google-services.json');
-  const iosGoogleServices = resolveAsset('GoogleService-Info.plist');
-
   const name = IS_DEV ? 'IITJ One (Dev)' : 'IITJ One';
   // Keep the same store identifiers unless APP_VARIANT=development AND
   // EXPO_PUBLIC_DEV_BUNDLE_SUFFIX=1 — avoids needing a second Firebase app
@@ -57,10 +66,18 @@ module.exports = ({ config }) => {
     ios: {
       ...config.ios,
       bundleIdentifier,
+      googleServicesFile: resolveGoogleServices(
+        'GOOGLE_SERVICES_PLIST',
+        './GoogleService-Info.plist',
+      ),
     },
     android: {
       ...config.android,
       package: androidPackage,
+      googleServicesFile: resolveGoogleServices(
+        'GOOGLE_SERVICES_JSON',
+        './google-services.json',
+      ),
     },
     extra: {
       ...config.extra,
@@ -83,18 +100,6 @@ module.exports = ({ config }) => {
 
   if (process.env.POSTHOG_PROJECT_TOKEN) {
     next.extra.posthogProjectToken = process.env.POSTHOG_PROJECT_TOKEN;
-  }
-
-  if (iosGoogleServices) {
-    next.ios.googleServicesFile = iosGoogleServices;
-  } else {
-    delete next.ios.googleServicesFile;
-  }
-
-  if (androidGoogleServices) {
-    next.android.googleServicesFile = androidGoogleServices;
-  } else {
-    delete next.android.googleServicesFile;
   }
 
   return next;
