@@ -8,10 +8,14 @@ import { useCampusModule } from '@/hooks/useCampusModule';
 import type { AboutDoc } from '@/types/campus';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { debugListKeys } from '@/debug/listDebug';
+import { isHttpUrl } from '@/utils/urlSafety';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 const DISCLAIMER =
   'IITJ One is a student-developed application for the IIT Jodhpur community. Not affiliated with or officially endorsed by IIT Jodhpur.';
+
+const SUPPORT_URL = process.env.EXPO_PUBLIC_SUPPORT_URL;
+const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL;
 
 const INSTITUTE_DETAILS = [
   {
@@ -116,6 +120,32 @@ export default function AboutScreen() {
           {DISCLAIMER}
         </Text>
       </View>
+
+      {isHttpUrl(SUPPORT_URL) || SUPPORT_EMAIL ? (
+        <View style={styles.contactSection}>
+          <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
+            IITJ One Support
+          </Text>
+          {isHttpUrl(SUPPORT_URL) ? (
+            <ContactRow
+              icon="help-circle-outline"
+              label="Support"
+              value="Help, FAQs & report a bug"
+              onPress={() => Linking.openURL(SUPPORT_URL)}
+              theme={theme}
+            />
+          ) : null}
+          {SUPPORT_EMAIL ? (
+            <ContactRow
+              icon="mail-outline"
+              label="Email us"
+              value={SUPPORT_EMAIL}
+              onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
+              theme={theme}
+            />
+          ) : null}
+        </View>
+      ) : null}
 
       {sections.map((section) => (
         <ContentCard key={section.title} title={section.title}>

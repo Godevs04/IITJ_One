@@ -18,6 +18,7 @@ import { usePostHog } from 'posthog-react-native';
 
 const PRIVACY_POLICY_URL = process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL;
 const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL;
+const SUPPORT_URL = process.env.EXPO_PUBLIC_SUPPORT_URL;
 
 const NOTIFICATION_TOPICS = [
   { key: 'iitj_all', label: 'All campus updates' },
@@ -112,6 +113,12 @@ export default function SettingsScreen() {
         />
         <DirectoryRow title="Suggest Something" onPress={() => router.push('/suggest')} />
         <DirectoryRow title="About IITJ One" onPress={() => router.push('/about')} />
+        {isHttpUrl(SUPPORT_URL) ? (
+          <DirectoryRow
+            title="Help & Support"
+            onPress={() => void Linking.openURL(SUPPORT_URL)}
+          />
+        ) : null}
         {isHttpUrl(PRIVACY_POLICY_URL) ? (
           <DirectoryRow
             title="Privacy Policy"
