@@ -42,10 +42,27 @@ export const campusLocationSchema = z
     });
   });
 
-export const mapPutSchema = z.object({
-  campusId: z.string().min(1),
-  locations: z.array(campusLocationSchema),
-});
+export const mapPutSchema = z
+  .object({
+    campusId: z.string().min(1),
+    locations: z.array(campusLocationSchema),
+  })
+  .superRefine((doc, ctx) => {
+    // Duplicate ids reach the mobile FlatList's keyExtractor as duplicate React
+    // keys (a runtime warning, and unpredictable list behavior) — reject at
+    // publish time rather than letting bad data reach every client.
+    const seen = new Set<string>();
+    doc.locations.forEach((loc, index) => {
+      if (seen.has(loc.id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Duplicate location id "${loc.id}" — each campus location needs a unique id.`,
+          path: ['locations', index, 'id'],
+        });
+      }
+      seen.add(loc.id);
+    });
+  });
 
 export type CampusLocation = z.infer<typeof campusLocationSchema>;
 export type MapLocationsDoc = z.infer<typeof mapPutSchema>;

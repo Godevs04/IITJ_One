@@ -13,6 +13,7 @@ import { useTheme } from '@/theme/ThemeProvider';
 import { Analytics, AppEvents } from '@/services/firebase';
 import { AppSpacing, AppTypography } from '@/theme/tokens';
 import { isHttpUrl } from '@/utils/urlSafety';
+import { debugListKeys } from '@/debug/listDebug';
 import { usePostHog } from 'posthog-react-native';
 
 const PRIVACY_POLICY_URL = process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL;
@@ -31,6 +32,7 @@ export default function SettingsScreen() {
   const { darkMode, setDarkMode, colors } = useTheme();
   const [topicPrefs, setTopicPrefs] = useState(loadTopicPrefs());
   const [pushInfo, setPushInfo] = useState<PushRegistration | null>(null);
+  debugListKeys('SettingsScreen', 'notificationTopics', NOTIFICATION_TOPICS, (topic) => topic.key);
 
   useEffect(() => {
     void registerForPushNotifications().then(setPushInfo);

@@ -4,6 +4,7 @@ import { highlightText } from '@/campus/utils/highlightText';
 import type { SearchEntry } from '@/services/search/types';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { debugListKeys } from '@/debug/listDebug';
 
 interface GlobalSearchResultCardProps {
   entry: SearchEntry;
@@ -15,6 +16,8 @@ export function GlobalSearchResultCard({ entry, query, matchedField }: GlobalSea
   const theme = useThemeColors();
   const showMatchedField = matchedField && matchedField !== entry.title && matchedField !== entry.subtitle;
   const subtitleSegments = entry.subtitle ? highlightText(entry.subtitle, query) : [];
+
+  debugListKeys('GlobalSearchResultCard', 'subtitleSegments', subtitleSegments, (segment, index) => `${segment.text}-${index}`);
 
   return (
     <View style={[styles.container, { borderColor: theme.border, backgroundColor: theme.surface }]}>

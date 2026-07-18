@@ -10,6 +10,7 @@ import { getClassesForDay } from '@/utils/timetable';
 import { todayDayShort } from '@/utils/date';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { debugListKeys } from '@/debug/listDebug';
 
 const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 
@@ -33,6 +34,9 @@ export default function TimetableScreen() {
   }, [load]);
 
   const dayClasses = getClassesForDay(entries, selectedDay);
+
+  debugListKeys('TimetableScreen', 'days', DAYS, (day) => day);
+  debugListKeys('TimetableScreen', 'dayClasses', dayClasses, (entry) => entry.id);
 
   return (
     <ScreenShell hideTitle subtitle="Stored only on this device" error={loadError}>

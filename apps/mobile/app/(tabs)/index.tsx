@@ -24,6 +24,7 @@ import {
 import { getNextDeparture, getNextArrival, type NextDeparture } from '@/utils/transport';
 import { getNextClass, type NextClass } from '@/utils/timetable';
 import { useThemeColors } from '@/theme/ThemeProvider';
+import { debugListKeys } from '@/debug/listDebug';
 import {
   AppRadius,
   AppSpacing,
@@ -463,6 +464,12 @@ export default function HomeScreen() {
     if (!meal) return [];
     return splitDishes(meal.nonVeg).filter(isMainDish);
   }, [meal]);
+
+  debugListKeys('HomeScreen', 'vegDishes', vegDishes, (_, index) => `${index}`);
+  debugListKeys('HomeScreen', 'nonVegDishes', nonVegDishes, (_, index) => `${index}`);
+  debugListKeys('HomeScreen', 'quickLinks', QUICK_LINKS, (item) => item.title);
+  debugListKeys('HomeScreen', 'upcomingEvents', upcomingEvents, (event, index) => `${event.title}-${index}`);
+  debugListKeys('HomeScreen', 'topNotices', topNotices, (notice, index) => `${notice.title}-${index}`);
 
   const isSameMenu = useMemo(() => {
     if (vegDishes.length !== nonVegDishes.length) return false;

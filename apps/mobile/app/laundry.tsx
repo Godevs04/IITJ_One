@@ -32,6 +32,7 @@ import {
   rescheduleLaundryNotifications,
 } from '@/laundry/services/laundryNotifications';
 import { useCampusData } from '@/state/CampusDataProvider';
+import { debugListKeys } from '@/debug/listDebug';
 import { Analytics, AppEvents } from '@/services/firebase';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { usePostHog } from 'posthog-react-native';
@@ -80,6 +81,7 @@ export default function LaundryScreen() {
   const onRefresh = useCallback(async () => {
     await sync();
   }, [sync]);
+  debugListKeys('LaundryScreen', 'reminderOptions', REMINDER_OPTIONS, (opt) => opt.minutesBefore);
 
   const refreshPermissionStatus = useCallback(async () => {
     const status = await getNotificationPermissionStatus();
@@ -168,6 +170,10 @@ export default function LaundryScreen() {
   );
 
   const hostelLabel = prefs.hostel ?? 'Select your hostel';
+  const boys = HOSTELS.filter((h) => h.category === 'boys');
+  const girls = HOSTELS.filter((h) => h.category === 'girls');
+  debugListKeys('LaundryScreen', 'boysHostels', boys, (hostel) => hostel.id);
+  debugListKeys('LaundryScreen', 'girlsHostels', girls, (hostel) => hostel.id);
 
   return (
     <ScreenShell

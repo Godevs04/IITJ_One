@@ -7,10 +7,13 @@ import { PrimaryButton } from '@/components/Buttons';
 import { ScreenShell } from '@/components/ScreenShell';
 import { deleteNote, listNotes, type Note } from '@/services/localDb';
 import { AppSpacing } from '@/theme/tokens';
+import { debugListKeys } from '@/debug/listDebug';
 
 export default function NotesScreen() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  debugListKeys('NotesScreen', 'notes', notes, (note) => note.id);
 
   const load = useCallback(async () => {
     try {

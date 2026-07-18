@@ -4,6 +4,7 @@ import { ContentCard } from '@/components/ContentCard';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { debugListKeys } from '@/debug/listDebug';
 
 const FUTURE_FEATURES: { icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
   { icon: 'call-outline', label: 'One-tap Call Driver' },
@@ -18,6 +19,8 @@ const FUTURE_FEATURES: { icon: keyof typeof Ionicons.glyphMap; label: string }[]
 
 export default function CabsAutosScreen() {
   const theme = useThemeColors();
+
+  debugListKeys('CabsAutosScreen', 'futureFeatures', FUTURE_FEATURES, (feature) => feature.label);
 
   return (
     <ScreenShell hideTitle subtitle="Local transportation directory">

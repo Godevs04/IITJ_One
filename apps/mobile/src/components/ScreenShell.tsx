@@ -66,6 +66,7 @@ export function ScreenShell({
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           onRefresh ? (
             <RefreshControl

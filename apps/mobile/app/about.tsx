@@ -7,6 +7,7 @@ import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
 import type { AboutDoc } from '@/types/campus';
 import { useThemeColors } from '@/theme/ThemeProvider';
+import { debugListKeys } from '@/debug/listDebug';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 const DISCLAIMER =
@@ -96,6 +97,7 @@ export default function AboutScreen() {
   const about = useCampusModule<AboutDoc>('about');
   const syncedSections = about?.sections ?? [];
   const sections = syncedSections.length > 0 ? syncedSections : INSTITUTE_DETAILS;
+  debugListKeys('AboutScreen', 'sections', sections, (section) => section.title);
 
   const onRefresh = useCallback(async () => {
     await sync();

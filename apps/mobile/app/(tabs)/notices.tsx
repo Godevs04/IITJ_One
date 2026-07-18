@@ -12,6 +12,7 @@ import type { NoticeDoc } from '@/types/campus';
 import { expirySeconds, formatExpiryLabel } from '@/utils/date';
 import { isHttpUrl } from '@/utils/urlSafety';
 import { AppSpacing } from '@/theme/tokens';
+import { debugListKeys } from '@/debug/listDebug';
 
 /** Map notice category → mute topic key (Settings). */
 const CATEGORY_TOPIC: Record<string, string> = {
@@ -39,6 +40,7 @@ export default function NoticesScreen() {
       return true;
     });
   }, [notices, topicPrefs]);
+  debugListKeys('NoticesScreen', 'activeNotices', activeNotices, (notice, index) => notice._id ?? `${notice.title}-${index}`);
 
   const onRefresh = useCallback(async () => {
     await sync();

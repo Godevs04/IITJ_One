@@ -5,6 +5,7 @@ import { router, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '@/components/EmptyState';
 import { GlobalSearchResultCard } from '@/components/GlobalSearchResultCard';
+import { debugKeyExtractor, debugListKeys } from '@/debug/listDebug';
 import { globalRecentSearchesStore } from '@/services/search/recentSearchesStore';
 import { globalSearchService, type GlobalSearchResult } from '@/services/search/searchService';
 import { Analytics, AppEvents, FirebaseCrashlytics } from '@/services/firebase';
@@ -25,6 +26,9 @@ export default function GlobalSearchScreen() {
 
   const results = useMemo(() => globalSearchService.search(query), [query]);
   const showRecents = query.trim().length === 0;
+
+  debugListKeys('GlobalSearchScreen', 'results', results, (item) => item.entry.id);
+  debugListKeys('GlobalSearchScreen', 'recentSearches', recentSearches, (item) => item);
 
   const commitSearch = useCallback((value: string) => {
     const trimmed = value.trim();
@@ -85,7 +89,7 @@ export default function GlobalSearchScreen() {
 
       <FlatList
         data={showRecents ? [] : results}
-        keyExtractor={(item) => item.entry.id}
+        keyExtractor={(item, index) => String(debugKeyExtractor('GlobalSearchScreen', 'results', item, index, (entry) => entry.entry.id))}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (

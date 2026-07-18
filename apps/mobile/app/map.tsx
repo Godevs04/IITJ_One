@@ -2,12 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams } from 'expo-router';
-import { Alert, Share, StyleSheet, TextInput, View, FlatList, Pressable, Text, ScrollView } from 'react-native';
+import { Alert, Share, StyleSheet, TextInput, View, Pressable, Text, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenShell } from '@/components/ScreenShell';
 import { Analytics, AppEvents, FirebaseCrashlytics } from '@/services/firebase';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { debugListKeys } from '@/debug/listDebug';
 import { campusDirectoryServiceProvider } from '@/campus/services/campusDirectoryService';
 import { useCampusData } from '@/state/CampusDataProvider';
 import { favoritesStore } from '@/campus/services/favoritesStore';
@@ -262,6 +263,24 @@ export default function MapScreen() {
       results = allLocations;
     }
 
+    if (__DEV__) {
+      // dedupeById() in campusDirectoryService makes a duplicate here
+      // structurally impossible from any currently-known code path — if this
+      // ever logs, it's real, new information (not the case this was written
+      // to catch), so capture exactly which id/name and where.
+      const seen = new Map<string, number>();
+      results.forEach((loc, i) => {
+        const priorIndex = seen.get(loc.id);
+        if (priorIndex !== undefined) {
+          console.warn(
+            `[MapScreen] Duplicate location id "${loc.id}" in filteredLocations: index ${priorIndex} and index ${i} (name: "${loc.name}"). allLocations.length=${allLocations.length}, searchActive=${searchQuery.trim().length > 0}`,
+          );
+        } else {
+          seen.set(loc.id, i);
+        }
+      });
+    }
+
     return results;
   }, [searchQuery, searchResults, selectedCategories, allLocations]);
 
@@ -321,6 +340,22 @@ export default function MapScreen() {
   const categories = Object.values(LOCATION_CATEGORIES);
   const isSearchActive = searchQuery.trim().length > 0;
 
+  debugListKeys('MapScreen', 'searchSuggestions', searchSuggestions, (item) => item.id);
+  debugListKeys('MapScreen', 'recentSearches', recentSearches.slice(0, 5), (query) => query);
+  debugListKeys('MapScreen', 'categories', categories, (cat) => cat.id);
+  debugListKeys('MapScreen', 'filteredLocations', filteredLocations, (item) => item.id);
+
+  if (__DEV__) {
+    filteredLocations.forEach((item, index) => {
+      console.log('📍 [MapScreen Debug] filteredLocations item:', {
+        index,
+        id: item.id,
+        keys: Object.keys(item),
+        item,
+      });
+    });
+  }
+
   return (
     <ScreenShell hideTitle subtitle="Campus Directory">
       {/* Search Bar */}
@@ -348,47 +383,47 @@ export default function MapScreen() {
           ) : null}
         </View>
 
-        {/* Search Suggestions Dropdown — anchored directly under the search bar */}
+        {/* Search Suggestions Dropdown — anchored directly under the search bar.
+            Rendered as a plain keyed .map() rather than a FlatList: FlatList wraps
+            VirtualizedList, which manages cell mount/recycle assuming it owns
+            scroll/viewport events. With scrollEnabled={false} (needed since this
+            sits inside ScreenShell's own ScrollView) it never gets those events,
+            so its internal cell pooling can produce spurious duplicate-key
+            warnings on rapid data changes (e.g. every keystroke) even when every
+            keyExtractor value is genuinely unique. There's no virtualization
+            benefit being lost here — the list is capped at 8 items. */}
         {isSearchFocused && searchQuery.trim() && searchSuggestions.length > 0 && (
           <View style={[styles.suggestionsDropdown, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <FlatList
-              data={searchSuggestions}
-              keyExtractor={(item) => item.id}
-              keyboardShouldPersistTaps="handled"
-              renderItem={({ item }) => (
-                <Pressable
-                  onPress={() => {
-                    handleSearch(item.name);
-                    setIsSearchFocused(false);
-                  }}
-                  style={({ pressed }) => [
-                    styles.suggestionItem,
-                    { borderBottomColor: theme.border },
-                    pressed && { backgroundColor: theme.surfaceMuted },
-                  ]}
-                >
-                  <Ionicons
-                    name={LOCATION_CATEGORIES[item.category].icon}
-                    size={16}
-                    color={theme.primary}
-                  />
-                  <View style={styles.suggestionContent}>
-                    <Text style={[styles.suggestionTitle, { color: theme.text }]}>
-                      {item.name}
+            {searchSuggestions.map((item) => (
+              <Pressable
+                key={item.id}
+                onPress={() => {
+                  handleSearch(item.name);
+                  setIsSearchFocused(false);
+                }}
+                style={({ pressed }) => [
+                  styles.suggestionItem,
+                  { borderBottomColor: theme.border },
+                  pressed && { backgroundColor: theme.surfaceMuted },
+                ]}
+              >
+                <Ionicons
+                  name={LOCATION_CATEGORIES[item.category].icon}
+                  size={16}
+                  color={theme.primary}
+                />
+                <View style={styles.suggestionContent}>
+                  <Text style={[styles.suggestionTitle, { color: theme.text }]}>
+                    {item.name}
+                  </Text>
+                  {item.description && (
+                    <Text style={[styles.suggestionSubtitle, { color: theme.textMuted }]}>
+                      {item.description}
                     </Text>
-                    {item.description && (
-                      <Text style={[styles.suggestionSubtitle, { color: theme.textMuted }]}>
-                        {item.description}
-                      </Text>
-                    )}
-                  </View>
-                </Pressable>
-              )}
-              scrollEnabled={false}
-              ItemSeparatorComponent={() => (
-                <View style={[styles.divider, { backgroundColor: theme.border }]} />
-              )}
-            />
+                  )}
+                </View>
+              </Pressable>
+            ))}
           </View>
         )}
       </View>
@@ -407,9 +442,9 @@ export default function MapScreen() {
             </Pressable>
           </View>
           <View style={styles.recentSearchesList}>
-            {recentSearches.slice(0, 5).map((query, idx) => (
+            {recentSearches.slice(0, 5).map((query) => (
               <Pressable
-                key={idx}
+                key={query}
                 onPress={() => handleSearch(query)}
                 style={({ pressed }) => [
                   styles.recentSearchItem,
@@ -501,61 +536,65 @@ export default function MapScreen() {
         </ScrollView>
       )}
 
-      {/* Results */}
-      <FlatList
-        data={filteredLocations}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => {
-          if (isSearchActive) {
-            // Find search result details
-            const searchResult = searchResults.find((r) => r.location.id === item.id);
-            if (searchResult) {
-              return (
-                <Pressable
-                  onPress={() => handleFavoriteToggle(item.id)}
-                  style={{ marginBottom: AppSpacing.sm }}
-                >
-                  <SearchResultCard
-                    location={item}
-                    query={searchQuery}
-                    matchType={searchResult.matchType}
-                    matchedField={searchResult.matchedField}
-                    theme={theme}
-                  />
-                </Pressable>
-              );
+      {/* Results — plain keyed .map() rather than a FlatList, for the same reason
+          as the suggestions list above: scrollEnabled={false} nested inside
+          ScreenShell's ScrollView defeats VirtualizedList's own windowing (no
+          benefit is lost — this list is capped at the size of the campus
+          directory) while remaining a documented trigger for spurious
+          duplicate-key warnings during rapid data changes. */}
+      {filteredLocations.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Ionicons
+            name={isSearchActive ? 'search-outline' : 'grid-outline'}
+            size={40}
+            color={theme.textMuted}
+          />
+          <Text style={[styles.emptyText, { color: theme.textMuted }]}>
+            {isSearchActive
+              ? 'No locations found'
+              : selectedCategories.size > 0
+                ? 'No locations in selected categories'
+                : 'Select a category to view locations'}
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.list}>
+          {filteredLocations.map((item) => {
+            if (isSearchActive) {
+              // Find search result details
+              const searchResult = searchResults.find((r) => r.location.id === item.id);
+              if (searchResult) {
+                return (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => handleFavoriteToggle(item.id)}
+                    style={{ marginBottom: AppSpacing.sm }}
+                  >
+                    <SearchResultCard
+                      location={item}
+                      query={searchQuery}
+                      matchType={searchResult.matchType}
+                      matchedField={searchResult.matchedField}
+                      theme={theme}
+                    />
+                  </Pressable>
+                );
+              }
             }
-          }
 
-          // Default card for browsing
-          return (
-            <LocationDetailCard
-              location={item}
-              isFavorite={favorites.has(item.id)}
-              onFavoriteToggle={handleFavoriteToggle}
-              theme={theme}
-            />
-          );
-        }}
-        scrollEnabled={false}
-        contentContainerStyle={styles.list}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Ionicons
-              name={isSearchActive ? 'search-outline' : 'grid-outline'}
-              size={40}
-              color={theme.textMuted}
-            />
-            <Text style={[styles.emptyText, { color: theme.textMuted }]}>
-              {isSearchActive
-                ? 'No locations found'
-                : selectedCategories.size > 0
-                  ? 'No locations in selected categories'
-                  : 'Select a category to view locations'}
-            </Text>
-          </View>
-        }
-      />
+            // Default card for browsing
+            return (
+              <LocationDetailCard
+                key={item.id}
+                location={item}
+                isFavorite={favorites.has(item.id)}
+                onFavoriteToggle={handleFavoriteToggle}
+                theme={theme}
+              />
+            );
+          })}
+        </View>
+      )}
     </ScreenShell>
   );
 }
