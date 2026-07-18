@@ -1,4 +1,5 @@
 const { getDefaultConfig } = require('expo/metro-config');
+const fs = require('fs');
 const path = require('path');
 
 const projectRoot = __dirname;
@@ -16,29 +17,39 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, 'node_modules'),
 ];
 
+/** Prefer apps/mobile/node_modules, fall back to monorepo root (npm workspaces hoist). */
+function resolvePackageDir(name) {
+  const candidates = [
+    path.resolve(projectRoot, 'node_modules', name),
+    path.resolve(workspaceRoot, 'node_modules', name),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(path.join(candidate, 'package.json'))) {
+      return candidate;
+    }
+  }
+  return candidates[0];
+}
+
+const reactDir = resolvePackageDir('react');
+const reactNativeDir = resolvePackageDir('react-native');
+const useSyncExternalStoreDir = resolvePackageDir('use-sync-external-store');
+
 // Force a single copy of React and its store shim to avoid the
 // "Invalid hook call" crash caused by posthog-react-native / @react-navigation
 // packages each hoisting their own react / use-sync-external-store instance.
 config.resolver.extraNodeModules = {
-  react: path.resolve(projectRoot, 'node_modules/react'),
-  'react-native': path.resolve(projectRoot, 'node_modules/react-native'),
-  'use-sync-external-store': path.resolve(projectRoot, 'node_modules/use-sync-external-store'),
+  react: reactDir,
+  'react-native': reactNativeDir,
+  'use-sync-external-store': useSyncExternalStoreDir,
 };
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (moduleName === 'react') {
-    return context.resolveRequest(
-      context,
-      path.resolve(projectRoot, 'node_modules/react'),
-      platform
-    );
+    return context.resolveRequest(context, reactDir, platform);
   }
   if (moduleName === 'react-native') {
-    return context.resolveRequest(
-      context,
-      path.resolve(projectRoot, 'node_modules/react-native'),
-      platform
-    );
+    return context.resolveRequest(context, reactNativeDir, platform);
   }
   return context.resolveRequest(context, moduleName, platform);
 };
@@ -52,5 +63,3 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
 config.resolver.blockList = /apps[\\/](admin[\\/]\.next|api[\\/]dist)[\\/].*/;
 
 module.exports = config;
-
-

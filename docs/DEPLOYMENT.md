@@ -131,6 +131,17 @@ Built and distributed via EAS — see [SETUP.md § EAS builds](./SETUP.md#eas-bu
 
 Before the **first** production build: replace the placeholder `EXPO_PUBLIC_EAS_PROJECT_ID` (in `.env` and `app.json`) with a real project ID from the Expo dashboard, and confirm `google-services.json` / `GoogleService-Info.plist` are the production Firebase project's files, not a dev project's.
 
+Those Firebase files are **gitignored**, so EAS cloud builds will not see them unless you upload file secrets (from `apps/mobile`):
+
+```bash
+eas env:create --name GOOGLE_SERVICES_JSON --type file \
+  --value ./google-services.json --environment production --visibility secret
+eas env:create --name GOOGLE_SERVICES_PLIST --type file \
+  --value ./GoogleService-Info.plist --environment production --visibility secret
+```
+
+Repeat for `--environment preview` (and `development` if you ship a dev client). The `eas-build-pre-install` script copies them into place before prebuild.
+
 ---
 
 ## Release checklist
