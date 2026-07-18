@@ -15,11 +15,16 @@ const SETTING_PREFIX = 'setting:';
  * whenever a stored shape changes — migrations run once on next launch and
  * never delete existing data, only transform/add to it.
  */
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 const SCHEMA_VERSION_KEY = 'schemaVersion';
 
-/** Keyed by the version being migrated FROM. Empty today — ready for future entries. */
-const MIGRATIONS: Record<number, () => void | Promise<void>> = {};
+/** Keyed by the version being migrated FROM. */
+const MIGRATIONS: Record<number, () => void | Promise<void>> = {
+  1: () => {
+    clearAllCache();
+    console.log('🧹 [Cache Migration] Flushed AsyncStorage module cache due to schema version 2 bump');
+  },
+};
 
 const memory = new Map<string, string>();
 let hydrated = false;

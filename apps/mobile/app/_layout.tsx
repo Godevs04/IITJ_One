@@ -51,15 +51,6 @@ export default function RootLayout() {
   useEffect(() => {
     async function bootstrap() {
       await initCache();
-      if (__DEV__) {
-        const { getSetting, setSetting, clearAllCache } = await import('@/services/cache');
-        const isFlushed = getSetting<boolean>('cacheFlushedForKeyWarnings_v2', false);
-        if (!isFlushed) {
-          clearAllCache();
-          setSetting('cacheFlushedForKeyWarnings_v2', true);
-          console.log('🧹 [RootLayout] Stale dev cache flushed successfully (one-time operation)');
-        }
-      }
       initBackendAnalytics();
       await initFirebase();
       setDefaultUserProperties();

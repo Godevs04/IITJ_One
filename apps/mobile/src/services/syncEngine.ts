@@ -265,6 +265,9 @@ class SyncEngine {
         }),
       );
     } catch (error) {
+      if (__DEV__) {
+        console.error('🔄 [SyncEngine] Manifest fetch failed:', error);
+      }
       const msg = error instanceof Error ? error.message : 'Manifest fetch failed';
       Analytics.trackEvent('sync_failed', { reason: msg });
       void FirebaseCrashlytics.log(`Sync failed: ${msg}`);
@@ -292,6 +295,14 @@ class SyncEngine {
         this.state.modules[module].retryCount = 0;
         return { success: true, data };
       } catch (error) {
+        if (__DEV__) {
+          console.error(
+            `🔄 [SyncEngine] Fetching module "${module}" failed (attempt ${attempt + 1}/${
+              RETRY_DELAYS.length + 1
+            }):`,
+            error,
+          );
+        }
         lastError = error instanceof Error ? error.message : 'Network error';
         this.state.modules[module].retryCount = attempt + 1;
 
