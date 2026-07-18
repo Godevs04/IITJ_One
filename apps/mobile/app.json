@@ -7,6 +7,12 @@
     "icon": "./assets/branding/logo.png",
     "scheme": "iitj1",
     "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "primaryColor": "#022543",
+    "description": "Campus companion for IIT Jodhpur — mess menu, notices, transport, map, and more.",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "splash": {
       "image": "./assets/branding/marketing/ios-splash.png",
       "resizeMode": "cover",
@@ -15,7 +21,12 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "app.iitjone",
+      "buildNumber": "1",
       "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": ["remote-notification"]
+      },
       "splash": {
         "image": "./assets/branding/marketing/ios-splash.png",
         "resizeMode": "cover",
@@ -23,17 +34,26 @@
       }
     },
     "android": {
+      "package": "app.iitjone",
+      "versionCode": 1,
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/branding/logo.png",
         "backgroundColor": "#022543"
       },
-      "package": "app.iitjone",
-      "googleServicesFile": "./google-services.json",
       "splash": {
         "image": "./assets/branding/marketing/android-splash.png",
         "resizeMode": "cover",
         "backgroundColor": "#022543"
-      }
+      },
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -66,19 +86,22 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/notification-icon.png",
-          "color": "#1D3F5E"
+          "icon": "./assets/icons/notification-icon.png",
+          "color": "#1D3F5E",
+          "defaultChannel": "default"
         }
       ],
       [
         "expo-image-picker",
         {
           "cameraPermission": "IITJ One uses the camera so you can photograph your Mess QR code.",
-          "photosPermission": "IITJ One uses your photo library so you can import your Mess QR code image."
+          "photosPermission": "IITJ One uses your photo library so you can import your Mess QR code image.",
+          "microphonePermission": false
         }
       ],
       "expo-sqlite",
-      "expo-asset"
+      "expo-asset",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
@@ -92,6 +115,10 @@
         "projectId": "c307eca8-e310-4cfa-aca6-8c06b8fcd39f"
       }
     },
-    "owner": "godevs"
+    "owner": "godevs",
+    "androidStatusBar": {
+      "barStyle": "light-content",
+      "backgroundColor": "#022543"
+    }
   }
 }

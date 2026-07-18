@@ -4,7 +4,6 @@ type RuntimeDebugContext = {
 };
 
 declare global {
-  // eslint-disable-next-line no-var
   var __IITJ_ONE_RUNTIME_DEBUG_CONTEXT__: RuntimeDebugContext | undefined;
 }
 

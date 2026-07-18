@@ -43,7 +43,8 @@ export class ErrorBoundary extends Component<Props, State> {
       originalHandler(error, isFatal);
     });
 
-    // Capture unhandled promise rejections
+    // Capture unhandled promise rejections (CJS helper — no ESM export)
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- RN internal module
     const rejectionTracking = require('promise/setimmediate/rejection-tracking');
     rejectionTracking.enable({
       allRejections: true,
