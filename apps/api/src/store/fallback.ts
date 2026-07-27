@@ -30,6 +30,11 @@ import type {
   PushHistoryDoc,
   AnalyticsEventDoc,
   AnalyticsDailyDoc,
+  VehicleDoc,
+  TripDoc,
+  SessionDoc,
+  GpsPingDoc,
+  BusStateDoc,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
 import { busesConflict, dateRangesOverlap } from '../services/transportScheduleExceptionStatus';
@@ -62,6 +67,11 @@ interface FallbackState {
   pushHistory: PushHistoryDoc[];
   analyticsEvents: AnalyticsEventDoc[];
   analyticsDaily: AnalyticsDailyDoc[];
+  vehicles: VehicleDoc[];
+  trips: TripDoc[];
+  rideSessions: SessionDoc[];
+  gpsPings: GpsPingDoc[];
+  busStates: BusStateDoc[];
 }
 
 let state: FallbackState | null = null;
@@ -318,6 +328,11 @@ function buildDefaultState(): FallbackState {
     pushHistory: [],
     analyticsEvents: [],
     analyticsDaily: [],
+    vehicles: [],
+    trips: [],
+    rideSessions: [],
+    gpsPings: [],
+    busStates: [],
   };
 }
 
@@ -635,4 +650,127 @@ export function fallbackListScheduleExceptionRevisions(scheduleId: string): Tran
   return getFallbackState()
     .transportScheduleExceptionRevisions.filter((r) => r.scheduleId === scheduleId)
     .sort((a, b) => b.revisionNumber - a.revisionNumber);
+}
+
+// ---------------------------------------------------------------------------
+// Live Bus Tracking — Vehicle (module-registered), Trip/Session/GPS/BusState
+// (operational/ephemeral, no version bump — see Phase 1 plan).
+// ---------------------------------------------------------------------------
+
+export function fallbackListVehicles(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+): { items: VehicleDoc[]; total: number } {
+  const all = getFallbackState().vehicles.filter((v) => v.campusId === campusId && !v.deletedAt);
+  const skip = (page - 1) * pageSize;
+  return { items: all.slice(skip, skip + pageSize), total: all.length };
+}
+
+export function fallbackGetVehicleById(id: string): VehicleDoc | null {
+  return getFallbackState().vehicles.find((v) => v._id === id) ?? null;
+}
+
+export function fallbackCreateVehicle(doc: Omit<VehicleDoc, '_id'>): VehicleDoc {
+  const s = getFallbackState();
+  const saved = { ...doc, _id: nextId() };
+  s.vehicles.push(saved);
+  return saved;
+}
+
+export function fallbackUpdateVehicle(id: string, patch: Partial<VehicleDoc>): VehicleDoc | null {
+  const s = getFallbackState();
+  const idx = s.vehicles.findIndex((v) => v._id === id);
+  if (idx < 0) return null;
+  s.vehicles[idx] = { ...s.vehicles[idx], ...patch };
+  return s.vehicles[idx];
+}
+
+export function fallbackSoftDeleteVehicle(id: string): VehicleDoc | null {
+  return fallbackUpdateVehicle(id, { deletedAt: new Date(), isActive: false });
+}
+
+export function fallbackGetTripsForCampusAndDate(campusId: string, serviceDate: string): TripDoc[] {
+  return getFallbackState().trips.filter((t) => t.campusId === campusId && t.serviceDate === serviceDate);
+}
+
+export function fallbackGetTripById(id: string): TripDoc | null {
+  return getFallbackState().trips.find((t) => t._id === id) ?? null;
+}
+
+/** Idempotent upsert keyed on (campusId, serviceDate, routeKey) — mirrors the unique Mongo index. */
+export function fallbackUpsertTripByRouteKey(
+  input: Omit<TripDoc, '_id' | 'createdAt' | 'updatedAt' | 'vehicleId' | 'status'>,
+): TripDoc {
+  const s = getFallbackState();
+  const now = new Date();
+  const existing = s.trips.find(
+    (t) => t.campusId === input.campusId && t.serviceDate === input.serviceDate && t.routeKey === input.routeKey,
+  );
+  if (existing) {
+    Object.assign(existing, input, { updatedAt: now });
+    return existing;
+  }
+  const created: TripDoc = { ...input, _id: nextId(), vehicleId: null, status: 'WAITING', createdAt: now, updatedAt: now };
+  s.trips.push(created);
+  return created;
+}
+
+export function fallbackUpdateTrip(id: string, patch: Partial<TripDoc>): TripDoc | null {
+  const s = getFallbackState();
+  const idx = s.trips.findIndex((t) => t._id === id);
+  if (idx < 0) return null;
+  s.trips[idx] = { ...s.trips[idx], ...patch, updatedAt: new Date() };
+  return s.trips[idx];
+}
+
+export function fallbackCreateRideSession(doc: Omit<SessionDoc, '_id'>): SessionDoc {
+  const s = getFallbackState();
+  const saved = { ...doc, _id: nextId() };
+  s.rideSessions.push(saved);
+  return saved;
+}
+
+export function fallbackGetRideSessionBySessionId(sessionId: string): SessionDoc | null {
+  return getFallbackState().rideSessions.find((r) => r.sessionId === sessionId) ?? null;
+}
+
+export function fallbackTouchRideSession(sessionId: string, now: Date): SessionDoc | null {
+  const s = getFallbackState();
+  const idx = s.rideSessions.findIndex((r) => r.sessionId === sessionId);
+  if (idx < 0) return null;
+  s.rideSessions[idx] = { ...s.rideSessions[idx], lastSeenAt: now };
+  return s.rideSessions[idx];
+}
+
+export function fallbackEndRideSession(sessionId: string, now: Date): SessionDoc | null {
+  const s = getFallbackState();
+  const idx = s.rideSessions.findIndex((r) => r.sessionId === sessionId);
+  if (idx < 0) return null;
+  s.rideSessions[idx] = { ...s.rideSessions[idx], isActive: false, endedAt: now };
+  return s.rideSessions[idx];
+}
+
+export function fallbackInsertGpsPing(doc: Omit<GpsPingDoc, '_id'>): GpsPingDoc {
+  const s = getFallbackState();
+  const saved = { ...doc, _id: nextId() };
+  s.gpsPings.push(saved);
+  return saved;
+}
+
+export function fallbackUpsertBusState(doc: Omit<BusStateDoc, '_id'>): BusStateDoc {
+  const s = getFallbackState();
+  const idx = s.busStates.findIndex((b) => b.tripId === doc.tripId);
+  if (idx >= 0) {
+    s.busStates[idx] = { ...s.busStates[idx], ...doc };
+    return s.busStates[idx];
+  }
+  const created = { ...doc, _id: nextId() };
+  s.busStates.push(created);
+  return created;
+}
+
+export function fallbackGetBusStatesByTripIds(tripIds: string[]): BusStateDoc[] {
+  const set = new Set(tripIds);
+  return getFallbackState().busStates.filter((b) => set.has(b.tripId));
 }

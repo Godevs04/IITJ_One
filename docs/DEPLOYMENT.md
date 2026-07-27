@@ -20,6 +20,9 @@ Or via Compose (also starts a local MongoDB container):
 cd apps/api && docker compose up -d
 ```
 
+For the full stack (Mongo + Redis + two API instances + Admin), see
+[Phase 6: Multi-instance & Redis](#phase-6-multi-instance--redis) below.
+
 **Without Docker (from monorepo root — required because of `@iitj1/types`):**
 ```bash
 npm ci --workspace=@iitj1/types --workspace=@iitj1/api --include-workspace-root=false
@@ -63,6 +66,64 @@ All in `apps/api/.env` (see `.env.example` for the full annotated list):
 ### Keep-alive (free-tier hosts)
 
 `.github/workflows/api-keepalive.yml` pings `GET /api/v1/health` daily. Set the `API_HEALTH_URL` repository secret to your deployed health URL. Skip this entirely on an always-on host.
+
+---
+
+## Phase 6: Multi-instance & Redis
+
+Everything below is optional. Every Redis-backed feature (Socket.IO
+adapter, shared contributor/BusState cache, distributed rate limiting,
+distributed GPS ingest throttle, replay ring buffer) automatically falls
+back to its existing in-memory, single-instance behavior when `REDIS_URL`
+is unset or unreachable — this is a scale-up path, not a requirement.
+
+### Running multiple API instances
+
+1. Provision a Redis instance (managed — Upstash, Redis Cloud, ElastiCache —
+   or self-hosted) and set `REDIS_URL` identically on every API instance.
+2. Put a load balancer in front of the instances. **Sticky sessions are not
+   required** — the Socket.IO Redis adapter broadcasts events to every
+   instance, so a client can be routed to any instance and still receive
+   `bus:update`/`trip:update` events for rooms it joined on a different one.
+   (Sticky sessions would still *help* HTTP long-polling fallback clients
+   avoid extra round-trips, but every current client — mobile, admin —
+   connects with `transports: ['websocket']` only, so this doesn't apply here.)
+3. Confirm each instance logs `Socket.IO using Redis adapter (multi-instance
+   broadcast enabled)` on boot — if you instead see the "REDIS_URL is set
+   but Redis is not connected" warning, fix connectivity before relying on
+   multi-instance behavior; each instance is otherwise silently running
+   isolated (correct only for a single instance).
+4. `docker-compose.yml` (repo root) runs two API instances (`api`, `api2`)
+   against a shared Mongo + Redis as a working example:
+   ```bash
+   docker compose up -d --build
+   # add Prometheus + Grafana too:
+   docker compose --profile observability up -d
+   ```
+
+### Required environment variables (Phase 6, all optional)
+
+| Variable | Notes |
+|---|---|
+| `REDIS_URL` | e.g. `redis://user:pass@host:6379`. Unset = single-instance, in-memory (unchanged from Phase 1–5) |
+| `METRICS_TOKEN` | Optional shared secret for `GET /metrics`, in addition to network-level restriction |
+| `SOCKET_CORS_ORIGIN` | Defaults to `*` (unchanged mobile-client behavior); restrict if browser clients besides the admin panel connect directly to the Socket.IO server |
+| `LOG_FORMAT` | `json` (structured, for log aggregators) or `pretty` (human-readable). Defaults to `json` in production |
+| `BACKUP_TIMESTAMP_FILE` | See [BACKUP_RESTORE.md](./BACKUP_RESTORE.md) |
+
+See [MONITORING.md](./MONITORING.md) for `/metrics` and the Grafana dashboards, and [OPERATIONS_RUNBOOK.md](./OPERATIONS_RUNBOOK.md) for day-to-day operation of a multi-instance deployment.
+
+### CI/CD
+
+`.github/workflows/ci.yml` runs install → lint → typecheck → test → build on
+every push/PR to `main`. `.github/workflows/deploy.yml` runs after CI
+succeeds on `main`: builds and pushes Docker images to GHCR, deploys to
+staging automatically, then **pauses for manual approval** before deploying
+to production (configure required reviewers on the `production` GitHub
+Environment — Settings → Environments). Both deploy steps trigger a Render
+deploy hook by default (`RENDER_STAGING_DEPLOY_HOOK_URL` /
+`RENDER_PRODUCTION_DEPLOY_HOOK_URL` repo secrets) — swap them for your own
+host's deploy mechanism if not using Render.
 
 ---
 
@@ -193,3 +254,5 @@ Repeat for `--environment preview` (and `development` if you ship a dev client).
 **Admin:** redeploy the previous build — it's stateless (JWT-based auth, no server-side sessions to lose).
 
 **Mobile:** app stores don't support true rollback — use a staged rollout (both stores support this) so a bad release reaches a small percentage first, and halt the rollout from the store console if Crashlytics spikes. For a fully broken release already at 100%, ship a new patched build rather than attempting to "undo" the store listing. `maintenance_mode` in Remote Config can disable functionality server-side without a new build if the break is API-compatibility-related.
+
+**Redis (Phase 6):** never requires an application rollback — every Redis-backed feature degrades to its existing in-memory behavior automatically. See [OPERATIONS_RUNBOOK.md](./OPERATIONS_RUNBOOK.md#redis-failure) for the full disaster recovery procedures (Redis failure, Mongo failure, Socket failure, backup restore).

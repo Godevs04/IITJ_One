@@ -28,6 +28,11 @@ import type {
   PushHistoryDoc,
   AnalyticsEventDoc,
   AnalyticsDailyDoc,
+  VehicleDoc,
+  TripDoc,
+  SessionDoc,
+  GpsPingDoc,
+  BusStateDoc,
 } from './types';
 
 let client: MongoClient | null = null;
@@ -145,6 +150,32 @@ async function ensureIndexes(): Promise<void> {
   await db.collection('transportScheduleExceptions').createIndex({ campusId: 1, createdAt: -1 });
   await db.collection('transportScheduleExceptionRevisions').createIndex({ scheduleId: 1, revisionNumber: -1 });
 
+  // Live Bus Tracking — vehicles is a real multi-doc module (like transportScheduleExceptions,
+  // no unique campusId index); trips/rideSessions/gpsPings/busStates are operational/ephemeral,
+  // never registered as sync modules — see Phase 1 plan.
+  await db.collection('vehicles').createIndex({ campusId: 1, isActive: 1 });
+  await db.collection('vehicles').createIndex({ registration: 1 }, { unique: true });
+
+  await db.collection('trips').createIndex({ campusId: 1, serviceDate: 1, routeKey: 1 }, { unique: true });
+  await db.collection('trips').createIndex({ campusId: 1, status: 1 });
+  await db.collection('trips').createIndex({ campusId: 1, direction: 1, scheduledDeparture: 1 });
+  // Trips are single-day-lived; TTL is a safety net, not the primary cleanup path.
+  await db.collection('trips').createIndex({ scheduledArrival: 1 }, { expireAfterSeconds: 2 * 24 * 60 * 60 });
+
+  await db.collection('rideSessions').createIndex({ tripId: 1, isActive: 1 });
+  await db.collection('rideSessions').createIndex({ sessionId: 1 }, { unique: true });
+  // A session a client forgot to stop self-expires after 12h.
+  await db.collection('rideSessions').createIndex({ lastSeenAt: 1 }, { expireAfterSeconds: 12 * 60 * 60 });
+
+  await db.collection('gpsPings').createIndex({ sessionId: 1, receivedAt: -1 });
+  await db.collection('gpsPings').createIndex({ tripId: 1, receivedAt: -1 });
+  // Pure real-time ingest — no downstream aggregation job needs pings older than this.
+  await db.collection('gpsPings').createIndex({ receivedAt: 1 }, { expireAfterSeconds: 60 * 60 });
+
+  await db.collection('busStates').createIndex({ tripId: 1 }, { unique: true });
+  // Insurance against orphaned trip docs, not the primary cleanup path.
+  await db.collection('busStates').createIndex({ lastUpdated: 1 }, { expireAfterSeconds: 2 * 24 * 60 * 60 });
+
   // One document per campus for singleton modules
   const uniqueCampus = { campusId: 1 } as const;
   for (const name of [
@@ -206,6 +237,11 @@ export const collections = {
   transportScheduleExceptions: () => col<TransportScheduleExceptionDoc>('transportScheduleExceptions'),
   transportScheduleExceptionRevisions: () =>
     col<TransportScheduleExceptionRevisionDoc>('transportScheduleExceptionRevisions'),
+  vehicles: () => col<VehicleDoc>('vehicles'),
+  trips: () => col<TripDoc>('trips'),
+  rideSessions: () => col<SessionDoc>('rideSessions'),
+  gpsPings: () => col<GpsPingDoc>('gpsPings'),
+  busStates: () => col<BusStateDoc>('busStates'),
   admins: () => col<AdminDoc>('admins'),
   auditLog: () => col<AuditLogDoc>('auditLog'),
   suggestions: () => col<SuggestionDoc>('suggestions'),

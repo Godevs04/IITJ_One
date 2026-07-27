@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: 'IITJ One Live Transport'
+    orgId: 1
+    folder: 'IITJ One Live Transport'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/files

@@ -1,0 +1,46 @@
+{
+  "uid": "iitj-redis",
+  "title": "Redis",
+  "tags": ["iitj-one", "transport", "redis"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Redis connected",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "redis_up", "legendFormat": "1 = connected, 0 = in-memory fallback" }]
+    },
+    {
+      "id": 2,
+      "title": "Redis connected — % of last 24h",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "avg_over_time(redis_up[24h]) * 100", "legendFormat": "% connected" }]
+    },
+    {
+      "id": 3,
+      "title": "Note",
+      "type": "text",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 0 },
+      "options": {
+        "mode": "markdown",
+        "content": "Every Redis-backed feature (Socket.IO adapter, shared contributor/BusState cache, distributed rate limiting, replay ring buffer) automatically falls back to in-memory behavior when `redis_up` is 0 — this dashboard exists to notice *how often* that's happening, not because a 0 here is an outage on its own for a single-instance deployment."
+      }
+    },
+    {
+      "id": 4,
+      "title": "redis_up over time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "redis_up", "legendFormat": "redis_up" }]
+    }
+  ]
+}

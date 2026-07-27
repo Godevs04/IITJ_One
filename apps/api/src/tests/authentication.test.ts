@@ -1,14 +1,38 @@
-import { test } from 'node:test';
+import { test, before, after } from 'node:test';
 import * as assert from 'node:assert';
+import { connectDb, disconnectDb } from '../db';
+import { bootstrapTestAdmin } from './helpers/testAdmin';
+
+// Real, mounted route is POST /api/v1/admin/login (confirmed against the
+// live server, the admin frontend at apps/admin/lib/api.ts, and the OpenAPI
+// spec) — there has never been an /admin/auth/login route. Every test in
+// this file previously hit that non-existent path, which fell through to
+// requireAuth and returned 401 "Missing or invalid authorization header"
+// before ever reaching the login handler, regardless of credentials.
+
+// node:test runs this file in its own process, isolated from the already-
+// running server's process. bootstrapTestAdmin() writes via the store layer
+// directly (not over HTTP), so THIS process needs its own real Mongo
+// connection too — otherwise the store silently falls back to an in-memory
+// state that only this process can see, and the admin it creates is
+// invisible to the live server this file's fetch() calls actually hit.
+before(async () => {
+  await connectDb();
+});
+after(async () => {
+  await disconnectDb();
+});
 
 test('Admin Authentication - Login', async (t) => {
-  await t.test('POST /api/v1/admin/auth/login with valid credentials returns tokens', async () => {
-    const response = await fetch('http://localhost:6002/api/v1/admin/auth/login', {
+  const testAdmin = await bootstrapTestAdmin();
+
+  await t.test('POST /api/v1/admin/login with valid credentials returns tokens', async () => {
+    const response = await fetch('http://localhost:6002/api/v1/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: 'admin@iitjone.app',
-        password: 'change-me-on-first-login',
+        email: testAdmin.email,
+        password: testAdmin.password,
       }),
     });
 
@@ -25,12 +49,12 @@ test('Admin Authentication - Login', async (t) => {
     assert.ok('role' in admin, 'Missing admin.role');
   });
 
-  await t.test('POST /api/v1/admin/auth/login with wrong password returns 401', async () => {
-    const response = await fetch('http://localhost:6002/api/v1/admin/auth/login', {
+  await t.test('POST /api/v1/admin/login with wrong password returns 401', async () => {
+    const response = await fetch('http://localhost:6002/api/v1/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: 'admin@iitjone.app',
+        email: testAdmin.email,
         password: 'wrongpassword',
       }),
     });
@@ -40,8 +64,8 @@ test('Admin Authentication - Login', async (t) => {
     assert.ok('error' in data, 'Should include error message');
   });
 
-  await t.test('POST /api/v1/admin/auth/login with invalid email format returns 400', async () => {
-    const response = await fetch('http://localhost:6002/api/v1/admin/auth/login', {
+  await t.test('POST /api/v1/admin/login with invalid email format returns 400', async () => {
+    const response = await fetch('http://localhost:6002/api/v1/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -56,8 +80,8 @@ test('Admin Authentication - Login', async (t) => {
     assert.ok('details' in data, 'Should include validation details');
   });
 
-  await t.test('POST /api/v1/admin/auth/login with missing email returns 400', async () => {
-    const response = await fetch('http://localhost:6002/api/v1/admin/auth/login', {
+  await t.test('POST /api/v1/admin/login with missing email returns 400', async () => {
+    const response = await fetch('http://localhost:6002/api/v1/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -68,8 +92,8 @@ test('Admin Authentication - Login', async (t) => {
     assert.strictEqual(response.status, 400);
   });
 
-  await t.test('POST /api/v1/admin/auth/login with non-existent email returns 401', async () => {
-    const response = await fetch('http://localhost:6002/api/v1/admin/auth/login', {
+  await t.test('POST /api/v1/admin/login with non-existent email returns 401', async () => {
+    const response = await fetch('http://localhost:6002/api/v1/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -83,16 +107,16 @@ test('Admin Authentication - Login', async (t) => {
 });
 
 test('Admin Authentication - Token Refresh', async (t) => {
-  let refreshToken: string;
+  const testAdmin = await bootstrapTestAdmin();
+  let refreshToken: string | undefined;
 
   t.before(async () => {
-    // First, login to get refresh token
-    const loginRes = await fetch('http://localhost:6002/api/v1/admin/auth/login', {
+    const loginRes = await fetch('http://localhost:6002/api/v1/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: 'admin@iitjone.app',
-        password: 'change-me-on-first-login',
+        email: testAdmin.email,
+        password: testAdmin.password,
       }),
     });
 
@@ -102,10 +126,13 @@ test('Admin Authentication - Token Refresh', async (t) => {
     }
   });
 
-  await t.test('POST /api/v1/admin/auth/refresh with valid token returns new tokens', async () => {
-    if (!refreshToken) this.skip('Login failed, cannot proceed with refresh test');
+  await t.test('POST /api/v1/admin/refresh with valid token returns new tokens', async (st) => {
+    if (!refreshToken) {
+      st.skip('Login failed, cannot proceed with refresh test');
+      return;
+    }
 
-    const response = await fetch('http://localhost:6002/api/v1/admin/auth/refresh', {
+    const response = await fetch('http://localhost:6002/api/v1/admin/refresh', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
@@ -119,8 +146,8 @@ test('Admin Authentication - Token Refresh', async (t) => {
     assert.ok('admin' in data, 'Missing admin object');
   });
 
-  await t.test('POST /api/v1/admin/auth/refresh with invalid token returns 401', async () => {
-    const response = await fetch('http://localhost:6002/api/v1/admin/auth/refresh', {
+  await t.test('POST /api/v1/admin/refresh with invalid token returns 401', async () => {
+    const response = await fetch('http://localhost:6002/api/v1/admin/refresh', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -131,8 +158,8 @@ test('Admin Authentication - Token Refresh', async (t) => {
     assert.strictEqual(response.status, 401);
   });
 
-  await t.test('POST /api/v1/admin/auth/refresh with malformed body returns 400', async () => {
-    const response = await fetch('http://localhost:6002/api/v1/admin/auth/refresh', {
+  await t.test('POST /api/v1/admin/refresh with malformed body returns 400', async () => {
+    const response = await fetch('http://localhost:6002/api/v1/admin/refresh', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -145,15 +172,16 @@ test('Admin Authentication - Token Refresh', async (t) => {
 });
 
 test('Admin Authentication - Session Info', async (t) => {
-  let accessToken: string;
+  const testAdmin = await bootstrapTestAdmin();
+  let accessToken: string | undefined;
 
   t.before(async () => {
-    const loginRes = await fetch('http://localhost:6002/api/v1/admin/auth/login', {
+    const loginRes = await fetch('http://localhost:6002/api/v1/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: 'admin@iitjone.app',
-        password: 'change-me-on-first-login',
+        email: testAdmin.email,
+        password: testAdmin.password,
       }),
     });
 
@@ -163,8 +191,11 @@ test('Admin Authentication - Session Info', async (t) => {
     }
   });
 
-  await t.test('GET /api/v1/admin/me with valid token returns admin info', async () => {
-    if (!accessToken) this.skip('Login failed');
+  await t.test('GET /api/v1/admin/me with valid token returns admin info', async (st) => {
+    if (!accessToken) {
+      st.skip('Login failed');
+      return;
+    }
 
     const response = await fetch('http://localhost:6002/api/v1/admin/me', {
       method: 'GET',
@@ -177,7 +208,7 @@ test('Admin Authentication - Session Info', async (t) => {
     assert.ok('email' in data, 'Missing email');
     assert.ok('name' in data, 'Missing name');
     assert.ok('role' in data, 'Missing role');
-    assert.strictEqual(data.email, 'admin@iitjone.app');
+    assert.strictEqual(data.email, testAdmin.email);
   });
 
   await t.test('GET /api/v1/admin/me without token returns 401', async () => {
@@ -208,18 +239,20 @@ test('Admin Authentication - Session Info', async (t) => {
 });
 
 test('Admin Authentication - Rate Limiting', async (t) => {
+  const testAdmin = await bootstrapTestAdmin();
   // Note: Rate limiting has a 15-minute window (900000ms), so rapid tests won't necessarily trigger it
   // This test documents expected behavior; actual rate limiting may not trigger in a test sequence
+  // (adminLoginRateLimiter also allows far more attempts outside production — see rateLimit.ts)
 
-  await t.test('Login rate limiting is enforced on /api/v1/admin/auth/login', async () => {
+  await t.test('Login rate limiting is enforced on /api/v1/admin/login', async () => {
     // Make multiple failed attempts
     let response;
     for (let i = 0; i < 6; i++) {
-      response = await fetch('http://localhost:6002/api/v1/admin/auth/login', {
+      response = await fetch('http://localhost:6002/api/v1/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: 'admin@iitjone.app',
+          email: testAdmin.email,
           password: 'wrong-password-' + i,
         }),
       });
@@ -239,15 +272,16 @@ test('Admin Authentication - Rate Limiting', async (t) => {
 });
 
 test('Token Structure and Content', async (t) => {
-  let accessToken: string;
+  const testAdmin = await bootstrapTestAdmin();
+  let accessToken: string | undefined;
 
   t.before(async () => {
-    const loginRes = await fetch('http://localhost:6002/api/v1/admin/auth/login', {
+    const loginRes = await fetch('http://localhost:6002/api/v1/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: 'admin@iitjone.app',
-        password: 'change-me-on-first-login',
+        email: testAdmin.email,
+        password: testAdmin.password,
       }),
     });
 
@@ -257,23 +291,29 @@ test('Token Structure and Content', async (t) => {
     }
   });
 
-  await t.test('accessToken is a valid JWT (has 3 parts separated by dots)', async () => {
-    if (!accessToken) this.skip('Login failed');
+  await t.test('accessToken is a valid JWT (has 3 parts separated by dots)', async (st) => {
+    if (!accessToken) {
+      st.skip('Login failed');
+      return;
+    }
 
     const parts = accessToken.split('.');
     assert.strictEqual(parts.length, 3, 'JWT should have 3 parts');
   });
 
-  await t.test('refreshToken is a valid JWT', async () => {
-    if (!accessToken) this.skip('Login failed');
+  await t.test('refreshToken is a valid JWT', async (st) => {
+    if (!accessToken) {
+      st.skip('Login failed');
+      return;
+    }
 
     // Get refresh token by logging in again
-    const loginRes = await fetch('http://localhost:6002/api/v1/admin/auth/login', {
+    const loginRes = await fetch('http://localhost:6002/api/v1/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: 'admin@iitjone.app',
-        password: 'change-me-on-first-login',
+        email: testAdmin.email,
+        password: testAdmin.password,
       }),
     });
 

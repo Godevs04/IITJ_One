@@ -20,6 +20,7 @@ import { ensureNotificationChannelsAsync } from '@/services/notificationChannels
 import { initBackendAnalytics, teardownBackendAnalytics } from '@/services/analytics/backendAnalytics';
 import '@/services/search/registerBuiltInProviders';
 import { CampusDataProvider } from '@/state/CampusDataProvider';
+import { LiveTrackingProvider } from '@/transport/state/LiveTrackingProvider';
 import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { setRuntimeDebugContext } from '@/debug/listDebug';
@@ -75,17 +76,19 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <ThemeProvider>
           <CampusDataProvider>
-            <PostHogProvider
-              client={posthog}
-              autocapture={{
-                captureScreens: false,
-                captureTouches: true,
-                propsToCapture: ['testID'],
-                maxElementsCaptured: 20,
-              }}
-            >
-              <RootNavigator />
-            </PostHogProvider>
+            <LiveTrackingProvider>
+              <PostHogProvider
+                client={posthog}
+                autocapture={{
+                  captureScreens: false,
+                  captureTouches: true,
+                  propsToCapture: ['testID'],
+                  maxElementsCaptured: 20,
+                }}
+              >
+                <RootNavigator />
+              </PostHogProvider>
+            </LiveTrackingProvider>
           </CampusDataProvider>
         </ThemeProvider>
       </SafeAreaProvider>

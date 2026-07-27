@@ -1,11 +1,6 @@
 import type { TransportTrip } from '@/types/campus';
 
-export interface BusStop {
-  name: string;
-  latitude: number;
-  longitude: number;
-  description: string;
-}
+export type { BusStop } from '@iitj1/types';
 
 export type TripStatus = 'upcoming' | 'boarding' | 'transit' | 'completed';
 

@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,16 +7,59 @@ import { useTheme, useThemeColors } from '@/theme/ThemeProvider';
 import { AppSpacing, AppTypography } from '@/theme/tokens';
 import type { TripWithStatus } from '../models/BusTypes';
 import { BUS_STOPS, getNormalizedStopName, openStopInMaps } from '../utils/coordinates';
+import { useLiveTracking } from '../state/LiveTrackingProvider';
 
 interface CampusMapScreenProps {
   tripsWithStatus: TripWithStatus[];
   onBack: () => void;
 }
 
+interface BusMarkerPayload {
+  tripId: string;
+  lat: number;
+  lng: number;
+  positionSource: 'live' | 'estimated';
+  confidence: 'high' | 'medium' | 'low';
+  contributors: number;
+  vehicleName: string | null;
+  status: string;
+}
+
 export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProps) {
   const theme = useThemeColors();
   const { scheme } = useTheme();
   const insets = useSafeAreaInsets();
+  const webViewRef = useRef<WebView>(null);
+  const [mapReady, setMapReady] = useState(false);
+  // Read live tracking directly from the shared provider (app/_layout.tsx
+  // wraps the whole app) — avoids a second data path duplicating what
+  // TransportScreenView already fetches (see LiveTrackingProvider).
+  const { trips: liveTrips } = useLiveTracking();
+
+  const busMarkers = useMemo<BusMarkerPayload[]>(
+    () =>
+      liveTrips.map((t) => ({
+        tripId: t.tripId,
+        lat: t.busState.latitude,
+        lng: t.busState.longitude,
+        positionSource: t.busState.positionSource,
+        confidence: t.busState.confidence,
+        contributors: t.busState.contributors,
+        vehicleName: t.vehicle?.displayName ?? null,
+        status: t.status,
+      })),
+    [liveTrips],
+  );
+
+  // Push marker updates into the already-loaded WebView via injectJavaScript
+  // rather than regenerating `htmlContent` — reloading the whole map on
+  // every bus position tick would restart the route-draw animation and
+  // flicker the WebView.
+  useEffect(() => {
+    if (!mapReady) return;
+    const payload = JSON.stringify(JSON.stringify(busMarkers));
+    webViewRef.current?.injectJavaScript(`window.updateBusMarkers && window.updateBusMarkers(${payload}); true;`);
+  }, [busMarkers, mapReady]);
   const basemap =
     scheme === 'dark'
       ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
@@ -73,12 +117,15 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
     [BUS_STOPS['AIIMS Jodhpur'].longitude, BUS_STOPS['AIIMS Jodhpur'].latitude],
   ];
 
-  // WebView message handler (for navigating to stop in external Google Maps)
+  // WebView message handler (navigate-to-stop deep link, and the map's
+  // "ready" signal that gates the first injectJavaScript marker push)
   const onMessage = (event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
       if (data.type === 'navigate') {
         openStopInMaps(data.name, data.lat, data.lng);
+      } else if (data.type === 'ready') {
+        setMapReady(true);
       }
     } catch (e) {
       console.error('Error parsing map message', e);
@@ -154,6 +201,29 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
           text-decoration: none;
           font-weight: bold;
           cursor: pointer;
+        }
+        .bus-marker {
+          width: 26px;
+          height: 26px;
+          border-radius: 13px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
+          border: 2px solid #FFFFFF;
+          box-shadow: 0 0 6px rgba(0,0,0,0.45);
+        }
+        .bus-live {
+          background-color: #22C55E;
+          animation: bus-pulse 1.6s infinite;
+        }
+        .bus-estimated {
+          background-color: #9CA3AF;
+        }
+        @keyframes bus-pulse {
+          0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.55); }
+          70% { box-shadow: 0 0 0 10px rgba(34,197,94,0); }
+          100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
         }
       </style>
     </head>
@@ -295,7 +365,74 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
               .setOffset([0, -14])
               .addTo(map);
           });
+
+          // Signal readiness — gates the RN side's first injectJavaScript
+          // marker push so it never races the map/markers being mounted.
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'ready' }));
         });
+
+        // --- Live bus markers -------------------------------------------
+        // Keyed by tripId so a marker persists (and animates) across
+        // updates instead of being torn down and recreated every tick.
+        window.__busMarkers = {};
+
+        function animateMarkerTo(entry, lng, lat) {
+          const startLng = entry.lng;
+          const startLat = entry.lat;
+          const duration = 800;
+          const startTime = performance.now();
+          function step(now) {
+            const t = Math.min(1, (now - startTime) / duration);
+            const curLng = startLng + (lng - startLng) * t;
+            const curLat = startLat + (lat - startLat) * t;
+            entry.marker.setLngLat([curLng, curLat]);
+            if (t < 1) {
+              requestAnimationFrame(step);
+            } else {
+              entry.lng = lng;
+              entry.lat = lat;
+            }
+          }
+          requestAnimationFrame(step);
+        }
+
+        window.updateBusMarkers = function (json) {
+          const buses = JSON.parse(json);
+          const seen = {};
+
+          buses.forEach(function (b) {
+            seen[b.tripId] = true;
+            let entry = window.__busMarkers[b.tripId];
+
+            if (!entry) {
+              const el = document.createElement('div');
+              el.innerText = '🚌';
+              const marker = new maplibregl.Marker({ element: el }).setLngLat([b.lng, b.lat]).addTo(map);
+              entry = { marker, el, lng: b.lng, lat: b.lat };
+              window.__busMarkers[b.tripId] = entry;
+            }
+
+            entry.el.className = 'bus-marker ' + (b.positionSource === 'live' ? 'bus-live' : 'bus-estimated');
+
+            const popupHtml =
+              '<div class="popup-title">' + (b.vehicleName || 'Bus') + '</div>' +
+              '<div class="popup-desc">' + b.status + '</div>' +
+              '<div class="popup-bus">' +
+                (b.positionSource === 'live' ? 'LIVE' : 'ESTIMATED') + ' · ' + b.confidence + ' confidence' +
+                (b.positionSource === 'live' ? ' · ' + b.contributors + ' sharing' : '') +
+              '</div>';
+            entry.marker.setPopup(new maplibregl.Popup({ offset: 15 }).setHTML(popupHtml));
+
+            animateMarkerTo(entry, b.lng, b.lat);
+          });
+
+          Object.keys(window.__busMarkers).forEach(function (tripId) {
+            if (!seen[tripId]) {
+              window.__busMarkers[tripId].marker.remove();
+              delete window.__busMarkers[tripId];
+            }
+          });
+        };
 
         function sendNavigation(name, lat, lng) {
           window.ReactNativeWebView.postMessage(JSON.stringify({
@@ -330,10 +467,12 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
       {/* Map WebView */}
       <View style={styles.mapContainer}>
         <WebView
+          ref={webViewRef}
           key={scheme}
           originWhitelist={['*']}
           source={{ html: htmlContent }}
           onMessage={onMessage}
+          onLoad={() => setMapReady(false)}
           style={styles.webView}
         />
       </View>

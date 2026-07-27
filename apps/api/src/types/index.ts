@@ -16,7 +16,8 @@ export type ModuleName =
   | 'holidays'
   | 'transportAlerts'
   | 'temporaryTransportSchedule'
-  | 'transportScheduleExceptions';
+  | 'transportScheduleExceptions'
+  | 'vehicles';
 
 export interface MetaVersions {
   menu: number;
@@ -37,6 +38,7 @@ export interface MetaVersions {
   transportAlerts: number;
   temporaryTransportSchedule: number;
   transportScheduleExceptions: number;
+  vehicles: number;
 }
 
 export type {
@@ -374,4 +376,100 @@ export interface JwtPayload {
   role: string;
   type: 'access' | 'refresh';
   tokenVersion: number;
+}
+
+// ---------------------------------------------------------------------------
+// Live Bus Tracking (Phase 1 — backend foundation)
+// ---------------------------------------------------------------------------
+
+export interface VehicleDoc {
+  _id?: string | ObjectId;
+  campusId: string;
+  registration: string;
+  displayName: string;
+  capacity: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  /** Soft-delete marker — omitted/null means active, mirrors NoticeDoc. */
+  deletedAt?: Date | null;
+}
+
+export type TripOperationalState =
+  | 'WAITING'
+  | 'BOARDING'
+  | 'LIVE'
+  | 'PREDICTING'
+  | 'STOPPED'
+  | 'COMPLETED'
+  | 'NO_DATA'
+  | 'OFFLINE';
+
+export interface TripDoc {
+  _id?: string | ObjectId;
+  campusId: string;
+  /** YYYY-MM-DD — the calendar day this materialized instance belongs to. */
+  serviceDate: string;
+  direction: 'departure' | 'arrival';
+  scheduledDeparture: Date;
+  scheduledArrival: Date;
+  /** TransportTrip.bus label this instance was materialized from — traceability only. */
+  sourceBus: string;
+  /** Deterministic composite key back to the TransportTrip it was materialized from — not a real foreign key, see tripMaterialization.ts. */
+  routeKey: string;
+  route: string;
+  from: string;
+  to: string;
+  vehicleId: string | null;
+  status: TripOperationalState;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SessionDoc {
+  _id?: string | ObjectId;
+  /** Anonymous, client-generated UUID — same pattern as AnalyticsEventDoc.sessionId. No PII is ever stored alongside it. */
+  sessionId: string;
+  tripId: string;
+  startedAt: Date;
+  lastSeenAt: Date;
+  endedAt?: Date | null;
+  isActive: boolean;
+}
+
+/** Raw GPS ingest — TTL'd, never surfaced to clients directly. */
+export interface GpsPingDoc {
+  _id?: string | ObjectId;
+  sessionId: string;
+  tripId: string;
+  latitude: number;
+  longitude: number;
+  speed: number | null;
+  heading: number | null;
+  accuracy: number;
+  clientTimestamp: Date;
+  receivedAt: Date;
+  accepted: boolean;
+  rejectReason?:
+    | 'stale_timestamp'
+    | 'future_timestamp'
+    | 'poor_accuracy'
+    | 'off_route'
+    | 'bearing_mismatch'
+    | 'implausible_speed'
+    | 'duplicate';
+}
+
+/** Derived, fused position — one document per trip, upserted by busFusion.ts. Never client-writable. */
+export interface BusStateDoc {
+  _id?: string | ObjectId;
+  tripId: string;
+  vehicleId: string | null;
+  latitude: number;
+  longitude: number;
+  confidence: 'high' | 'medium' | 'low';
+  contributors: number;
+  positionSource: 'live' | 'estimated';
+  status: TripOperationalState;
+  lastUpdated: Date;
 }

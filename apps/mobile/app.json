@@ -25,7 +25,7 @@
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": ["remote-notification", "location"]
       },
       "splash": {
         "image": "./assets/branding/marketing/ios-splash.png",
@@ -49,7 +49,8 @@
       "permissions": [
         "android.permission.POST_NOTIFICATIONS",
         "android.permission.CAMERA",
-        "android.permission.READ_MEDIA_IMAGES"
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.ACCESS_BACKGROUND_LOCATION"
       ],
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
@@ -114,6 +115,14 @@
           "cameraPermission": "IITJ One uses the camera so you can photograph your Mess QR code.",
           "photosPermission": "IITJ One uses your photo library so you can import your Mess QR code image.",
           "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "IITJ One uses your location only while you're actively sharing your ride, to help other students see where the bus is. Location is never shared outside an active ride.",
+          "locationAlwaysAndWhenInUsePermission": "IITJ One continues sharing your location briefly in the background only while you're actively sharing a ride, so other students still see the bus if you switch apps. Location is never shared outside an active ride.",
+          "isAndroidForegroundServiceEnabled": true
         }
       ],
       "expo-sqlite",

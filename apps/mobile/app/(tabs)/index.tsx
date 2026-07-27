@@ -617,7 +617,7 @@ export default function HomeScreen() {
 
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
-          University services
+          Institute services
         </Text>
         <View style={styles.grid}>
           {QUICK_LINKS.map((item) => (

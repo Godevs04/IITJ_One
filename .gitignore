@@ -44,6 +44,10 @@ Thumbs.db
 coverage/
 .nyc_output/
 
+# RC CI generated artifacts (apps/api/scripts/rc/runCi.ts) — regenerated each run
+release-report.json
+apps/api/test-output.log
+
 # Expo / React Native
 .expo/
 web-build/
@@ -66,5 +70,11 @@ ios/build/
 .cache/
 tmp/
 temp/
+
+# Local AI coding assistant config (machine-specific, may contain personal
+# tool permissions or MCP server credentials — never commit these)
+.claude/
+.codex/
+.kiro/
 
 testsprite_tests\tmp\config.json

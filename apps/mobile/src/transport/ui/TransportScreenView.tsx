@@ -18,10 +18,15 @@ import type {
 } from '@/types/campus';
 import { getScheduleKey, getTripsForDayType, evaluateTripStatus, isScheduleOverridden, isAlertActive, isExceptionActive, getTripsForToday } from '../services/ScheduleEngine';
 import { parseRouteStops } from '../utils/coordinates';
+import { parseTimeToMinutes } from '@/utils/date';
 import { TripCard } from '../widgets/TripCard';
+import { LiveStatusBar } from '../widgets/LiveStatusBar';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { debugListKeys } from '@/debug/listDebug';
+import type { RideState } from '../state/LiveTrackingProvider';
+import type { RideDirection, TransportLiveTrip } from '../services/liveTrackingApi';
+import type { SocketConnectionState } from '../services/liveTrackingSocket';
 
 interface TransportScreenViewProps {
   transport: TransportDoc | null;
@@ -33,7 +38,21 @@ interface TransportScreenViewProps {
   tick: number;
   onRefresh: () => Promise<void>;
   refreshing: boolean;
+  liveTrips: TransportLiveTrip[];
+  liveLoading: boolean;
+  liveError: string | null;
+  lastUpdated: string | null;
+  connectionState: SocketConnectionState;
+  ride: RideState;
+  onStopRide: () => void;
 }
+
+const CONNECTION_INDICATOR: Record<SocketConnectionState, { icon: keyof typeof Ionicons.glyphMap; color: string }> = {
+  connected: { icon: 'radio', color: '#22C55E' },
+  connecting: { icon: 'radio-outline', color: '#F59E0B' },
+  reconnecting: { icon: 'radio-outline', color: '#F59E0B' },
+  disconnected: { icon: 'cloud-offline-outline', color: '#9CA3AF' },
+};
 
 const PRIORITY_STYLES: Record<
   ScheduleExceptionPriority,
@@ -57,6 +76,13 @@ export function TransportScreenView({
   tick,
   onRefresh,
   refreshing,
+  liveTrips,
+  liveLoading,
+  liveError,
+  lastUpdated,
+  connectionState,
+  ride,
+  onStopRide,
 }: TransportScreenViewProps) {
   const { colors: theme, darkMode } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
@@ -195,8 +221,47 @@ export function TransportScreenView({
     return alerts.alerts.some((a) => isAlertActive(a, now));
   }, [alerts, tick]);
 
+  // --- Live tracking correlation --------------------------------------
+  // The mobile schedule (client-computed TransportTrip) and the backend's
+  // live trips (materialized server-side, keyed by tripId) are two
+  // independent representations of "today's trips." Match them by
+  // direction + scheduled departure minute, since both are derived from the
+  // same underlying timetable and the server ports the same resolution
+  // chain (see tripSchedule.ts) — this is the only stable shared key
+  // without giving TransportTrip a real id of its own.
+  const getRideDirection = (trip: TransportTrip): RideDirection => (isDepartureFromCampus(trip) ? 'departure' : 'arrival');
+
+  const liveTripsByKey = useMemo(() => {
+    const map = new Map<string, TransportLiveTrip>();
+    for (const lt of liveTrips) {
+      const d = new Date(lt.scheduledDeparture);
+      const minutes = d.getHours() * 60 + d.getMinutes();
+      map.set(`${lt.direction}-${minutes}`, lt);
+    }
+    return map;
+  }, [liveTrips]);
+
+  const matchLiveTrip = (trip: TransportTrip, direction: RideDirection): TransportLiveTrip | undefined =>
+    liveTripsByKey.get(`${direction}-${parseTimeToMinutes(trip.startTime)}`);
+
+  // Offline behaviour: if the last REST poll failed AND the socket is down,
+  // treat live positions as stale and hide them rather than showing a
+  // frozen "LIVE" badge — the connection indicator communicates the
+  // degraded state instead.
+  const liveDataStale = !!liveError && connectionState !== 'connected';
+
   const headerRight = (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: AppSpacing.sm }}>
+      <View
+        style={styles.headerButton}
+        accessibilityLabel={`Live tracking connection: ${connectionState}`}
+      >
+        <Ionicons
+          name={CONNECTION_INDICATOR[connectionState].icon}
+          size={20}
+          color={CONNECTION_INDICATOR[connectionState].color}
+        />
+      </View>
       <Pressable
         onPress={() => router.push('/search')}
         hitSlop={10}
@@ -310,6 +375,16 @@ export function TransportScreenView({
           </Text>
         </View>
       ) : null}
+
+      <LiveStatusBar
+        trips={liveTrips}
+        connectionState={connectionState}
+        lastUpdated={lastUpdated}
+        loading={liveLoading}
+        error={liveError}
+        ride={ride}
+        onStopRide={onStopRide}
+      />
 
       {/* Dynamic Schedule Filter Tabs & Updates Banner */}
       <View style={styles.filterSection}>
@@ -532,14 +607,20 @@ export function TransportScreenView({
         </Text>
 
         {activeTrips.length > 0 ? (
-          activeTrips.map((item) => (
-            <TripCard
-              key={`${item.trip.bus}-${item.trip.startTime}`}
-              item={item}
-              isFavorited={isFavorited}
-              onToggleFavorite={onToggleFavorite}
-            />
-          ))
+          activeTrips.map((item) => {
+            const direction = getRideDirection(item.trip);
+            return (
+              <TripCard
+                key={`${item.trip.bus}-${item.trip.startTime}`}
+                item={item}
+                isFavorited={isFavorited}
+                onToggleFavorite={onToggleFavorite}
+                direction={direction}
+                liveTrip={matchLiveTrip(item.trip, direction)}
+                liveDataStale={liveDataStale}
+              />
+            );
+          })
         ) : (
           <EmptyState
             icon="bus-outline"

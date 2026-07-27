@@ -54,6 +54,20 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   return context.resolveRequest(context, moduleName, platform);
 };
 
+// expo-sqlite web support: wa-sqlite ships a .wasm binary that Metro must
+// treat as an asset (not try to resolve as a JS/TS module), plus the
+// COEP/COOP headers SharedArrayBuffer needs to run wa-sqlite in the browser.
+config.resolver.assetExts.push('wasm');
+const originalEnhanceMiddleware = config.server.enhanceMiddleware;
+config.server.enhanceMiddleware = (middleware, metroServer) => {
+  const withCoepCoop = (req, res, next) => {
+    res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    middleware(req, res, next);
+  };
+  return originalEnhanceMiddleware ? originalEnhanceMiddleware(withCoepCoop, metroServer) : withCoepCoop;
+};
+
 // Next.js (Admin) rewrites apps/admin/.next on every dev-server restart or
 // rebuild. Since watchFolders covers the whole workspace root, Metro's
 // watcher used to race those writes on Windows — Next mid-write to

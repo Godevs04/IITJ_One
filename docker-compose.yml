@@ -1,0 +1,126 @@
+# Full-stack local/staging compose — Phase 6. For "just the API + Mongo"
+# during day-to-day backend dev, apps/api/docker-compose.yml is still the
+# simpler, faster option (unchanged). Use this one to exercise the whole
+# stack together, including Redis multi-instance behavior and metrics/Grafana.
+#
+# Usage:
+#   docker compose up -d --build
+#   docker compose --profile observability up -d   # adds Prometheus + Grafana
+
+services:
+  mongo:
+    image: mongo:7
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - "6002:6002"
+    env_file:
+      - apps/api/.env
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/iitj1
+      - REDIS_URL=redis://redis:6379
+      - PORT=6002
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Second instance — proves the Redis-backed shared state (Socket.IO
+  # adapter, contributor/BusState cache, distributed rate limiting) actually
+  # works across instances. Point a load balancer (nginx/ALB) at both `api`
+  # and `api2` to exercise this for real; see docs/DEPLOYMENT.md.
+  api2:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - "6003:6002"
+    env_file:
+      - apps/api/.env
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/iitj1
+      - REDIS_URL=redis://redis:6379
+      - PORT=6002
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:6002/api/v1
+      - NEXT_PUBLIC_CAMPUS_ID=iitj
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    profiles: ["observability"]
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    profiles: ["observability"]
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=change-me-on-first-login
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/grafana/dashboards:/etc/grafana/provisioning/dashboards/files:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:

@@ -8,3 +8,5 @@ export * from './transportAlerts';
 export * from './temporaryTransportSchedule';
 export * from './transport';
 export * from './transportScheduleException';
+export * from './geo';
+export * from './busStops';

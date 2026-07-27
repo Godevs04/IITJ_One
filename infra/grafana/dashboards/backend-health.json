@@ -1,0 +1,68 @@
+{
+  "uid": "iitj-backend-health",
+  "title": "Backend Health",
+  "tags": ["iitj-one", "transport", "health"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Process uptime",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "time() - process_start_time_seconds", "legendFormat": "uptime" }]
+    },
+    {
+      "id": 2,
+      "title": "Redis connected",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "redis_up", "legendFormat": "redis_up" }]
+    },
+    {
+      "id": 3,
+      "title": "Backup age (hours)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "backup_age_seconds / 3600", "legendFormat": "hours since backup" }]
+    },
+    {
+      "id": 4,
+      "title": "Event loop lag (mean)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "nodejs_eventloop_lag_mean_seconds", "legendFormat": "lag" }]
+    },
+    {
+      "id": 5,
+      "title": "Resident memory (RSS)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "process_resident_memory_bytes", "legendFormat": "RSS bytes" }]
+    },
+    {
+      "id": 6,
+      "title": "CPU seconds total (rate)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "rate(process_cpu_seconds_total[5m])", "legendFormat": "CPU" }]
+    },
+    {
+      "id": 7,
+      "title": "REST errors / sec (all routes)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "sum(rate(rest_errors_total[5m]))", "legendFormat": "errors/sec" }]
+    }
+  ]
+}
