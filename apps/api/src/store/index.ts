@@ -1,7 +1,7 @@
 import type { ClientSession } from 'mongodb';
 import { isDbConnected, collections, ObjectId, getMongoClient } from '../db';
 import { busesConflict } from '../services/transportScheduleExceptionStatus';
-import { invalidateModule } from '../cache';
+import { invalidateModule, invalidateAll, cached, cache } from '../cache';
 import {
   initFallbackStore,
   fallbackGetMeta,
@@ -1324,12 +1324,32 @@ export async function listVehicles(
   return fallbackListVehicles(campusId, page, pageSize);
 }
 
+const VEHICLE_CACHE_TTL_S = 15;
+function vehicleCacheKey(id: string): string {
+  return `vehicle:${id}`;
+}
+
+/**
+ * Phase 7.3 free-tier optimization: called once per unique vehicleId on
+ * every GET /transport/live and GET /admin/trips response (to resolve a
+ * display name) — a handful of vehicles looked up repeatedly by every
+ * concurrent client. Short TTL (not the module-version-invalidated system,
+ * since a by-id lookup has no campusId cheaply on hand) plus an explicit
+ * single-key bust in updateVehicle/deleteVehicle below, so an admin edit is
+ * visible immediately rather than waiting out the TTL.
+ */
 export async function getVehicleById(id: string): Promise<VehicleDoc | null> {
-  if (isDbConnected()) {
-    const result = await collections.vehicles().findOne({ _id: new ObjectId(id) } as never);
-    return result ? withVehicleStringId(result) : null;
-  }
-  return fallbackGetVehicleById(id);
+  return cached(
+    vehicleCacheKey(id),
+    async () => {
+      if (isDbConnected()) {
+        const result = await collections.vehicles().findOne({ _id: new ObjectId(id) } as never);
+        return result ? withVehicleStringId(result) : null;
+      }
+      return fallbackGetVehicleById(id);
+    },
+    VEHICLE_CACHE_TTL_S,
+  );
 }
 
 export async function createVehicle(
@@ -1363,11 +1383,13 @@ export async function updateVehicle(
       .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: withUpdatedAt }, { returnDocument: 'after' });
     if (!result) return null;
     await bumpVersion('vehicles', result.campusId, adminEmail, 'update', `Vehicle "${result.displayName}" updated`);
+    cache.del(vehicleCacheKey(id));
     return withVehicleStringId(result);
   }
   const saved = fallbackUpdateVehicle(id, withUpdatedAt);
   if (saved) {
     await bumpVersion('vehicles', saved.campusId, adminEmail, 'update', `Vehicle "${saved.displayName}" updated`);
+    cache.del(vehicleCacheKey(id));
   }
   return saved;
 }
@@ -1382,11 +1404,13 @@ export async function deleteVehicle(id: string, adminEmail: string): Promise<boo
       .vehicles()
       .updateOne({ _id: new ObjectId(id) } as never, { $set: { deletedAt: now, isActive: false, updatedAt: now } });
     await bumpVersion('vehicles', existing.campusId, adminEmail, 'delete', `Vehicle "${existing.displayName}" deleted`);
+    cache.del(vehicleCacheKey(id));
     return true;
   }
   const saved = fallbackSoftDeleteVehicle(id);
   if (saved) {
     await bumpVersion('vehicles', existing.campusId, adminEmail, 'delete', `Vehicle "${existing.displayName}" deleted`);
+    cache.del(vehicleCacheKey(id));
   }
   return !!saved;
 }
@@ -1418,8 +1442,9 @@ export async function upsertTripByRouteKey(
   input: Pick<TripDoc, 'campusId' | 'serviceDate' | 'direction' | 'scheduledDeparture' | 'scheduledArrival' | 'sourceBus' | 'routeKey' | 'route' | 'from' | 'to'>,
 ): Promise<TripDoc> {
   const now = new Date();
+  let result: TripDoc;
   if (isDbConnected()) {
-    const result = await collections.trips().findOneAndUpdate(
+    const doc = await collections.trips().findOneAndUpdate(
       { campusId: input.campusId, serviceDate: input.serviceDate, routeKey: input.routeKey },
       {
         $set: { ...input, updatedAt: now },
@@ -1427,29 +1452,49 @@ export async function upsertTripByRouteKey(
       },
       { upsert: true, returnDocument: 'after' },
     );
-    return withTripStringId(result!);
+    result = withTripStringId(doc!);
+  } else {
+    result = await fallbackUpsertTripByRouteKey(input);
   }
-  return fallbackUpsertTripByRouteKey(input);
+  // Phase 7.3: any direct upsert (not just ensureTodaysTrips's own
+  // materialization loop, which immediately recaches the fresh result
+  // anyway) must bust the trips-live cache — otherwise a trip inserted
+  // out-of-band (e.g. a test fixture) is invisible to assignTripForRideStart
+  // until the TTL naturally expires.
+  invalidateAll('trips-live');
+  return result;
 }
 
 export async function updateTripStatus(id: string, status: TripDoc['status']): Promise<TripDoc | null> {
+  let result: TripDoc | null;
   if (isDbConnected()) {
-    const result = await collections
+    const doc = await collections
       .trips()
       .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: { status, updatedAt: new Date() } }, { returnDocument: 'after' });
-    return result ? withTripStringId(result) : null;
+    result = doc ? withTripStringId(doc) : null;
+  } else {
+    result = fallbackUpdateTrip(id, { status });
   }
-  return fallbackUpdateTrip(id, { status });
+  // Phase 7.3: ensureTodaysTrips (tripMaterialization.ts) caches "today's
+  // trips" for up to 10s to cut Mongo load — an admin-forced status
+  // override (e.g. a breakdown) must still be visible immediately, not
+  // wait out that window.
+  invalidateAll('trips-live');
+  return result;
 }
 
 export async function assignVehicleToTrip(id: string, vehicleId: string | null): Promise<TripDoc | null> {
+  let result: TripDoc | null;
   if (isDbConnected()) {
-    const result = await collections
+    const doc = await collections
       .trips()
       .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: { vehicleId, updatedAt: new Date() } }, { returnDocument: 'after' });
-    return result ? withTripStringId(result) : null;
+    result = doc ? withTripStringId(doc) : null;
+  } else {
+    result = fallbackUpdateTrip(id, { vehicleId });
   }
-  return fallbackUpdateTrip(id, { vehicleId });
+  invalidateAll('trips-live');
+  return result;
 }
 
 // --- Ride session (anonymous, ephemeral — no bumpVersion) ---

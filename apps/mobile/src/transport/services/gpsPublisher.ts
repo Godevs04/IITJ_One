@@ -1,5 +1,6 @@
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
+import { haversineDistanceMeters, bearingDiffDegrees } from '@iitj1/types';
 
 export type GpsPublisherStatus =
   | 'idle'
@@ -32,6 +33,63 @@ const BACKGROUND_LOCATION_TASK = 'iitj1-ride-sharing-location-task';
 // the app itself isn't running in the foreground.
 const fixListeners = new Set<FixListener>();
 
+// Phase 7.3 free-tier optimization: event-driven upload. Every fix is still
+// acquired at the same PUBLISH_INTERVAL_MS cadence as before (tracking
+// quality — how often we *know* the position — is unchanged); only whether
+// a fix is actually sent to the server is now conditional. A bus sitting at
+// a stop for a minute previously sent ~20 identical pings; now it sends at
+// most one every MAX_UPLOAD_INTERVAL_MS. That max-interval fallback is
+// deliberately kept safely under the backend's 15s contributor-freshness
+// window (FRESHNESS_MS in apps/api/src/services/busFusion.ts) — skipping
+// sends for too long would make fusion silently drop a rider who is still
+// genuinely on the bus, which would be a real tracking-quality regression,
+// not just a traffic optimization.
+interface SentFixRecord {
+  fix: GpsFix;
+  sentAt: number;
+}
+let lastSent: SentFixRecord | null = null;
+
+const DISTANCE_THRESHOLD_METERS = 15;
+const HEADING_THRESHOLD_DEGREES = 25;
+const SPEED_THRESHOLD_KMH_DELTA = 10;
+/** Below this speed, GPS-implied heading is naturally noisy — mirrors gpsValidation.ts's own WALKING_PACE_KMH threshold. */
+const WALKING_PACE_KMH = 5;
+const MAX_UPLOAD_INTERVAL_MS = 10_000;
+
+function kmh(metersPerSecond: number | null): number {
+  return (metersPerSecond ?? 0) * 3.6;
+}
+
+function shouldSendFix(candidate: GpsFix, now: number): boolean {
+  if (!lastSent) return true; // always send the first fix of a ride
+  if (now - lastSent.sentAt >= MAX_UPLOAD_INTERVAL_MS) return true; // heartbeat — keeps the contributor "fresh" server-side even standing still
+
+  const distance = haversineDistanceMeters(
+    { latitude: lastSent.fix.latitude, longitude: lastSent.fix.longitude },
+    { latitude: candidate.latitude, longitude: candidate.longitude },
+  );
+  if (distance >= DISTANCE_THRESHOLD_METERS) return true;
+
+  const speedNow = kmh(candidate.speed);
+  const speedBefore = kmh(lastSent.fix.speed);
+  if (Math.abs(speedNow - speedBefore) >= SPEED_THRESHOLD_KMH_DELTA) return true;
+
+  if (speedNow > WALKING_PACE_KMH && candidate.heading != null && lastSent.fix.heading != null) {
+    if (bearingDiffDegrees(candidate.heading, lastSent.fix.heading) >= HEADING_THRESHOLD_DEGREES) return true;
+  }
+
+  return false;
+}
+
+/** The single choke point both the foreground and background fix sources funnel through — decides send vs. skip, then (only if sending) notifies listeners exactly as before. */
+function maybeEmitFix(fix: GpsFix): void {
+  const now = Date.now();
+  if (!shouldSendFix(fix, now)) return;
+  lastSent = { fix, sentAt: now };
+  for (const listener of fixListeners) listener(fix);
+}
+
 function toFix(location: Location.LocationObject): GpsFix {
   return {
     latitude: location.coords.latitude,
@@ -55,7 +113,7 @@ TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
   const latest = locations?.[locations.length - 1];
   if (!latest) return;
   const fix = toFix(latest);
-  for (const listener of fixListeners) listener(fix);
+  maybeEmitFix(fix);
 });
 
 /**
@@ -106,7 +164,7 @@ class GpsPublisher {
     try {
       const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
       const fix = toFix(location);
-      for (const listener of fixListeners) listener(fix);
+      maybeEmitFix(fix);
     } catch {
       // A single failed fix (GPS momentarily unavailable, e.g. indoors)
       // shouldn't stop the whole ride — just skip this tick and try again
@@ -119,6 +177,10 @@ class GpsPublisher {
   async start(): Promise<GpsPublisherStatus> {
     if (this.timer || this.usingBackgroundUpdates) return this.status; // already running — never publish twice concurrently
 
+    // A new ride's first fix must always send immediately, regardless of
+    // where a previous ride last left off (which could otherwise
+    // incorrectly suppress it as "no meaningful change").
+    lastSent = null;
     this.setStatus('requesting_permission');
     const { status: permissionStatus } = await Location.requestForegroundPermissionsAsync();
     if (permissionStatus !== 'granted') {

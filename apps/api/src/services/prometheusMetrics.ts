@@ -81,6 +81,21 @@ export const busStatePersistDuration = new client.Histogram({
   registers: [registry],
 });
 
+/** Phase 7.3 free-tier optimization: a fusion pass whose result is byte-identical to the last persisted BusState skips the Mongo write entirely (see busFusion.ts). Tracks the resulting reduction. */
+export const busStateWritesSkippedTotal = new client.Counter({
+  name: 'busstate_writes_skipped_total',
+  help: 'BusState fusion passes that skipped the Mongo write because nothing changed since the last persisted state',
+  registers: [registry],
+});
+
+/** Phase 7.3 free-tier optimization: in-process TTL cache hit/miss, by cache name (trips-live, vehicle). A cache miss still costs a Mongo round trip; a hit costs nothing. */
+export const memCacheResultTotal = new client.Counter({
+  name: 'mem_cache_result_total',
+  help: 'In-process TTL cache lookups, by cache name and hit/miss outcome',
+  labelNames: ['cache', 'result'],
+  registers: [registry],
+});
+
 export const redisUp = new client.Gauge({
   name: 'redis_up',
   help: '1 if Redis is connected, 0 if running in in-memory fallback mode',

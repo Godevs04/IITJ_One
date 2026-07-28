@@ -34,7 +34,15 @@ import {
 } from '../services/liveTrackingSocket';
 import { gpsPublisher, type GpsPublisherStatus } from '../services/gpsPublisher';
 
-const LIVE_POLL_INTERVAL_MS = 20_000;
+// Phase 7.3 free-tier optimization: this REST poll is a baseline safety net
+// (discovers newly-appearing trips and works if the socket is down — see
+// the effect below) — the socket already pushes real-time bus:update/
+// trip:update for trips this client knows about, so there's no UX reason to
+// poll every 20s regardless of socket health. Poll rarely while the socket
+// is healthy; fall back to the original, more frequent cadence exactly
+// when the socket is the thing that's actually degraded.
+const LIVE_POLL_INTERVAL_CONNECTED_MS = 90_000;
+const LIVE_POLL_INTERVAL_FALLBACK_MS = 15_000;
 
 export type RideStatus = 'idle' | 'starting' | 'active' | 'stopping';
 
@@ -173,7 +181,8 @@ export function LiveTrackingProvider({ children }: { children: ReactNode }) {
   // --- REST polling: baseline snapshot, works even if the socket is down ---
   useEffect(() => {
     void fetchLive();
-    const interval = setInterval(() => void fetchLive(), LIVE_POLL_INTERVAL_MS);
+    const intervalMs = connectionState === 'connected' ? LIVE_POLL_INTERVAL_CONNECTED_MS : LIVE_POLL_INTERVAL_FALLBACK_MS;
+    const interval = setInterval(() => void fetchLive(), intervalMs);
     const subscription = AppState.addEventListener('change', (next) => {
       if (next === 'active') void fetchLive();
     });
@@ -181,7 +190,7 @@ export function LiveTrackingProvider({ children }: { children: ReactNode }) {
       clearInterval(interval);
       subscription.remove();
     };
-  }, [fetchLive]);
+  }, [fetchLive, connectionState]);
 
   const refresh = useCallback(async () => {
     await fetchLive();

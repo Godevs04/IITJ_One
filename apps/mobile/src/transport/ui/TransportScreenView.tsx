@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { StyleSheet, Text, View, TextInput, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -118,25 +118,32 @@ export function TransportScreenView({
   }, []);
 
   // Toggle favorite stop
-  const onToggleFavorite = async (stopName: string) => {
-    let updated: string[];
-    if (favorites.includes(stopName)) {
-      updated = favorites.filter((s) => s !== stopName);
-      if (selectedFavoriteFilter === stopName) {
-        setSelectedFavoriteFilter(null);
+  // Phase 7.3: stabilized with useCallback (was a fresh closure every
+  // render) — TripCard is now React.memo'd below, and a prop that's
+  // recreated every render would defeat that regardless of trip data
+  // actually changing.
+  const onToggleFavorite = useCallback(
+    async (stopName: string) => {
+      let updated: string[];
+      if (favorites.includes(stopName)) {
+        updated = favorites.filter((s) => s !== stopName);
+        if (selectedFavoriteFilter === stopName) {
+          setSelectedFavoriteFilter(null);
+        }
+      } else {
+        updated = [...favorites, stopName];
       }
-    } else {
-      updated = [...favorites, stopName];
-    }
-    setFavorites(updated);
-    try {
-      await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
-    } catch (e) {
-      console.error('Failed to save favorites', e);
-    }
-  };
+      setFavorites(updated);
+      try {
+        await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to save favorites', e);
+      }
+    },
+    [favorites, selectedFavoriteFilter],
+  );
 
-  const isFavorited = (stopName: string) => favorites.includes(stopName);
+  const isFavorited = useCallback((stopName: string) => favorites.includes(stopName), [favorites]);
 
   const isExceptionLive = useMemo(() => isExceptionActive(activeException), [activeException]);
   // Legacy alert-triggered override — a dated schedule exception takes

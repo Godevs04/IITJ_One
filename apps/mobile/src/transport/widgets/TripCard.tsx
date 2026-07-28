@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/theme/ThemeProvider';
@@ -38,7 +39,7 @@ const LIVE_STATUS_LABEL: Record<string, string> = {
   OFFLINE: 'Offline',
 };
 
-export function TripCard({ item, isFavorited, onToggleFavorite, direction, liveTrip, liveDataStale }: TripCardProps) {
+function TripCardComponent({ item, isFavorited, onToggleFavorite, direction, liveTrip, liveDataStale }: TripCardProps) {
   const theme = useThemeColors();
   const { trip, status, statusText, stops } = item;
   const showRideButton = direction != null && status !== 'completed';
@@ -301,6 +302,15 @@ export function TripCard({ item, isFavorited, onToggleFavorite, direction, liveT
     </View>
   );
 }
+
+// Phase 7.3 free-tier optimization: rendered in a list, re-evaluated on
+// every live-tracking update — memoized since `liveTrip` is already a
+// stable reference for unaffected trips (LiveTrackingProvider's socket
+// merge only replaces the one trip object that changed), and
+// isFavorited/onToggleFavorite are now useCallback-stabilized in
+// TransportScreenView.tsx, so an unrelated trip's update no longer
+// re-renders every card in the list.
+export const TripCard = memo(TripCardComponent);
 
 const styles = StyleSheet.create({
   card: {

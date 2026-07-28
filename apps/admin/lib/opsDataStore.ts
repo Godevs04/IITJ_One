@@ -200,6 +200,21 @@ class OpsDataStore {
     this.setState({ activity: [...this.state.activity, entry].slice(-retention) });
   }
 
+  /**
+   * Phase 7.3 free-tier optimization: the socket subscription below already
+   * patches trip status/vehicle changes in real time via lastTripUpdate —
+   * this REST poll's real job is discovering brand-new trips and full
+   * resyncs, not being the primary update channel. Poll at the configured
+   * (admin-tunable) rate only while the socket is actually down; slow way
+   * down once it's healthy, since the socket is then doing the real work.
+   */
+  private restartTripsTimer(connected: boolean): void {
+    if (this.tripsTimer) clearInterval(this.tripsTimer);
+    const config = getTransportConfig();
+    const intervalMs = connected ? config.tripsPollMs * 6 : config.tripsPollMs;
+    this.tripsTimer = setInterval(() => void this.loadTrips(), intervalMs);
+  }
+
   private start(): void {
     const config = getTransportConfig();
     transportLog('opsDataStore starting', config);
@@ -208,7 +223,7 @@ class OpsDataStore {
     void this.loadVehicles();
     void this.loadHealth();
 
-    this.tripsTimer = setInterval(() => void this.loadTrips(), config.tripsPollMs);
+    this.restartTripsTimer(this.wasConnected);
     this.healthTimer = setInterval(() => void this.loadHealth(), config.healthPollMs);
 
     adminLiveSocket.connect(campusId);
@@ -225,6 +240,10 @@ class OpsDataStore {
           this.setState({ lastReconnectMs: Date.now() - this.disconnectedAt });
           this.disconnectedAt = null;
         }
+      }
+      if (wasConnected !== nowConnected) {
+        this.restartTripsTimer(nowConnected);
+        void this.loadTrips(); // immediate resync right on every transition, not just at the next slow-cadence tick
       }
       this.wasConnected = nowConnected;
 
@@ -471,10 +490,9 @@ class OpsDataStore {
   }
 
   restartPolling(): void {
-    if (this.tripsTimer) clearInterval(this.tripsTimer);
     if (this.healthTimer) clearInterval(this.healthTimer);
     const config = getTransportConfig();
-    this.tripsTimer = setInterval(() => void this.loadTrips(), config.tripsPollMs);
+    this.restartTripsTimer(this.wasConnected);
     this.healthTimer = setInterval(() => void this.loadHealth(), config.healthPollMs);
     void this.loadTrips();
     void this.loadHealth();

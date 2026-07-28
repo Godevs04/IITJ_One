@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, memo } from 'react';
 import { Map as MapLibreMap, Marker, NavigationControl, Popup } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { AdminTrip } from '@/lib/types';
@@ -63,7 +63,7 @@ interface MarkerEntry {
  * parent page refreshes by polling GET /admin/trips (see the Phase 3 report
  * for why: `bus:update` sockets require a ride session admins don't have).
  */
-export function OpsMap({ trips }: OpsMapProps) {
+function OpsMapComponent({ trips }: OpsMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Map<string, MarkerEntry>>(new Map());
@@ -162,3 +162,10 @@ export function OpsMap({ trips }: OpsMapProps) {
 
   return <div ref={containerRef} className="h-[420px] w-full rounded-2xl border border-border" />;
 }
+
+// Phase 7.3 free-tier optimization: the marker-diffing effect above re-runs
+// on every `trips` reference change — pairs with the memoized `filteredTrips`
+// in TransportOperationsPage so an unrelated state change (health poll,
+// activity log push) elsewhere in the page no longer re-triggers a full
+// marker re-render here.
+export const OpsMap = memo(OpsMapComponent);

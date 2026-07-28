@@ -3,6 +3,7 @@ import { upsertBusState } from '../store';
 import { getDensifiedRouteForTrip } from './routeGeometry';
 import { incrementCounter, recordTiming } from './metrics';
 import { getRedisClient } from './redisClient';
+import { busStateWritesSkippedTotal } from './prometheusMetrics';
 import { log } from '../utils/logger';
 import type { TripDoc, BusStateDoc } from '../types';
 
@@ -28,6 +29,32 @@ interface Contributor {
  */
 const contributorsByTrip = new Map<string, Map<string, Contributor>>();
 const lastEmittedAtByTrip = new Map<string, number>();
+
+/**
+ * Phase 7.3 free-tier optimization: computeAndPersistBusState previously
+ * wrote to Mongo on every call — including every GET /transport/live poll
+ * from every concurrent client, regardless of whether the fused position
+ * had actually moved. Tracking the last-persisted signature per trip lets
+ * an unchanged recompute skip the write entirely. Deliberately excludes
+ * `lastUpdated` (which changes on every call by definition) — the returned
+ * `state` object still always carries a fresh `lastUpdated: now`, so
+ * nothing a client/socket sees changes; only the Mongo write becomes
+ * conditional. Resets on process restart (empty map), which correctly
+ * forces one real write to re-establish the durable snapshot.
+ */
+const lastPersistedSignatureByTrip = new Map<string, string>();
+
+function busStateSignature(state: Omit<BusStateDoc, '_id'>): string {
+  return [
+    state.latitude.toFixed(6),
+    state.longitude.toFixed(6),
+    state.confidence,
+    state.contributors,
+    state.positionSource,
+    state.status,
+    state.vehicleId ?? '',
+  ].join('|');
+}
 
 const FRESHNESS_MS = 15_000;
 const OUTLIER_REJECT_METERS = 150;
@@ -302,9 +329,15 @@ export async function computeAndPersistBusState(trip: TripDoc, now: Date = new D
 
   if (state.positionSource === 'estimated') incrementCounter('estimated_fallbacks');
 
-  const persistStarted = Date.now();
-  await upsertBusState(state);
-  recordTiming('busstate_persist_ms', Date.now() - persistStarted);
+  const signature = busStateSignature(state);
+  if (signature !== lastPersistedSignatureByTrip.get(tripId)) {
+    const persistStarted = Date.now();
+    await upsertBusState(state);
+    recordTiming('busstate_persist_ms', Date.now() - persistStarted);
+    lastPersistedSignatureByTrip.set(tripId, signature);
+  } else {
+    busStateWritesSkippedTotal.inc();
+  }
   void cacheBusState(tripId, state);
   void pushReplaySnapshot(tripId, state);
 

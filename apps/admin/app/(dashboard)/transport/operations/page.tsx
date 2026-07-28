@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useOpsData, opsDataStore } from '@/lib/opsDataStore';
 import { getTransportConfig } from '@/lib/transportConfig';
 import { Card, LoadingBlock, PageHeader, StatusPill } from '@/components/ui';
@@ -63,21 +63,30 @@ export default function TransportOperationsPage() {
     }
   }
 
-  const filteredTrips = data.trips.filter((trip) => {
-    if (filters.direction !== 'all' && trip.direction !== filters.direction) return false;
-    if (filters.status !== 'all' && trip.status !== filters.status) return false;
-    if (filters.vehicleId === '__unassigned' && trip.vehicleId) return false;
-    if (filters.vehicleId && filters.vehicleId !== '__unassigned' && trip.vehicleId !== filters.vehicleId) return false;
-    if (filters.onlyActive && (trip.status === 'COMPLETED' || trip.status === 'OFFLINE')) return false;
-    if (filters.onlyEstimated && trip.busState.positionSource !== 'estimated') return false;
-    if (filters.search.trim()) {
-      const q = filters.search.trim().toLowerCase();
-      const vehicle = trip.vehicleId ? data.vehicles.find((v) => v._id === trip.vehicleId) : null;
-      const haystack = `${vehicle?.displayName ?? ''} ${vehicle?.registration ?? ''}`.toLowerCase();
-      if (!haystack.includes(q)) return false;
-    }
-    return true;
-  });
+  // Phase 7.3 free-tier optimization: memoized so OpsMap/TripsTable/
+  // RideMonitor (all React.memo'd or prop-sensitive below) only re-render
+  // when the trips/vehicles/filters actually change, not on every
+  // unrelated opsDataStore update (health poll, activity log push, etc.)
+  // that also touches `data`.
+  const filteredTrips = useMemo(
+    () =>
+      data.trips.filter((trip) => {
+        if (filters.direction !== 'all' && trip.direction !== filters.direction) return false;
+        if (filters.status !== 'all' && trip.status !== filters.status) return false;
+        if (filters.vehicleId === '__unassigned' && trip.vehicleId) return false;
+        if (filters.vehicleId && filters.vehicleId !== '__unassigned' && trip.vehicleId !== filters.vehicleId) return false;
+        if (filters.onlyActive && (trip.status === 'COMPLETED' || trip.status === 'OFFLINE')) return false;
+        if (filters.onlyEstimated && trip.busState.positionSource !== 'estimated') return false;
+        if (filters.search.trim()) {
+          const q = filters.search.trim().toLowerCase();
+          const vehicle = trip.vehicleId ? data.vehicles.find((v) => v._id === trip.vehicleId) : null;
+          const haystack = `${vehicle?.displayName ?? ''} ${vehicle?.registration ?? ''}`.toLowerCase();
+          if (!haystack.includes(q)) return false;
+        }
+        return true;
+      }),
+    [data.trips, data.vehicles, filters],
+  );
 
   if (data.loading) {
     return (
