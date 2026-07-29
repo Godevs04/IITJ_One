@@ -59,7 +59,7 @@ export const config = {
     topicPrefix: process.env.FCM_TOPIC_PREFIX ?? 'iitj',
   },
   adminBootstrap: {
-    email: process.env.ADMIN_BOOTSTRAP_EMAIL ?? 'admin@iitjone.app',
+    email: process.env.ADMIN_BOOTSTRAP_EMAIL ?? 'admin@iitjone.in',
     password: process.env.ADMIN_BOOTSTRAP_PASSWORD ?? INSECURE_DEFAULTS.bootstrapPassword,
     name: process.env.ADMIN_BOOTSTRAP_NAME ?? 'IITJ One Admin',
   },

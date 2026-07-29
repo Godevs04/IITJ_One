@@ -8,7 +8,7 @@ export const openApiSpec = {
     version: '1.0.0',
     description:
       'Campus data API for the IITJ One mobile app and admin console. Public routes are open; `/admin/*` requires a Bearer access token from `POST /admin/login`.',
-    contact: { name: 'IITJ One', email: 'godevsteam@gmail.com' },
+    contact: { name: 'IITJ One', email: 'support@iitjone.in' },
   },
   servers: [
     { url: 'http://localhost:6002/api/v1', description: 'Local' },

@@ -8,7 +8,7 @@ const roleOverride = roleArg ? roleArg.split('=')[1] : undefined;
 
 async function main() {
   await connectDb();
-  const admin = await findAdminByEmail('admin@iitjone.app');
+  const admin = await findAdminByEmail('admin@iitjone.in');
   if (!admin) throw new Error('no admin');
   const token = signAccessToken({
     sub: admin.email,

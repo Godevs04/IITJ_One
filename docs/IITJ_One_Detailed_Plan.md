@@ -30,11 +30,11 @@ IITJ One is a student-developed mobile application (Android + iOS) that consolid
 |---|---|
 | App Name | **IITJ One** |
 | Tagline | One app. All of IIT Jodhpur. |
-| Package ID (Android) | `com.iitjone.app` (finalize before first Play Store upload — cannot be changed later) |
-| Bundle ID (iOS) | `com.iitjone.app` |
+| Package ID (Android) | `app.iitjone` (launched — cannot be changed) |
+| Bundle ID (iOS) | `app.iitjone` (launched — cannot be changed) |
 | Color Palette | Blue + sandstone/desert tones (inspired by IITJ and Jodhpur, without copying official branding) |
 | Logo Concept | Minimal "1" merged with a location pin or connected dots |
-| Handles to reserve | @iitjone (Instagram), iitjone.in / iitjone.app (domain), iitjone (GitHub org) |
+| Handles to reserve | @iitjone (Instagram), iitjone.in (domain), iitjone (GitHub org) |
 
 **Mandatory disclaimer (About screen + store listings):**
 

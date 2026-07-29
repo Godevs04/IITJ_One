@@ -40,7 +40,7 @@ function disclose(name: string, detail: string): void {
 }
 
 async function getAdminToken(): Promise<string> {
-  const admin = await findAdminByEmail('admin@iitjone.app');
+  const admin = await findAdminByEmail('admin@iitjone.in');
   if (!admin) throw new Error('seed admin account not found');
   return signAccessToken({
     sub: admin.email, email: admin.email, name: admin.name, role: admin.role, tokenVersion: admin.tokenVersion,

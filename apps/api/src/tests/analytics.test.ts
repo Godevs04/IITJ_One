@@ -1,8 +1,30 @@
-import { test } from 'node:test';
+import { test, before, after } from 'node:test';
 import * as assert from 'node:assert';
 import { sanitizeParams } from '../services/analytics';
+import { connectDb, disconnectDb } from '../db';
+import { bootstrapTestAdmin } from './helpers/testAdmin';
 
 const BASE = 'http://localhost:6002/api/v1';
+
+let adminAccessToken = '';
+
+before(async () => {
+  await connectDb();
+  const admin = await bootstrapTestAdmin();
+
+  const loginRes = await fetch(`${BASE}/admin/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: admin.email, password: admin.password }),
+  });
+  if (loginRes.ok) {
+    adminAccessToken = ((await loginRes.json()) as { accessToken: string }).accessToken;
+  }
+});
+
+after(async () => {
+  await disconnectDb();
+});
 
 function testEvent(overrides: Record<string, unknown> = {}) {
   return {
@@ -146,14 +168,8 @@ test('POST /api/v1/analytics/ping', async (t) => {
     assert.strictEqual(res.status, 400);
   });
 
-  await t.test('a fresh ping is reflected in admin GET /analytics/live', async () => {
-    const loginRes = await fetch(`${BASE}/admin/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'admin@iitjone.app', password: 'change-me-on-first-login' }),
-    });
-    if (!loginRes.ok) return t.skip('Admin login failed — cannot verify live count');
-    const { accessToken } = (await loginRes.json()) as { accessToken: string };
+  await t.test('a fresh ping is reflected in admin GET /analytics/live', async (t2) => {
+    if (!adminAccessToken) return t2.skip('Admin login failed — cannot verify live count');
 
     await fetch(`${BASE}/analytics/ping`, {
       method: 'POST',
@@ -162,7 +178,7 @@ test('POST /api/v1/analytics/ping', async (t) => {
     });
 
     const liveRes = await fetch(`${BASE}/admin/analytics/live`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: { Authorization: `Bearer ${adminAccessToken}` },
     });
     assert.strictEqual(liveRes.status, 200);
     const live = (await liveRes.json()) as { liveUsers: number; windowSeconds: number };
@@ -192,17 +208,7 @@ test('Admin analytics dashboard (GET /admin/analytics/*) requires authentication
 });
 
 test('Admin analytics dashboard (GET /admin/analytics/*) — authenticated', async (t) => {
-  let accessToken = '';
-
-  t.before(async () => {
-    const res = await fetch(`${BASE}/admin/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'admin@iitjone.app', password: 'change-me-on-first-login' }),
-    });
-    if (res.ok) accessToken = ((await res.json()) as { accessToken: string }).accessToken;
-  });
-
+  const accessToken = adminAccessToken;
   const auth = () => ({ Authorization: `Bearer ${accessToken}` });
 
   await t.test('GET /overview returns the expected shape', async (t2) => {

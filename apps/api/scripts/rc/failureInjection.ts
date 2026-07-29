@@ -79,20 +79,20 @@ async function main() {
 
   // --- 1. Mongo disconnect / reconnect (isolated, this script's own client) ---
   await step('Mongo disconnect → store falls back gracefully → reconnect recovers', async () => {
-    const before = await findAdminByEmail('admin@iitjone.app');
+    const before = await findAdminByEmail('admin@iitjone.in');
     if (!before) throw new Error('precondition failed: admin account not found while connected');
 
     await disconnectDb();
     // Store functions branch on isDbConnected() — this must not throw, it
     // must silently use the in-memory fallback (same contract as every
     // store function in store/fallback.ts).
-    const duringDisconnect = await findAdminByEmail('admin@iitjone.app');
+    const duringDisconnect = await findAdminByEmail('admin@iitjone.in');
     if (duringDisconnect) {
       throw new Error('fallback store unexpectedly has this admin — fallback and real data are not supposed to share identity');
     }
 
     await connectDb();
-    const after = await findAdminByEmail('admin@iitjone.app');
+    const after = await findAdminByEmail('admin@iitjone.in');
     if (!after) throw new Error('did not recover after reconnect — admin lookup failed post-reconnect');
 
     return `pre-disconnect lookup ok, fallback lookup during disconnect returned null (graceful, no throw), post-reconnect lookup recovered admin ${after.email}`;
