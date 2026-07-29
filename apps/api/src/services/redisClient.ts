@@ -1,3 +1,4 @@
+import type Redis from 'ioredis';
 import { config } from '../config';
 import { log } from '../utils/logger';
 
@@ -8,28 +9,12 @@ import { log } from '../utils/logger';
  * caller falls back to its existing in-memory implementation automatically
  * — this module never throws, it just reports connected/disconnected.
  *
- * Soft dependency: if `ioredis` is not installed (incomplete local
- * node_modules), Redis stays permanently disconnected and all callers use
- * their in-memory fallbacks. Production installs include ioredis via
- * package.json.
+ * Soft runtime load: if `ioredis` is missing from node_modules, Redis stays
+ * disconnected and callers use in-memory fallbacks. Types still come from
+ * the package (a declared dependency) so tsc stays accurate for callers.
  */
 
-/** Minimal ioredis surface used by this module — avoids a hard type import. */
-interface RedisLike {
-  on(event: string, listener: (...args: unknown[]) => void): unknown;
-  connect(): Promise<void>;
-  quit(): Promise<unknown>;
-}
-
-type RedisCtor = new (
-  url: string,
-  options: {
-    lazyConnect?: boolean;
-    maxRetriesPerRequest?: number;
-    retryStrategy?: (times: number) => number;
-    reconnectOnError?: () => boolean;
-  },
-) => RedisLike;
+type RedisCtor = typeof import('ioredis').default;
 
 function loadRedisCtor(): RedisCtor | null {
   try {
@@ -43,18 +28,18 @@ function loadRedisCtor(): RedisCtor | null {
 
 const RedisClient = loadRedisCtor();
 
-let client: RedisLike | null = null;
+let client: Redis | null = null;
 let connected = false;
 let connectAttempted = false;
 
-function createClient(): RedisLike {
+function createClient(): Redis {
   if (!RedisClient) {
     throw new Error('ioredis is not installed');
   }
   const redis = new RedisClient(config.redisUrl!, {
     lazyConnect: true,
     maxRetriesPerRequest: 2,
-    retryStrategy: (times: number) => Math.min(times * 500, 5000),
+    retryStrategy: (times) => Math.min(times * 500, 5000),
     reconnectOnError: () => true,
   });
 
@@ -62,9 +47,8 @@ function createClient(): RedisLike {
     connected = true;
     log.info('redis connected');
   });
-  redis.on('error', (...args: unknown[]) => {
-    const err = args[0] as Error | undefined;
-    if (connected) log.warn('redis error', { error: err?.message ?? 'unknown' });
+  redis.on('error', (err) => {
+    if (connected) log.warn('redis error', { error: err.message });
     connected = false;
   });
   redis.on('close', () => {
@@ -98,12 +82,12 @@ export function isRedisConnected(): boolean {
 }
 
 /** Returns the client only when actually connected — callers should always check this rather than assuming a non-null client is usable (ioredis queues commands while reconnecting, which we deliberately avoid relying on for these use cases). */
-export function getRedisClient(): RedisLike | null {
+export function getRedisClient(): Redis | null {
   return connected ? client : null;
 }
 
 /** For the Socket.IO adapter, which needs its own dedicated pub/sub connections regardless of the shared client's state — still gated by the same REDIS_URL/connected check. */
-export function createRedisDuplicate(): RedisLike | null {
+export function createRedisDuplicate(): Redis | null {
   if (!config.redisUrl || !RedisClient) return null;
   return createClient();
 }
