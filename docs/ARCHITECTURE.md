@@ -65,6 +65,21 @@ apps/api/src/
 
 **Sync manifest:** `GET /api/v1/sync/manifest` returns `{ versions: { menu: 6, notices: 30, ... } }` — one integer per module, bumped on every admin write. This is what makes incremental sync possible (see Sync Engine below) without the client ever downloading unchanged data.
 
+### Health Center sync (`src/services/healthCenterSync.ts`)
+
+Unlike every other content module, `healthCenter` isn't admin-authored — it's kept fresh by a background scheduler that scrapes the public IIT Jodhpur Health Center site, started once from `bootstrap()` in `index.ts`:
+
+1. **Static sections** (medical officers, hospitals, services, address, contacts) — fetched from the main Health Center page + its contact sub-page via native `fetch` + `cheerio`, every 24h. Security/Ambulance/Fire numbers are merged in from a fixed constant (the old Emergency module's contacts, preserved here since the mobile Emergency screen was removed in favor of this one).
+2. **Doctor schedule** — the doctors-schedule page embeds an `<iframe>` pointing at a published Google Sheet with **one worksheet tab per day** (no fixed number of tabs, no hardcoded gids). Every 30 minutes:
+   - Discover every worksheet tab from the sheet's own embedded bootstrap script (`items.push({name, gid})`, present in the raw `pubhtml` regardless of JS execution) — however many tabs exist, all are found.
+   - Convert each tab's `gid` into its CSV export URL and fetch it independently.
+   - Parse each CSV with a fully **layout-independent** parser: every `DOCTOR'S NAME` cell anywhere in the grid is its own table anchor (not a shared header row), each anchor's column span is discovered by expanding outward until a blank cell (so column order and inserted/deleted columns don't matter), and each table reads its own rows to its own end independently of any other table's row count. See the parser tests in `src/tests/healthCenterSync.test.ts` for the exact scenarios this is resilient to (reordered/inserted/deleted columns, headers on different rows, decorative title rows, empty tables).
+   - Visiting-specialist name cells are split into `doctorName` + `qualification` by position of the first comma/dash — not a hardcoded replacement list.
+3. Every write is diffed against the last-synced signature (`computeSignature`) before touching MongoDB, and only invalidates the `healthCenter` cache entry when something actually changed.
+4. `dataSource: 'live'|'static'` + `lastSyncedAt`/`lastAttemptedAt` on the document make it visible whether a given campus's data came from a successful scrape or the static fallback seed (used on first boot, or if a scrape fails outright).
+
+A one-off manual verification script (`apps/api/scripts/testHealthCenterSync.ts`) runs the same pipeline directly against the live site and logs the parsed result — useful when IITJ changes the page/sheet layout and the parser needs re-checking.
+
 ---
 
 ## apps/mobile — Mobile app

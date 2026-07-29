@@ -4,7 +4,8 @@ A campus companion for IIT Jodhpur: an Expo/React Native mobile app, an Express 
 
 ## Key features
 
-- **Campus data, always available offline** — mess menu, notices, transport schedules, campus map, emergency contacts, laundry schedules, Wi-Fi guides, and more, synced incrementally and cached on-device (see [Sync Engine](docs/ARCHITECTURE.md#sync-engine-srcservicessyncenginets))
+- **Campus data, always available offline** — mess menu, notices, transport schedules, campus map, Health Center info (medical officers, hospitals, contacts), laundry schedules, Wi-Fi guides, and more, synced incrementally and cached on-device (see [Sync Engine](docs/ARCHITECTURE.md#sync-engine-srcservicessyncenginets))
+- **Health Center hub** — doctor duty roster and visiting specialists synced live from the institute's published Google Sheet (one worksheet per day, auto-discovered), plus hospitals/contacts/facilities — see [Health Center sync](docs/ARCHITECTURE.md#health-center-sync-srcserviceshealthcentersyncts)
 - **Push notifications** — topic-based (no accounts), composed and tracked from the admin panel, with per-device delivery analytics
 - **Firebase-backed observability** — Analytics, Crashlytics, Performance Monitoring, Remote Config, extended (not replaced) by a **custom backend analytics dashboard** for live usage data the Firebase Console can't give you in real time
 - **Anonymous by design** — no end-user accounts anywhere in the app; personal data (Mess QR, notes, laundry hostel) never leaves the device
