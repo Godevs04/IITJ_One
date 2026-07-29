@@ -6,6 +6,7 @@ import { assertProductionSecrets, config } from './config';
 import { connectDb, disconnectDb, startReconnectLoop } from './db';
 import { initFallbackStore } from './store/fallback';
 import { startAnalyticsAggregationScheduler } from './services/analytics';
+import { startHealthCenterSyncScheduler } from './services/healthCenterSync';
 import { registerRideSocketHandlers } from './services/rideSocket';
 import { startMetricsLogging } from './services/metrics';
 import { initRedis, disconnectRedis, isRedisConnected, createRedisDuplicate } from './services/redisClient';
@@ -51,6 +52,7 @@ async function bootstrap(): Promise<void> {
   await initRedis();
 
   startAnalyticsAggregationScheduler();
+  startHealthCenterSyncScheduler();
 
   const app = express();
 

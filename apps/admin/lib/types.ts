@@ -182,11 +182,6 @@ export interface ServicesDoc {
   }[];
 }
 
-export interface EmergencyDoc {
-  campusId: string;
-  contacts: { label: string; phone: string; order: number }[];
-}
-
 export interface LaundryDoc {
   campusId: string;
   schedules: {

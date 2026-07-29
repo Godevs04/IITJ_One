@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     default: 'IITJ One — Campus Companion for IIT Jodhpur',
     template: '%s · IITJ One',
   },
-  description: `${TAGLINE} Mess menu, transport, notices, calendar, laundry, Wi-Fi, and emergency contacts for IIT Jodhpur — offline-first, no login required.`,
+  description: `${TAGLINE} Mess menu, transport, notices, calendar, laundry, Wi-Fi, and Health Center contacts for IIT Jodhpur — offline-first, no login required.`,
   applicationName: 'IITJ One',
   formatDetection: { telephone: false },
   icons: {
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     'IITJ transport',
     'IITJ calendar',
     'IITJ laundry',
-    'IITJ emergency',
+    'IITJ health center',
     'campus app IITJ',
     'student app IITJ',
   ],

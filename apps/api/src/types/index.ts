@@ -7,7 +7,7 @@ export type ModuleName =
   | 'apps'
   | 'map'
   | 'services'
-  | 'emergency'
+  | 'healthCenter'
   | 'about'
   | 'laundry'
   | 'wifi'
@@ -28,7 +28,7 @@ export interface MetaVersions {
   apps: number;
   map: number;
   services: number;
-  emergency: number;
+  healthCenter: number;
   about: number;
   laundry: number;
   wifi: number;
@@ -236,17 +236,6 @@ export interface ServicesDoc {
   entries: ServiceEntry[];
 }
 
-export interface EmergencyContact {
-  label: string;
-  phone: string;
-  order: number;
-}
-
-export interface EmergencyDoc {
-  campusId: string;
-  contacts: EmergencyContact[];
-}
-
 export interface AboutSection {
   title: string;
   body: string;
@@ -267,6 +256,13 @@ export type {
   MapLocationsDoc,
   CampusLocation,
   LocationCategory,
+  MedicalOfficer,
+  Contact,
+  Hospital,
+  VisitingSpecialist,
+  DoctorScheduleEntry,
+  DoctorScheduleDay,
+  HealthCenterDoc,
 } from '@iitj1/types';
 
 export interface AdminDoc {

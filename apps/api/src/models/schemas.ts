@@ -217,17 +217,6 @@ export const servicesPutSchema = z.object({
   ),
 });
 
-export const emergencyPutSchema = z.object({
-  campusId: z.string().min(1),
-  contacts: z.array(
-    z.object({
-      label: z.string(),
-      phone: z.string(),
-      order: z.number().int(),
-    }),
-  ),
-});
-
 export const aboutPutSchema = z.object({
   campusId: z.string().min(1),
   sections: z.array(
@@ -310,7 +299,7 @@ export const menuImportSchema = z.object({
   nonVegCsv: z.string().min(1),
 });
 
-export { holidaysPutSchema, transportAlertsPutSchema, temporaryTransportSchedulePutSchema } from '@iitj1/types';
+export { holidaysPutSchema, transportAlertsPutSchema, temporaryTransportSchedulePutSchema, healthCenterPutSchema } from '@iitj1/types';
 
 export {
   transportScheduleExceptionCreateSchema,

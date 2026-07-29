@@ -286,13 +286,24 @@ export const openApiSpec = {
           },
         ],
       },
-      EmergencyDoc: {
+      HealthCenterDoc: {
         allOf: [
           { $ref: '#/components/schemas/CampusIdBody' },
           {
             type: 'object',
             properties: {
+              medicalOfficers: { type: 'array', items: { type: 'object', additionalProperties: true } },
+              visitingSpecialists: { type: 'array', items: { type: 'object', additionalProperties: true } },
+              doctorSchedule: { type: 'array', items: { type: 'object', additionalProperties: true } },
+              hospitals: { type: 'array', items: { type: 'object', additionalProperties: true } },
               contacts: { type: 'array', items: { type: 'object', additionalProperties: true } },
+              services: { type: 'array', items: { type: 'string' } },
+              address: { type: 'string' },
+              officialUrl: { type: 'string' },
+              doctorScheduleUrl: { type: 'string' },
+              dataSource: { type: 'string', enum: ['live', 'static'] },
+              lastSyncedAt: { type: 'string', nullable: true },
+              lastAttemptedAt: { type: 'string', nullable: true },
             },
           },
         ],
@@ -658,13 +669,13 @@ export const openApiSpec = {
         responses: { '200': { description: 'Services doc' }, '404': { description: 'Not found' } },
       },
     },
-    '/emergency': {
+    '/healthCenter': {
       get: {
         tags: ['Public modules'],
-        summary: 'Emergency contacts',
-        operationId: 'getEmergency',
+        summary: 'Health Center info',
+        operationId: 'getHealthCenter',
         parameters: [{ $ref: '#/components/parameters/CampusQuery' }],
-        responses: { '200': { description: 'Emergency doc' }, '404': { description: 'Not found' } },
+        responses: { '200': { description: 'Health Center doc' }, '404': { description: 'Not found' } },
       },
     },
     '/about': {
@@ -898,7 +909,7 @@ export const openApiSpec = {
     '/admin/apps': modulePut('Admin — campus data', 'putApps', 'AppsDoc', 'Publish apps'),
     '/admin/map': modulePut('Admin — campus data', 'putMap', 'MapDoc', 'Publish map locations'),
     '/admin/services': modulePut('Admin — campus data', 'putServices', 'ServicesDoc', 'Publish services'),
-    '/admin/emergency': modulePut('Admin — campus data', 'putEmergency', 'EmergencyDoc', 'Publish emergency contacts'),
+    '/admin/healthCenter': modulePut('Admin — campus data', 'putHealthCenter', 'HealthCenterDoc', 'Publish Health Center info'),
     '/admin/about': modulePut('Admin — campus data', 'putAbout', 'AboutDoc', 'Publish about'),
     '/admin/laundry': modulePut('Admin — campus data', 'putLaundry', 'LaundryDoc', 'Publish laundry'),
     '/admin/wifi': modulePut('Admin — campus data', 'putWifi', 'WifiDoc', 'Publish Wi-Fi'),

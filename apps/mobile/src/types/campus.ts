@@ -170,17 +170,6 @@ export interface ServicesDoc {
   entries: ServiceEntry[];
 }
 
-export interface EmergencyContact {
-  label: string;
-  phone: string;
-  order: number;
-}
-
-export interface EmergencyDoc {
-  campusId: string;
-  contacts: EmergencyContact[];
-}
-
 export interface AboutSection {
   title: string;
   body: string;
@@ -277,4 +266,10 @@ export type {
   TransportAlertsDoc,
   TemporaryTransportSchedule,
   TemporaryTransportScheduleDoc,
+  MedicalOfficer,
+  Contact,
+  Hospital,
+  VisitingSpecialist,
+  DoctorScheduleEntry,
+  HealthCenterDoc,
 } from '@iitj1/types';

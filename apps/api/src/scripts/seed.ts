@@ -50,7 +50,7 @@ async function seedMongo(): Promise<void> {
   await collections.apps().replaceOne({ campusId }, fallback.apps, { upsert: true });
   await collections.mapLocations().replaceOne({ campusId }, fallback.mapLocations, { upsert: true });
   await collections.services().replaceOne({ campusId }, fallback.services, { upsert: true });
-  await collections.emergency().replaceOne({ campusId }, fallback.emergency, { upsert: true });
+  await collections.healthCenter().replaceOne({ campusId }, fallback.healthCenter, { upsert: true });
   await collections.about().replaceOne({ campusId }, fallback.about, { upsert: true });
   await collections.laundry().replaceOne({ campusId }, fallback.laundry, { upsert: true });
   await collections.wifi().replaceOne({ campusId }, fallback.wifi, { upsert: true });

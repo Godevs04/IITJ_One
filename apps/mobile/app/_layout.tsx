@@ -187,7 +187,7 @@ function RootNavigator() {
         <Stack.Screen name="e-rickshaw" options={{ title: 'E-Rickshaw' }} />
         <Stack.Screen name="cabs-autos" options={{ title: 'Cabs & Autos' }} />
         <Stack.Screen name="wifi" options={{ title: 'Internet & Wi-Fi' }} />
-        <Stack.Screen name="emergency" options={{ title: 'Emergency Contacts' }} />
+        <Stack.Screen name="health-center" options={{ title: 'Health Center' }} />
         <Stack.Screen name="about" options={{ title: 'About IITJ One' }} />
         <Stack.Screen name="settings" options={{ title: 'Settings' }} />
         <Stack.Screen name="mess-qr" options={{ title: 'My Mess QR' }} />

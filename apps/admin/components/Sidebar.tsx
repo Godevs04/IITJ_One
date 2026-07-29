@@ -60,7 +60,6 @@ const NAV: { label: string; items: NavItem[] }[] = [
       { href: '/apps', label: 'Apps' },
       { href: '/map', label: 'Map' },
       { href: '/services', label: 'Services' },
-      { href: '/emergency', label: 'Emergency' },
       { href: '/laundry', label: 'Laundry' },
       { href: '/wifi', label: 'Wi-Fi' },
       { href: '/erickshaw', label: 'E-Rickshaw' },

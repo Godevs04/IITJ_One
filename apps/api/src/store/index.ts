@@ -60,7 +60,7 @@ import type {
   AppsDoc,
   MapLocationsDoc,
   ServicesDoc,
-  EmergencyDoc,
+  HealthCenterDoc,
   AboutDoc,
   AdminDoc,
   AuditLogDoc,
@@ -479,24 +479,40 @@ export async function putServices(
   await bumpVersion('services', doc.campusId, adminEmail, 'update', 'Services updated');
 }
 
-export async function getEmergency(campusId: string): Promise<EmergencyDoc | null> {
-  if (isDbConnected()) return collections.emergency().findOne({ campusId });
+export async function getHealthCenter(campusId: string): Promise<HealthCenterDoc | null> {
+  if (isDbConnected()) return collections.healthCenter().findOne({ campusId });
   initFallbackStore();
-  return getFallbackState().emergency;
+  return getFallbackState().healthCenter;
 }
 
-export async function putEmergency(
-  doc: EmergencyDoc,
+export async function putHealthCenter(
+  doc: HealthCenterDoc,
   adminEmail: string,
   expectedVersion?: number,
 ): Promise<void> {
-  await assertVersionMatches('emergency', doc.campusId, expectedVersion);
+  await assertVersionMatches('healthCenter', doc.campusId, expectedVersion);
   if (isDbConnected()) {
-    await collections.emergency().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
+    await collections.healthCenter().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
   } else {
-    getFallbackState().emergency = doc;
+    getFallbackState().healthCenter = doc;
   }
-  await bumpVersion('emergency', doc.campusId, adminEmail, 'update', 'Emergency contacts updated');
+  await bumpVersion('healthCenter', doc.campusId, adminEmail, 'update', 'Health Center info updated');
+}
+
+/**
+ * Unconditional writer used only by the background scraper (services/healthCenterSync.ts).
+ * Bypasses assertVersionMatches — a solo scheduled job isn't racing a human editor, and
+ * assertVersionMatches would otherwise throw VersionConflictError on every write past the
+ * first (it only tolerates expectedVersion=undefined when no version has ever been set,
+ * which stops being true the moment defaultVersions() seeds healthCenter:1).
+ */
+export async function syncHealthCenter(doc: HealthCenterDoc, source: string): Promise<void> {
+  if (isDbConnected()) {
+    await collections.healthCenter().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
+  } else {
+    getFallbackState().healthCenter = doc;
+  }
+  await bumpVersion('healthCenter', doc.campusId, source, 'update', 'Health Center info synced from source');
 }
 
 export async function getAbout(campusId: string): Promise<AboutDoc | null> {

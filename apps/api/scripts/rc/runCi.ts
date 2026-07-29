@@ -114,8 +114,16 @@ function waitForHealth(timeoutMs: number): Promise<void> {
   });
 }
 
+function resolveTsxCli(): string {
+  const tsxPkgPath = require.resolve('tsx/package.json', { paths: [API_DIR] });
+  const tsxPkg = require(tsxPkgPath) as { bin?: Record<string, string> | string };
+  const binRelative = typeof tsxPkg.bin === 'string' ? tsxPkg.bin : tsxPkg.bin?.tsx;
+  if (!binRelative) throw new Error('Could not resolve tsx CLI bin path from tsx/package.json');
+  return path.join(path.dirname(tsxPkgPath), binRelative);
+}
+
 function startServer(): ChildProcess {
-  const tsxCli = path.join(API_DIR, 'node_modules', 'tsx', 'dist', 'cli.mjs');
+  const tsxCli = resolveTsxCli();
   // Deliberately NOT `tsx watch` — a mid-run file-edit-triggered restart
   // would silently reset in-memory state (contributor pool, GPS throttle
   // map, Prometheus counters) partway through a CI run.

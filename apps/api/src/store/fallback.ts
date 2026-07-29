@@ -1,4 +1,4 @@
-import { DEFAULT_LAUNDRY_SCHEDULES, DEFAULT_WIFI_DOC, DEFAULT_ERICKSHAW_DOC, DEFAULT_MEAL_WINDOWS, DEFAULT_CAMPUS_LOCATIONS } from '@iitj1/types';
+import { DEFAULT_LAUNDRY_SCHEDULES, DEFAULT_WIFI_DOC, DEFAULT_ERICKSHAW_DOC, DEFAULT_MEAL_WINDOWS, DEFAULT_CAMPUS_LOCATIONS, DEFAULT_HEALTH_CENTER_DOC } from '@iitj1/types';
 import { config } from '../config';
 import { loadMenuFromFiles, loadTransportFromFile } from '../services/parsers';
 import type {
@@ -11,7 +11,7 @@ import type {
   AppsDoc,
   MapLocationsDoc,
   ServicesDoc,
-  EmergencyDoc,
+  HealthCenterDoc,
   AboutDoc,
   LaundryDoc,
   WifiDoc,
@@ -49,7 +49,7 @@ interface FallbackState {
   apps: AppsDoc;
   mapLocations: MapLocationsDoc;
   services: ServicesDoc;
-  emergency: EmergencyDoc;
+  healthCenter: HealthCenterDoc;
   about: AboutDoc;
   laundry: LaundryDoc;
   wifi: WifiDoc;
@@ -249,14 +249,9 @@ function buildDefaultState(): FallbackState {
         },
       ],
     },
-    emergency: {
+    healthCenter: {
       campusId,
-      contacts: [
-        { label: 'Campus Security', phone: '100', order: 1 },
-        { label: 'Ambulance', phone: '108', order: 2 },
-        { label: 'Fire', phone: '101', order: 3 },
-        { label: 'Health Centre', phone: '+91-291-2800000', order: 4 },
-      ],
+      ...DEFAULT_HEALTH_CENTER_DOC,
     },
     about: {
       campusId,

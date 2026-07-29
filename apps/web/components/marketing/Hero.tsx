@@ -33,7 +33,7 @@ export function Hero() {
             {TAGLINE}
           </h1>
           <p className="mt-5 max-w-xl text-balance text-base text-muted sm:text-lg">
-            Mess menu, transport, notices, calendar, laundry, Wi-Fi, and emergency contacts —
+            Mess menu, transport, notices, calendar, laundry, Wi-Fi, and Health Center contacts —
             all offline-first, all in one app. No account, no login.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">

@@ -69,7 +69,7 @@ const SCREEN_ROUTES: Record<string, string> = {
   transport: '/(tabs)/transport',
   menu: '/(tabs)/menu',
   calendar: '/calendar',
-  emergency: '/emergency',
+  healthCenter: '/health-center',
   laundry: '/laundry',
   map: '/map',
   'mess-qr': '/mess-qr',

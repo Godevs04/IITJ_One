@@ -68,7 +68,7 @@ const VERSION_META: Record<string, { label: string; hue: string }> = {
   apps: { label: 'Apps', hue: 'bg-[#345a7a]' },
   map: { label: 'Map', hue: 'bg-[#c68642]' },
   services: { label: 'Services', hue: 'bg-[#6e8b74]' },
-  emergency: { label: 'Emergency', hue: 'bg-[#b23a34]' },
+  healthCenter: { label: 'Health Center', hue: 'bg-[#b23a34]' },
   about: { label: 'About', hue: 'bg-[#1d3f5e]' },
   laundry: { label: 'Laundry', hue: 'bg-[#6e8b74]' },
   wifi: { label: 'Wi-Fi', hue: 'bg-[#345a7a]' },

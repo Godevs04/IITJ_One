@@ -1,11 +1,11 @@
-import { UtensilsCrossed, Bus, PhoneCall, CalendarDays } from 'lucide-react';
+import { UtensilsCrossed, Bus, HeartPulse, CalendarDays } from 'lucide-react';
 import { GlassPanel } from '@/components/ui/Card';
 
 const available = [
   { Icon: UtensilsCrossed, label: 'Mess menu' },
   { Icon: Bus, label: 'Transport schedules' },
   { Icon: CalendarDays, label: 'Academic calendar' },
-  { Icon: PhoneCall, label: 'Emergency contacts' },
+  { Icon: HeartPulse, label: 'Health Center contacts' },
 ];
 
 export function OfflineSection() {

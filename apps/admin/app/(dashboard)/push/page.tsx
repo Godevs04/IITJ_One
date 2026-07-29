@@ -36,7 +36,7 @@ const DEEP_LINK_SCREENS = [
   { value: 'notices', label: 'Notices' },
   { value: 'calendar', label: 'Calendar' },
   { value: 'laundry', label: 'Laundry' },
-  { value: 'emergency', label: 'Emergency' },
+  { value: 'healthCenter', label: 'Health Center' },
   { value: 'map', label: 'Map' },
   { value: 'search', label: 'Search' },
   { value: 'settings', label: 'Settings' },

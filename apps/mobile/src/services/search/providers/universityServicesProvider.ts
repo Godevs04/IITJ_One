@@ -6,7 +6,7 @@ const ENTRIES: SearchEntry[] = [
   { id: 'svc-laundry', title: 'Laundry', subtitle: 'Laundry schedules & reminders', module: 'Institute Services', icon: 'shirt-outline', route: '/laundry' },
   { id: 'svc-erickshaw', title: 'E-Rickshaw', subtitle: 'On-campus e-rickshaw service', module: 'Institute Services', icon: 'car-sport-outline', route: '/e-rickshaw' },
   { id: 'svc-cabs', title: 'Cabs & Autos', subtitle: 'Book a cab or auto', module: 'Institute Services', icon: 'car-outline', route: '/cabs-autos' },
-  { id: 'svc-emergency', title: 'Emergency Contacts', subtitle: 'Campus emergency numbers', module: 'Institute Services', icon: 'alert-circle-outline', route: '/emergency' },
+  { id: 'svc-health-center', title: 'Health Center', subtitle: 'Doctors, hospitals & health contacts', module: 'Institute Services', icon: 'medical-outline', route: '/health-center' },
   { id: 'svc-services', title: 'Campus Services', subtitle: 'Student services directory', module: 'Institute Services', icon: 'construct-outline', keywords: ['student services'], route: '/services' },
   { id: 'svc-qr', title: 'Mess QR', subtitle: 'Your Mess QR pass', module: 'Institute Services', icon: 'qr-code-outline', keywords: ['qr'], route: '/mess-qr' },
   { id: 'svc-portals', title: 'Essential Portals', subtitle: 'Institute web portals', module: 'Institute Services', icon: 'link-outline', route: '/portals' },

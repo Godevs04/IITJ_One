@@ -33,7 +33,7 @@ const SECTIONS: MoreSection[] = [
       { title: 'Laundry', icon: 'shirt-outline', route: '/laundry' },
       { title: 'E-Rickshaw', icon: 'car-sport-outline', route: '/e-rickshaw' },
       { title: 'Cabs & Autos', icon: 'car-outline', route: '/cabs-autos' },
-      { title: 'Emergency Contacts', icon: 'alert-circle-outline', route: '/emergency', variant: 'danger' },
+      { title: 'Health Center', icon: 'medical-outline', route: '/health-center', variant: 'danger' },
     ],
   },
   {
