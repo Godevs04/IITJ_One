@@ -1,4 +1,4 @@
-import Redis from 'ioredis';
+import type Redis from 'ioredis';
 import { config } from '../config';
 import { log } from '../utils/logger';
 
@@ -8,13 +8,35 @@ import { log } from '../utils/logger';
  * limiting, replay ring buffer). REDIS_URL unset or unreachable ⇒ every
  * caller falls back to its existing in-memory implementation automatically
  * — this module never throws, it just reports connected/disconnected.
+ *
+ * Soft runtime load: if `ioredis` is missing from node_modules, Redis stays
+ * disconnected and callers use in-memory fallbacks. Types still come from
+ * the package (a declared dependency) so tsc stays accurate for callers.
  */
+
+type RedisCtor = typeof import('ioredis').default;
+
+function loadRedisCtor(): RedisCtor | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const mod = require('ioredis') as { default?: RedisCtor } & RedisCtor;
+    return (mod.default ?? mod) as RedisCtor;
+  } catch {
+    return null;
+  }
+}
+
+const RedisClient = loadRedisCtor();
+
 let client: Redis | null = null;
 let connected = false;
 let connectAttempted = false;
 
 function createClient(): Redis {
-  const redis = new Redis(config.redisUrl!, {
+  if (!RedisClient) {
+    throw new Error('ioredis is not installed');
+  }
+  const redis = new RedisClient(config.redisUrl!, {
     lazyConnect: true,
     maxRetriesPerRequest: 2,
     retryStrategy: (times) => Math.min(times * 500, 5000),
@@ -41,6 +63,10 @@ function createClient(): Redis {
 export async function initRedis(): Promise<void> {
   if (!config.redisUrl || connectAttempted) return;
   connectAttempted = true;
+  if (!RedisClient) {
+    log.warn('ioredis not installed — running in in-memory fallback mode');
+    return;
+  }
   client = createClient();
   try {
     await client.connect();
@@ -62,7 +88,7 @@ export function getRedisClient(): Redis | null {
 
 /** For the Socket.IO adapter, which needs its own dedicated pub/sub connections regardless of the shared client's state — still gated by the same REDIS_URL/connected check. */
 export function createRedisDuplicate(): Redis | null {
-  if (!config.redisUrl) return null;
+  if (!config.redisUrl || !RedisClient) return null;
   return createClient();
 }
 

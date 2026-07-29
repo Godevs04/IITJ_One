@@ -3,9 +3,9 @@ import * as assert from 'node:assert';
 import { randomUUID } from 'crypto';
 import { io, type Socket } from 'socket.io-client';
 import { connectDb, disconnectDb } from '../db';
-import { ensureTodaysTrips } from '../services/tripMaterialization';
 import { createRideSession } from '../store';
 import { bootstrapTestAdmin } from './helpers/testAdmin';
+import { createActiveTripFixture } from './fixtures/tripFixtures';
 
 // This file follows the same convention as the rest of src/tests/: it
 // assumes a real API server is already running on localhost:6002 (see
@@ -50,8 +50,8 @@ function locationPayload(sessionId: string, overrides: Partial<Record<string, un
     sessionId,
     tripId,
     campusId: CAMPUS_ID,
-    latitude: 26.469,
-    longitude: 73.1125,
+    latitude: 26.471,
+    longitude: 73.113,
     speed: 5,
     heading: null,
     accuracy: 15,
@@ -62,9 +62,11 @@ function locationPayload(sessionId: string, overrides: Partial<Record<string, un
 
 before(async () => {
   await connectDb();
-  const trips = await ensureTodaysTrips(CAMPUS_ID, new Date());
-  assert.ok(trips.length > 0, 'fixture data must materialize at least one trip today');
-  tripId = String((trips.find((t) => t.direction === 'arrival') ?? trips[0])._id);
+  // Phase 7.2: do not depend on timetable materialization (day-of-week /
+  // holidays / schedule exceptions). A fixture trip is always boardable now
+  // and carries real stop geometry so GPS corridor checks still run.
+  const trip = await createActiveTripFixture({ campusId: CAMPUS_ID, direction: 'arrival' });
+  tripId = String(trip._id);
 
   // A dedicated, randomly-credentialed test admin (see helpers/testAdmin.ts)
   // rather than the documented seed account — this suite must not depend on

@@ -1,9 +1,12 @@
 import { test, before, after } from 'node:test';
 import * as assert from 'node:assert';
 import { connectDb, disconnectDb } from '../db';
-import { ensureTodaysTrips } from '../services/tripMaterialization';
 import { assignTripForRideStart } from '../services/tripAssignment';
 import { updateTripStatus } from '../store';
+import {
+  createActiveTripFixture,
+  createOfflineTripFixture,
+} from './fixtures/tripFixtures';
 
 before(async () => {
   await connectDb();
@@ -14,12 +17,11 @@ after(async () => {
 });
 
 test('assignTripForRideStart: matches a trip whose window covers `at`, disambiguated by direction', async () => {
-  const trips = await ensureTodaysTrips('iitj', new Date());
-  const candidate = trips.find((t) => t.direction === 'arrival');
-  assert.ok(candidate, 'fixture data must contain at least one arrival trip to test against');
+  const at = new Date();
+  const candidate = await createActiveTripFixture({ direction: 'arrival', at });
 
   const midpoint = new Date(
-    (candidate!.scheduledDeparture.getTime() + candidate!.scheduledArrival.getTime()) / 2,
+    (candidate.scheduledDeparture.getTime() + candidate.scheduledArrival.getTime()) / 2,
   );
 
   const result = await assignTripForRideStart({
@@ -49,12 +51,11 @@ test('assignTripForRideStart: returns no_matching_trip well outside every trip\'
 });
 
 test('assignTripForRideStart: does not match a trip whose direction differs from the request', async () => {
-  const trips = await ensureTodaysTrips('iitj', new Date());
-  const departureTrip = trips.find((t) => t.direction === 'departure');
-  assert.ok(departureTrip, 'fixture data must contain at least one departure trip to test against');
+  const at = new Date();
+  const departureTrip = await createActiveTripFixture({ direction: 'departure', at });
 
   const midpoint = new Date(
-    (departureTrip!.scheduledDeparture.getTime() + departureTrip!.scheduledArrival.getTime()) / 2,
+    (departureTrip.scheduledDeparture.getTime() + departureTrip.scheduledArrival.getTime()) / 2,
   );
 
   // Same time window as a real departure trip, but asking for 'arrival' —
@@ -69,21 +70,15 @@ test('assignTripForRideStart: does not match a trip whose direction differs from
 
   if (result.ok) {
     assert.strictEqual(result.trip.direction, 'arrival');
-  }
-  // Either no_matching_trip, or (if an arrival trip also happens to overlap
-  // this exact window in the fixture data) a genuine arrival trip — never
-  // the departureTrip itself.
-  if (result.ok) {
-    assert.notStrictEqual(String(result.trip._id), String(departureTrip!._id));
+    assert.notStrictEqual(String(result.trip._id), String(departureTrip._id));
   }
 });
 
 test('assignTripForRideStart: 20-minute early-boarding window before scheduled departure is honored', async () => {
-  const trips = await ensureTodaysTrips('iitj', new Date());
-  const candidate = trips.find((t) => t.direction === 'departure');
-  assert.ok(candidate, 'fixture data must contain at least one departure trip to test against');
+  const at = new Date();
+  const candidate = await createActiveTripFixture({ direction: 'departure', at });
 
-  const justBeforeDeparture = new Date(candidate!.scheduledDeparture.getTime() - 10 * 60 * 1000);
+  const justBeforeDeparture = new Date(candidate.scheduledDeparture.getTime() - 10 * 60 * 1000);
   const result = await assignTripForRideStart({
     campusId: 'iitj',
     direction: 'departure',
@@ -95,11 +90,10 @@ test('assignTripForRideStart: 20-minute early-boarding window before scheduled d
 });
 
 test('assignTripForRideStart: rejects more than 20 minutes before scheduled departure', async () => {
-  const trips = await ensureTodaysTrips('iitj', new Date());
-  const candidate = trips.find((t) => t.direction === 'departure');
-  assert.ok(candidate);
+  const at = new Date();
+  const candidate = await createActiveTripFixture({ direction: 'departure', at });
 
-  const wayTooEarly = new Date(candidate!.scheduledDeparture.getTime() - 25 * 60 * 1000);
+  const wayTooEarly = new Date(candidate.scheduledDeparture.getTime() - 25 * 60 * 1000);
   const result = await assignTripForRideStart({
     campusId: 'iitj',
     direction: 'departure',
@@ -111,18 +105,17 @@ test('assignTripForRideStart: rejects more than 20 minutes before scheduled depa
   // trip could theoretically still match by coincidence, so only assert
   // non-match when the result names this exact trip.
   if (result.ok) {
-    assert.notStrictEqual(String(result.trip._id), String(candidate!._id));
+    assert.notStrictEqual(String(result.trip._id), String(candidate._id));
   }
 });
 
 test('assignTripForRideStart: a trip manually marked COMPLETED is never matched, even within its normal time window (resilience: trip lifecycle end)', async () => {
-  const trips = await ensureTodaysTrips('iitj', new Date());
-  const candidate = trips.find((t) => t.direction === 'departure');
-  assert.ok(candidate);
+  const at = new Date();
+  const candidate = await createActiveTripFixture({ direction: 'departure', at });
+  await updateTripStatus(String(candidate._id), 'COMPLETED');
 
-  await updateTripStatus(String(candidate!._id), 'COMPLETED');
   try {
-    const midpoint = new Date((candidate!.scheduledDeparture.getTime() + candidate!.scheduledArrival.getTime()) / 2);
+    const midpoint = new Date((candidate.scheduledDeparture.getTime() + candidate.scheduledArrival.getTime()) / 2);
     const result = await assignTripForRideStart({
       campusId: 'iitj',
       direction: 'departure',
@@ -131,33 +124,26 @@ test('assignTripForRideStart: a trip manually marked COMPLETED is never matched,
       at: midpoint,
     });
     if (result.ok) {
-      assert.notStrictEqual(String(result.trip._id), String(candidate!._id));
+      assert.notStrictEqual(String(result.trip._id), String(candidate._id));
     }
   } finally {
-    // Restore — this trip is shared fixture data other tests in this file also rely on.
-    await updateTripStatus(String(candidate!._id), 'WAITING');
+    await updateTripStatus(String(candidate._id), 'WAITING');
   }
 });
 
 test('assignTripForRideStart: an OFFLINE trip is never matched (resilience: admin-forced service outage)', async () => {
-  const trips = await ensureTodaysTrips('iitj', new Date());
-  const candidate = trips.find((t) => t.direction === 'arrival');
-  assert.ok(candidate);
+  const at = new Date();
+  const candidate = await createOfflineTripFixture({ direction: 'arrival', at });
 
-  await updateTripStatus(String(candidate!._id), 'OFFLINE');
-  try {
-    const midpoint = new Date((candidate!.scheduledDeparture.getTime() + candidate!.scheduledArrival.getTime()) / 2);
-    const result = await assignTripForRideStart({
-      campusId: 'iitj',
-      direction: 'arrival',
-      latitude: 26.469,
-      longitude: 73.1125,
-      at: midpoint,
-    });
-    if (result.ok) {
-      assert.notStrictEqual(String(result.trip._id), String(candidate!._id));
-    }
-  } finally {
-    await updateTripStatus(String(candidate!._id), 'WAITING');
+  const midpoint = new Date((candidate.scheduledDeparture.getTime() + candidate.scheduledArrival.getTime()) / 2);
+  const result = await assignTripForRideStart({
+    campusId: 'iitj',
+    direction: 'arrival',
+    latitude: 26.469,
+    longitude: 73.1125,
+    at: midpoint,
+  });
+  if (result.ok) {
+    assert.notStrictEqual(String(result.trip._id), String(candidate._id));
   }
 });

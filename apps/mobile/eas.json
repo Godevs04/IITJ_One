@@ -16,7 +16,11 @@
       "distribution": "internal",
       "env": {
         "APP_VARIANT": "preview",
-        "EXPO_PUBLIC_API_URL": "https://api.iitjone.app/api/v1",
+        "EXPO_PUBLIC_API_URL": "https://api.iitjone.in/api/v1",
+        "EXPO_PUBLIC_PRIVACY_POLICY_URL": "https://iitjone.in/privacy",
+        "EXPO_PUBLIC_TERMS_URL": "https://iitjone.in/terms",
+        "EXPO_PUBLIC_SUPPORT_URL": "https://iitjone.in/support",
+        "EXPO_PUBLIC_SUPPORT_EMAIL": "support@iitjone.in",
         "EXPO_PUBLIC_ENABLE_ANALYTICS": "true",
         "EXPO_PUBLIC_ENABLE_CRASH_REPORTING": "true"
       }
@@ -25,7 +29,11 @@
       "autoIncrement": true,
       "env": {
         "APP_VARIANT": "production",
-        "EXPO_PUBLIC_API_URL": "https://api.iitjone.app/api/v1",
+        "EXPO_PUBLIC_API_URL": "https://api.iitjone.in/api/v1",
+        "EXPO_PUBLIC_PRIVACY_POLICY_URL": "https://iitjone.in/privacy",
+        "EXPO_PUBLIC_TERMS_URL": "https://iitjone.in/terms",
+        "EXPO_PUBLIC_SUPPORT_URL": "https://iitjone.in/support",
+        "EXPO_PUBLIC_SUPPORT_EMAIL": "support@iitjone.in",
         "EXPO_PUBLIC_ENABLE_ANALYTICS": "true",
         "EXPO_PUBLIC_ENABLE_CRASH_REPORTING": "true"
       }

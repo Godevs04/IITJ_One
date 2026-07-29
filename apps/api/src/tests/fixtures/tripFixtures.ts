@@ -16,7 +16,17 @@ export interface TripFixtureOptions {
   direction?: 'departure' | 'arrival';
   /** Reference instant the fixture's window is built around — defaults to real now via `new Date()` at call time. Pass an injected TimeProvider's `now()` for full determinism. */
   at?: Date;
+  /** Real stop/route labels from packages/types busStops — needed when GPS corridor checks must run. */
+  route?: string;
+  from?: string;
+  to?: string;
 }
+
+const DEFAULT_ROUTE = {
+  route: 'MBM College → Paota → IITJ',
+  from: 'Gate 1: MBM',
+  to: 'IITJ',
+};
 
 /**
  * A trip whose real-time assignable window ([scheduledDeparture - 20min,
@@ -31,6 +41,9 @@ export async function createActiveTripFixture(options: TripFixtureOptions = {}):
   const direction = options.direction ?? 'departure';
   const at = options.at ?? new Date();
   const serviceDate = getIstDateString(at);
+  const route = options.route ?? DEFAULT_ROUTE.route;
+  const from = options.from ?? DEFAULT_ROUTE.from;
+  const to = options.to ?? DEFAULT_ROUTE.to;
 
   return upsertTripByRouteKey({
     campusId,
@@ -40,9 +53,9 @@ export async function createActiveTripFixture(options: TripFixtureOptions = {}):
     scheduledArrival: new Date(at.getTime() + 90 * 60 * 1000),
     sourceBus: 'RC-FIXTURE',
     routeKey: fixtureRouteKey(),
-    route: 'RC Fixture Route',
-    from: 'RC Fixture Origin',
-    to: 'RC Fixture Destination',
+    route,
+    from,
+    to,
   });
 }
 
@@ -61,9 +74,9 @@ export async function createCompletedTripFixture(options: TripFixtureOptions = {
     scheduledArrival: new Date(at.getTime() - 2 * 60 * 60 * 1000),
     sourceBus: 'RC-FIXTURE',
     routeKey: fixtureRouteKey(),
-    route: 'RC Fixture Route',
-    from: 'RC Fixture Origin',
-    to: 'RC Fixture Destination',
+    route: options.route ?? DEFAULT_ROUTE.route,
+    from: options.from ?? DEFAULT_ROUTE.from,
+    to: options.to ?? DEFAULT_ROUTE.to,
   });
   const updated = await updateTripStatus(String(trip._id), 'COMPLETED');
   return updated ?? trip;
@@ -84,9 +97,9 @@ export async function createOfflineTripFixture(options: TripFixtureOptions = {})
     scheduledArrival: new Date(at.getTime() + 90 * 60 * 1000),
     sourceBus: 'RC-FIXTURE',
     routeKey: fixtureRouteKey(),
-    route: 'RC Fixture Route',
-    from: 'RC Fixture Origin',
-    to: 'RC Fixture Destination',
+    route: options.route ?? DEFAULT_ROUTE.route,
+    from: options.from ?? DEFAULT_ROUTE.from,
+    to: options.to ?? DEFAULT_ROUTE.to,
   });
   const updated = await updateTripStatus(String(trip._id), 'OFFLINE');
   return updated ?? trip;

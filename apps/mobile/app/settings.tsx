@@ -16,9 +16,10 @@ import { isHttpUrl } from '@/utils/urlSafety';
 import { debugListKeys } from '@/debug/listDebug';
 import { usePostHog } from 'posthog-react-native';
 
-const PRIVACY_POLICY_URL = process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL;
-const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL;
-const SUPPORT_URL = process.env.EXPO_PUBLIC_SUPPORT_URL;
+const PRIVACY_POLICY_URL =
+  process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL || 'https://iitjone.in/privacy';
+const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL || 'https://iitjone.in/terms';
+const SUPPORT_URL = process.env.EXPO_PUBLIC_SUPPORT_URL || 'https://iitjone.in/support';
 
 const NOTIFICATION_TOPICS = [
   { key: 'iitj_all', label: 'All campus updates' },

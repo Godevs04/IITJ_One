@@ -15,7 +15,7 @@
     "build:types": "npm run build -w @iitj1/types",
     "build:web": "npm run build -w @iitj1/web",
     "typecheck": "npm run typecheck -w @iitj1/types && npm run build -w @iitj1/types && npm run typecheck -w @iitj1/api && npm run typecheck -w @iitj1/admin && npm run typecheck -w @iitj1/web",
-    "prepare": "npm run build -w @iitj1/types"
+    "prepare": "(husky || true) && npm run build -w @iitj1/types"
   },
   "engines": {
     "node": "20.x"
@@ -56,5 +56,8 @@
     "@expo/metro-config": {
       "postcss": "^8.5.18"
     }
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
   }
 }

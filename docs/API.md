@@ -22,14 +22,14 @@ Two token types, both JWT, both admin-only — **the mobile app has no end-user 
 POST /api/v1/admin/login
 Content-Type: application/json
 
-{ "email": "admin@iitjone.app", "password": "..." }
+{ "email": "admin@iitjone.in", "password": "..." }
 ```
 ```json
 200 OK
 {
   "accessToken": "eyJ...",
   "refreshToken": "eyJ...",
-  "admin": { "email": "admin@iitjone.app", "name": "IITJ One Admin", "role": "superadmin" }
+  "admin": { "email": "admin@iitjone.in", "name": "IITJ One Admin", "role": "superadmin" }
 }
 ```
 

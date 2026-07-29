@@ -459,7 +459,7 @@ curl -X POST http://localhost:6002/api/v1/admin/admins \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <token>" \
   -d '{
-    "email": "test@iitjone.app",
+    "email": "test@iitjone.in",
     "password": "testpass123",
     "name": "Test Admin",
     "role": "admin"

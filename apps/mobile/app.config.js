@@ -27,16 +27,14 @@ const VARIANT =
 const IS_DEV = VARIANT === 'development';
 const IS_PROD = VARIANT === 'production';
 
-const PROJECT_ROOT = __dirname;
-
 function resolveLocal(relativePath) {
-  const absolute = path.join(PROJECT_ROOT, relativePath);
+  // Expo/EAS run config from the app root (cwd), so resolve relative to that.
+  const absolute = path.resolve(relativePath);
   return fs.existsSync(absolute) ? relativePath : undefined;
 }
 
 /** Prefer EAS file-secret path, then a local file, then the conventional path. */
-function resolveGoogleServices(envKey, relativePath) {
-  const fromEas = process.env[envKey];
+function resolveGoogleServices(fromEas, relativePath) {
   if (fromEas && fs.existsSync(fromEas)) {
     return fromEas;
   }
@@ -57,7 +55,7 @@ module.exports = ({ config }) => {
   const apiUrl =
     process.env.EXPO_PUBLIC_API_URL ||
     (IS_PROD || VARIANT === 'preview'
-      ? 'https://api.iitjone.app/api/v1'
+      ? 'https://api.iitjone.in/api/v1'
       : undefined);
 
   const next = {
@@ -67,7 +65,7 @@ module.exports = ({ config }) => {
       ...config.ios,
       bundleIdentifier,
       googleServicesFile: resolveGoogleServices(
-        'GOOGLE_SERVICES_PLIST',
+        process.env.GOOGLE_SERVICES_PLIST,
         './GoogleService-Info.plist',
       ),
     },
@@ -75,7 +73,7 @@ module.exports = ({ config }) => {
       ...config.android,
       package: androidPackage,
       googleServicesFile: resolveGoogleServices(
-        'GOOGLE_SERVICES_JSON',
+        process.env.GOOGLE_SERVICES_JSON,
         './google-services.json',
       ),
     },

@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+# Monorepo pre-commit: typecheck the API workspace (fast enough for hooks).
+# Skip with: git commit --no-verify
+
+npm run typecheck -w @iitj1/api

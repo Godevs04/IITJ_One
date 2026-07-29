@@ -58,7 +58,7 @@ All in `apps/api/.env` (see `.env.example` for the full annotated list):
 | `MONGODB_URI` | A real MongoDB Atlas (or equivalent) connection string — production should not run on the in-memory fallback |
 | `JWT_SECRET`, `JWT_REFRESH_SECRET` | Long random strings, **must differ from each other** |
 | `CORS_ORIGIN` | Comma-separated production origins (admin panel's domain; the mobile app doesn't need CORS since it's not browser-based) |
-| `API_BASE_URL` | Your public API URL, e.g. `https://api.iitjone.app` |
+| `API_BASE_URL` | Your public API URL, e.g. `https://api.iitjone.in` |
 | `FCM_PROJECT_ID`, `FCM_CLIENT_EMAIL`, `FCM_PRIVATE_KEY` | Firebase service account — required for `/admin/push` to work (returns `503` without it) |
 | `CLOUDINARY_*` | Required for admin image uploads |
 | `ADMIN_BOOTSTRAP_*` | Only used by `npm run seed` — rotate/remove after first login |

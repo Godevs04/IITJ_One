@@ -14,8 +14,8 @@ import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 const DISCLAIMER =
   'IITJ One is a student-developed application for the IIT Jodhpur community. Not affiliated with or officially endorsed by IIT Jodhpur.';
 
-const SUPPORT_URL = process.env.EXPO_PUBLIC_SUPPORT_URL;
-const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL;
+const SUPPORT_URL = process.env.EXPO_PUBLIC_SUPPORT_URL || 'https://iitjone.in/support';
+const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@iitjone.in';
 
 const INSTITUTE_DETAILS = [
   {
