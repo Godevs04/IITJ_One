@@ -89,6 +89,7 @@ jobs:
       JWT_SECRET: ci-only-secret-not-used-in-production-min32
       JWT_REFRESH_SECRET: ci-only-refresh-secret-differs-min32c
       NODE_ENV: test
+      PORT: 6002
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -102,7 +103,33 @@ jobs:
             packages/*/node_modules
             packages/types/dist
           key: ${{ runner.os }}-deps-${{ github.sha }}
+      # test:api's suite is integration-style: it makes real HTTP requests against a live
+      # server (see e.g. src/tests/health.test.ts, authentication.test.ts) — it isn't enough
+      # to just run the test process, a server must actually be listening on $PORT first.
+      - name: Start API server
+        working-directory: apps/api
+        run: |
+          npx tsx src/index.ts > /tmp/api-server.log 2>&1 &
+          echo $! > /tmp/api-server.pid
+      - name: Wait for API to become healthy
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf "http://localhost:${PORT}/api/v1/health" > /dev/null; then
+              echo "API is healthy"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "API did not become healthy within 30s"
+          cat /tmp/api-server.log
+          exit 1
       - run: npm run test:api
+      - name: Stop API server
+        if: always()
+        run: kill "$(cat /tmp/api-server.pid)" 2>/dev/null || true
+      - name: Show API server log on failure
+        if: failure()
+        run: cat /tmp/api-server.log 2>/dev/null || true
 
   build:
     needs: [lint, typecheck, test]
