@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/theme/ThemeProvider';
@@ -6,16 +7,50 @@ import type { TripWithStatus } from '../models/BusTypes';
 import { getStopCoords, openStopInMaps } from '../utils/coordinates';
 import { nowMinutes, parseTimeToMinutes } from '@/utils/date';
 import { debugListKeys } from '@/debug/listDebug';
+import { RideButton } from './RideButton';
+import type { RideDirection, TransportLiveTrip } from '../services/liveTrackingApi';
 
 interface TripCardProps {
   item: TripWithStatus;
   isFavorited: (stopName: string) => boolean;
   onToggleFavorite: (stopName: string) => void;
+  /** This trip's ride-sharing direction — omitted, live tracking is not wired in for this card. */
+  direction?: RideDirection;
+  /** The live-tracking snapshot matched to this scheduled trip, if the backend has one. */
+  liveTrip?: TransportLiveTrip;
+  /** True when live data is known stale (poll failing and socket disconnected) — hides the live badge rather than showing a frozen position. */
+  liveDataStale?: boolean;
 }
 
-export function TripCard({ item, isFavorited, onToggleFavorite }: TripCardProps) {
+const CONFIDENCE_LABEL: Record<string, string> = {
+  high: 'High confidence',
+  medium: 'Medium confidence',
+  low: 'Low confidence',
+};
+
+const LIVE_STATUS_LABEL: Record<string, string> = {
+  WAITING: 'Waiting to depart',
+  BOARDING: 'Boarding',
+  LIVE: 'En route',
+  PREDICTING: 'En route (predicted)',
+  STOPPED: 'Stopped',
+  COMPLETED: 'Completed',
+  NO_DATA: 'No data',
+  OFFLINE: 'Offline',
+};
+
+function TripCardComponent({ item, isFavorited, onToggleFavorite, direction, liveTrip, liveDataStale }: TripCardProps) {
   const theme = useThemeColors();
   const { trip, status, statusText, stops } = item;
+  const showRideButton = direction != null && status !== 'completed';
+  const showLiveBadge = liveTrip != null && !liveDataStale;
+  const confidenceColor = liveTrip
+    ? liveTrip.busState.confidence === 'high'
+      ? theme.veg
+      : liveTrip.busState.confidence === 'medium'
+        ? theme.secondary
+        : theme.textMuted
+    : theme.textMuted;
 
   const isCompleted = status === 'completed';
   const isTransit = status === 'transit';
@@ -215,9 +250,67 @@ export function TripCard({ item, isFavorited, onToggleFavorite }: TripCardProps)
       <Text style={[styles.routeText, { color: theme.textMuted }]}>
         Route: {trip.route || 'Direct'}
       </Text>
+
+      {/* Live Tracking */}
+      {showLiveBadge && liveTrip ? (
+        <View style={styles.liveRow}>
+          <View
+            style={[
+              styles.liveBadge,
+              {
+                backgroundColor: liveTrip.busState.positionSource === 'live' ? theme.vegTint : theme.chipBackground,
+                borderColor: liveTrip.busState.positionSource === 'live' ? theme.veg : theme.border,
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.liveDot,
+                { backgroundColor: liveTrip.busState.positionSource === 'live' ? theme.veg : theme.textMuted },
+              ]}
+            />
+            <Text
+              style={[
+                styles.liveBadgeText,
+                { color: liveTrip.busState.positionSource === 'live' ? theme.veg : theme.textMuted },
+              ]}
+            >
+              {liveTrip.busState.positionSource === 'live' ? 'LIVE' : 'ESTIMATED'}
+            </Text>
+          </View>
+          {liveTrip.vehicle?.displayName ? (
+            <Text style={[styles.liveDetailText, { color: theme.textMuted }]} numberOfLines={1}>
+              {liveTrip.vehicle.displayName}
+            </Text>
+          ) : null}
+          {liveTrip.busState.positionSource === 'live' && liveTrip.busState.contributors > 0 ? (
+            <View style={styles.liveDetailRow}>
+              <Ionicons name="people-outline" size={12} color={theme.iconMuted} />
+              <Text style={[styles.liveDetailText, { color: theme.textMuted }]}>{liveTrip.busState.contributors}</Text>
+            </View>
+          ) : null}
+          <Text style={[styles.confidenceText, { color: confidenceColor }]} numberOfLines={1}>
+            {CONFIDENCE_LABEL[liveTrip.busState.confidence] ?? liveTrip.busState.confidence}
+          </Text>
+          <Text style={[styles.liveDetailText, { color: theme.textMuted }]} numberOfLines={1}>
+            {LIVE_STATUS_LABEL[liveTrip.status] ?? liveTrip.status}
+          </Text>
+        </View>
+      ) : null}
+
+      {showRideButton ? <RideButton direction={direction} tripId={liveTrip?.tripId} /> : null}
     </View>
   );
 }
+
+// Phase 7.3 free-tier optimization: rendered in a list, re-evaluated on
+// every live-tracking update — memoized since `liveTrip` is already a
+// stable reference for unaffected trips (LiveTrackingProvider's socket
+// merge only replaces the one trip object that changed), and
+// isFavorited/onToggleFavorite are now useCallback-stabilized in
+// TransportScreenView.tsx, so an unrelated trip's update no longer
+// re-renders every card in the list.
+export const TripCard = memo(TripCardComponent);
 
 const styles = StyleSheet.create({
   card: {
@@ -310,5 +403,46 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.7,
+  },
+  liveRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: AppSpacing.sm,
+    marginTop: AppSpacing.xs,
+  },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: AppRadius.full,
+    borderWidth: 1,
+    paddingHorizontal: AppSpacing.sm,
+    paddingVertical: 2,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  liveBadgeText: {
+    ...AppTypography.caption,
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  liveDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  liveDetailText: {
+    ...AppTypography.caption,
+    fontSize: 11,
+  },
+  confidenceText: {
+    ...AppTypography.caption,
+    fontSize: 11,
+    fontWeight: '600',
   },
 });

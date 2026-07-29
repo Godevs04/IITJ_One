@@ -20,6 +20,7 @@ import { ensureNotificationChannelsAsync } from '@/services/notificationChannels
 import { initBackendAnalytics, teardownBackendAnalytics } from '@/services/analytics/backendAnalytics';
 import '@/services/search/registerBuiltInProviders';
 import { CampusDataProvider } from '@/state/CampusDataProvider';
+import { LiveTrackingProvider } from '@/transport/state/LiveTrackingProvider';
 import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { setRuntimeDebugContext } from '@/debug/listDebug';
@@ -75,17 +76,19 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <ThemeProvider>
           <CampusDataProvider>
-            <PostHogProvider
-              client={posthog}
-              autocapture={{
-                captureScreens: false,
-                captureTouches: true,
-                propsToCapture: ['testID'],
-                maxElementsCaptured: 20,
-              }}
-            >
-              <RootNavigator />
-            </PostHogProvider>
+            <LiveTrackingProvider>
+              <PostHogProvider
+                client={posthog}
+                autocapture={{
+                  captureScreens: false,
+                  captureTouches: true,
+                  propsToCapture: ['testID'],
+                  maxElementsCaptured: 20,
+                }}
+              >
+                <RootNavigator />
+              </PostHogProvider>
+            </LiveTrackingProvider>
           </CampusDataProvider>
         </ThemeProvider>
       </SafeAreaProvider>
@@ -184,7 +187,7 @@ function RootNavigator() {
         <Stack.Screen name="e-rickshaw" options={{ title: 'E-Rickshaw' }} />
         <Stack.Screen name="cabs-autos" options={{ title: 'Cabs & Autos' }} />
         <Stack.Screen name="wifi" options={{ title: 'Internet & Wi-Fi' }} />
-        <Stack.Screen name="emergency" options={{ title: 'Emergency Contacts' }} />
+        <Stack.Screen name="health-center" options={{ title: 'Health Center' }} />
         <Stack.Screen name="about" options={{ title: 'About IITJ One' }} />
         <Stack.Screen name="settings" options={{ title: 'Settings' }} />
         <Stack.Screen name="mess-qr" options={{ title: 'My Mess QR' }} />

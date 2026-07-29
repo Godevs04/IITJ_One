@@ -26,7 +26,7 @@ export const SUPPORT_URL = `${SITE_URL}/support`;
 export const PLAY_STORE_URL = process.env.NEXT_PUBLIC_PLAY_STORE_URL || '';
 export const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL || '';
 
-export type FeatureKey = 'mess' | 'transport' | 'calendar' | 'laundry' | 'wifi' | 'emergency' | 'campus-apps';
+export type FeatureKey = 'mess' | 'transport' | 'calendar' | 'laundry' | 'wifi' | 'health-center' | 'campus-apps';
 
 export interface FeatureMeta {
   key: FeatureKey;
@@ -74,10 +74,10 @@ export const FEATURES: FeatureMeta[] = [
     accent: 'indigo',
   },
   {
-    key: 'emergency',
-    title: 'Emergency Contacts',
-    oneLiner: 'Every emergency number, available offline.',
-    description: 'Security, medical, and hostel emergency contacts, always available even without signal.',
+    key: 'health-center',
+    title: 'Health Center',
+    oneLiner: 'Doctors, hospitals, and health contacts, always at hand.',
+    description: 'Medical officers, visiting specialists, empanelled hospitals, and every Health Center contact number in one place.',
     accent: 'muted',
   },
   {

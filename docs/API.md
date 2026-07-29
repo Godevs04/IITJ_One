@@ -67,7 +67,9 @@ Per-IP, sliding window, returns `429` with `{ "error": "..." }` when exceeded:
 
 ## Campus data (public)
 
-Every content module follows the same shape: `GET /<module>?campus=iitj`. Modules: `menu`, `notices`, `transport`, `calendar`, `portals`, `apps`, `map`, `services`, `emergency`, `about`, `laundry`, `wifi`, `erickshaw`, `mealWindows`, `holidays`, `transportAlerts`, `temporaryTransportSchedule`.
+Every content module follows the same shape: `GET /<module>?campus=iitj`. Modules: `menu`, `notices`, `transport`, `calendar`, `portals`, `apps`, `map`, `services`, `healthCenter`, `about`, `laundry`, `wifi`, `erickshaw`, `mealWindows`, `holidays`, `transportAlerts`, `temporaryTransportSchedule`.
+
+`healthCenter` is unusual among these: it's not admin-authored — a background scheduler (`services/healthCenterSync.ts`) scrapes the IIT Jodhpur Health Center site every 24h, discovers every worksheet tab in its published Google Sheet doctor-duty schedule (one tab per day, no hardcoded gids), and re-syncs just the schedule every 30min. `GET /healthCenter?campus=iitj` returns `dataSource: 'live'|'static'`, `lastSyncedAt`, `lastAttemptedAt`, and `doctorSchedules: [{ date, day, regularDoctors, visitingSpecialists }]` (one entry per discovered worksheet) alongside the usual medical officers/hospitals/contacts/services/address. See [ARCHITECTURE.md § Health Center sync](./ARCHITECTURE.md#health-center-sync-srcserviceshealthcentersyncts) for the scraping pipeline.
 
 ```http
 GET /api/v1/notices?campus=iitj&category=academic
@@ -94,7 +96,7 @@ The mobile Sync Engine polls this and only re-fetches a module when its version 
 
 Every module has an admin counterpart. Two patterns depending on whether the module is a **single versioned document** or a **collection**:
 
-**Single document** (menu, transport, calendar, portals, apps, map, services, emergency, about, laundry, wifi, erickshaw, mealWindows, holidays, transportAlerts, temporaryTransportSchedule) — whole-document replace with optimistic concurrency:
+**Single document** (menu, transport, calendar, portals, apps, map, services, healthCenter, about, laundry, wifi, erickshaw, mealWindows, holidays, transportAlerts, temporaryTransportSchedule) — whole-document replace with optimistic concurrency:
 
 ```http
 PUT /api/v1/admin/transport

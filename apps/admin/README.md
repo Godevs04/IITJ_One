@@ -26,7 +26,7 @@ Login with bootstrap credentials from `apps/api/.env`:
 
 - Mess menu day/meal editor + CSV import
 - Notices CRUD
-- Transport / calendar (JSON), portals, apps, map, services, emergency, about
+- Transport / calendar (JSON), portals, apps, map, services, healthCenter, about
 - FCM push composer, suggestions inbox, audit log
 
 Publishing bumps `meta.versions.<module>` so the Expo app syncs on next refresh.

@@ -1,0 +1,59 @@
+{
+  "uid": "iitj-transport-overview",
+  "title": "Transport Overview",
+  "tags": ["iitj-one", "transport"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "GPS updates / sec (accepted vs rejected)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "sum(rate(gps_updates_total{result=\"accepted\"}[5m]))", "legendFormat": "accepted" },
+        { "expr": "sum(rate(gps_updates_total{result=\"rejected\"}[5m]))", "legendFormat": "rejected" }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Fusion executions / sec",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "rate(fusion_executions_total[5m])", "legendFormat": "fusion/sec" }]
+    },
+    {
+      "id": 3,
+      "title": "BusState updates / sec",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "rate(busstate_updates_total[5m])", "legendFormat": "updates/sec" }]
+    },
+    {
+      "id": 4,
+      "title": "Socket connections vs disconnects / sec",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "rate(socket_connections_total[5m])", "legendFormat": "connections" },
+        { "expr": "rate(socket_disconnects_total[5m])", "legendFormat": "disconnects" },
+        { "expr": "rate(socket_reconnects_total[5m])", "legendFormat": "reconnects (recovered)" }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "REST errors / sec, by route",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "sum by (route, status_code) (rate(rest_errors_total[5m]))", "legendFormat": "{{route}} ({{status_code}})" }]
+    }
+  ]
+}

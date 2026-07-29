@@ -12,8 +12,8 @@ export function AboutSection() {
 
       <div className="mt-6 space-y-4 text-sm leading-relaxed text-ink">
         <p>
-          IITJ One started as a simple question: why does finding today&apos;s mess menu, the next bus, or an
-          emergency contact take more taps than it should? The app exists to answer that — one place for the
+          IITJ One started as a simple question: why does finding today&apos;s mess menu, the next bus, or a
+          Health Center contact take more taps than it should? The app exists to answer that — one place for the
           campus information every IIT Jodhpur student checks daily, built with the same care that goes into
           apps students actually enjoy using.
         </p>

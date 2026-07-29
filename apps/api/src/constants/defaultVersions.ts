@@ -15,7 +15,7 @@ export function defaultVersions(): MetaVersions {
     apps: 1,
     map: 1,
     services: 1,
-    emergency: 1,
+    healthCenter: 1,
     about: 1,
     laundry: 1,
     wifi: 1,
@@ -25,5 +25,6 @@ export function defaultVersions(): MetaVersions {
     transportAlerts: 1,
     temporaryTransportSchedule: 1,
     transportScheduleExceptions: 1,
+    vehicles: 1,
   };
 }

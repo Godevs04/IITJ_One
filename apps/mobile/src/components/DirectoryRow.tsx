@@ -7,6 +7,8 @@ interface DirectoryRowProps {
   title: string;
   subtitle?: string;
   phone?: string;
+  /** When set alongside `phone`, renders a second icon button that copies `phone` to the clipboard. */
+  onCopy?: () => void;
   onPress?: () => void;
   renderRight?: () => React.ReactNode;
 }
@@ -15,6 +17,7 @@ export function DirectoryRow({
   title,
   subtitle,
   phone,
+  onCopy,
   onPress,
   renderRight,
 }: DirectoryRowProps) {
@@ -42,15 +45,28 @@ export function DirectoryRow({
         ) : null}
       </View>
       {phone ? (
-        <Pressable
-          onPress={() => Linking.openURL(`tel:${phone}`)}
-          style={[styles.iconButton, { backgroundColor: theme.primaryTint }]}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={`Call ${title}`}
-        >
-          <Ionicons name="call-outline" size={20} color={theme.primary} />
-        </Pressable>
+        <View style={styles.actions}>
+          {onCopy ? (
+            <Pressable
+              onPress={onCopy}
+              style={[styles.iconButton, { backgroundColor: theme.surfaceMuted }]}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={`Copy ${title} number`}
+            >
+              <Ionicons name="copy-outline" size={18} color={theme.textMuted} />
+            </Pressable>
+          ) : null}
+          <Pressable
+            onPress={() => Linking.openURL(`tel:${phone}`)}
+            style={[styles.iconButton, { backgroundColor: theme.primaryTint }]}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={`Call ${title}`}
+          >
+            <Ionicons name="call-outline" size={20} color={theme.primary} />
+          </Pressable>
+        </View>
       ) : renderRight ? (
         renderRight()
       ) : onPress ? (
@@ -81,6 +97,11 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     ...AppTypography.caption,
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.sm,
   },
   iconButton: {
     width: 40,

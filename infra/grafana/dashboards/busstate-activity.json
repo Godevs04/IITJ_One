@@ -1,0 +1,39 @@
+{
+  "uid": "iitj-busstate-activity",
+  "title": "BusState Activity",
+  "tags": ["iitj-one", "transport", "busstate"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "BusState writes / sec",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "rate(busstate_updates_total[5m])", "legendFormat": "writes/sec" }]
+    },
+    {
+      "id": 2,
+      "title": "Fusion executions / sec",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "rate(fusion_executions_total[5m])", "legendFormat": "fusion/sec" }]
+    },
+    {
+      "id": 3,
+      "title": "BusState persist latency (p50/p95)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(busstate_persist_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p50" },
+        { "expr": "histogram_quantile(0.95, sum(rate(busstate_persist_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p95" }
+      ]
+    }
+  ]
+}

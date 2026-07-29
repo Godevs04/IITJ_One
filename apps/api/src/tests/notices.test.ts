@@ -1,5 +1,20 @@
-import { test } from 'node:test';
+import { test, before, after } from 'node:test';
 import * as assert from 'node:assert';
+import { connectDb, disconnectDb } from '../db';
+import { bootstrapTestAdmin } from './helpers/testAdmin';
+
+// node:test runs this file in its own process, isolated from the already-
+// running server's process. bootstrapTestAdmin() writes via the store layer
+// directly (not over HTTP), so THIS process needs its own real Mongo
+// connection too — otherwise the store silently falls back to an in-memory
+// state only this process can see, invisible to the live server this
+// file's fetch() calls actually hit.
+before(async () => {
+  await connectDb();
+});
+after(async () => {
+  await disconnectDb();
+});
 
 test('Public Notices API (GET /api/v1/notices)', async (t) => {
   await t.test('returns object with campusId and notices array', async () => {
@@ -78,16 +93,17 @@ test('Public Notices API (GET /api/v1/notices)', async (t) => {
 });
 
 test('Admin Notices API (Requires Authentication)', async (t) => {
-  let accessToken: string;
+  const testAdmin = await bootstrapTestAdmin();
+  let accessToken: string | undefined;
 
   t.before(async () => {
     // Login to get token
-    const loginRes = await fetch('http://localhost:6002/api/v1/admin/auth/login', {
+    const loginRes = await fetch('http://localhost:6002/api/v1/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: 'admin@iitjone.app',
-        password: 'change-me-on-first-login',
+        email: testAdmin.email,
+        password: testAdmin.password,
       }),
     });
 
@@ -97,8 +113,11 @@ test('Admin Notices API (Requires Authentication)', async (t) => {
     }
   });
 
-  await t.test('GET /api/v1/admin/notices returns paginated list', async () => {
-    if (!accessToken) this.skip('Admin login failed');
+  await t.test('GET /api/v1/admin/notices returns paginated list', async (st) => {
+    if (!accessToken) {
+      st.skip('Admin login failed');
+      return;
+    }
 
     const response = await fetch(
       'http://localhost:6002/api/v1/admin/notices?page=1&limit=10',
@@ -116,8 +135,11 @@ test('Admin Notices API (Requires Authentication)', async (t) => {
     assert.ok(Array.isArray(data.notices), 'notices should be array');
   });
 
-  await t.test('GET /api/v1/admin/notices respects pagination limits', async () => {
-    if (!accessToken) this.skip('Admin login failed');
+  await t.test('GET /api/v1/admin/notices respects pagination limits', async (st) => {
+    if (!accessToken) {
+      st.skip('Admin login failed');
+      return;
+    }
 
     const response = await fetch(
       'http://localhost:6002/api/v1/admin/notices?page=1&limit=5',
@@ -129,8 +151,11 @@ test('Admin Notices API (Requires Authentication)', async (t) => {
     assert.ok(notices.length <= 5, 'Should return at most 5 notices');
   });
 
-  await t.test('POST /api/v1/admin/notices creates new notice', async () => {
-    if (!accessToken) this.skip('Admin login failed');
+  await t.test('POST /api/v1/admin/notices creates new notice', async (st) => {
+    if (!accessToken) {
+      st.skip('Admin login failed');
+      return;
+    }
 
     const tomorrow = new Date(Date.now() + 86400000).toISOString();
     const nextWeek = new Date(Date.now() + 604800000).toISOString();
@@ -156,8 +181,11 @@ test('Admin Notices API (Requires Authentication)', async (t) => {
     assert.ok('_id' in data || 'id' in data, 'Should return notice with ID');
   });
 
-  await t.test('POST /api/v1/admin/notices rejects missing required fields', async () => {
-    if (!accessToken) this.skip('Admin login failed');
+  await t.test('POST /api/v1/admin/notices rejects missing required fields', async (st) => {
+    if (!accessToken) {
+      st.skip('Admin login failed');
+      return;
+    }
 
     const response = await fetch('http://localhost:6002/api/v1/admin/notices', {
       method: 'POST',
@@ -195,8 +223,11 @@ test('Admin Notices API (Requires Authentication)', async (t) => {
     assert.strictEqual(response.status, 401, 'Should reject unauthenticated request');
   });
 
-  await t.test('PATCH /api/v1/admin/notices/:id updates notice (requires valid ID)', async () => {
-    if (!accessToken) this.skip('Admin login failed');
+  await t.test('PATCH /api/v1/admin/notices/:id updates notice (requires valid ID)', async (st) => {
+    if (!accessToken) {
+      st.skip('Admin login failed');
+      return;
+    }
 
     // Note: This test requires a valid notice ID from a previous test
     // In practice, you'd store the ID from the POST test
@@ -213,8 +244,11 @@ test('Admin Notices API (Requires Authentication)', async (t) => {
     assert.strictEqual(response.status, 400, 'Should reject invalid ID format');
   });
 
-  await t.test('DELETE /api/v1/admin/notices/:id soft-deletes notice (requires valid ID)', async () => {
-    if (!accessToken) this.skip('Admin login failed');
+  await t.test('DELETE /api/v1/admin/notices/:id soft-deletes notice (requires valid ID)', async (st) => {
+    if (!accessToken) {
+      st.skip('Admin login failed');
+      return;
+    }
 
     const response = await fetch('http://localhost:6002/api/v1/admin/notices/invalid-id', {
       method: 'DELETE',

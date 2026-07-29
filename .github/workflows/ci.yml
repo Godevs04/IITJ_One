@@ -1,0 +1,151 @@
+name: CI
+
+# Phase 6 — install/lint/typecheck/test/build pipeline. Runs on every push
+# and PR against main; the Docker build + deploy pipeline (deploy.yml) only
+# runs after this workflow succeeds, on pushes to main.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20.18.1'
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run build -w @iitj1/types
+      - name: Cache node_modules + types build for downstream jobs
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            packages/types/dist
+          key: ${{ runner.os }}-deps-${{ github.sha }}
+
+  lint:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            packages/types/dist
+          key: ${{ runner.os }}-deps-${{ github.sha }}
+      - run: npm run lint -w @iitj1/admin
+      - run: npm run lint -w @iitj1/web
+
+  typecheck:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            packages/types/dist
+          key: ${{ runner.os }}-deps-${{ github.sha }}
+      - run: npm run typecheck
+
+  test:
+    needs: install
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7
+        ports: ['27017:27017']
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      MONGODB_URI: mongodb://127.0.0.1:27017/iitj1_ci
+      JWT_SECRET: ci-only-secret-not-used-in-production-min32
+      JWT_REFRESH_SECRET: ci-only-refresh-secret-differs-min32c
+      NODE_ENV: test
+      PORT: 6002
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            packages/types/dist
+          key: ${{ runner.os }}-deps-${{ github.sha }}
+      # test:api's suite is integration-style: it makes real HTTP requests against a live
+      # server (see e.g. src/tests/health.test.ts, authentication.test.ts) — it isn't enough
+      # to just run the test process, a server must actually be listening on $PORT first.
+      - name: Start API server
+        working-directory: apps/api
+        run: |
+          npx tsx src/index.ts > /tmp/api-server.log 2>&1 &
+          echo $! > /tmp/api-server.pid
+      - name: Wait for API to become healthy
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf "http://localhost:${PORT}/api/v1/health" > /dev/null; then
+              echo "API is healthy"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "API did not become healthy within 30s"
+          cat /tmp/api-server.log
+          exit 1
+      - run: npm run test:api
+      - name: Stop API server
+        if: always()
+        run: kill "$(cat /tmp/api-server.pid)" 2>/dev/null || true
+      - name: Show API server log on failure
+        if: failure()
+        run: cat /tmp/api-server.log 2>/dev/null || true
+
+  build:
+    needs: [lint, typecheck, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            packages/types/dist
+          key: ${{ runner.os }}-deps-${{ github.sha }}
+      - run: npm run build -w @iitj1/api
+      - run: npm run build -w @iitj1/admin

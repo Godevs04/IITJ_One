@@ -38,7 +38,7 @@ export default function TermsPage() {
             <li>Transport schedules</li>
             <li>Academic calendar</li>
             <li>Laundry schedules</li>
-            <li>Emergency contacts</li>
+            <li>Health Center information and contacts</li>
             <li>Campus services</li>
             <li>Official notices</li>
           </ul>

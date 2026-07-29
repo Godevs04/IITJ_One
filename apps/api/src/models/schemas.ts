@@ -29,6 +29,43 @@ export const servicesQuerySchema = campusQuerySchema.extend({
   q: z.string().optional(),
 });
 
+export const rideStartBodySchema = z.object({
+  campusId: z.string().min(1).default('iitj'),
+  direction: z.enum(['departure', 'arrival']),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+});
+
+export const rideStopBodySchema = z.object({
+  sessionId: z.string().min(1),
+});
+
+export const transportLiveQuerySchema = campusQuerySchema;
+
+export const adminVehiclesQuerySchema = campusQuerySchema.merge(paginationQuerySchema);
+
+export const vehicleCreateSchema = z.object({
+  campusId: z.string().min(1),
+  registration: z.string().min(1),
+  displayName: z.string().min(1),
+  capacity: z.number().int().positive(),
+  isActive: z.boolean().default(true),
+});
+
+export const vehicleUpdateSchema = vehicleCreateSchema.omit({ campusId: true }).partial();
+
+export const adminTripsQuerySchema = campusQuerySchema.extend({
+  serviceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
+
+export const assignVehicleSchema = z.object({
+  vehicleId: z.string().nullable(),
+});
+
+export const overrideTripStatusSchema = z.object({
+  status: z.enum(['WAITING', 'BOARDING', 'LIVE', 'PREDICTING', 'STOPPED', 'COMPLETED', 'NO_DATA', 'OFFLINE']),
+});
+
 export const suggestionBodySchema = z.object({
   message: z.string().trim().min(1).max(2000),
 });
@@ -180,17 +217,6 @@ export const servicesPutSchema = z.object({
   ),
 });
 
-export const emergencyPutSchema = z.object({
-  campusId: z.string().min(1),
-  contacts: z.array(
-    z.object({
-      label: z.string(),
-      phone: z.string(),
-      order: z.number().int(),
-    }),
-  ),
-});
-
 export const aboutPutSchema = z.object({
   campusId: z.string().min(1),
   sections: z.array(
@@ -273,7 +299,7 @@ export const menuImportSchema = z.object({
   nonVegCsv: z.string().min(1),
 });
 
-export { holidaysPutSchema, transportAlertsPutSchema, temporaryTransportSchedulePutSchema } from '@iitj1/types';
+export { holidaysPutSchema, transportAlertsPutSchema, temporaryTransportSchedulePutSchema, healthCenterPutSchema } from '@iitj1/types';
 
 export {
   transportScheduleExceptionCreateSchema,

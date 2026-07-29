@@ -38,6 +38,19 @@ export const config = {
   bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS ?? '12', 10),
   enableEtag: process.env.ENABLE_ETAG !== 'false',
   logLevel: process.env.LOG_LEVEL ?? 'info',
+  /** 'json' for structured single-line JSON logs (production/log aggregators); 'pretty' for the existing human-readable console format (local dev default). */
+  logFormat: (process.env.LOG_FORMAT ?? (process.env.NODE_ENV === 'production' ? 'json' : 'pretty')) as 'json' | 'pretty',
+  /**
+   * Phase 6 — optional. When unset, every Redis-backed feature (Socket.IO
+   * adapter, shared contributor/BusState cache, distributed rate limiting)
+   * automatically falls back to its existing in-memory implementation —
+   * single-instance behavior is byte-for-byte unchanged from Phase 1–5.
+   */
+  redisUrl: process.env.REDIS_URL || null,
+  /** Optional shared-secret gate for GET /metrics, in addition to network-level restriction (the standard Prometheus scraping practice). Unset = open, matching most self-hosted Prometheus setups. */
+  metricsToken: process.env.METRICS_TOKEN || null,
+  /** Socket.IO CORS — defaults to '*' to preserve Phase 1's behavior exactly (mobile clients send no fixed Origin); set to a comma-separated allowlist to restrict in production. */
+  socketCorsOrigin: process.env.SOCKET_CORS_ORIGIN ?? '*',
   fcm: {
     projectId: process.env.FCM_PROJECT_ID,
     clientEmail: process.env.FCM_CLIENT_EMAIL,
@@ -87,5 +100,24 @@ export function assertProductionSecrets(): void {
   }
   if (failures.length > 0) {
     throw new Error(`[config] Refusing to start in production:\n- ${failures.join('\n- ')}`);
+  }
+
+  // Soft warnings only — none of these block boot, since every feature they
+  // relate to (Socket.IO adapter, shared caches, metrics scraping) already
+  // degrades gracefully without them. Surfaced so a real misconfiguration
+  // doesn't go silently unnoticed in production specifically.
+  const warnings: string[] = [];
+  if (!config.redisUrl) {
+    warnings.push('REDIS_URL is unset — running single-instance only (Socket.IO/contributor cache/rate limits are in-memory, not shared across instances)');
+  }
+  if (!config.metricsToken) {
+    warnings.push('METRICS_TOKEN is unset — GET /metrics is unauthenticated; restrict access at the network/reverse-proxy level');
+  }
+  if (config.socketCorsOrigin === '*') {
+    warnings.push('SOCKET_CORS_ORIGIN is "*" — acceptable for mobile-only clients (no fixed Origin), but restrict it if browser clients besides the admin panel connect to the Socket.IO server');
+  }
+  for (const warning of warnings) {
+    // eslint-disable-next-line no-console -- logger.ts isn't guaranteed configured yet this early in boot
+    console.warn(`[config] Production warning: ${warning}`);
   }
 }

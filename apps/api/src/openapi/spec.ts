@@ -23,6 +23,8 @@ export const openApiSpec = {
     { name: 'Admin — content' },
     { name: 'Admin — campus data' },
     { name: 'Admin — ops' },
+    { name: 'Live Tracking' },
+    { name: 'Admin — live tracking' },
   ],
   components: {
     securitySchemes: {
@@ -59,6 +61,20 @@ export const openApiSpec = {
         in: 'path',
         required: true,
         schema: { type: 'string' },
+      },
+      VehicleId: {
+        name: 'id',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        description: 'Mongo ObjectId of the vehicle',
+      },
+      TripId: {
+        name: 'id',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        description: 'Mongo ObjectId of the materialized trip',
       },
     },
     schemas: {
@@ -270,13 +286,24 @@ export const openApiSpec = {
           },
         ],
       },
-      EmergencyDoc: {
+      HealthCenterDoc: {
         allOf: [
           { $ref: '#/components/schemas/CampusIdBody' },
           {
             type: 'object',
             properties: {
+              medicalOfficers: { type: 'array', items: { type: 'object', additionalProperties: true } },
+              visitingSpecialists: { type: 'array', items: { type: 'object', additionalProperties: true } },
+              doctorSchedule: { type: 'array', items: { type: 'object', additionalProperties: true } },
+              hospitals: { type: 'array', items: { type: 'object', additionalProperties: true } },
               contacts: { type: 'array', items: { type: 'object', additionalProperties: true } },
+              services: { type: 'array', items: { type: 'string' } },
+              address: { type: 'string' },
+              officialUrl: { type: 'string' },
+              doctorScheduleUrl: { type: 'string' },
+              dataSource: { type: 'string', enum: ['live', 'static'] },
+              lastSyncedAt: { type: 'string', nullable: true },
+              lastAttemptedAt: { type: 'string', nullable: true },
             },
           },
         ],
@@ -370,6 +397,140 @@ export const openApiSpec = {
           title: { type: 'string' },
           body: { type: 'string' },
           data: { type: 'object', additionalProperties: { type: 'string' } },
+        },
+      },
+      Vehicle: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string' },
+          campusId: { type: 'string' },
+          registration: { type: 'string', example: 'RJ19PA1234' },
+          displayName: { type: 'string', example: 'Bus B2' },
+          capacity: { type: 'integer', example: 40 },
+          isActive: { type: 'boolean' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+          deletedAt: { type: 'string', format: 'date-time', nullable: true },
+        },
+      },
+      VehicleCreate: {
+        type: 'object',
+        required: ['campusId', 'registration', 'displayName', 'capacity'],
+        properties: {
+          campusId: { type: 'string', example: 'iitj' },
+          registration: { type: 'string', example: 'RJ19PA1234' },
+          displayName: { type: 'string', example: 'Bus B2' },
+          capacity: { type: 'integer', minimum: 1, example: 40 },
+          isActive: { type: 'boolean', default: true },
+        },
+      },
+      BusState: {
+        type: 'object',
+        properties: {
+          tripId: { type: 'string' },
+          vehicleId: { type: 'string', nullable: true },
+          latitude: { type: 'number' },
+          longitude: { type: 'number' },
+          confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+          contributors: { type: 'integer' },
+          positionSource: { type: 'string', enum: ['live', 'estimated'] },
+          status: {
+            type: 'string',
+            enum: ['WAITING', 'BOARDING', 'LIVE', 'PREDICTING', 'STOPPED', 'COMPLETED', 'NO_DATA', 'OFFLINE'],
+          },
+          lastUpdated: { type: 'string', format: 'date-time' },
+        },
+      },
+      Trip: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string' },
+          campusId: { type: 'string' },
+          serviceDate: { type: 'string', example: '2026-07-26' },
+          direction: { type: 'string', enum: ['departure', 'arrival'] },
+          scheduledDeparture: { type: 'string', format: 'date-time' },
+          scheduledArrival: { type: 'string', format: 'date-time' },
+          sourceBus: { type: 'string' },
+          routeKey: { type: 'string' },
+          route: { type: 'string' },
+          from: { type: 'string' },
+          to: { type: 'string' },
+          vehicleId: { type: 'string', nullable: true },
+          status: {
+            type: 'string',
+            enum: ['WAITING', 'BOARDING', 'LIVE', 'PREDICTING', 'STOPPED', 'COMPLETED', 'NO_DATA', 'OFFLINE'],
+          },
+        },
+      },
+      TransportLiveTrip: {
+        allOf: [
+          { $ref: '#/components/schemas/Trip' },
+          {
+            type: 'object',
+            properties: {
+              vehicle: {
+                type: 'object',
+                nullable: true,
+                properties: {
+                  vehicleId: { type: 'string' },
+                  displayName: { type: 'string', nullable: true },
+                },
+              },
+              busState: { $ref: '#/components/schemas/BusState' },
+            },
+          },
+        ],
+      },
+      RideStartRequest: {
+        type: 'object',
+        required: ['campusId', 'direction', 'latitude', 'longitude'],
+        properties: {
+          campusId: { type: 'string', default: 'iitj' },
+          direction: { type: 'string', enum: ['departure', 'arrival'] },
+          latitude: { type: 'number', minimum: -90, maximum: 90 },
+          longitude: { type: 'number', minimum: -180, maximum: 180 },
+        },
+      },
+      RideStartResponse: {
+        type: 'object',
+        properties: {
+          sessionId: { type: 'string', format: 'uuid' },
+          tripId: { type: 'string' },
+          trip: {
+            type: 'object',
+            properties: {
+              direction: { type: 'string', enum: ['departure', 'arrival'] },
+              scheduledDeparture: { type: 'string', format: 'date-time' },
+              scheduledArrival: { type: 'string', format: 'date-time' },
+              vehicleDisplayName: { type: 'string', nullable: true },
+            },
+          },
+          socketNamespace: { type: 'string', example: '/' },
+          socketPath: { type: 'string', example: '/api/v1/socket.io' },
+        },
+      },
+      RideStopRequest: {
+        type: 'object',
+        required: ['sessionId'],
+        properties: {
+          sessionId: { type: 'string', format: 'uuid' },
+        },
+      },
+      AssignVehicleRequest: {
+        type: 'object',
+        required: ['vehicleId'],
+        properties: {
+          vehicleId: { type: 'string', nullable: true },
+        },
+      },
+      OverrideStatusRequest: {
+        type: 'object',
+        required: ['status'],
+        properties: {
+          status: {
+            type: 'string',
+            enum: ['WAITING', 'BOARDING', 'LIVE', 'PREDICTING', 'STOPPED', 'COMPLETED', 'NO_DATA', 'OFFLINE'],
+          },
         },
       },
     },
@@ -508,13 +669,13 @@ export const openApiSpec = {
         responses: { '200': { description: 'Services doc' }, '404': { description: 'Not found' } },
       },
     },
-    '/emergency': {
+    '/healthCenter': {
       get: {
         tags: ['Public modules'],
-        summary: 'Emergency contacts',
-        operationId: 'getEmergency',
+        summary: 'Health Center info',
+        operationId: 'getHealthCenter',
         parameters: [{ $ref: '#/components/parameters/CampusQuery' }],
-        responses: { '200': { description: 'Emergency doc' }, '404': { description: 'Not found' } },
+        responses: { '200': { description: 'Health Center doc' }, '404': { description: 'Not found' } },
       },
     },
     '/about': {
@@ -748,7 +909,7 @@ export const openApiSpec = {
     '/admin/apps': modulePut('Admin — campus data', 'putApps', 'AppsDoc', 'Publish apps'),
     '/admin/map': modulePut('Admin — campus data', 'putMap', 'MapDoc', 'Publish map locations'),
     '/admin/services': modulePut('Admin — campus data', 'putServices', 'ServicesDoc', 'Publish services'),
-    '/admin/emergency': modulePut('Admin — campus data', 'putEmergency', 'EmergencyDoc', 'Publish emergency contacts'),
+    '/admin/healthCenter': modulePut('Admin — campus data', 'putHealthCenter', 'HealthCenterDoc', 'Publish Health Center info'),
     '/admin/about': modulePut('Admin — campus data', 'putAbout', 'AboutDoc', 'Publish about'),
     '/admin/laundry': modulePut('Admin — campus data', 'putLaundry', 'LaundryDoc', 'Publish laundry'),
     '/admin/wifi': modulePut('Admin — campus data', 'putWifi', 'WifiDoc', 'Publish Wi-Fi'),
@@ -824,6 +985,279 @@ export const openApiSpec = {
           },
         ],
         responses: { '200': { description: 'Audit entries' } },
+      },
+    },
+
+    '/ride/start': {
+      post: {
+        tags: ['Live Tracking'],
+        summary: 'Start an anonymous ride-sharing session',
+        description:
+          'Auto-assigns the caller to the currently active trip for the given direction (no trip/vehicle is ever chosen by the client). Returns the Socket.IO connection details needed to stream `location:update` events for this session.',
+        operationId: 'rideStart',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/RideStartRequest' },
+              example: { campusId: 'iitj', direction: 'arrival', latitude: 26.469, longitude: 73.1125 },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Session created',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/RideStartResponse' },
+                example: {
+                  sessionId: '48850826-ab81-46d8-955a-c2f15e1fc2f6',
+                  tripId: '6a65c5689d65fd58a5b6d10b',
+                  trip: {
+                    direction: 'arrival',
+                    scheduledDeparture: '2026-07-26T07:30:00.000Z',
+                    scheduledArrival: '2026-07-26T08:30:00.000Z',
+                    vehicleDisplayName: null,
+                  },
+                  socketNamespace: '/',
+                  socketPath: '/api/v1/socket.io',
+                },
+              },
+            },
+          },
+          '400': { description: 'Validation failed', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          '404': {
+            description: 'No trip currently matches this direction/time',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' }, example: { error: 'no_matching_trip' } } },
+          },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/ride/stop': {
+      post: {
+        tags: ['Live Tracking'],
+        summary: 'End a ride-sharing session',
+        operationId: 'rideStop',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/RideStopRequest' },
+              example: { sessionId: '48850826-ab81-46d8-955a-c2f15e1fc2f6' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Session ended',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Success' } } },
+          },
+          '400': { description: 'Validation failed', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          '404': {
+            description: 'Unknown session',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' }, example: { error: 'session_not_found' } } },
+          },
+        },
+      },
+    },
+    '/transport/live': {
+      get: {
+        tags: ['Live Tracking'],
+        summary: "Today's trips with live/estimated bus position",
+        description: 'Never cached — recomputes BusState on every call so position and confidence are always current.',
+        operationId: 'getTransportLive',
+        parameters: [{ $ref: '#/components/parameters/CampusQuery' }],
+        responses: {
+          '200': {
+            description: 'Live trip list',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    campusId: { type: 'string' },
+                    trips: { type: 'array', items: { $ref: '#/components/schemas/TransportLiveTrip' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/admin/vehicles': {
+      get: {
+        tags: ['Admin — live tracking'],
+        summary: 'List vehicles',
+        operationId: 'adminListVehicles',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: '#/components/parameters/CampusQuery' },
+          { name: 'page', in: 'query', required: false, schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', required: false, schema: { type: 'integer', default: 20 } },
+        ],
+        responses: {
+          '200': {
+            description: 'Vehicle list',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    campusId: { type: 'string' },
+                    vehicles: { type: 'array', items: { $ref: '#/components/schemas/Vehicle' } },
+                    total: { type: 'integer' },
+                    page: { type: 'integer' },
+                    pageSize: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+          '401': { description: 'Unauthorized' },
+        },
+      },
+      post: {
+        tags: ['Admin — live tracking'],
+        summary: 'Create vehicle',
+        operationId: 'adminCreateVehicle',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/VehicleCreate' } } },
+        },
+        responses: {
+          '201': {
+            description: 'Created',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Vehicle' } } },
+          },
+          '400': { description: 'Validation failed' },
+          '401': { description: 'Unauthorized' },
+          '409': {
+            description: 'A vehicle with this registration already exists',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
+          },
+        },
+      },
+    },
+    '/admin/vehicles/{id}': {
+      get: {
+        tags: ['Admin — live tracking'],
+        summary: 'Get vehicle',
+        operationId: 'adminGetVehicle',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: '#/components/parameters/VehicleId' }],
+        responses: {
+          '200': { description: 'Vehicle', content: { 'application/json': { schema: { $ref: '#/components/schemas/Vehicle' } } } },
+          '404': { description: 'Not found' },
+        },
+      },
+      put: {
+        tags: ['Admin — live tracking'],
+        summary: 'Update vehicle',
+        operationId: 'adminUpdateVehicle',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: '#/components/parameters/VehicleId' }],
+        requestBody: {
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/VehicleCreate' } } },
+        },
+        responses: {
+          '200': { description: 'Updated', content: { 'application/json': { schema: { $ref: '#/components/schemas/Vehicle' } } } },
+          '404': { description: 'Not found' },
+          '409': { description: 'A vehicle with this registration already exists' },
+        },
+      },
+      delete: {
+        tags: ['Admin — live tracking'],
+        summary: 'Soft-delete vehicle',
+        operationId: 'adminDeleteVehicle',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: '#/components/parameters/VehicleId' }],
+        responses: {
+          '200': { description: 'Deleted', content: { 'application/json': { schema: { $ref: '#/components/schemas/Success' } } } },
+          '404': { description: 'Not found' },
+        },
+      },
+    },
+    '/admin/trips': {
+      get: {
+        tags: ['Admin — live tracking'],
+        summary: "List today's (or a given day's) trips with vehicle + BusState",
+        operationId: 'adminListTrips',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: '#/components/parameters/CampusQuery' },
+          {
+            name: 'serviceDate',
+            in: 'query',
+            required: false,
+            schema: { type: 'string', example: '2026-07-26' },
+            description: 'YYYY-MM-DD (IST calendar day) — defaults to today',
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Trip list',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    campusId: { type: 'string' },
+                    serviceDate: { type: 'string' },
+                    trips: { type: 'array', items: { $ref: '#/components/schemas/TransportLiveTrip' } },
+                  },
+                },
+              },
+            },
+          },
+          '401': { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/admin/trips/{id}/assign-vehicle': {
+      post: {
+        tags: ['Admin — live tracking'],
+        summary: 'Assign (or unassign) a vehicle to a trip',
+        operationId: 'adminAssignVehicle',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: '#/components/parameters/TripId' }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/AssignVehicleRequest' },
+              example: { vehicleId: '6a65cbb07a8ffb2e0cf8e693' },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Updated trip', content: { 'application/json': { schema: { $ref: '#/components/schemas/Trip' } } } },
+          '404': { description: 'Trip not found' },
+        },
+      },
+    },
+    '/admin/trips/{id}/override-status': {
+      post: {
+        tags: ['Admin — live tracking'],
+        summary: 'Manually force a trip’s operational status (e.g. a breakdown)',
+        operationId: 'adminOverrideTripStatus',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: '#/components/parameters/TripId' }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/OverrideStatusRequest' },
+              example: { status: 'STOPPED' },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Updated trip', content: { 'application/json': { schema: { $ref: '#/components/schemas/Trip' } } } },
+          '404': { description: 'Trip not found' },
+        },
       },
     },
   },

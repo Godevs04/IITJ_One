@@ -1,0 +1,136 @@
+name: Build & Deploy
+
+# Phase 6 — Docker image → staging (automatic) → production (manual
+# approval). Only runs after CI succeeds, on pushes to main.
+#
+# Manual approval gate: create a GitHub Environment named "production" in
+# repo Settings → Environments, add required reviewers there — the
+# `environment: production` line below is what makes this workflow pause
+# and wait for one of those reviewers to approve before the job runs.
+#
+# Deploy targets: this repo already deploys apps/api to Render (render.yaml)
+# — the staging/production steps here trigger Render's deploy hooks. Swap
+# the "Deploy to Render" steps for your own host's deploy mechanism if
+# you're not using Render; the build-and-push job (Docker images → GHCR) is
+# host-agnostic either way.
+
+on:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build & push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/iitj1-api:${{ github.sha }}
+            ghcr.io/${{ github.repository }}/iitj1-api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & push Admin image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/admin/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/iitj1-admin:${{ github.sha }}
+            ghcr.io/${{ github.repository }}/iitj1-admin:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-staging:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Trigger staging deploy
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$DEPLOY_HOOK" ]; then
+            echo "RENDER_STAGING_DEPLOY_HOOK_URL not set — skipping (configure it in repo secrets to enable)"
+            exit 0
+          fi
+          curl -fsS -X POST "$DEPLOY_HOOK"
+
+      - name: Wait for staging health check
+        env:
+          HEALTH_URL: ${{ secrets.STAGING_HEALTH_URL }}
+        run: |
+          if [ -z "$HEALTH_URL" ]; then
+            echo "STAGING_HEALTH_URL not set — skipping"
+            exit 0
+          fi
+          for i in $(seq 1 20); do
+            if curl -fsS --max-time 10 "$HEALTH_URL" | grep -q '"status"'; then
+              echo "Staging healthy"
+              exit 0
+            fi
+            echo "Waiting for staging to come up ($i/20)..."
+            sleep 15
+          done
+          echo "Staging did not become healthy in time" >&2
+          exit 1
+
+  deploy-production:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    # Requires manual approval — configure required reviewers on the
+    # "production" GitHub Environment (Settings → Environments).
+    environment: production
+    steps:
+      - name: Trigger production deploy
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$DEPLOY_HOOK" ]; then
+            echo "RENDER_PRODUCTION_DEPLOY_HOOK_URL not set — skipping (configure it in repo secrets to enable)"
+            exit 0
+          fi
+          curl -fsS -X POST "$DEPLOY_HOOK"
+
+      - name: Verify production health
+        env:
+          HEALTH_URL: ${{ secrets.PRODUCTION_HEALTH_URL }}
+        run: |
+          if [ -z "$HEALTH_URL" ]; then
+            echo "PRODUCTION_HEALTH_URL not set — skipping"
+            exit 0
+          fi
+          for i in $(seq 1 20); do
+            if curl -fsS --max-time 10 "$HEALTH_URL" | grep -q '"status":"ok"'; then
+              echo "Production healthy"
+              exit 0
+            fi
+            echo "Waiting for production to come up ($i/20)..."
+            sleep 15
+          done
+          echo "Production did not report healthy in time — check manually before assuming it's broken" >&2
+          exit 1

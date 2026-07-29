@@ -33,7 +33,7 @@ import { Analytics, FirebaseCrashlytics, FirebasePerformance, TraceNames } from 
 
 export const SYNC_MODULES = [
   'menu', 'notices', 'transport', 'calendar', 'portals', 'apps', 'map',
-  'services', 'emergency', 'about', 'laundry', 'wifi', 'erickshaw',
+  'services', 'healthCenter', 'about', 'laundry', 'wifi', 'erickshaw',
   'mealWindows', 'holidays', 'transportAlerts', 'temporaryTransportSchedule',
 ] as const;
 
@@ -100,7 +100,7 @@ function isRetryableError(error: unknown): boolean {
 const VERSION_KEY: Record<SyncModule, string> = {
   menu: 'menu', notices: 'notices', transport: 'transport', calendar: 'calendar',
   portals: 'portals', apps: 'apps', map: 'map', services: 'services',
-  emergency: 'emergency', about: 'about', laundry: 'laundry', wifi: 'wifi',
+  healthCenter: 'healthCenter', about: 'about', laundry: 'laundry', wifi: 'wifi',
   erickshaw: 'erickshaw', mealWindows: 'mealWindows', holidays: 'holidays',
   transportAlerts: 'transportAlerts', temporaryTransportSchedule: 'temporaryTransportSchedule',
 };

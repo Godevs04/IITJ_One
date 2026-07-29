@@ -1,0 +1,55 @@
+{
+  "uid": "iitj-socket-health",
+  "title": "Socket Health",
+  "tags": ["iitj-one", "transport", "socket"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Active connections (connections - disconnects, cumulative)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "socket_connections_total - socket_disconnects_total", "legendFormat": "active (approx.)" }]
+    },
+    {
+      "id": 2,
+      "title": "Reconnects (connection state recovery) / 5m",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "increase(socket_reconnects_total[5m])", "legendFormat": "reconnects" }]
+    },
+    {
+      "id": 3,
+      "title": "Redis adapter status (multi-instance broadcast)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "redis_up", "legendFormat": "redis_up (adapter active if 1)" }]
+    },
+    {
+      "id": 4,
+      "title": "Socket events / sec, by event + result",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "sum by (event, result) (rate(socket_events_total[5m]))", "legendFormat": "{{event}} ({{result}})" }]
+    },
+    {
+      "id": 5,
+      "title": "Connections / disconnects / sec",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "rate(socket_connections_total[5m])", "legendFormat": "connections" },
+        { "expr": "rate(socket_disconnects_total[5m])", "legendFormat": "disconnects" }
+      ]
+    }
+  ]
+}

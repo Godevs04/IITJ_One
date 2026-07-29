@@ -7,7 +7,7 @@ export const MODULE_NAMES = [
   'apps',
   'map',
   'services',
-  'emergency',
+  'healthCenter',
   'about',
   'laundry',
   'wifi',

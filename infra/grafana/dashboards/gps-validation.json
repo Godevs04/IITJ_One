@@ -1,0 +1,63 @@
+{
+  "uid": "iitj-gps-validation",
+  "title": "GPS Validation",
+  "tags": ["iitj-one", "transport", "gps"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Acceptance rate (%)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(gps_updates_total{result=\"accepted\"}[15m])) / (sum(rate(gps_updates_total{result=\"accepted\"}[15m])) + sum(rate(gps_updates_total{result=\"rejected\"}[15m]))) * 100",
+          "legendFormat": "acceptance %"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Accepted / sec",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "sum(rate(gps_updates_total{result=\"accepted\"}[5m]))", "legendFormat": "accepted/sec" }]
+    },
+    {
+      "id": 3,
+      "title": "Rejected / sec",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 0 },
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "sum(rate(gps_updates_total{result=\"rejected\"}[5m]))", "legendFormat": "rejected/sec" }]
+    },
+    {
+      "id": 4,
+      "title": "Rejection breakdown by reason",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
+      "datasource": "Prometheus",
+      "description": "reason label values: stale_timestamp, future_timestamp, poor_accuracy, off_route, bearing_mismatch, implausible_speed, duplicate, throttled (apps/api/src/services/gpsValidation.ts + rideSocket.ts)",
+      "targets": [
+        { "expr": "sum by (reason) (rate(gps_updates_total{result=\"rejected\"}[5m]))", "legendFormat": "{{reason}}" }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Accepted vs rejected / sec",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "datasource": "Prometheus",
+      "targets": [
+        { "expr": "sum(rate(gps_updates_total{result=\"accepted\"}[5m]))", "legendFormat": "accepted" },
+        { "expr": "sum(rate(gps_updates_total{result=\"rejected\"}[5m]))", "legendFormat": "rejected" }
+      ]
+    }
+  ]
+}

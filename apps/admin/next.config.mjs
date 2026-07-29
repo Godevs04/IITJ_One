@@ -3,6 +3,11 @@ const apiProxyTarget =
   process.env.API_PROXY_TARGET?.replace(/\/$/, '') || 'http://127.0.0.1:6002';
 
 const nextConfig = {
+  // Phase 6 — standalone output produces a minimal, self-contained server
+  // bundle (node_modules pruned to only what's actually required), which is
+  // what apps/admin/Dockerfile copies into its runtime stage. Pure build
+  // output config — no change to routes, rendering, or behavior.
+  output: 'standalone',
   async rewrites() {
     return [
       {

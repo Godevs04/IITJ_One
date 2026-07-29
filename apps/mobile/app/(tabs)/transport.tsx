@@ -4,6 +4,7 @@ import type { CalendarDoc, TransportDoc, HolidaysDoc, TransportAlertsDoc, Tempor
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
 import { useActiveScheduleException } from '@/hooks/useActiveScheduleException';
+import { useLiveTracking } from '@/transport/state/LiveTrackingProvider';
 import { TransportScreenView } from '@/transport/ui/TransportScreenView';
 
 export default function TransportScreen() {
@@ -14,6 +15,16 @@ export default function TransportScreen() {
   const alerts = useCampusModule<TransportAlertsDoc>('transportAlerts');
   const tempSchedule = useCampusModule<TemporaryTransportScheduleDoc>('temporaryTransportSchedule');
   const { data: activeException, refetch: refetchException } = useActiveScheduleException();
+  const {
+    trips: liveTrips,
+    loading: liveLoading,
+    error: liveError,
+    lastUpdated,
+    connectionState,
+    ride,
+    stopRide,
+    refresh: refreshLive,
+  } = useLiveTracking();
 
   const [tick, setTick] = useState(0);
 
@@ -34,8 +45,8 @@ export default function TransportScreen() {
   }, []);
 
   const onRefresh = useCallback(async () => {
-    await Promise.all([sync(), refetchException()]);
-  }, [sync, refetchException]);
+    await Promise.all([sync(), refetchException(), refreshLive()]);
+  }, [sync, refetchException, refreshLive]);
 
   return (
     <TransportScreenView
@@ -48,6 +59,13 @@ export default function TransportScreen() {
       tick={tick}
       onRefresh={onRefresh}
       refreshing={syncing}
+      liveTrips={liveTrips}
+      liveLoading={liveLoading}
+      liveError={liveError}
+      lastUpdated={lastUpdated}
+      connectionState={connectionState}
+      ride={ride}
+      onStopRide={stopRide}
     />
   );
 }
