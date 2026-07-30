@@ -20,6 +20,7 @@ import {
   DEFAULT_LAUNDRY_PREFERENCES,
   HOSTELS,
   REMINDER_OPTIONS,
+  getHostelLabel,
   type Hostel,
   type LaundryPreferences,
   type NotificationPermissionStatus,
@@ -169,7 +170,7 @@ export default function LaundryScreen() {
     [prefs, persist, applyReminders],
   );
 
-  const hostelLabel = prefs.hostel ?? 'Select your hostel';
+  const hostelLabel = prefs.hostel ? getHostelLabel(prefs.hostel) : 'Select your hostel';
   const boys = HOSTELS.filter((h) => h.category === 'boys');
   const girls = HOSTELS.filter((h) => h.category === 'girls');
   debugListKeys('LaundryScreen', 'boysHostels', boys, (hostel) => hostel.id);
@@ -411,7 +412,7 @@ function HostelOptionRow({
         { borderColor: theme.border, backgroundColor: selected ? theme.primaryTint : theme.surface },
       ]}
     >
-      <Text style={[styles.hostelOptionText, { color: theme.text }]}>{hostel}</Text>
+      <Text style={[styles.hostelOptionText, { color: theme.text }]}>{getHostelLabel(hostel)}</Text>
       {selected ? <Ionicons name="checkmark" size={18} color={theme.linkText} /> : null}
     </Pressable>
   );
