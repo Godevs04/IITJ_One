@@ -1,5 +1,6 @@
 import {
   DEFAULT_MEAL_WINDOWS,
+  DEFAULT_WEEKEND_MEAL_WINDOWS,
   type MealKey,
   type MealWindowsDoc,
 } from '@iitj1/types';
@@ -93,6 +94,24 @@ function toMealWindow(cfg: {
   };
 }
 
+function isWeekendDay(target?: string | Date): boolean {
+  if (!target) {
+    const day = new Date().getDay();
+    return day === 0 || day === 6;
+  }
+  if (target instanceof Date) {
+    const day = target.getDay();
+    return day === 0 || day === 6;
+  }
+  const lower = target.trim().toLowerCase();
+  return (
+    lower === 'saturday' ||
+    lower === 'sunday' ||
+    lower === 'sat' ||
+    lower === 'sun'
+  );
+}
+
 /** Hardcoded defaults — prefer getMealWindows() after sync. */
 export const MEAL_WINDOWS: Record<MealKey, MealWindow> = {
   breakfast: toMealWindow(DEFAULT_MEAL_WINDOWS.breakfast),
@@ -101,9 +120,13 @@ export const MEAL_WINDOWS: Record<MealKey, MealWindow> = {
   dinner: toMealWindow(DEFAULT_MEAL_WINDOWS.dinner),
 };
 
-export function getMealWindows(): Record<MealKey, MealWindow> {
+export function getMealWindows(dayNameOrDate?: string | Date): Record<MealKey, MealWindow> {
   const doc = readCachedModule<MealWindowsDoc>('mealWindows');
-  const windows = doc?.windows ?? DEFAULT_MEAL_WINDOWS;
+  const isWeekend = isWeekendDay(dayNameOrDate);
+  const windows = isWeekend
+    ? (doc?.weekendWindows ?? DEFAULT_WEEKEND_MEAL_WINDOWS)
+    : (doc?.windows ?? DEFAULT_MEAL_WINDOWS);
+
   return {
     breakfast: toMealWindow(windows.breakfast),
     lunch: toMealWindow(windows.lunch),
@@ -126,9 +149,9 @@ export interface MealTimeStatus {
   timeLeftString: string;
 }
 
-export function getMealTimeStatus(key: MealKey): MealTimeStatus {
+export function getMealTimeStatus(key: MealKey, dayNameOrDate?: string | Date): MealTimeStatus {
   const now = nowMinutes();
-  const window = getMealWindows()[key];
+  const window = getMealWindows(dayNameOrDate)[key];
 
   if (now >= window.startMin && now < window.endMin) {
     const diff = window.endMin - now;

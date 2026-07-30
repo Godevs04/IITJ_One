@@ -7,6 +7,7 @@ import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
 import { useSwipeGesture } from '@/navigation/SwipeContext';
+import { useModalOverlayLock } from '@/services/overlayGate';
 import type { MessMenuDoc } from '@/types/campus';
 import { getMealTimeStatus, getMealWindows } from '@/utils/date';
 import { useThemeColors } from '@/theme/ThemeProvider';
@@ -43,12 +44,22 @@ export default function MenuScreen() {
   const [dietPreference, setDietPreference] = useState<'veg' | 'nonVeg'>('veg');
   const [selectedWeekday, setSelectedWeekday] = useState<string>(() => todayWeekdayName());
   const [showCharges, setShowCharges] = useState(false);
+  useModalOverlayLock(showCharges);
 
-  const menu = dietPreference === 'veg' ? vegMenu : nonVegMenu;
+  const menu =
+    dietPreference === 'veg'
+      ? (vegMenu ?? nonVegMenu)
+      : (nonVegMenu ?? vegMenu);
 
-  // The schema guarantees exactly 7 unique weekdays with all 4 meals present,
-  // so this can only be null when `menu` itself hasn't been published yet.
-  const dayMenu = useMemo(() => menu?.days.find((d) => d.day === selectedWeekday) ?? null, [menu, selectedWeekday]);
+  // Robust case-insensitive weekday matching with fallback to first day if missing
+  const dayMenu = useMemo(() => {
+    if (!menu?.days || menu.days.length === 0) return null;
+    const target = selectedWeekday.trim().toLowerCase();
+    return (
+      menu.days.find((d) => d.day.trim().toLowerCase() === target) ??
+      menu.days[0]
+    );
+  }, [menu, selectedWeekday]);
 
   const onRefresh = useCallback(async () => {
     await sync();
@@ -62,7 +73,8 @@ export default function MenuScreen() {
     { meal: 'Dinner', veg: '₹75', nonVeg: '₹80' },
   ], (item) => item.meal);
 
-  const isSelectedToday = selectedWeekday === todayWeekdayName();
+  const isSelectedToday =
+    selectedWeekday.trim().toLowerCase() === todayWeekdayName().trim().toLowerCase();
 
   const subtitle = menu ? `${monthNumberToName(menu.month)} ${menu.year} — weekly rotation` : undefined;
 
@@ -217,8 +229,8 @@ export default function MenuScreen() {
           debugListKeys('MenuScreen', `${meal}NonVegItems`, items.nonVegItems, (_, index) => `${index}`);
 
           const isToday = isSelectedToday;
-          const timeStatus = isToday ? getMealTimeStatus(meal) : null;
-          const mealWindow = getMealWindows()[meal];
+          const timeStatus = isToday ? getMealTimeStatus(meal, selectedWeekday) : null;
+          const mealWindow = getMealWindows(selectedWeekday)[meal];
 
           const isActive = timeStatus?.status === 'active';
 

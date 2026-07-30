@@ -6,7 +6,7 @@ import {
   getCalendar,
   getMealWindows,
 } from '../store';
-import { DEFAULT_MEAL_WINDOWS, type MealKey } from '@iitj1/types';
+import { DEFAULT_MEAL_WINDOWS, DEFAULT_WEEKEND_MEAL_WINDOWS, type MealKey, type MealWindowsDoc } from '@iitj1/types';
 
 function todayDayName(): string {
   const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -25,8 +25,14 @@ function parseHourMinute(time: string): number {
   return h * 60 + m;
 }
 
-function currentMeal(windows = DEFAULT_MEAL_WINDOWS): MealKey {
+function currentMeal(mealWindowsDoc?: MealWindowsDoc | null): MealKey {
   const now = new Date();
+  const day = now.getDay();
+  const isWeekend = day === 0 || day === 6;
+  const windows = isWeekend
+    ? (mealWindowsDoc?.weekendWindows ?? DEFAULT_WEEKEND_MEAL_WINDOWS)
+    : (mealWindowsDoc?.windows ?? DEFAULT_MEAL_WINDOWS);
+
   const mins = now.getHours() * 60 + now.getMinutes();
   if (mins < parseHourMinute(windows.breakfast.end)) return 'breakfast';
   if (mins < parseHourMinute(windows.lunch.end)) return 'lunch';
@@ -46,7 +52,7 @@ export async function buildHomeBundle(campusId: string) {
 
   const dayName = todayDayName();
   const todayMenu = menu?.days.find((d) => d.dayName === dayName) ?? null;
-  const meal = currentMeal(mealWindows?.windows ?? DEFAULT_MEAL_WINDOWS);
+  const meal = currentMeal(mealWindows);
 
   const upcomingEvents =
     calendar?.events
