@@ -100,6 +100,8 @@ async function getMessaging() {
 
 // ─── Initialization ─────────────────────────────────────────────────────────────
 
+import { sanitizeNotificationError } from '@/utils/errorSanitizer';
+
 /**
  * Initialize FCM. Call once after Firebase is initialized.
  * - Requests permission
@@ -146,7 +148,7 @@ export async function initFCM(): Promise<void> {
 
     void crashLog('FCM initialized');
   } catch (error) {
-    if (__DEV__) console.warn('[fcm] Init failed:', error);
+    sanitizeNotificationError(error, 'fcm:init');
   }
 }
 
@@ -202,9 +204,11 @@ async function registerToken(token: string): Promise<void> {
       }
 
       throw new Error(`HTTP ${response.status}`);
-    } catch {
+    } catch (err) {
       if (attempt < RETRY_DELAYS.length) {
         await new Promise((r) => setTimeout(r, RETRY_DELAYS[attempt]));
+      } else {
+        sanitizeNotificationError(err, 'fcm:registerToken');
       }
     }
   }
