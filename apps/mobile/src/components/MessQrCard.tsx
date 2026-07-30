@@ -49,7 +49,7 @@ export function MessQrCard() {
 
   const iconBox = (
     <Animated.View style={[styles.iconBox, { backgroundColor: theme.primaryTint, transform: [{ scale: scaleAnim }] }]}>
-      <Ionicons name="qr-code-outline" size={24} color={theme.primary} />
+      <Ionicons name="qr-code-outline" size={24} color={theme.linkText} />
     </Animated.View>
   );
 

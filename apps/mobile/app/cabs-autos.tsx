@@ -26,7 +26,7 @@ export default function CabsAutosScreen() {
     <ScreenShell hideTitle subtitle="Local transportation directory">
       <View style={styles.hero}>
         <View style={[styles.heroIcon, { backgroundColor: theme.primaryTint }]}>
-          <Ionicons name="car-sport-outline" size={36} color={theme.primary} />
+          <Ionicons name="car-sport-outline" size={36} color={theme.linkText} />
         </View>
         <Text style={[styles.heroTitle, { color: theme.text }]}>Cabs & Autos</Text>
         <Text style={[styles.heroBody, { color: theme.textMuted }]}>

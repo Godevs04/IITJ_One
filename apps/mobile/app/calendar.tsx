@@ -164,16 +164,16 @@ export default function CalendarScreen() {
           pressed && styles.pressed,
         ]}
       >
-        <Ionicons name="document-text-outline" size={24} color={theme.primary} />
+        <Ionicons name="document-text-outline" size={24} color={theme.linkText} />
         <View style={{ flex: 1 }}>
-          <Text style={[styles.pdfBannerTitle, { color: theme.primary }]}>
+          <Text style={[styles.pdfBannerTitle, { color: theme.linkText }]}>
             View Official PDF Calendar
           </Text>
           <Text style={[styles.pdfBannerSubtitle, { color: theme.textMuted }]}>
             Open AY 2026-27 official calendar with zoom & search
           </Text>
         </View>
-        <Ionicons name="chevron-forward" size={20} color={theme.primary} />
+        <Ionicons name="chevron-forward" size={20} color={theme.linkText} />
       </Pressable>
 
       <View style={styles.filters}>
@@ -194,7 +194,7 @@ export default function CalendarScreen() {
               <Text
                 style={[
                   styles.chipText,
-                  { color: active ? theme.primary : theme.textMuted },
+                  { color: active ? theme.linkText : theme.textMuted },
                 ]}
               >
                 {f}
@@ -259,7 +259,7 @@ export default function CalendarScreen() {
             renderLoading={() => (
               <ActivityIndicator
                 size="large"
-                color={theme.primary}
+                color={theme.linkText}
                 style={StyleSheet.absoluteFillObject}
               />
             )}
@@ -279,7 +279,7 @@ function EventRow({ event }: { event: CalendarEvent }) {
         { backgroundColor: theme.surface, borderColor: theme.border },
       ]}
     >
-      <Text style={[styles.type, { color: theme.primary }]}>
+      <Text style={[styles.type, { color: theme.linkText }]}>
         {event.type.toUpperCase()}
       </Text>
       <Text style={[styles.title, { color: theme.text }]}>{event.title}</Text>

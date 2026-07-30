@@ -70,7 +70,7 @@ function LocationDetailCard({
     <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <View style={styles.cardHeader}>
         <View style={[styles.categoryIcon, { backgroundColor: theme.primaryTint }]}>
-          <Ionicons name={categoryInfo.icon} size={20} color={theme.primary} />
+          <Ionicons name={categoryInfo.icon} size={20} color={theme.linkText} />
         </View>
         <View style={styles.headerContent}>
           <Text style={[styles.locationName, { color: theme.text }]}>
@@ -96,7 +96,7 @@ function LocationDetailCard({
           <Ionicons
             name={isFavorite ? 'heart' : 'heart-outline'}
             size={18}
-            color={isFavorite ? theme.primary : theme.textMuted}
+            color={isFavorite ? theme.linkText : theme.textMuted}
           />
         </Pressable>
       </View>
@@ -133,8 +133,8 @@ function LocationDetailCard({
                 pressed && { opacity: 0.8 },
               ]}
             >
-              <Ionicons name="call-outline" size={14} color={theme.primary} />
-              <Text style={[styles.contactText, { color: theme.primary }]}>
+              <Ionicons name="call-outline" size={14} color={theme.linkText} />
+              <Text style={[styles.contactText, { color: theme.linkText }]}>
                 Call
               </Text>
             </Pressable>
@@ -148,8 +148,8 @@ function LocationDetailCard({
                 pressed && { opacity: 0.8 },
               ]}
             >
-              <Ionicons name="mail-outline" size={14} color={theme.primary} />
-              <Text style={[styles.contactText, { color: theme.primary }]}>
+              <Ionicons name="mail-outline" size={14} color={theme.linkText} />
+              <Text style={[styles.contactText, { color: theme.linkText }]}>
                 Email
               </Text>
             </Pressable>
@@ -167,8 +167,8 @@ function LocationDetailCard({
               pressed && { opacity: 0.8 },
             ]}
           >
-            <Ionicons name="map-outline" size={16} color={theme.primary} />
-            <Text style={[styles.actionText, { color: theme.primary }]}>
+            <Ionicons name="map-outline" size={16} color={theme.linkText} />
+            <Text style={[styles.actionText, { color: theme.linkText }]}>
               Maps
             </Text>
           </Pressable>
@@ -410,7 +410,7 @@ export default function MapScreen() {
                 <Ionicons
                   name={LOCATION_CATEGORIES[item.category].icon}
                   size={16}
-                  color={theme.primary}
+                  color={theme.linkText}
                 />
                 <View style={styles.suggestionContent}>
                   <Text style={[styles.suggestionTitle, { color: theme.text }]}>
@@ -436,7 +436,7 @@ export default function MapScreen() {
               Recent Searches
             </Text>
             <Pressable onPress={handleClearRecentSearches}>
-              <Text style={[styles.clearRecentText, { color: theme.primary }]}>
+              <Text style={[styles.clearRecentText, { color: theme.linkText }]}>
                 Clear All
               </Text>
             </Pressable>
@@ -473,12 +473,12 @@ export default function MapScreen() {
       {/* Filter Info */}
       {selectedCategories.size > 0 && (
         <View style={[styles.filterInfo, { backgroundColor: theme.primaryTint, borderColor: theme.primary }]}>
-          <Ionicons name="filter-outline" size={16} color={theme.primary} />
-          <Text style={[styles.filterInfoText, { color: theme.primary }]}>
+          <Ionicons name="filter-outline" size={16} color={theme.linkText} />
+          <Text style={[styles.filterInfoText, { color: theme.linkText }]}>
             {selectedCategories.size} categor{selectedCategories.size === 1 ? 'y' : 'ies'} · {filteredLocations.length} location{filteredLocations.length === 1 ? '' : 's'}
           </Text>
           <Pressable onPress={() => setSelectedCategories(new Set())}>
-            <Text style={[styles.clearFilterText, { color: theme.primary }]}>Clear</Text>
+            <Text style={[styles.clearFilterText, { color: theme.linkText }]}>Clear</Text>
           </Pressable>
         </View>
       )}
@@ -527,7 +527,7 @@ export default function MapScreen() {
                 </View>
                 {isSelected && (
                   <View style={[styles.selectedBadge, { backgroundColor: theme.surface }]}>
-                    <Ionicons name="checkmark" size={12} color={theme.primary} />
+                    <Ionicons name="checkmark" size={12} color={theme.linkText} />
                   </View>
                 )}
               </Pressable>

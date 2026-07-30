@@ -104,7 +104,7 @@ export default function GlobalSearchScreen() {
                 <View style={styles.recentHeader}>
                   <Text style={[styles.recentTitle, { color: theme.textMuted }]}>Recent searches</Text>
                   <Pressable onPress={handleClearRecents}>
-                    <Text style={[styles.clearAll, { color: theme.primary }]}>Clear All</Text>
+                    <Text style={[styles.clearAll, { color: theme.linkText }]}>Clear All</Text>
                   </Pressable>
                 </View>
                 {recentSearches.map((q) => (

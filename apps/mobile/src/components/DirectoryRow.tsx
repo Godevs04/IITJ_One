@@ -64,7 +64,7 @@ export function DirectoryRow({
             accessibilityRole="button"
             accessibilityLabel={`Call ${title}`}
           >
-            <Ionicons name="call-outline" size={20} color={theme.primary} />
+            <Ionicons name="call-outline" size={20} color={theme.linkText} />
           </Pressable>
         </View>
       ) : renderRight ? (

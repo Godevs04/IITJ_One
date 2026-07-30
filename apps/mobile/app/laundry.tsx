@@ -287,7 +287,7 @@ export default function LaundryScreen() {
           </View>
           {prefs.notificationPermissionStatus === 'denied' ? (
             <Pressable onPress={() => Linking.openSettings()}>
-              <Text style={[styles.settingsLink, { color: theme.primary }]}>Open device settings</Text>
+              <Text style={[styles.settingsLink, { color: theme.linkText }]}>Open device settings</Text>
             </Pressable>
           ) : null}
         </View>
@@ -412,7 +412,7 @@ function HostelOptionRow({
       ]}
     >
       <Text style={[styles.hostelOptionText, { color: theme.text }]}>{hostel}</Text>
-      {selected ? <Ionicons name="checkmark" size={18} color={theme.primary} /> : null}
+      {selected ? <Ionicons name="checkmark" size={18} color={theme.linkText} /> : null}
     </Pressable>
   );
 }

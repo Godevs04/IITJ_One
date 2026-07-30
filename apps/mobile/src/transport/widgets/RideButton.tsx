@@ -55,7 +55,7 @@ export function RideButton({ direction: fixedDirection, tripId }: RideButtonProp
                 accessibilityRole="button"
                 accessibilityLabel={d === 'departure' ? 'Departure from Campus' : 'Arrival at Campus'}
               >
-                <Text style={[styles.pickerTabText, { color: direction === d ? theme.primary : theme.textMuted }]}>
+                <Text style={[styles.pickerTabText, { color: direction === d ? theme.linkText : theme.textMuted }]}>
                   {d === 'departure' ? 'Departing campus' : 'Arriving at campus'}
                 </Text>
               </Pressable>

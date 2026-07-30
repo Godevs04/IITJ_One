@@ -38,7 +38,7 @@ function InfoChip({ label }: { label: string }) {
     <View
       style={[styles.chip, { backgroundColor: theme.primaryTint, borderColor: theme.border }]}
     >
-      <Text style={[styles.chipText, { color: theme.primary }]}>{label}</Text>
+      <Text style={[styles.chipText, { color: theme.linkText }]}>{label}</Text>
     </View>
   );
 }
@@ -61,7 +61,7 @@ function InfoRow({
   return (
     <View style={styles.infoRow}>
       <View style={[styles.infoIconWrap, { backgroundColor: theme.primaryTint }]}>
-        <Ionicons name={icon} size={16} color={theme.primary} />
+        <Ionicons name={icon} size={16} color={theme.linkText} />
       </View>
       <View style={styles.infoTextBlock}>
         <Text style={[styles.infoLabel, { color: theme.textMuted }]}>{label}</Text>
@@ -77,7 +77,7 @@ function GuideCard({ guide }: { guide: WifiGuide }) {
     <View style={[styles.guideCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <View style={styles.guideCardHeader}>
         <View style={[styles.guideIconWrap, { backgroundColor: theme.primaryTint }]}>
-          <Ionicons name={resolveIcon(guide.icon)} size={22} color={theme.primary} />
+          <Ionicons name={resolveIcon(guide.icon)} size={22} color={theme.linkText} />
         </View>
         <View style={styles.guideTitleBlock}>
           <Text style={[styles.guideTitle, { color: theme.text }]}>{guide.title}</Text>
@@ -137,13 +137,13 @@ export default function WifiScreen() {
       >
         <View style={styles.infoCardHeader}>
           <View style={[styles.wifiIconWrap, { backgroundColor: theme.primaryTint }]}>
-            <Ionicons name="wifi-outline" size={26} color={theme.primary} />
+            <Ionicons name="wifi-outline" size={26} color={theme.linkText} />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={[styles.infoCardTitle, { color: theme.text }]}>Internet Facility</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Ionicons name="checkmark-circle-outline" size={14} color={theme.primary} />
-              <Text style={[styles.speedBadge, { color: theme.primary }]}>
+              <Ionicons name="checkmark-circle-outline" size={14} color={theme.linkText} />
+              <Text style={[styles.speedBadge, { color: theme.linkText }]}>
                 Up to 9 Gbps Connectivity
               </Text>
             </View>

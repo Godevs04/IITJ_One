@@ -138,7 +138,7 @@ export default function AppsScreen() {
                     </Text>
                     {app.category ? (
                       <View style={[styles.badge, { backgroundColor: theme.primaryTint }]}>
-                        <Text style={[styles.badgeText, { color: theme.primary }]}>
+                        <Text style={[styles.badgeText, { color: theme.linkText }]}>
                           {app.category}
                         </Text>
                       </View>

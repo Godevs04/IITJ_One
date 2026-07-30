@@ -110,7 +110,7 @@ export default function TransportAlertsScreen() {
         {activeAlerts.length === 0 ? (
           <View style={styles.emptyContainer}>
             <View style={[styles.emptyIconCircle, { backgroundColor: theme.primaryTint }]}>
-              <Ionicons name="notifications-off-outline" size={32} color={theme.primary} />
+              <Ionicons name="notifications-off-outline" size={32} color={theme.linkText} />
             </View>
             <Text style={[styles.emptyTitle, { color: theme.text }]}>All Clear</Text>
             <Text style={[styles.emptySubtitle, { color: theme.textMuted }]}>
@@ -174,8 +174,8 @@ export default function TransportAlertsScreen() {
                           pressed && styles.pressed,
                         ]}
                       >
-                        <Text style={[styles.linkText, { color: theme.primary }]}>Read More</Text>
-                        <Ionicons name="open-outline" size={14} color={theme.primary} />
+                        <Text style={[styles.linkText, { color: theme.linkText }]}>Read More</Text>
+                        <Ionicons name="open-outline" size={14} color={theme.linkText} />
                       </Pressable>
                     ) : null}
                   </View>

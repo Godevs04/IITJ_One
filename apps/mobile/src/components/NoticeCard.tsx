@@ -68,7 +68,7 @@ export function NoticeCard({
             </View>
           )}
           {hasLink ? (
-            <Text style={[styles.linkHint, { color: theme.primary }]}>Link</Text>
+            <Text style={[styles.linkHint, { color: theme.linkText }]}>Link</Text>
           ) : null}
         </View>
         <Text style={[styles.title, { color: theme.text }]}>{title}</Text>

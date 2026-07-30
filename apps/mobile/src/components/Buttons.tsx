@@ -41,7 +41,7 @@ export function SecondaryButton({ label, onPress, disabled }: ButtonProps) {
         pressed && !disabled && styles.pressed,
       ]}
     >
-      <Text style={[styles.secondaryText, { color: theme.primary }]}>{label}</Text>
+      <Text style={[styles.secondaryText, { color: theme.linkText }]}>{label}</Text>
     </Pressable>
   );
 }
