@@ -33,6 +33,8 @@ import type {
   SessionDoc,
   GpsPingDoc,
   BusStateDoc,
+  MessMenuDoc,
+  MessMenuHistoryEntry,
 } from './types';
 
 let client: MongoClient | null = null;
@@ -176,6 +178,13 @@ async function ensureIndexes(): Promise<void> {
   // Insurance against orphaned trip docs, not the primary cleanup path.
   await db.collection('busStates').createIndex({ lastUpdated: 1 }, { expireAfterSeconds: 2 * 24 * 60 * 60 });
 
+  // Mess menu JSON import: up to 2 live docs per (campus, menuType) — one draft, one
+  // published — so a plain {campusId:1} unique index (the singleton loop below) doesn't
+  // fit; compound key instead, same style as the trips precedent above.
+  await db.collection('messMenus').createIndex({ campusId: 1, menuType: 1, status: 1 }, { unique: true });
+  // Append-only publish history — never unique, newest-first listing.
+  await db.collection('messMenuHistory').createIndex({ campusId: 1, menuType: 1, version: -1 });
+
   // One document per campus for singleton modules
   const uniqueCampus = { campusId: 1 } as const;
   for (const name of [
@@ -249,6 +258,8 @@ export const collections = {
   pushHistory: () => col<PushHistoryDoc>('pushHistory'),
   analyticsEvents: () => col<AnalyticsEventDoc>('analyticsEvents'),
   analyticsDaily: () => col<AnalyticsDailyDoc>('analyticsDaily'),
+  messMenus: () => col<MessMenuDoc>('messMenus'),
+  messMenuHistory: () => col<MessMenuHistoryEntry>('messMenuHistory'),
 };
 
 export async function disconnectDb(): Promise<void> {

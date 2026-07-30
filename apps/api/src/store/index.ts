@@ -1,5 +1,6 @@
 import type { ClientSession } from 'mongodb';
 import { isDbConnected, collections, ObjectId, getMongoClient } from '../db';
+import { sortMessMenuDays, monthNumberToName } from '@iitj1/types';
 import { busesConflict } from '../services/transportScheduleExceptionStatus';
 import { invalidateModule, invalidateAll, cached, cache } from '../cache';
 import {
@@ -82,6 +83,9 @@ import type {
   SessionDoc,
   GpsPingDoc,
   BusStateDoc,
+  MessMenuInput,
+  MessMenuDoc,
+  MessMenuHistoryEntry,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
 
@@ -285,7 +289,7 @@ export async function getAllNotices(
   initFallbackStore();
   const all = getFallbackState()
     .notices.filter((n) => n.campusId === campusId && (!category || n.category === category))
-    .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
+    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
   return { items: all.slice(skip, skip + pageSize), total: all.length };
 }
 
@@ -513,6 +517,169 @@ export async function syncHealthCenter(doc: HealthCenterDoc, source: string): Pr
     getFallbackState().healthCenter = doc;
   }
   await bumpVersion('healthCenter', doc.campusId, source, 'update', 'Health Center info synced from source');
+}
+
+function messMenuSyncModule(menuType: 'veg' | 'non-veg'): ModuleName {
+  return menuType === 'veg' ? 'messMenuVeg' : 'messMenuNonVeg';
+}
+
+/** Public/mobile-facing — drafts never leak here, only the currently live published doc. */
+export async function getMessMenu(campusId: string, menuType: 'veg' | 'non-veg'): Promise<MessMenuDoc | null> {
+  if (isDbConnected()) return collections.messMenus().findOne({ campusId, menuType, status: 'published' });
+  initFallbackStore();
+  const s = getFallbackState();
+  return menuType === 'veg' ? s.messMenuVeg : s.messMenuNonVeg;
+}
+
+/** Admin-only — reloads a previously saved draft for editing. */
+export async function getMessMenuDraft(campusId: string, menuType: 'veg' | 'non-veg'): Promise<MessMenuDoc | null> {
+  if (isDbConnected()) return collections.messMenus().findOne({ campusId, menuType, status: 'draft' });
+  initFallbackStore();
+  const s = getFallbackState();
+  return menuType === 'veg' ? s.messMenuVegDraft : s.messMenuNonVegDraft;
+}
+
+/**
+ * No sync-version bump (drafts are invisible to mobile) and no optimistic
+ * lock (a draft is a single admin's scratch space — last-write-wins is fine,
+ * unlike the published doc other admins/students actually rely on).
+ */
+export async function saveMessMenuDraft(input: MessMenuInput, adminEmail: string): Promise<void> {
+  const now = new Date().toISOString();
+  const doc: MessMenuDoc = {
+    ...input,
+    days: sortMessMenuDays(input.days),
+    status: 'draft',
+    version: 0,
+    publishedAt: null,
+    publishedBy: null,
+    updatedAt: now,
+    updatedBy: adminEmail,
+  };
+  if (isDbConnected()) {
+    await collections.messMenus().replaceOne(
+      { campusId: input.campusId, menuType: input.menuType, status: 'draft' },
+      doc,
+      { upsert: true },
+    );
+  } else {
+    initFallbackStore();
+    const s = getFallbackState();
+    if (input.menuType === 'veg') s.messMenuVegDraft = doc;
+    else s.messMenuNonVegDraft = doc;
+  }
+}
+
+async function publishMessMenuInSession(
+  input: MessMenuInput,
+  rawJson: unknown,
+  adminEmail: string,
+  expectedVersion: number | undefined,
+  session: ClientSession | undefined,
+): Promise<number> {
+  const syncModule = messMenuSyncModule(input.menuType);
+  // Not threaded through the transaction: this is an optimistic-lock check that
+  // throws before any writes happen, matching every other module's non-transactional
+  // assertVersionMatches usage elsewhere in this file. The writes below ARE atomic
+  // with each other via `session`, which is the guarantee "Publish Both" needs.
+  await assertVersionMatches(syncModule, input.campusId, expectedVersion);
+  const current = await getMessMenu(input.campusId, input.menuType);
+  const now = new Date().toISOString();
+  const doc: MessMenuDoc = {
+    ...input,
+    days: sortMessMenuDays(input.days),
+    status: 'published',
+    version: (current?.version ?? 0) + 1,
+    publishedAt: now,
+    publishedBy: adminEmail,
+    updatedAt: now,
+    updatedBy: adminEmail,
+  };
+  const history: MessMenuHistoryEntry = {
+    campusId: input.campusId,
+    menuType: input.menuType,
+    version: doc.version,
+    rawJson,
+    normalizedDoc: doc,
+    publishedAt: now,
+    publishedBy: adminEmail,
+  };
+  if (isDbConnected()) {
+    await collections.messMenus().replaceOne(
+      { campusId: input.campusId, menuType: input.menuType, status: 'published' },
+      doc,
+      { upsert: true, session },
+    );
+    await collections.messMenuHistory().insertOne(history, { session });
+  } else {
+    initFallbackStore();
+    const s = getFallbackState();
+    if (input.menuType === 'veg') s.messMenuVeg = doc;
+    else s.messMenuNonVeg = doc;
+    s.messMenuHistory.push(history);
+  }
+  await bumpVersion(
+    syncModule,
+    input.campusId,
+    adminEmail,
+    'update',
+    `Mess menu (${input.menuType}) v${doc.version} published for ${monthNumberToName(input.month)} ${input.year}`,
+    session,
+  );
+  return doc.version;
+}
+
+export async function publishMessMenu(
+  input: MessMenuInput,
+  rawJson: unknown,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<number> {
+  return publishMessMenuInSession(input, rawJson, adminEmail, expectedVersion, undefined);
+}
+
+/**
+ * Publishes both menu types in one request. Uses a real Mongo transaction
+ * (Atlas is always a replica set) so a partial-failure state — veg live,
+ * non-veg not — can't happen from a single "Publish Both" click.
+ */
+export async function publishBothMessMenus(
+  veg: { input: MessMenuInput; rawJson: unknown; expectedVersion?: number },
+  nonVeg: { input: MessMenuInput; rawJson: unknown; expectedVersion?: number },
+  adminEmail: string,
+): Promise<{ vegVersion: number; nonVegVersion: number }> {
+  if (!isDbConnected()) {
+    const vegVersion = await publishMessMenuInSession(veg.input, veg.rawJson, adminEmail, veg.expectedVersion, undefined);
+    const nonVegVersion = await publishMessMenuInSession(nonVeg.input, nonVeg.rawJson, adminEmail, nonVeg.expectedVersion, undefined);
+    return { vegVersion, nonVegVersion };
+  }
+  const session = getMongoClient().startSession();
+  try {
+    let vegVersion = 0;
+    let nonVegVersion = 0;
+    await session.withTransaction(async () => {
+      vegVersion = await publishMessMenuInSession(veg.input, veg.rawJson, adminEmail, veg.expectedVersion, session);
+      nonVegVersion = await publishMessMenuInSession(nonVeg.input, nonVeg.rawJson, adminEmail, nonVeg.expectedVersion, session);
+    });
+    return { vegVersion, nonVegVersion };
+  } finally {
+    await session.endSession();
+  }
+}
+
+export async function listMessMenuHistory(
+  campusId: string,
+  menuType: 'veg' | 'non-veg',
+  limit = 20,
+): Promise<MessMenuHistoryEntry[]> {
+  if (isDbConnected()) {
+    return collections.messMenuHistory().find({ campusId, menuType }).sort({ version: -1 }).limit(limit).toArray();
+  }
+  initFallbackStore();
+  return getFallbackState()
+    .messMenuHistory.filter((h) => h.campusId === campusId && h.menuType === menuType)
+    .sort((a, b) => b.version - a.version)
+    .slice(0, limit);
 }
 
 export async function getAbout(campusId: string): Promise<AboutDoc | null> {

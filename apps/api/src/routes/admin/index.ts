@@ -4,6 +4,7 @@ import { adminCors } from '../../middleware/cors';
 import { requireMongoForAdminWrites } from '../../middleware/requireMongoWrite';
 import authRouter from './auth';
 import menuRouter from './menu';
+import messMenuRouter from './messMenu';
 import noticesRouter from './notices';
 import transportRouter from './transport';
 import calendarRouter from './calendar';
@@ -56,6 +57,7 @@ router.get('/me', (req: AuthRequest, res: Response) => {
 });
 router.use('/uploads', uploadsRouter);
 router.use('/menu', menuRouter);
+router.use('/messMenu', messMenuRouter);
 router.use('/notices', noticesRouter);
 // More-specific mount registered before '/transport' as a defensive convention —
 // doesn't rely on transportRouter's fallthrough behavior for sub-paths.

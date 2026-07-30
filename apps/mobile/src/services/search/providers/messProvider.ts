@@ -1,5 +1,5 @@
 import { readCachedModule } from '@/services/sync';
-import type { MenuDoc } from '@/types/campus';
+import type { MessMenuDoc } from '@/types/campus';
 import { getMealWindows } from '@/utils/date';
 import { registerSearchProvider } from '../registry';
 import type { IoniconName, SearchEntry } from '../types';
@@ -20,24 +20,26 @@ const MEAL_ICONS: Record<(typeof MEALS)[number], IoniconName> = {
   dinner: 'restaurant-outline',
 };
 
-const WEEKDAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-
-function splitDishes(value: string): string[] {
-  return value
-    .split(/[,;]/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
+const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 function getEntries(): SearchEntry[] {
-  const menu = readCachedModule<MenuDoc>('menu');
+  const vegMenu = readCachedModule<MessMenuDoc>('messMenuVeg');
+  const nonVegMenu = readCachedModule<MessMenuDoc>('messMenuNonVeg');
   const windows = getMealWindows();
   const weekday = WEEKDAY_NAMES[new Date().getDay()];
-  const dayMenu = menu?.days.find((d) => d.dayName === weekday);
+  const vegDayMenu = vegMenu?.days.find((d) => d.day === weekday);
+  const nonVegDayMenu = nonVegMenu?.days.find((d) => d.day === weekday);
 
   return MEALS.map((meal) => {
-    const items = dayMenu?.[meal];
-    const dishes = items ? [...splitDishes(items.veg), ...splitDishes(items.nonVeg)] : [];
+    // Not diet-preference-scoped — combine both mess halls' dishes for maximum search recall.
+    const vegItems = vegDayMenu?.meals[meal];
+    const nonVegItems = nonVegDayMenu?.meals[meal];
+    const dishes = [
+      ...(vegItems?.vegItems ?? []),
+      ...(vegItems?.compulsoryItems ?? []),
+      ...(nonVegItems?.nonVegItems ?? []),
+      ...(nonVegItems?.compulsoryItems ?? []),
+    ];
 
     return {
       id: `mess-${meal}`,

@@ -26,5 +26,7 @@ export function defaultVersions(): MetaVersions {
     temporaryTransportSchedule: 1,
     transportScheduleExceptions: 1,
     vehicles: 1,
+    messMenuVeg: 1,
+    messMenuNonVeg: 1,
   };
 }

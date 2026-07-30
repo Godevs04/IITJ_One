@@ -35,6 +35,8 @@ import type {
   SessionDoc,
   GpsPingDoc,
   BusStateDoc,
+  MessMenuDoc,
+  MessMenuHistoryEntry,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
 import { busesConflict, dateRangesOverlap } from '../services/transportScheduleExceptionStatus';
@@ -72,6 +74,19 @@ interface FallbackState {
   rideSessions: SessionDoc[];
   gpsPings: GpsPingDoc[];
   busStates: BusStateDoc[];
+  /**
+   * Unlike every other module above, mess menu has no sensible default
+   * content — fabricating a plausible-looking fake weekly menu would risk
+   * silently showing invented dish names to students as if real. `null`
+   * means "nothing published yet," matching the DB-connected path's
+   * `Promise<MessMenuDoc | null>` return type and the public route's
+   * 404-on-null handling.
+   */
+  messMenuVeg: MessMenuDoc | null;
+  messMenuNonVeg: MessMenuDoc | null;
+  messMenuVegDraft: MessMenuDoc | null;
+  messMenuNonVegDraft: MessMenuDoc | null;
+  messMenuHistory: MessMenuHistoryEntry[];
 }
 
 let state: FallbackState | null = null;
@@ -328,6 +343,11 @@ function buildDefaultState(): FallbackState {
     rideSessions: [],
     gpsPings: [],
     busStates: [],
+    messMenuVeg: null,
+    messMenuNonVeg: null,
+    messMenuVegDraft: null,
+    messMenuNonVegDraft: null,
+    messMenuHistory: [],
   };
 }
 
@@ -379,17 +399,17 @@ export function fallbackFindAdminByEmail(email: string): AdminDoc | undefined {
 
 
 export function fallbackGetNotices(campusId: string, category?: string): NoticeDoc[] {
-  const now = new Date();
+  const nowMs = Date.now();
   return getFallbackState()
     .notices.filter(
       (n) =>
         n.campusId === campusId &&
         !n.deletedAt &&
-        n.startDate <= now &&
-        n.expiryDate > now &&
+        new Date(n.startDate).getTime() <= nowMs &&
+        new Date(n.expiryDate).getTime() > nowMs &&
         (!category || n.category === category),
     )
-    .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
+    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 }
 
 export function fallbackAddNotice(notice: NoticeDoc): NoticeDoc {

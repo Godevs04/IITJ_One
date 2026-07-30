@@ -16,6 +16,8 @@ export const MODULE_NAMES = [
   'holidays',
   'transportAlerts',
   'temporaryTransportSchedule',
+  'messMenuVeg',
+  'messMenuNonVeg',
 ] as const;
 
 export type ModuleName = (typeof MODULE_NAMES)[number];

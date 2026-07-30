@@ -25,6 +25,7 @@ export interface NoticeDoc {
   startDate: string;
   expiryDate: string;
   publishedAt?: string;
+  deletedAt?: string | null;
 }
 
 export interface TransportTrip {
@@ -272,4 +273,8 @@ export type {
   VisitingSpecialist,
   DoctorScheduleEntry,
   HealthCenterDoc,
+  MealItems,
+  MessMenuMeals,
+  MessMenuDay,
+  MessMenuDoc,
 } from '@iitj1/types';

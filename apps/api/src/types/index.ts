@@ -17,7 +17,9 @@ export type ModuleName =
   | 'transportAlerts'
   | 'temporaryTransportSchedule'
   | 'transportScheduleExceptions'
-  | 'vehicles';
+  | 'vehicles'
+  | 'messMenuVeg'
+  | 'messMenuNonVeg';
 
 export interface MetaVersions {
   menu: number;
@@ -39,6 +41,8 @@ export interface MetaVersions {
   temporaryTransportSchedule: number;
   transportScheduleExceptions: number;
   vehicles: number;
+  messMenuVeg: number;
+  messMenuNonVeg: number;
 }
 
 export type {
@@ -263,6 +267,12 @@ export type {
   DoctorScheduleEntry,
   DoctorScheduleDay,
   HealthCenterDoc,
+  MealItems,
+  MessMenuMeals,
+  MessMenuDay,
+  MessMenuInput,
+  MessMenuDoc,
+  MessMenuHistoryEntry,
 } from '@iitj1/types';
 
 export interface AdminDoc {

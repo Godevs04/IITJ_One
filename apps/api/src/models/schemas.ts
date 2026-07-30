@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { transportTripSchema } from '@iitj1/types';
+import { transportTripSchema, messMenuPutSchema } from '@iitj1/types';
 
 export { transportTripSchema };
 
@@ -10,6 +10,22 @@ export const campusQuerySchema = z.object({
 export const noticesQuerySchema = campusQuerySchema.extend({
   category: z.string().optional(),
 });
+
+export const messMenuQuerySchema = campusQuerySchema.extend({
+  menuType: z.enum(['veg', 'non-veg']),
+});
+
+export const messMenuHistoryQuerySchema = messMenuQuerySchema.extend({
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export const publishBothMessMenusSchema = z
+  .object({
+    veg: messMenuPutSchema,
+    nonVeg: messMenuPutSchema,
+  })
+  .refine((body) => body.veg.menuType === 'veg', { message: '"veg" must have menuType "veg"', path: ['veg', 'menuType'] })
+  .refine((body) => body.nonVeg.menuType === 'non-veg', { message: '"nonVeg" must have menuType "non-veg"', path: ['nonVeg', 'menuType'] });
 
 export const paginationQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -300,6 +316,8 @@ export const menuImportSchema = z.object({
 });
 
 export { holidaysPutSchema, transportAlertsPutSchema, temporaryTransportSchedulePutSchema, healthCenterPutSchema } from '@iitj1/types';
+
+export { messMenuPutSchema };
 
 export {
   transportScheduleExceptionCreateSchema,

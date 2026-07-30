@@ -11,3 +11,4 @@ export * from './transportScheduleException';
 export * from './geo';
 export * from './busStops';
 export * from './healthCenter';
+export * from './messMenu';

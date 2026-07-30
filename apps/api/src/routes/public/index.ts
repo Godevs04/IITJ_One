@@ -4,6 +4,7 @@ import healthRouter from './health';
 import syncRouter from './sync';
 import homeRouter from './home';
 import menuRouter from './menu';
+import messMenuRouter from './messMenu';
 import noticesRouter from './notices';
 import transportRouter from './transport';
 import calendarRouter from './calendar';
@@ -37,6 +38,7 @@ router.use('/health', healthRouter);
 router.use('/sync', syncRouter);
 router.use('/home', homeRouter);
 router.use('/menu', menuRouter);
+router.use('/messMenu', messMenuRouter);
 router.use('/notices', noticesRouter);
 // More-specific mount registered before '/transport' as a defensive convention —
 // doesn't rely on transportRouter's fallthrough behavior for sub-paths.

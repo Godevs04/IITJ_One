@@ -74,6 +74,8 @@ const VERSION_META: Record<string, { label: string; hue: string }> = {
   wifi: { label: 'Wi-Fi', hue: 'bg-[#345a7a]' },
   erickshaw: { label: 'E-Rickshaw', hue: 'bg-[#e2703a]' },
   mealWindows: { label: 'Meal windows', hue: 'bg-[#c68642]' },
+  messMenuVeg: { label: 'Mess Menu (Veg)', hue: 'bg-[#6e8b74]' },
+  messMenuNonVeg: { label: 'Mess Menu (Non-Veg)', hue: 'bg-[#b23a34]' },
 };
 
 const VERSION_ORDER = Object.keys(VERSION_META);

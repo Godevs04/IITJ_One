@@ -94,8 +94,8 @@ export function getManifest(campusId = CAMPUS_ID) {
   return apiGet<SyncManifest>('/sync/manifest', { campus: campusId });
 }
 
-export function getModule<T>(module: string, campusId = CAMPUS_ID) {
-  return apiGet<T>(`/${module}`, { campus: campusId });
+export function getModule<T>(module: string, campusId = CAMPUS_ID, extraParams?: Record<string, string>) {
+  return apiGet<T>(`/${module}`, { campus: campusId, ...extraParams });
 }
 
 /**
