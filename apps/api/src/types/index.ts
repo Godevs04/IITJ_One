@@ -1,3 +1,5 @@
+import type { SuggestionCategory } from '@iitj1/types';
+
 export type ModuleName =
   | 'menu'
   | 'notices'
@@ -273,6 +275,7 @@ export type {
   MessMenuInput,
   MessMenuDoc,
   MessMenuHistoryEntry,
+  SuggestionCategory,
 } from '@iitj1/types';
 
 export interface AdminDoc {
@@ -301,6 +304,15 @@ export interface SuggestionDoc {
   message: string;
   submittedAt: Date;
   status?: SuggestionStatus;
+  /** Optional fields added for the Feedback & Suggestions upgrade — every
+   * pre-existing record simply lacks them, which is a valid state, not an
+   * error. */
+  category?: SuggestionCategory;
+  name?: string;
+  email?: string;
+  deviceId?: string;
+  platform?: string;
+  appVersion?: string;
 }
 
 export interface DeviceDoc {

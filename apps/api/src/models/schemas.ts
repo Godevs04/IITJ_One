@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { transportTripSchema, messMenuPutSchema } from '@iitj1/types';
+import { transportTripSchema, messMenuPutSchema, SUGGESTION_CATEGORIES } from '@iitj1/types';
 
 export { transportTripSchema };
 
@@ -36,6 +36,7 @@ export const adminNoticesQuerySchema = noticesQuerySchema.merge(paginationQueryS
 
 export const adminSuggestionsQuerySchema = paginationQuerySchema.extend({
   status: z.enum(['new', 'read', 'archived']).optional(),
+  category: z.enum(SUGGESTION_CATEGORIES).optional(),
 });
 
 export const adminAuditQuerySchema = paginationQuerySchema;
@@ -83,7 +84,20 @@ export const overrideTripStatusSchema = z.object({
 });
 
 export const suggestionBodySchema = z.object({
-  message: z.string().trim().min(1).max(2000),
+  message: z.string().trim().min(10, 'Message must be at least 10 characters').max(1000, 'Message must be at most 1000 characters'),
+  category: z.enum(SUGGESTION_CATEGORIES),
+  // Optional contact details — no auth on this app, so these are the only way
+  // to identify a submitter, and only if they choose to provide them.
+  name: z.string().trim().max(100).optional(),
+  // Empty string means "left blank" (anonymous), not an invalid email — only
+  // validate the format when something was actually typed.
+  email: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().trim().email('Invalid email address').optional(),
+  ),
+  deviceId: z.string().trim().max(200).optional(),
+  platform: z.string().trim().max(50).optional(),
+  appVersion: z.string().trim().max(50).optional(),
 });
 
 export const loginBodySchema = z.object({

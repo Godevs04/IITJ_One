@@ -48,7 +48,7 @@ const SECTIONS: MoreSection[] = [
     title: 'Settings & support',
     links: [
       { title: 'Settings', icon: 'settings-outline', route: '/settings' },
-      { title: 'Suggest Something', icon: 'bulb-outline', route: '/suggest' },
+      { title: 'Feedback & Suggestions', icon: 'chatbubble-ellipses-outline', route: '/suggest' },
       { title: 'About IITJ One', icon: 'information-circle-outline', route: '/about' },
     ],
   },

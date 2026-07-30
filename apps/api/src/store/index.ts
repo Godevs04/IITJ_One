@@ -795,17 +795,22 @@ export async function getSuggestions(
   status?: SuggestionDoc['status'],
   page = 1,
   pageSize = 20,
+  category?: SuggestionDoc['category'],
 ): Promise<{ items: SuggestionDoc[]; total: number }> {
   const skip = (page - 1) * pageSize;
   if (isDbConnected()) {
-    const filter = status ? { status } : {};
+    const filter: Record<string, unknown> = {};
+    if (status) filter.status = status;
+    if (category) filter.category = category;
     const [items, total] = await Promise.all([
       collections.suggestions().find(filter).sort({ submittedAt: -1 }).skip(skip).limit(pageSize).toArray(),
       collections.suggestions().countDocuments(filter),
     ]);
     return { items, total };
   }
-  const all = fallbackGetSuggestions().filter((s) => !status || (s.status ?? 'new') === status);
+  const all = fallbackGetSuggestions().filter(
+    (s) => (!status || (s.status ?? 'new') === status) && (!category || s.category === category),
+  );
   return { items: all.slice(skip, skip + pageSize), total: all.length };
 }
 

@@ -12,3 +12,4 @@ export * from './geo';
 export * from './busStops';
 export * from './healthCenter';
 export * from './messMenu';
+export * from './suggestions';

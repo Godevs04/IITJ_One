@@ -1,3 +1,5 @@
+import type { SuggestionCategory } from '@iitj1/types';
+
 export interface AdminUser {
   email: string;
   name: string;
@@ -217,6 +219,14 @@ export interface SuggestionDoc {
   submittedAt?: string;
   createdAt?: string;
   status?: 'new' | 'read' | 'archived';
+  /** Optional fields added for the Feedback & Suggestions upgrade — older
+   * records simply lack them. */
+  category?: SuggestionCategory;
+  name?: string;
+  email?: string;
+  deviceId?: string;
+  platform?: string;
+  appVersion?: string;
 }
 
 export interface PushHistoryDoc {
