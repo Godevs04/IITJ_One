@@ -31,6 +31,7 @@ export default function NoticesScreen() {
     const now = Date.now();
     const mutedAll = topicPrefs.iitj_all === false;
     return (notices ?? []).filter((n) => {
+      if (n.deletedAt) return false;
       const start = new Date(n.startDate).getTime();
       const end = new Date(n.expiryDate).getTime();
       if (!(start <= now && now < end)) return false;

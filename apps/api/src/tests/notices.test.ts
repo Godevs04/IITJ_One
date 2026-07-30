@@ -179,6 +179,14 @@ test('Admin Notices API (Requires Authentication)', async (t) => {
     assert.strictEqual(response.status, 201, 'Should return 201 Created');
     const data = await response.json() as Record<string, unknown>;
     assert.ok('_id' in data || 'id' in data, 'Should return notice with ID');
+
+    const createdId = String(data._id ?? data.id);
+    if (createdId) {
+      await fetch(`http://localhost:6002/api/v1/admin/notices/${createdId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+      });
+    }
   });
 
   await t.test('POST /api/v1/admin/notices rejects missing required fields', async (st) => {
