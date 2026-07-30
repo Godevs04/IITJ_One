@@ -18,13 +18,6 @@ const CONTACT_URL = 'https://www.iitj.ac.in/health-center/en/contact';
 const DOCTORS_SCHEDULE_URL = DEFAULT_HEALTH_CENTER_DOC.doctorScheduleUrl;
 const FETCH_TIMEOUT_MS = 10_000;
 
-/** Non-PHC campus safety numbers merged in from the removed Emergency module — never dropped by a live sync. */
-const CAMPUS_SAFETY_CONTACTS: Contact[] = [
-  { label: 'Campus Security', phone: '100' },
-  { label: 'Ambulance', phone: '108' },
-  { label: 'Fire', phone: '101' },
-];
-
 /** Contact page labels don't always match the display names we want. */
 const CONTACT_LABEL_MAP: Record<string, string> = {
   'Office of PHC': 'Health Center Office',
@@ -136,7 +129,10 @@ function parseContactPage(html: string): Contact[] {
     if (!match) return;
     const rawLabel = match[1].trim();
     const label = CONTACT_LABEL_MAP[rawLabel] ?? rawLabel;
-    contacts.push({ label, phone: normalizePhone(match[2]) });
+    const phone = normalizePhone(match[2]);
+    if (!['Campus Security', 'Ambulance', 'Fire'].includes(label) && !['100', '108', '101'].includes(phone)) {
+      contacts.push({ label, phone });
+    }
   });
   return contacts;
 }
@@ -493,7 +489,7 @@ async function scrapeCandidateDoc(campusId: string): Promise<Omit<HealthCenterDo
         : DEFAULT_HEALTH_CENTER_DOC.visitingSpecialists,
     doctorSchedules,
     hospitals: main.hospitals.length > 0 ? main.hospitals : DEFAULT_HEALTH_CENTER_DOC.hospitals,
-    contacts: [...phcContacts, ...CAMPUS_SAFETY_CONTACTS],
+    contacts: phcContacts,
     services: main.services.length > 0 ? main.services : DEFAULT_HEALTH_CENTER_DOC.services,
     address: main.address ?? DEFAULT_HEALTH_CENTER_DOC.address,
     officialUrl: DEFAULT_HEALTH_CENTER_DOC.officialUrl,

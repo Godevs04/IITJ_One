@@ -101,9 +101,6 @@ export const DEFAULT_HEALTH_CENTER_DOC: Omit<HealthCenterDoc, 'campusId'> = {
     { label: 'Pharmacy', phone: '0291-2801183' },
     { label: 'Professor In-Charge', phone: '0291-2801185' },
     { label: 'Laboratory', phone: '0291-2801186' },
-    { label: 'Campus Security', phone: '100' },
-    { label: 'Ambulance', phone: '108' },
-    { label: 'Fire', phone: '101' },
   ],
   services: [
     '24×7 Medical Officers',
