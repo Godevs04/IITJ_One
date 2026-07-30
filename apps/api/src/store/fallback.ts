@@ -1,4 +1,4 @@
-import { DEFAULT_LAUNDRY_SCHEDULES, DEFAULT_WIFI_DOC, DEFAULT_ERICKSHAW_DOC, DEFAULT_MEAL_WINDOWS, DEFAULT_CAMPUS_LOCATIONS, DEFAULT_HEALTH_CENTER_DOC } from '@iitj1/types';
+import { DEFAULT_LAUNDRY_SCHEDULES, DEFAULT_WIFI_DOC, DEFAULT_ERICKSHAW_DOC, DEFAULT_MEAL_WINDOWS, DEFAULT_WEEKEND_MEAL_WINDOWS, DEFAULT_CAMPUS_LOCATIONS, DEFAULT_HEALTH_CENTER_DOC } from '@iitj1/types';
 import { config } from '../config';
 import { loadMenuFromFiles, loadTransportFromFile } from '../services/parsers';
 import type {
@@ -119,6 +119,592 @@ function loadSeedMenu() {
     return [];
   }
 }
+
+export const DEFAULT_AUGUST_NON_VEG_MENU: MessMenuDoc = {
+  campusId: 'iitj',
+  menuType: 'non-veg',
+  month: 8,
+  year: 2026,
+  status: 'published',
+  version: 1,
+  publishedAt: '2026-07-30T20:43:00.000Z',
+  publishedBy: 'admin@iitjone.in',
+  updatedAt: '2026-07-30T20:43:00.000Z',
+  updatedBy: 'admin@iitjone.in',
+  days: [
+    {
+      day: 'Monday',
+      meals: {
+        breakfast: {
+          vegItems: ['Poha(Namkeen)', 'Sambar and Jalebi'],
+          nonVegItems: ['Boiled egg (2)'],
+          compulsoryItems: ['Toasted white/whole wheat bread', 'Butter', 'Jam', 'Sugar', 'Cornflakes', 'Sprouts-boiled chana', 'Milk(Non-Toned)', 'Tea', 'Coffee', 'Bournvita'],
+        },
+        lunch: {
+          vegItems: ['Bhindi Peanut Fry', 'Malai Kofta', 'Moong dal'],
+          nonVegItems: ['Seasonal fruits (2 Types)', 'Masala Chaas'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+        snacks: {
+          vegItems: ['Dhokla or khandvi(Besan)', 'Mirchi Chutney', 'Imli Chutney'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Ghugni', 'Sabut Masoor dal', 'Moong dal barfi (2 Piece)'],
+          nonVegItems: ['Egg Burji'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+      },
+    },
+    {
+      day: 'Tuesday',
+      meals: {
+        breakfast: {
+          vegItems: ['Masala paratha', 'Mix sabji', 'pudhina chutney'],
+          nonVegItems: ['Banana(2)'],
+          compulsoryItems: ['Toasted white/whole wheat bread', 'Butter', 'Jam', 'Sugar', 'Oats', 'Sprouts-boiled chana', 'Milk(Non-Toned)', 'Tea', 'Coffee', 'Bournvita'],
+        },
+        lunch: {
+          vegItems: ['Veg Korma', 'Methi Matar Malai', 'Urad chilka dal'],
+          nonVegItems: ['Curd', 'Roohhafza'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+        snacks: {
+          vegItems: ['Aloo Samosa or Aloo tikki chat', 'Chutney', 'dahi', 'chole'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Soyachunks gravy', 'Tinde ki Sabji', 'Dal Makhani', 'Lemon Rice'],
+          nonVegItems: [],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+      },
+    },
+    {
+      day: 'Wednesday',
+      meals: {
+        breakfast: {
+          vegItems: ['Uttapam or Namkeen siwaiya', 'Sambhar', 'Coconut Chutney'],
+          nonVegItems: ['Boiled egg (2)'],
+          compulsoryItems: ['Toasted white/whole wheat bread', 'Butter', 'Jam', 'Sugar', 'Cornflakes', 'Sprouts-boiled chana', 'Milk(Non-Toned)', 'Tea', 'Coffee', 'Bournvita'],
+        },
+        lunch: {
+          vegItems: ['Aloo parval', 'Baigan ka bharta', 'Mix dal'],
+          nonVegItems: ['Veg Raita', 'Rasna'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+        snacks: {
+          vegItems: ['Pasta or maggi', 'Chutney or ketchup'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Mix Veg', 'Masoor dal', 'Fruit Custard'],
+          nonVegItems: ['Butter Chiken'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+      },
+    },
+    {
+      day: 'Thursday',
+      meals: {
+        breakfast: {
+          vegItems: ['Masala Poori', 'Chole or Safed Mattar ki Sabzi and Kheer'],
+          nonVegItems: ['Banana(2)'],
+          compulsoryItems: ['Toasted white/whole wheat bread', 'Butter', 'Jam', 'Sugar', 'Oats', 'Sprouts-boiled chana', 'Milk(Non-Toned)', 'Tea', 'Coffee', 'Bournvita'],
+        },
+        lunch: {
+          vegItems: ['Kadi Pakora', 'Aloo-Jeera', 'Kali massor Dal'],
+          nonVegItems: ['Seasonal fruits( amrood or pears  or apple)', 'Lassi'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+        snacks: {
+          vegItems: ['Cheese Grilled Sandwich (2pcs)', 'ketchup'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Pindi Chola', 'Soyachunks matar Masala', 'Lobia dal', 'Veg Pulao'],
+          nonVegItems: [],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat', 'Ghee'],
+        },
+      },
+    },
+    {
+      day: 'Friday',
+      meals: {
+        breakfast: {
+          vegItems: ['Idli+Fried Idli or Idli+Mendu Vada', 'Sambhar', 'Coconut Chutney', 'Tomato Chutney'],
+          nonVegItems: ['Boiled egg (2)'],
+          compulsoryItems: ['Toasted white/whole wheat bread', 'Butter', 'Jam', 'Sugar', 'Cornflakes', 'Sprouts-boiled chana', 'Milk(Non-Toned)', 'Tea', 'Coffee', 'Bournvita'],
+        },
+        lunch: {
+          vegItems: ['Lauki channa', 'Arbi', 'Rajma dal'],
+          nonVegItems: ['Pudina Chaas', 'Aam panna'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+        snacks: {
+          vegItems: ['Pyaz kachori or Moong Dal kachori', 'Chutney'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Sev Tamatar', 'Dal Fry', 'Veg Biryani', 'Rasmalai(2 Piece)'],
+          nonVegItems: ['Egg Butter Masala'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat', 'Ghee'],
+        },
+      },
+    },
+    {
+      day: 'Saturday',
+      meals: {
+        breakfast: {
+          vegItems: ['Dal stuffed paratha', 'kala Chaane ki saabji'],
+          nonVegItems: ['Boiled egg (2)'],
+          compulsoryItems: ['Toasted white/whole wheat bread', 'Butter', 'Jam', 'Sugar', 'Oats', 'Sprouts-boiled chana', 'Milk(Non-Toned)', 'Tea', 'Coffee', 'Bournvita'],
+        },
+        lunch: {
+          vegItems: ['Gawar fali sabji', 'mix Veg Pakoda', 'Moong dal'],
+          nonVegItems: ['Curd', 'Roohhafza'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+        snacks: {
+          vegItems: ['Dahi papdi chat Chutney'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Soya Masala dry', 'Chole Bhature', 'Dal Tadka'],
+          nonVegItems: [],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat', 'Ghee'],
+        },
+      },
+    },
+    {
+      day: 'Sunday',
+      meals: {
+        breakfast: {
+          vegItems: ['Masala dosa', 'Coconut Chutney', 'sambhar'],
+          nonVegItems: ['Boiled Egg (2)'],
+          compulsoryItems: ['Toasted white/whole wheat bread', 'Butter', 'Jam', 'Sugar', 'Cornflakes', 'Sprouts-boiled chana', 'Milk(Non-Toned)', 'Tea', 'Coffee', 'Bournvita'],
+        },
+        lunch: {
+          vegItems: ['Veg fried Rice', 'Kaddu masala', 'Green moong chilka', 'Manchurian'],
+          nonVegItems: ['Boondi Raita pudina'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+        snacks: {
+          vegItems: ['Paani puri', 'emili pani'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Veg Korma', 'Arhar Dal', 'Ice cream(Chocolate or Butterscotch)'],
+          nonVegItems: ['Chicken Biryani', 'veg Raita'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat', 'Ghee'],
+        },
+      },
+    },
+  ],
+};
+
+export const DEFAULT_AUGUST_VEG_MENU: MessMenuDoc = {
+  campusId: 'iitj',
+  menuType: 'veg',
+  month: 8,
+  year: 2026,
+  status: 'published',
+  version: 1,
+  publishedAt: '2026-07-30T20:48:00.000Z',
+  publishedBy: 'admin@iitjone.in',
+  updatedAt: '2026-07-30T20:48:00.000Z',
+  updatedBy: 'admin@iitjone.in',
+  days: [
+    {
+      day: 'Monday',
+      meals: {
+        breakfast: {
+          vegItems: ['Poha(Namkeen)', 'Sambar and Jalebi/ Dalia'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Banana (2)',
+            'Toasted white/whole wheat bread',
+            'Butter',
+            'Jam',
+            'Sugar',
+            'oats',
+            'Sprouts-boiled chana',
+            'Milk(Non-Toned)',
+            'Tea',
+            'Coffee',
+            'Bournvita/Horlicks',
+          ],
+        },
+        lunch: {
+          vegItems: ['Curd rice', 'Chana+Arhar daal', 'Kala chana', 'Bhindi peanut fry'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Curd',
+            'Rasna',
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+        snacks: {
+          vegItems: ['Samosa', 'chutney'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Dal Makhani', 'Capsicum-Aloo Masala'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+      },
+    },
+    {
+      day: 'Tuesday',
+      meals: {
+        breakfast: {
+          vegItems: ['Sewai Upma', 'Chatni'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Banana(2)',
+            'Toasted white/whole wheat bread',
+            'Butter',
+            'Jam',
+            'Sugar',
+            'Cornflakes',
+            'Sprouts-boiled chana',
+            'Milk(Non-Toned)',
+            'Tea',
+            'Coffee',
+            'Bournvita/Horlicks',
+          ],
+        },
+        lunch: {
+          vegItems: ['Dal Panchmahal', 'Veg Korma', 'Sev tamatar ki sabji'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Mango',
+            'Jeera - Chhach',
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad/Aloo masala chips',
+            'Ghee',
+          ],
+        },
+        snacks: {
+          vegItems: ['Aloo grilled sandwich'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Lemon Rice', 'Mix Dal', 'Aaloo Mutter Masala', 'Lauki Chana', 'Kheer'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Plain Rice',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+      },
+    },
+    {
+      day: 'Wednesday',
+      meals: {
+        breakfast: {
+          vegItems: ['Idli+Fried Idli / Idli+Mendu Vada', 'Sambhar', 'Coconut Chutney', 'Tomato Chutney'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Banana (2)',
+            'Toasted white/whole wheat bread',
+            'Butter',
+            'Jam',
+            'Sugar',
+            'Oats',
+            'Sprouts-boiled chana',
+            'Milk(Non-Toned)',
+            'Tea',
+            'Coffee',
+            'Bournvita/Horlicks',
+          ],
+        },
+        lunch: {
+          vegItems: ['Masoor Dal', 'Besan Gatte ki sabji', 'Bhindi Do Pyaza'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Curd',
+            'Roohaafza',
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+        snacks: {
+          vegItems: ['Bhelpuri'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Lasooni Dal Tadka', 'Aloo Pyaaj ki  Sabji'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+      },
+    },
+    {
+      day: 'Thursday',
+      meals: {
+        breakfast: {
+          vegItems: ['Poori', 'aalu tamatar Sabzi'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Banana(2)',
+            'Toasted white/whole wheat bread',
+            'Butter',
+            'Jam',
+            'Sugar',
+            'Cornflakes',
+            'Sprouts-boiled chana',
+            'Milk(Non-Toned)',
+            'Tea',
+            'Coffee',
+            'Bournvita/Horlicks',
+          ],
+        },
+        lunch: {
+          vegItems: ['Channa Dal Fry', 'Curry Pakoda', 'Dahi Chauli'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Veg raita',
+            'Nimboo pani',
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+        snacks: {
+          vegItems: ['Veg-cutlet'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: [
+            'Khichdi',
+            'Masoor Dal',
+            'Dry Tinda Masala',
+            'Lobiya',
+            'Milk barfi (2 pieces)/ Fruit custard',
+          ],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+      },
+    },
+    {
+      day: 'Friday',
+      meals: {
+        breakfast: {
+          vegItems: ['Pongal with sambhar and chutney /Uttapam', 'Sambhar', 'Coconut Chutney'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Banana (2)',
+            'Toasted white/whole wheat bread',
+            'Butter',
+            'Jam',
+            'Sugar',
+            'Oats Sprouts-boiled chana',
+            'Milk(Non-Toned)',
+            'Tea',
+            'Coffee',
+            'Bournvita/Horlicks',
+          ],
+        },
+        lunch: {
+          vegItems: ['Rajma Dal', 'Aloo matar tamatar', 'Mix Veg Dry'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Mango',
+            'Butter Milk',
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+        snacks: {
+          vegItems: ['Aloo - tikki chaat'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Mong  Dal', 'Veg Biriyani', 'Pindi chole'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+      },
+    },
+    {
+      day: 'Saturday',
+      meals: {
+        breakfast: {
+          vegItems: ['Aloo Pyaz Paratha', 'Curd', 'Mint Chutney', 'Pickle'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Banana',
+            'Toasted white/whole wheat bread',
+            'Butter',
+            'Jam',
+            'Sugar',
+            'Oats',
+            'Sprouts-boiled chana',
+            'Milk(Non-Toned)',
+            'Tea',
+            'Coffee',
+            'Bournvita/Horlicks',
+          ],
+        },
+        lunch: {
+          vegItems: ['Veg pakoda Sabji', 'Dal tadka', 'Gawarfalii'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Curd',
+            'Roohhafza',
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+        snacks: {
+          vegItems: ['Maggie/Veg Noodles'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: [
+            'Veg Pulao',
+            'Dal Tadka',
+            'Chole Bhature',
+            'Dry Aloo Masala',
+            'Ice cream (Butterscotch/ Chocolate)',
+          ],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+      },
+    },
+    {
+      day: 'Sunday',
+      meals: {
+        breakfast: {
+          vegItems: ['Masala dosa', 'Sambhar'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Banana(2)',
+            'Toasted white/whole wheat bread',
+            'Butter',
+            'Jam',
+            'Sugar',
+            'Cornflakes',
+            'Sprouts-boiled chana',
+            'Milk(Non-Toned)',
+            'Tea',
+            'Coffee',
+            'Bournvita/Horlicks',
+          ],
+        },
+        lunch: {
+          vegItems: ['Veg Fried Rice', 'Dal Makhani', 'Green Mung chilka', 'Veg manchurian'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Bundi Raita',
+            'Nimboo Pani',
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+        snacks: {
+          vegItems: ['Pani-Puri'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Plain rice', 'Chana Dal tadka', 'white chola', 'Gulab jamun(2 piece)'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+      },
+    },
+  ],
+};
 
 function buildDefaultState(): FallbackState {
   const campusId = config.campusId;
@@ -316,6 +902,7 @@ function buildDefaultState(): FallbackState {
     mealWindows: {
       campusId,
       windows: { ...DEFAULT_MEAL_WINDOWS },
+      weekendWindows: { ...DEFAULT_WEEKEND_MEAL_WINDOWS },
     },
     holidays: {
       campusId,
@@ -343,8 +930,8 @@ function buildDefaultState(): FallbackState {
     rideSessions: [],
     gpsPings: [],
     busStates: [],
-    messMenuVeg: null,
-    messMenuNonVeg: null,
+    messMenuVeg: DEFAULT_AUGUST_VEG_MENU,
+    messMenuNonVeg: DEFAULT_AUGUST_NON_VEG_MENU,
     messMenuVegDraft: null,
     messMenuNonVegDraft: null,
     messMenuHistory: [],
