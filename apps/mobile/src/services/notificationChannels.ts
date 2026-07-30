@@ -1,6 +1,16 @@
-import * as Notifications from 'expo-notifications';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+let Notifications: any = null;
+
+if (!isExpoGo) {
+  try {
+    Notifications = require('expo-notifications');
+  } catch (e) {
+    console.warn('Failed to load expo-notifications', e);
+  }
+}
 /**
  * Android 8+ requires every notification to belong to a channel, or it falls
  * back to a generic "Miscellaneous" channel with no per-category importance/
@@ -11,7 +21,7 @@ import { Platform } from 'react-native';
 let ensured = false;
 
 export async function ensureNotificationChannelsAsync(): Promise<void> {
-  if (Platform.OS !== 'android' || ensured) return;
+  if (Platform.OS !== 'android' || ensured || !Notifications) return;
   ensured = true;
 
   await Notifications.setNotificationChannelAsync('class-reminders', {

@@ -37,6 +37,10 @@ import type {
   BusStateDoc,
   MessMenuDoc,
   MessMenuHistoryEntry,
+  DepartmentDoc,
+  OrganizationDoc,
+  PersonDoc,
+  RoleDoc,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
 import { busesConflict, dateRangesOverlap } from '../services/transportScheduleExceptionStatus';
@@ -87,6 +91,11 @@ interface FallbackState {
   messMenuVegDraft: MessMenuDoc | null;
   messMenuNonVegDraft: MessMenuDoc | null;
   messMenuHistory: MessMenuHistoryEntry[];
+  /** Campus Directory — no seed content by design (see db seeding note), admins populate from scratch. */
+  departments: DepartmentDoc[];
+  organizations: OrganizationDoc[];
+  people: PersonDoc[];
+  roles: RoleDoc[];
 }
 
 let state: FallbackState | null = null;
@@ -935,6 +944,10 @@ function buildDefaultState(): FallbackState {
     messMenuVegDraft: null,
     messMenuNonVegDraft: null,
     messMenuHistory: [],
+    departments: [],
+    organizations: [],
+    people: [],
+    roles: [],
   };
 }
 
@@ -1290,6 +1303,203 @@ export function fallbackUpdateVehicle(id: string, patch: Partial<VehicleDoc>): V
 
 export function fallbackSoftDeleteVehicle(id: string): VehicleDoc | null {
   return fallbackUpdateVehicle(id, { deletedAt: new Date(), isActive: false });
+}
+
+// --- Campus Directory (hard delete — no cross-collection cascade in Phase 1) ---
+
+interface CampusDirectoryListOptions {
+  search?: string;
+  active?: boolean;
+  sort?: 'asc' | 'desc';
+}
+
+function matchesSearch(haystacks: (string | undefined)[], search?: string): boolean {
+  if (!search) return true;
+  const q = search.toLowerCase();
+  return haystacks.some((h) => h?.toLowerCase().includes(q));
+}
+
+export function fallbackListDepartments(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampusDirectoryListOptions = {},
+): { items: DepartmentDoc[]; total: number } {
+  let all = getFallbackState().departments.filter(
+    (d) =>
+      d.campusId === campusId &&
+      (opts.active === undefined || d.active === opts.active) &&
+      matchesSearch([d.name, d.shortName], opts.search),
+  );
+  all = [...all].sort((a, b) => (opts.sort === 'desc' ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name)));
+  const skip = (page - 1) * pageSize;
+  return { items: all.slice(skip, skip + pageSize), total: all.length };
+}
+
+export function fallbackGetDepartmentById(id: string): DepartmentDoc | null {
+  return getFallbackState().departments.find((d) => d._id === id) ?? null;
+}
+
+export function fallbackCreateDepartment(doc: Omit<DepartmentDoc, '_id'>): DepartmentDoc {
+  const s = getFallbackState();
+  const saved = { ...doc, _id: nextId() };
+  s.departments.push(saved);
+  return saved;
+}
+
+export function fallbackUpdateDepartment(id: string, patch: Partial<DepartmentDoc>): DepartmentDoc | null {
+  const s = getFallbackState();
+  const idx = s.departments.findIndex((d) => d._id === id);
+  if (idx < 0) return null;
+  s.departments[idx] = { ...s.departments[idx], ...patch };
+  return s.departments[idx];
+}
+
+export function fallbackDeleteDepartment(id: string): boolean {
+  const s = getFallbackState();
+  const idx = s.departments.findIndex((d) => d._id === id);
+  if (idx < 0) return false;
+  s.departments.splice(idx, 1);
+  return true;
+}
+
+export function fallbackListOrganizations(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampusDirectoryListOptions & { type?: string } = {},
+): { items: OrganizationDoc[]; total: number } {
+  let all = getFallbackState().organizations.filter(
+    (o) =>
+      o.campusId === campusId &&
+      (opts.active === undefined || o.active === opts.active) &&
+      (!opts.type || o.type === opts.type) &&
+      matchesSearch([o.name, o.category], opts.search),
+  );
+  all = [...all].sort((a, b) => (opts.sort === 'desc' ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name)));
+  const skip = (page - 1) * pageSize;
+  return { items: all.slice(skip, skip + pageSize), total: all.length };
+}
+
+export function fallbackGetOrganizationById(id: string): OrganizationDoc | null {
+  return getFallbackState().organizations.find((o) => o._id === id) ?? null;
+}
+
+export function fallbackCreateOrganization(doc: Omit<OrganizationDoc, '_id'>): OrganizationDoc {
+  const s = getFallbackState();
+  const saved = { ...doc, _id: nextId() };
+  s.organizations.push(saved);
+  return saved;
+}
+
+export function fallbackUpdateOrganization(id: string, patch: Partial<OrganizationDoc>): OrganizationDoc | null {
+  const s = getFallbackState();
+  const idx = s.organizations.findIndex((o) => o._id === id);
+  if (idx < 0) return null;
+  s.organizations[idx] = { ...s.organizations[idx], ...patch };
+  return s.organizations[idx];
+}
+
+export function fallbackDeleteOrganization(id: string): boolean {
+  const s = getFallbackState();
+  const idx = s.organizations.findIndex((o) => o._id === id);
+  if (idx < 0) return false;
+  s.organizations.splice(idx, 1);
+  return true;
+}
+
+export function fallbackListPeople(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampusDirectoryListOptions & { departmentId?: string } = {},
+): { items: PersonDoc[]; total: number } {
+  let all = getFallbackState().people.filter(
+    (p) =>
+      p.campusId === campusId &&
+      (opts.active === undefined || p.active === opts.active) &&
+      (!opts.departmentId || p.departmentId === opts.departmentId) &&
+      matchesSearch([p.name, p.designation, p.email], opts.search),
+  );
+  all = [...all].sort((a, b) => (opts.sort === 'desc' ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name)));
+  const skip = (page - 1) * pageSize;
+  return { items: all.slice(skip, skip + pageSize), total: all.length };
+}
+
+export function fallbackGetPersonById(id: string): PersonDoc | null {
+  return getFallbackState().people.find((p) => p._id === id) ?? null;
+}
+
+export function fallbackCreatePerson(doc: Omit<PersonDoc, '_id'>): PersonDoc {
+  const s = getFallbackState();
+  const saved = { ...doc, _id: nextId() };
+  s.people.push(saved);
+  return saved;
+}
+
+export function fallbackUpdatePerson(id: string, patch: Partial<PersonDoc>): PersonDoc | null {
+  const s = getFallbackState();
+  const idx = s.people.findIndex((p) => p._id === id);
+  if (idx < 0) return null;
+  s.people[idx] = { ...s.people[idx], ...patch };
+  return s.people[idx];
+}
+
+export function fallbackDeletePerson(id: string): boolean {
+  const s = getFallbackState();
+  const idx = s.people.findIndex((p) => p._id === id);
+  if (idx < 0) return false;
+  s.people.splice(idx, 1);
+  return true;
+}
+
+export function fallbackListRoles(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampusDirectoryListOptions & { personId?: string; organizationId?: string; category?: string } = {},
+): { items: RoleDoc[]; total: number } {
+  let all = getFallbackState().roles.filter(
+    (r) =>
+      r.campusId === campusId &&
+      (opts.active === undefined || r.active === opts.active) &&
+      (!opts.personId || r.personId === opts.personId) &&
+      (!opts.organizationId || r.organizationId === opts.organizationId) &&
+      (!opts.category || r.category === opts.category) &&
+      matchesSearch([r.title], opts.search),
+  );
+  all = [...all].sort((a, b) =>
+    opts.sort === 'desc' ? b.title.localeCompare(a.title) : a.title.localeCompare(b.title),
+  );
+  const skip = (page - 1) * pageSize;
+  return { items: all.slice(skip, skip + pageSize), total: all.length };
+}
+
+export function fallbackGetRoleById(id: string): RoleDoc | null {
+  return getFallbackState().roles.find((r) => r._id === id) ?? null;
+}
+
+export function fallbackCreateRole(doc: Omit<RoleDoc, '_id'>): RoleDoc {
+  const s = getFallbackState();
+  const saved = { ...doc, _id: nextId() };
+  s.roles.push(saved);
+  return saved;
+}
+
+export function fallbackUpdateRole(id: string, patch: Partial<RoleDoc>): RoleDoc | null {
+  const s = getFallbackState();
+  const idx = s.roles.findIndex((r) => r._id === id);
+  if (idx < 0) return null;
+  s.roles[idx] = { ...s.roles[idx], ...patch };
+  return s.roles[idx];
+}
+
+export function fallbackDeleteRole(id: string): boolean {
+  const s = getFallbackState();
+  const idx = s.roles.findIndex((r) => r._id === id);
+  if (idx < 0) return false;
+  s.roles.splice(idx, 1);
+  return true;
 }
 
 export function fallbackGetTripsForCampusAndDate(campusId: string, serviceDate: string): TripDoc[] {

@@ -10,7 +10,7 @@ function getEntries(): SearchEntry[] {
       id: `directory-${location.id || location.name}`,
       title: location.name,
       subtitle: location.description || location.address,
-      module: 'Campus Directory',
+      module: 'Campus Map',
       icon: categoryInfo.icon,
       category: categoryInfo.label,
       keywords: location.aliases,

@@ -35,6 +35,10 @@ import type {
   BusStateDoc,
   MessMenuDoc,
   MessMenuHistoryEntry,
+  DepartmentDoc,
+  OrganizationDoc,
+  PersonDoc,
+  RoleDoc,
 } from './types';
 
 let client: MongoClient | null = null;
@@ -178,6 +182,20 @@ async function ensureIndexes(): Promise<void> {
   // Insurance against orphaned trip docs, not the primary cleanup path.
   await db.collection('busStates').createIndex({ lastUpdated: 1 }, { expireAfterSeconds: 2 * 24 * 60 * 60 });
 
+  // Campus Directory — genuinely multi-document per campus (like notices/vehicles
+  // above), no unique campusId index. Text-ish search is done via case-insensitive
+  // $regex against these fields rather than a Mongo text index, matching the
+  // getPushHistory() precedent, so no separate 'text' index is needed.
+  await db.collection('departments').createIndex({ campusId: 1, name: 1 });
+  await db.collection('departments').createIndex({ campusId: 1, active: 1 });
+  await db.collection('organizations').createIndex({ campusId: 1, type: 1 });
+  await db.collection('organizations').createIndex({ campusId: 1, active: 1 });
+  await db.collection('people').createIndex({ campusId: 1, departmentId: 1 });
+  await db.collection('people').createIndex({ campusId: 1, active: 1 });
+  await db.collection('roles').createIndex({ campusId: 1, personId: 1 });
+  await db.collection('roles').createIndex({ campusId: 1, organizationId: 1 });
+  await db.collection('roles').createIndex({ campusId: 1, active: 1 });
+
   // Mess menu JSON import: up to 2 live docs per (campus, menuType) — one draft, one
   // published — so a plain {campusId:1} unique index (the singleton loop below) doesn't
   // fit; compound key instead, same style as the trips precedent above.
@@ -260,6 +278,10 @@ export const collections = {
   analyticsDaily: () => col<AnalyticsDailyDoc>('analyticsDaily'),
   messMenus: () => col<MessMenuDoc>('messMenus'),
   messMenuHistory: () => col<MessMenuHistoryEntry>('messMenuHistory'),
+  departments: () => col<DepartmentDoc>('departments'),
+  organizations: () => col<OrganizationDoc>('organizations'),
+  people: () => col<PersonDoc>('people'),
+  roles: () => col<RoleDoc>('roles'),
 };
 
 export async function disconnectDb(): Promise<void> {

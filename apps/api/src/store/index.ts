@@ -49,6 +49,26 @@ import {
   fallbackInsertGpsPing,
   fallbackUpsertBusState,
   fallbackGetBusStatesByTripIds,
+  fallbackListDepartments,
+  fallbackGetDepartmentById,
+  fallbackCreateDepartment,
+  fallbackUpdateDepartment,
+  fallbackDeleteDepartment,
+  fallbackListOrganizations,
+  fallbackGetOrganizationById,
+  fallbackCreateOrganization,
+  fallbackUpdateOrganization,
+  fallbackDeleteOrganization,
+  fallbackListPeople,
+  fallbackGetPersonById,
+  fallbackCreatePerson,
+  fallbackUpdatePerson,
+  fallbackDeletePerson,
+  fallbackListRoles,
+  fallbackGetRoleById,
+  fallbackCreateRole,
+  fallbackUpdateRole,
+  fallbackDeleteRole,
   getFallbackState,
 } from './fallback';
 import type {
@@ -86,6 +106,14 @@ import type {
   MessMenuInput,
   MessMenuDoc,
   MessMenuHistoryEntry,
+  DepartmentDoc,
+  DepartmentCreateInput,
+  OrganizationDoc,
+  OrganizationCreateInput,
+  PersonDoc,
+  PersonCreateInput,
+  RoleDoc,
+  RoleCreateInput,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
 
@@ -1601,6 +1629,377 @@ export async function deleteVehicle(id: string, adminEmail: string): Promise<boo
     cache.del(vehicleCacheKey(id));
   }
   return !!saved;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Campus Directory — Departments, Organizations, People, Roles.
+// Genuinely multi-document per campus (like vehicles/notices above), hard
+// delete (no cross-collection cascade in Phase 1 — see module roadmap).
+// Public getX() below returns the full active-only list, unpaginated, for
+// mobile's offline sync cache; admin listX() is paginated/searchable/sortable.
+// ─────────────────────────────────────────────────────────────────────────
+
+interface CampusDirectoryListOpts {
+  search?: string;
+  active?: boolean;
+  sort?: 'asc' | 'desc';
+}
+
+function withDepartmentStringId(doc: DepartmentDoc): DepartmentDoc {
+  return { ...doc, _id: doc._id?.toString() };
+}
+function withOrganizationStringId(doc: OrganizationDoc): OrganizationDoc {
+  return { ...doc, _id: doc._id?.toString() };
+}
+function withPersonStringId(doc: PersonDoc): PersonDoc {
+  return { ...doc, _id: doc._id?.toString() };
+}
+function withRoleStringId(doc: RoleDoc): RoleDoc {
+  return { ...doc, _id: doc._id?.toString() };
+}
+
+function searchFilter(fields: string[], search?: string): Record<string, unknown> {
+  if (!search) return {};
+  return { $or: fields.map((f) => ({ [f]: { $regex: search, $options: 'i' } })) };
+}
+
+// --- Departments ---
+
+export async function getDepartments(campusId: string): Promise<DepartmentDoc[]> {
+  if (isDbConnected()) {
+    const items = await collections
+      .departments()
+      .find({ campusId, active: true })
+      .sort({ name: 1 })
+      .toArray();
+    return items.map(withDepartmentStringId);
+  }
+  return fallbackListDepartments(campusId, 1, Number.MAX_SAFE_INTEGER, { active: true }).items;
+}
+
+export async function listDepartments(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampusDirectoryListOpts = {},
+): Promise<{ items: DepartmentDoc[]; total: number }> {
+  const skip = (page - 1) * pageSize;
+  if (isDbConnected()) {
+    const filter: Record<string, unknown> = { campusId, ...searchFilter(['name', 'shortName'], opts.search) };
+    if (opts.active !== undefined) filter.active = opts.active;
+    const [items, total] = await Promise.all([
+      collections.departments().find(filter).sort({ name: opts.sort === 'desc' ? -1 : 1 }).skip(skip).limit(pageSize).toArray(),
+      collections.departments().countDocuments(filter),
+    ]);
+    return { items: items.map(withDepartmentStringId), total };
+  }
+  return fallbackListDepartments(campusId, page, pageSize, opts);
+}
+
+export async function getDepartmentById(id: string): Promise<DepartmentDoc | null> {
+  if (isDbConnected()) {
+    const result = await collections.departments().findOne({ _id: new ObjectId(id) } as never);
+    return result ? withDepartmentStringId(result) : null;
+  }
+  return fallbackGetDepartmentById(id);
+}
+
+export async function createDepartment(input: DepartmentCreateInput, adminEmail: string): Promise<DepartmentDoc> {
+  const now = new Date().toISOString();
+  const doc: Omit<DepartmentDoc, '_id'> = { ...input, createdAt: now, updatedAt: now };
+  if (isDbConnected()) {
+    const result = await collections.departments().insertOne(doc as DepartmentDoc);
+    await bumpVersion('campusDirectoryDepartments', doc.campusId, adminEmail, 'create', `Department "${doc.name}" created`);
+    return { ...doc, _id: result.insertedId.toString() };
+  }
+  const saved = fallbackCreateDepartment(doc);
+  await bumpVersion('campusDirectoryDepartments', doc.campusId, adminEmail, 'create', `Department "${doc.name}" created`);
+  return saved;
+}
+
+export async function updateDepartment(
+  id: string,
+  patch: Partial<DepartmentCreateInput>,
+  adminEmail: string,
+): Promise<DepartmentDoc | null> {
+  const withUpdatedAt = { ...patch, updatedAt: new Date().toISOString() };
+  if (isDbConnected()) {
+    const result = await collections
+      .departments()
+      .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: withUpdatedAt }, { returnDocument: 'after' });
+    if (!result) return null;
+    await bumpVersion('campusDirectoryDepartments', result.campusId, adminEmail, 'update', `Department "${result.name}" updated`);
+    return withDepartmentStringId(result);
+  }
+  const saved = fallbackUpdateDepartment(id, withUpdatedAt);
+  if (saved) await bumpVersion('campusDirectoryDepartments', saved.campusId, adminEmail, 'update', `Department "${saved.name}" updated`);
+  return saved;
+}
+
+export async function deleteDepartment(id: string, adminEmail: string): Promise<boolean> {
+  const existing = await getDepartmentById(id);
+  if (!existing) return false;
+  if (isDbConnected()) {
+    await collections.departments().deleteOne({ _id: new ObjectId(id) } as never);
+  } else if (!fallbackDeleteDepartment(id)) {
+    return false;
+  }
+  await bumpVersion('campusDirectoryDepartments', existing.campusId, adminEmail, 'delete', `Department "${existing.name}" deleted`);
+  return true;
+}
+
+// --- Organizations ---
+
+export async function getOrganizations(campusId: string): Promise<OrganizationDoc[]> {
+  if (isDbConnected()) {
+    const items = await collections
+      .organizations()
+      .find({ campusId, active: true })
+      .sort({ name: 1 })
+      .toArray();
+    return items.map(withOrganizationStringId);
+  }
+  return fallbackListOrganizations(campusId, 1, Number.MAX_SAFE_INTEGER, { active: true }).items;
+}
+
+export async function listOrganizations(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampusDirectoryListOpts & { type?: string } = {},
+): Promise<{ items: OrganizationDoc[]; total: number }> {
+  const skip = (page - 1) * pageSize;
+  if (isDbConnected()) {
+    const filter: Record<string, unknown> = { campusId, ...searchFilter(['name', 'category'], opts.search) };
+    if (opts.active !== undefined) filter.active = opts.active;
+    if (opts.type) filter.type = opts.type;
+    const [items, total] = await Promise.all([
+      collections.organizations().find(filter).sort({ name: opts.sort === 'desc' ? -1 : 1 }).skip(skip).limit(pageSize).toArray(),
+      collections.organizations().countDocuments(filter),
+    ]);
+    return { items: items.map(withOrganizationStringId), total };
+  }
+  return fallbackListOrganizations(campusId, page, pageSize, opts);
+}
+
+export async function getOrganizationById(id: string): Promise<OrganizationDoc | null> {
+  if (isDbConnected()) {
+    const result = await collections.organizations().findOne({ _id: new ObjectId(id) } as never);
+    return result ? withOrganizationStringId(result) : null;
+  }
+  return fallbackGetOrganizationById(id);
+}
+
+export async function createOrganization(input: OrganizationCreateInput, adminEmail: string): Promise<OrganizationDoc> {
+  const now = new Date().toISOString();
+  const doc: Omit<OrganizationDoc, '_id'> = { ...input, createdAt: now, updatedAt: now };
+  if (isDbConnected()) {
+    const result = await collections.organizations().insertOne(doc as OrganizationDoc);
+    await bumpVersion('campusDirectoryOrganizations', doc.campusId, adminEmail, 'create', `Organization "${doc.name}" created`);
+    return { ...doc, _id: result.insertedId.toString() };
+  }
+  const saved = fallbackCreateOrganization(doc);
+  await bumpVersion('campusDirectoryOrganizations', doc.campusId, adminEmail, 'create', `Organization "${doc.name}" created`);
+  return saved;
+}
+
+export async function updateOrganization(
+  id: string,
+  patch: Partial<OrganizationCreateInput>,
+  adminEmail: string,
+): Promise<OrganizationDoc | null> {
+  const withUpdatedAt = { ...patch, updatedAt: new Date().toISOString() };
+  if (isDbConnected()) {
+    const result = await collections
+      .organizations()
+      .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: withUpdatedAt }, { returnDocument: 'after' });
+    if (!result) return null;
+    await bumpVersion('campusDirectoryOrganizations', result.campusId, adminEmail, 'update', `Organization "${result.name}" updated`);
+    return withOrganizationStringId(result);
+  }
+  const saved = fallbackUpdateOrganization(id, withUpdatedAt);
+  if (saved) {
+    await bumpVersion('campusDirectoryOrganizations', saved.campusId, adminEmail, 'update', `Organization "${saved.name}" updated`);
+  }
+  return saved;
+}
+
+export async function deleteOrganization(id: string, adminEmail: string): Promise<boolean> {
+  const existing = await getOrganizationById(id);
+  if (!existing) return false;
+  if (isDbConnected()) {
+    await collections.organizations().deleteOne({ _id: new ObjectId(id) } as never);
+  } else if (!fallbackDeleteOrganization(id)) {
+    return false;
+  }
+  await bumpVersion('campusDirectoryOrganizations', existing.campusId, adminEmail, 'delete', `Organization "${existing.name}" deleted`);
+  return true;
+}
+
+// --- People ---
+
+export async function getPeople(campusId: string): Promise<PersonDoc[]> {
+  if (isDbConnected()) {
+    const items = await collections.people().find({ campusId, active: true }).sort({ name: 1 }).toArray();
+    return items.map(withPersonStringId);
+  }
+  return fallbackListPeople(campusId, 1, Number.MAX_SAFE_INTEGER, { active: true }).items;
+}
+
+export async function listPeople(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampusDirectoryListOpts & { departmentId?: string } = {},
+): Promise<{ items: PersonDoc[]; total: number }> {
+  const skip = (page - 1) * pageSize;
+  if (isDbConnected()) {
+    const filter: Record<string, unknown> = { campusId, ...searchFilter(['name', 'designation', 'email'], opts.search) };
+    if (opts.active !== undefined) filter.active = opts.active;
+    if (opts.departmentId) filter.departmentId = opts.departmentId;
+    const [items, total] = await Promise.all([
+      collections.people().find(filter).sort({ name: opts.sort === 'desc' ? -1 : 1 }).skip(skip).limit(pageSize).toArray(),
+      collections.people().countDocuments(filter),
+    ]);
+    return { items: items.map(withPersonStringId), total };
+  }
+  return fallbackListPeople(campusId, page, pageSize, opts);
+}
+
+export async function getPersonById(id: string): Promise<PersonDoc | null> {
+  if (isDbConnected()) {
+    const result = await collections.people().findOne({ _id: new ObjectId(id) } as never);
+    return result ? withPersonStringId(result) : null;
+  }
+  return fallbackGetPersonById(id);
+}
+
+export async function createPerson(input: PersonCreateInput, adminEmail: string): Promise<PersonDoc> {
+  const now = new Date().toISOString();
+  const doc: Omit<PersonDoc, '_id'> = { ...input, createdAt: now, updatedAt: now };
+  if (isDbConnected()) {
+    const result = await collections.people().insertOne(doc as PersonDoc);
+    await bumpVersion('campusDirectoryPeople', doc.campusId, adminEmail, 'create', `Person "${doc.name}" created`);
+    return { ...doc, _id: result.insertedId.toString() };
+  }
+  const saved = fallbackCreatePerson(doc);
+  await bumpVersion('campusDirectoryPeople', doc.campusId, adminEmail, 'create', `Person "${doc.name}" created`);
+  return saved;
+}
+
+export async function updatePerson(
+  id: string,
+  patch: Partial<PersonCreateInput>,
+  adminEmail: string,
+): Promise<PersonDoc | null> {
+  const withUpdatedAt = { ...patch, updatedAt: new Date().toISOString() };
+  if (isDbConnected()) {
+    const result = await collections
+      .people()
+      .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: withUpdatedAt }, { returnDocument: 'after' });
+    if (!result) return null;
+    await bumpVersion('campusDirectoryPeople', result.campusId, adminEmail, 'update', `Person "${result.name}" updated`);
+    return withPersonStringId(result);
+  }
+  const saved = fallbackUpdatePerson(id, withUpdatedAt);
+  if (saved) await bumpVersion('campusDirectoryPeople', saved.campusId, adminEmail, 'update', `Person "${saved.name}" updated`);
+  return saved;
+}
+
+export async function deletePerson(id: string, adminEmail: string): Promise<boolean> {
+  const existing = await getPersonById(id);
+  if (!existing) return false;
+  if (isDbConnected()) {
+    await collections.people().deleteOne({ _id: new ObjectId(id) } as never);
+  } else if (!fallbackDeletePerson(id)) {
+    return false;
+  }
+  await bumpVersion('campusDirectoryPeople', existing.campusId, adminEmail, 'delete', `Person "${existing.name}" deleted`);
+  return true;
+}
+
+// --- Roles ---
+
+export async function getRoles(campusId: string): Promise<RoleDoc[]> {
+  if (isDbConnected()) {
+    const items = await collections.roles().find({ campusId, active: true }).sort({ priority: 1 }).toArray();
+    return items.map(withRoleStringId);
+  }
+  return fallbackListRoles(campusId, 1, Number.MAX_SAFE_INTEGER, { active: true }).items;
+}
+
+export async function listRoles(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampusDirectoryListOpts & { personId?: string; organizationId?: string; category?: string } = {},
+): Promise<{ items: RoleDoc[]; total: number }> {
+  const skip = (page - 1) * pageSize;
+  if (isDbConnected()) {
+    const filter: Record<string, unknown> = { campusId, ...searchFilter(['title'], opts.search) };
+    if (opts.active !== undefined) filter.active = opts.active;
+    if (opts.personId) filter.personId = opts.personId;
+    if (opts.organizationId) filter.organizationId = opts.organizationId;
+    if (opts.category) filter.category = opts.category;
+    const [items, total] = await Promise.all([
+      collections.roles().find(filter).sort({ title: opts.sort === 'desc' ? -1 : 1 }).skip(skip).limit(pageSize).toArray(),
+      collections.roles().countDocuments(filter),
+    ]);
+    return { items: items.map(withRoleStringId), total };
+  }
+  return fallbackListRoles(campusId, page, pageSize, opts);
+}
+
+export async function getRoleById(id: string): Promise<RoleDoc | null> {
+  if (isDbConnected()) {
+    const result = await collections.roles().findOne({ _id: new ObjectId(id) } as never);
+    return result ? withRoleStringId(result) : null;
+  }
+  return fallbackGetRoleById(id);
+}
+
+export async function createRole(input: RoleCreateInput, adminEmail: string): Promise<RoleDoc> {
+  const now = new Date().toISOString();
+  const doc: Omit<RoleDoc, '_id'> = { ...input, createdAt: now, updatedAt: now };
+  if (isDbConnected()) {
+    const result = await collections.roles().insertOne(doc as RoleDoc);
+    await bumpVersion('campusDirectoryRoles', doc.campusId, adminEmail, 'create', `Role "${doc.title}" created`);
+    return { ...doc, _id: result.insertedId.toString() };
+  }
+  const saved = fallbackCreateRole(doc);
+  await bumpVersion('campusDirectoryRoles', doc.campusId, adminEmail, 'create', `Role "${doc.title}" created`);
+  return saved;
+}
+
+export async function updateRole(
+  id: string,
+  patch: Partial<RoleCreateInput>,
+  adminEmail: string,
+): Promise<RoleDoc | null> {
+  const withUpdatedAt = { ...patch, updatedAt: new Date().toISOString() };
+  if (isDbConnected()) {
+    const result = await collections
+      .roles()
+      .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: withUpdatedAt }, { returnDocument: 'after' });
+    if (!result) return null;
+    await bumpVersion('campusDirectoryRoles', result.campusId, adminEmail, 'update', `Role "${result.title}" updated`);
+    return withRoleStringId(result);
+  }
+  const saved = fallbackUpdateRole(id, withUpdatedAt);
+  if (saved) await bumpVersion('campusDirectoryRoles', saved.campusId, adminEmail, 'update', `Role "${saved.title}" updated`);
+  return saved;
+}
+
+export async function deleteRole(id: string, adminEmail: string): Promise<boolean> {
+  const existing = await getRoleById(id);
+  if (!existing) return false;
+  if (isDbConnected()) {
+    await collections.roles().deleteOne({ _id: new ObjectId(id) } as never);
+  } else if (!fallbackDeleteRole(id)) {
+    return false;
+  }
+  await bumpVersion('campusDirectoryRoles', existing.campusId, adminEmail, 'delete', `Role "${existing.title}" deleted`);
+  return true;
 }
 
 // --- Trip (operational, no bumpVersion — not a synced module) ---

@@ -1,19 +1,28 @@
-import * as Notifications from 'expo-notifications';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { parseTimeToMinutes } from '@/utils/date';
 import type { DayName, Hostel, LaundrySchedule } from '../types';
 
-// Idempotent — safe to call again even if another module (e.g. Timetable)
-// already registered the same handler.
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+let Notifications: any = null;
 
+if (!isExpoGo) {
+  try {
+    Notifications = require('expo-notifications');
+    // Idempotent — safe to call again even if another module (e.g. Timetable)
+    // already registered the same handler.
+    Notifications?.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+  } catch (e) {
+    console.warn('Failed to load expo-notifications', e);
+  }
+}
 const DAY_MAP: Record<DayName, number> = {
   sunday: 1,
   monday: 2,
@@ -39,6 +48,7 @@ function notificationId(hostel: Hostel, day: DayName): string {
 }
 
 export async function requestLaundryNotificationPermission(): Promise<boolean> {
+  if (!Notifications) return false;
   const { status: existing } = await Notifications.getPermissionsAsync();
   if (existing === 'granted') return true;
   const { status } = await Notifications.requestPermissionsAsync();
@@ -46,6 +56,7 @@ export async function requestLaundryNotificationPermission(): Promise<boolean> {
 }
 
 export async function getNotificationPermissionStatus(): Promise<'granted' | 'denied' | 'undetermined'> {
+  if (!Notifications) return 'undetermined';
   const { status } = await Notifications.getPermissionsAsync();
   if (status === 'granted') return 'granted';
   if (status === 'denied') return 'denied';
@@ -53,6 +64,7 @@ export async function getNotificationPermissionStatus(): Promise<'granted' | 'de
 }
 
 export async function cancelLaundryNotifications(hostel: Hostel): Promise<void> {
+  if (!Notifications) return;
   await Promise.all(
     ALL_DAYS.map((day) => Notifications.cancelScheduledNotificationAsync(notificationId(hostel, day))),
   );

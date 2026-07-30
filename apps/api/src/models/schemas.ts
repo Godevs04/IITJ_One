@@ -1,5 +1,18 @@
 import { z } from 'zod';
-import { transportTripSchema, messMenuPutSchema, SUGGESTION_CATEGORIES } from '@iitj1/types';
+import {
+  transportTripSchema,
+  messMenuPutSchema,
+  SUGGESTION_CATEGORIES,
+  ORGANIZATION_TYPES,
+  departmentCreateSchema,
+  departmentUpdateSchema,
+  organizationCreateSchema,
+  organizationUpdateSchema,
+  personCreateSchema,
+  personUpdateSchema,
+  roleCreateSchema,
+  roleUpdateSchema,
+} from '@iitj1/types';
 
 export { transportTripSchema };
 
@@ -343,3 +356,47 @@ export const adminTransportScheduleExceptionsQuerySchema = campusQuerySchema.mer
 });
 
 export const activeTransportScheduleExceptionQuerySchema = campusQuerySchema;
+
+// --- Campus Directory ---------------------------------------------------
+
+export {
+  departmentCreateSchema,
+  departmentUpdateSchema,
+  organizationCreateSchema,
+  organizationUpdateSchema,
+  personCreateSchema,
+  personUpdateSchema,
+  roleCreateSchema,
+  roleUpdateSchema,
+};
+
+const campusDirectorySortSchema = z.enum(['asc', 'desc']).default('asc');
+
+export const adminDepartmentsQuerySchema = campusQuerySchema.merge(paginationQuerySchema).extend({
+  search: z.string().optional(),
+  active: z.coerce.boolean().optional(),
+  sort: campusDirectorySortSchema,
+});
+
+export const adminOrganizationsQuerySchema = campusQuerySchema.merge(paginationQuerySchema).extend({
+  search: z.string().optional(),
+  type: z.enum(ORGANIZATION_TYPES).optional(),
+  active: z.coerce.boolean().optional(),
+  sort: campusDirectorySortSchema,
+});
+
+export const adminPeopleQuerySchema = campusQuerySchema.merge(paginationQuerySchema).extend({
+  search: z.string().optional(),
+  departmentId: z.string().optional(),
+  active: z.coerce.boolean().optional(),
+  sort: campusDirectorySortSchema,
+});
+
+export const adminRolesQuerySchema = campusQuerySchema.merge(paginationQuerySchema).extend({
+  search: z.string().optional(),
+  personId: z.string().optional(),
+  organizationId: z.string().optional(),
+  category: z.string().optional(),
+  active: z.coerce.boolean().optional(),
+  sort: campusDirectorySortSchema,
+});

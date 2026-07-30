@@ -21,7 +21,11 @@ export type ModuleName =
   | 'transportScheduleExceptions'
   | 'vehicles'
   | 'messMenuVeg'
-  | 'messMenuNonVeg';
+  | 'messMenuNonVeg'
+  | 'campusDirectoryDepartments'
+  | 'campusDirectoryPeople'
+  | 'campusDirectoryOrganizations'
+  | 'campusDirectoryRoles';
 
 export interface MetaVersions {
   menu: number;
@@ -45,6 +49,10 @@ export interface MetaVersions {
   vehicles: number;
   messMenuVeg: number;
   messMenuNonVeg: number;
+  campusDirectoryDepartments: number;
+  campusDirectoryPeople: number;
+  campusDirectoryOrganizations: number;
+  campusDirectoryRoles: number;
 }
 
 export type {
@@ -276,6 +284,19 @@ export type {
   MessMenuDoc,
   MessMenuHistoryEntry,
   SuggestionCategory,
+  OrganizationType,
+  DepartmentCreateInput,
+  DepartmentUpdateInput,
+  DepartmentDoc,
+  OrganizationCreateInput,
+  OrganizationUpdateInput,
+  OrganizationDoc,
+  PersonCreateInput,
+  PersonUpdateInput,
+  PersonDoc,
+  RoleCreateInput,
+  RoleUpdateInput,
+  RoleDoc,
 } from '@iitj1/types';
 
 export interface AdminDoc {

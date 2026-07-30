@@ -277,4 +277,9 @@ export type {
   MessMenuMeals,
   MessMenuDay,
   MessMenuDoc,
+  OrganizationType,
+  DepartmentDoc,
+  OrganizationDoc,
+  PersonDoc,
+  RoleDoc,
 } from '@iitj1/types';

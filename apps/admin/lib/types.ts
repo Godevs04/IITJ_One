@@ -1,4 +1,45 @@
-import type { SuggestionCategory } from '@iitj1/types';
+import type {
+  SuggestionCategory,
+  OrganizationType,
+  DepartmentDoc,
+  OrganizationDoc,
+  PersonDoc,
+  RoleDoc,
+} from '@iitj1/types';
+
+export type { OrganizationType, DepartmentDoc, OrganizationDoc, PersonDoc, RoleDoc };
+
+export interface AdminDepartmentsResponse {
+  campusId: string;
+  departments: DepartmentDoc[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface AdminOrganizationsResponse {
+  campusId: string;
+  organizations: OrganizationDoc[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface AdminPeopleResponse {
+  campusId: string;
+  people: PersonDoc[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface AdminRolesResponse {
+  campusId: string;
+  roles: RoleDoc[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 
 export interface AdminUser {
   email: string;

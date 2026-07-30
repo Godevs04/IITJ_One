@@ -28,6 +28,10 @@ export const SYNC_MODULES = [
   'temporaryTransportSchedule',
   'messMenuVeg',
   'messMenuNonVeg',
+  'campusDirectoryDepartments',
+  'campusDirectoryPeople',
+  'campusDirectoryOrganizations',
+  'campusDirectoryRoles',
 ] as const;
 
 export type SyncModule = (typeof SYNC_MODULES)[number];
@@ -53,6 +57,10 @@ const VERSION_KEY: Record<SyncModule, string> = {
   temporaryTransportSchedule: 'temporaryTransportSchedule',
   messMenuVeg: 'messMenuVeg',
   messMenuNonVeg: 'messMenuNonVeg',
+  campusDirectoryDepartments: 'campusDirectoryDepartments',
+  campusDirectoryPeople: 'campusDirectoryPeople',
+  campusDirectoryOrganizations: 'campusDirectoryOrganizations',
+  campusDirectoryRoles: 'campusDirectoryRoles',
 };
 
 export interface SyncResult {

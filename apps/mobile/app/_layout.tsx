@@ -181,7 +181,16 @@ function RootNavigator() {
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="search" options={{ headerShown: false }} />
-        <Stack.Screen name="map" options={{ title: 'Campus Directory' }} />
+        <Stack.Screen name="map" options={{ title: 'Campus Map' }} />
+        <Stack.Screen name="campus-directory/index" options={{ title: 'Campus Directory' }} />
+        <Stack.Screen name="campus-directory/leadership" options={{ title: 'Leadership' }} />
+        <Stack.Screen name="campus-directory/departments" options={{ title: 'Departments' }} />
+        <Stack.Screen name="campus-directory/faculty" options={{ title: 'Faculty' }} />
+        <Stack.Screen name="campus-directory/administration" options={{ title: 'Administration' }} />
+        <Stack.Screen name="campus-directory/clubs" options={{ title: 'Clubs & Societies' }} />
+        <Stack.Screen name="campus-directory/student-council" options={{ title: 'Student Council' }} />
+        <Stack.Screen name="campus-directory/offices" options={{ title: 'Offices & Cells' }} />
+        <Stack.Screen name="campus-directory/search" options={{ title: 'Search Directory' }} />
         <Stack.Screen name="portals" options={{ title: 'Essential Portals' }} />
         <Stack.Screen name="apps" options={{ title: 'Campus Apps' }} />
         <Stack.Screen name="calendar" options={{ title: 'Academic Calendar' }} />

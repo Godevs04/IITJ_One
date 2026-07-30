@@ -28,6 +28,10 @@ import suggestionsRouter from './suggestions';
 import devicesRouter from './devices';
 import analyticsRouter from './analytics';
 import docsRouter from './docs';
+import campusDirectoryDepartmentsRouter from './campusDirectoryDepartments';
+import campusDirectoryOrganizationsRouter from './campusDirectoryOrganizations';
+import campusDirectoryPeopleRouter from './campusDirectoryPeople';
+import campusDirectoryRolesRouter from './campusDirectoryRoles';
 
 const router = Router();
 
@@ -63,5 +67,9 @@ router.use('/temporaryTransportSchedule', temporaryTransportScheduleRouter);
 router.use('/suggestions', suggestionsRouter);
 router.use('/devices', devicesRouter);
 router.use('/analytics', analyticsRouter);
+router.use('/campusDirectory/departments', campusDirectoryDepartmentsRouter);
+router.use('/campusDirectory/organizations', campusDirectoryOrganizationsRouter);
+router.use('/campusDirectory/people', campusDirectoryPeopleRouter);
+router.use('/campusDirectory/roles', campusDirectoryRolesRouter);
 
 export default router;

@@ -65,7 +65,25 @@ export default function SuggestScreen() {
   }, []);
 
   const send = useCallback(async () => {
-    if (!canSend || !category) return;
+    if (sending) return;
+
+    if (!category) {
+      Alert.alert('Missing Category', 'Please select a category for your feedback.');
+      return;
+    }
+    if (!messageValid) {
+      Alert.alert('Invalid Message', `Your message must be at least ${MESSAGE_MIN} characters long.`);
+      return;
+    }
+    if (!emailValid) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address or leave it blank.');
+      return;
+    }
+    if (!nameValid) {
+      Alert.alert('Invalid Name', `Name is too long (max ${NAME_MAX} characters).`);
+      return;
+    }
+
     setSending(true);
     setError(null);
     try {
@@ -97,7 +115,7 @@ export default function SuggestScreen() {
     } finally {
       setSending(false);
     }
-  }, [canSend, category, trimmedMessage, trimmedName, trimmedEmail, posthog, clearForm]);
+  }, [sending, category, messageValid, emailValid, nameValid, trimmedMessage, trimmedName, trimmedEmail, posthog, clearForm]);
 
   return (
     <ScreenShell
@@ -207,7 +225,7 @@ export default function SuggestScreen() {
       <PrimaryButton
         label={sending ? 'Sending...' : 'Send Feedback'}
         onPress={() => void send()}
-        disabled={!canSend}
+        disabled={sending}
         accessibilityHint="Submits your feedback to the IITJ One team"
       />
     </ScreenShell>

@@ -1,9 +1,30 @@
-import * as Notifications from 'expo-notifications';
-import Constants from 'expo-constants';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 import { getSetting, setSetting } from './cache';
 import { acquireOverlayLock, releaseOverlayLock } from './overlayGate';
 import { sanitizeNotificationError } from '@/utils/errorSanitizer';
+
+// In Expo SDK 53, expo-notifications throws an error when imported in Expo Go on Android.
+// We must conditionally require it only in development builds or standalone apps.
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+let Notifications: typeof import('expo-notifications') | null = null;
+
+if (!isExpoGo) {
+  try {
+    Notifications = require('expo-notifications');
+    Notifications?.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+  } catch (e) {
+    console.warn('Failed to load expo-notifications', e);
+  }
+}
 
 export type PushRegistration = {
   status: 'granted' | 'denied' | 'undetermined' | 'unavailable';
@@ -12,26 +33,17 @@ export type PushRegistration = {
 };
 
 const TOKEN_KEY = 'expoPushToken';
-
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
-
 /**
  * Register for local/Expo push notifications.
  */
 export async function registerForPushNotifications(): Promise<PushRegistration> {
-  if (Platform.OS === 'web') {
+  if (Platform.OS === 'web' || !Notifications) {
     return {
       status: 'unavailable',
       expoPushToken: null,
-      note: 'Notifications are available on supported iOS and Android devices.',
+      note: !Notifications 
+        ? 'Push notifications are not supported in Expo Go. Please use a development build.' 
+        : 'Notifications are available on supported iOS and Android devices.',
     };
   }
 

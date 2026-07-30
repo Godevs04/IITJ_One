@@ -30,6 +30,10 @@ import suggestionsRouter from './suggestions';
 import uploadsRouter from './uploads';
 import adminsRouter from './admins';
 import analyticsRouter from './analytics';
+import campusDirectoryDepartmentsRouter from './campusDirectoryDepartments';
+import campusDirectoryOrganizationsRouter from './campusDirectoryOrganizations';
+import campusDirectoryPeopleRouter from './campusDirectoryPeople';
+import campusDirectoryRolesRouter from './campusDirectoryRoles';
 
 const router = Router();
 
@@ -84,5 +88,9 @@ router.use('/audit', auditRouter);
 router.use('/suggestions', suggestionsRouter);
 router.use('/admins', adminsRouter);
 router.use('/analytics', analyticsRouter);
+router.use('/campusDirectory/departments', campusDirectoryDepartmentsRouter);
+router.use('/campusDirectory/organizations', campusDirectoryOrganizationsRouter);
+router.use('/campusDirectory/people', campusDirectoryPeopleRouter);
+router.use('/campusDirectory/roles', campusDirectoryRolesRouter);
 
 export default router;

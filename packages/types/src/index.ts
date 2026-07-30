@@ -13,3 +13,4 @@ export * from './busStops';
 export * from './healthCenter';
 export * from './messMenu';
 export * from './suggestions';
+export * from './campusDirectory';

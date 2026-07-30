@@ -43,6 +43,16 @@ const NAV: { label: string; items: NavItem[] }[] = [
     label: 'Campus data',
     items: [
       {
+        label: 'Campus Directory',
+        children: [
+          { href: '/campus-directory', label: 'Dashboard' },
+          { href: '/campus-directory/departments', label: 'Departments' },
+          { href: '/campus-directory/people', label: 'People' },
+          { href: '/campus-directory/roles', label: 'Roles' },
+          { href: '/campus-directory/organizations', label: 'Organizations' },
+        ],
+      },
+      {
         label: 'Transport',
         children: [
           { href: '/transport', label: 'Weekday Schedule' },
