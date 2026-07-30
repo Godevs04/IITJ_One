@@ -364,11 +364,15 @@ export default function HomeScreen() {
     return { mealKey: key, targetDay: day };
   })();
 
-  const targetWeekday = targetDay.charAt(0).toUpperCase() + targetDay.slice(1);
-  const vegDayMenu = vegMenu?.days.find((d) => d.day === targetWeekday);
-  const nonVegDayMenu = nonVegMenu?.days.find((d) => d.day === targetWeekday);
-  const vegMeal = vegDayMenu?.meals[mealKey];
-  const nonVegMeal = nonVegDayMenu?.meals[mealKey];
+  const targetLower = targetDay.trim().toLowerCase();
+  const vegDayMenu = vegMenu?.days?.find(
+    (d) => d.day.trim().toLowerCase() === targetLower,
+  );
+  const nonVegDayMenu = nonVegMenu?.days?.find(
+    (d) => d.day.trim().toLowerCase() === targetLower,
+  );
+  const vegMeal = vegDayMenu?.meals?.[mealKey];
+  const nonVegMeal = nonVegDayMenu?.meals?.[mealKey];
 
   const hasCriticalAlert = useMemo(() => {
     if (!alerts?.alerts) return false;
