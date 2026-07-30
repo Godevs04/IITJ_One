@@ -2,6 +2,8 @@ import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { getSetting, setSetting } from './cache';
+import { acquireOverlayLock, releaseOverlayLock } from './overlayGate';
+import { sanitizeNotificationError } from '@/utils/errorSanitizer';
 
 export type PushRegistration = {
   status: 'granted' | 'denied' | 'undetermined' | 'unavailable';
@@ -23,33 +25,39 @@ Notifications.setNotificationHandler({
 
 /**
  * Register for local/Expo push notifications.
- * FCM topic subscribe requires a native Firebase build — not available in Expo Go.
  */
 export async function registerForPushNotifications(): Promise<PushRegistration> {
   if (Platform.OS === 'web') {
     return {
       status: 'unavailable',
       expoPushToken: null,
-      note: 'Web builds do not register for campus push topics.',
-    };
-  }
-
-  const existing = await Notifications.getPermissionsAsync();
-  let finalStatus = existing.status;
-  if (existing.status !== 'granted') {
-    const requested = await Notifications.requestPermissionsAsync();
-    finalStatus = requested.status;
-  }
-
-  if (finalStatus !== 'granted') {
-    return {
-      status: finalStatus === 'denied' ? 'denied' : 'undetermined',
-      expoPushToken: null,
-      note: 'Enable notifications in system settings to receive reminders and future campus pushes.',
+      note: 'Notifications are available on supported iOS and Android devices.',
     };
   }
 
   try {
+    const existing = await Notifications.getPermissionsAsync();
+    let finalStatus = existing.status;
+    if (existing.status !== 'granted') {
+      // The native OS permission dialog is its own modal overlay — hold the
+      // lock for its duration so the feedback prompt can't pop up underneath/behind it.
+      acquireOverlayLock();
+      try {
+        const requested = await Notifications.requestPermissionsAsync();
+        finalStatus = requested.status;
+      } finally {
+        releaseOverlayLock();
+      }
+    }
+
+    if (finalStatus !== 'granted') {
+      return {
+        status: finalStatus === 'denied' ? 'denied' : 'undetermined',
+        expoPushToken: null,
+        note: "Notifications are disabled. Enable them in Settings if you'd like to receive important campus updates.",
+      };
+    }
+
     const projectId =
       Constants.expoConfig?.extra?.eas?.projectId ??
       Constants.easConfig?.projectId;
@@ -63,17 +71,14 @@ export async function registerForPushNotifications(): Promise<PushRegistration> 
     return {
       status: 'granted',
       expoPushToken: token,
-      note:
-        'Device token saved. Campus FCM topic delivery needs a production build with Firebase — preferences below are stored for that release.',
+      note: 'Active — important campus updates will be delivered to this device.',
     };
   } catch (err) {
+    const sanitized = sanitizeNotificationError(err, 'pushTopics');
     return {
       status: 'unavailable',
       expoPushToken: getSetting<string | null>(TOKEN_KEY, null),
-      note:
-        err instanceof Error
-          ? `Could not get push token: ${err.message}`
-          : 'Could not get push token. Topic prefs are saved locally only.',
+      note: sanitized.userMessage,
     };
   }
 }

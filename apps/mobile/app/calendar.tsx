@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
+import { useModalOverlayLock } from '@/services/overlayGate';
 import type { CalendarDoc, CalendarEvent } from '@/types/campus';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
@@ -29,6 +30,7 @@ export default function CalendarScreen() {
   const calendar = useCampusModule<CalendarDoc>('calendar');
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('all');
   const [showPdf, setShowPdf] = useState(false);
+  useModalOverlayLock(showPdf);
   const webViewRef = useRef<any>(null);
 
   const events = useMemo(() => {

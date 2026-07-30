@@ -16,6 +16,8 @@ import {
 } from '@expo-google-fonts/ibm-plex-sans';
 import * as SplashScreen from 'expo-splash-screen';
 import { initCache } from '@/services/cache';
+import { FeedbackPromptManager } from '@/services/feedbackPrompt';
+import { FeedbackPromptSheet } from '@/components/FeedbackPromptSheet';
 import { ensureNotificationChannelsAsync } from '@/services/notificationChannels';
 import { initBackendAnalytics, teardownBackendAnalytics } from '@/services/analytics/backendAnalytics';
 import '@/services/search/registerBuiltInProviders';
@@ -52,6 +54,7 @@ export default function RootLayout() {
   useEffect(() => {
     async function bootstrap() {
       await initCache();
+      FeedbackPromptManager.init();
       initBackendAnalytics();
       await initFirebase();
       setDefaultUserProperties();
@@ -60,7 +63,7 @@ export default function RootLayout() {
     }
     void bootstrap().finally(() => setReady(true));
     void ensureNotificationChannelsAsync();
-    return () => { teardownFCM(); teardownBackendAnalytics(); };
+    return () => { teardownFCM(); teardownBackendAnalytics(); FeedbackPromptManager.teardown(); };
   }, []);
 
   useEffect(() => {
@@ -194,8 +197,9 @@ function RootNavigator() {
         <Stack.Screen name="timetable" options={{ headerShown: false }} />
         <Stack.Screen name="notes" options={{ title: 'Notes' }} />
         <Stack.Screen name="notes/edit" options={{ title: 'Edit Note' }} />
-        <Stack.Screen name="suggest" options={{ title: 'Suggest Something' }} />
+        <Stack.Screen name="suggest" options={{ title: 'Feedback & Suggestions' }} />
       </Stack>
+      <FeedbackPromptSheet />
     </GestureHandlerRootView>
   );
 }

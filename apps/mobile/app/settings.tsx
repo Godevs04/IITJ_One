@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Linking, Switch, Text, View } from 'react-native';
+import { Alert, Linking, Switch, Text, View } from 'react-native';
 import { DirectoryRow } from '@/components/DirectoryRow';
 import { ScreenShell } from '@/components/ScreenShell';
 import {
@@ -9,6 +9,7 @@ import {
   saveTopicPrefs,
   type PushRegistration,
 } from '@/services/pushTopics';
+import { FeedbackPromptManager } from '@/services/feedbackPrompt';
 import { useTheme } from '@/theme/ThemeProvider';
 import { Analytics, AppEvents } from '@/services/firebase';
 import { AppSpacing, AppTypography } from '@/theme/tokens';
@@ -69,9 +70,11 @@ export default function SettingsScreen() {
         <DirectoryRow
           title="Notification preferences"
           subtitle={
-            pushInfo?.expoPushToken
-              ? 'Device token registered'
-              : 'Local prefs · remote FCM topics need a release build'
+            pushInfo?.status === 'granted'
+              ? 'Active — receiving updates for selected topics'
+              : pushInfo?.status === 'denied'
+              ? 'Disabled in system settings'
+              : 'Preferences saved'
           }
         />
         {pushInfo?.note ? (
@@ -83,7 +86,7 @@ export default function SettingsScreen() {
           <DirectoryRow
             key={topic.key}
             title={topic.label}
-            subtitle={topicPrefs[topic.key] !== false ? 'Enabled locally' : 'Muted locally'}
+            subtitle={topicPrefs[topic.key] !== false ? 'Enabled' : 'Muted'}
             onPress={() => {
               const next = { ...topicPrefs, [topic.key]: topicPrefs[topic.key] === false };
               setTopicPrefs(next);
@@ -113,7 +116,7 @@ export default function SettingsScreen() {
           subtitle="Stored only on this device"
           onPress={() => router.push('/notes')}
         />
-        <DirectoryRow title="Suggest Something" onPress={() => router.push('/suggest')} />
+        <DirectoryRow title="Feedback & Suggestions" onPress={() => router.push('/suggest')} />
         <DirectoryRow title="About IITJ One" onPress={() => router.push('/about')} />
         {isHttpUrl(SUPPORT_URL) ? (
           <DirectoryRow
@@ -141,6 +144,22 @@ export default function SettingsScreen() {
           />
         ) : null}
       </View>
+
+      {__DEV__ ? (
+        <View style={{ gap: AppSpacing.sm }}>
+          <Text style={{ ...AppTypography.caption, color: colors.textMuted, paddingHorizontal: 4 }}>
+            Developer Tools
+          </Text>
+          <DirectoryRow
+            title="Reset feedback prompt"
+            subtitle="Clears usage timer + shown flag so it can be re-tested"
+            onPress={() => {
+              FeedbackPromptManager.reset();
+              Alert.alert('Reset', 'Feedback prompt state cleared. It will show again after 10 minutes of active usage.');
+            }}
+          />
+        </View>
+      ) : null}
     </ScreenShell>
   );
 }

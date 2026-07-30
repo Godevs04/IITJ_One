@@ -33,6 +33,7 @@ import {
   rescheduleLaundryNotifications,
 } from '@/laundry/services/laundryNotifications';
 import { useCampusData } from '@/state/CampusDataProvider';
+import { useModalOverlayLock } from '@/services/overlayGate';
 import { debugListKeys } from '@/debug/listDebug';
 import { Analytics, AppEvents } from '@/services/firebase';
 import { useCampusSync } from '@/hooks/useCampusSync';
@@ -352,6 +353,7 @@ function HostelPickerModal({
   onClose: () => void;
   theme: ReturnType<typeof useThemeColors>;
 }) {
+  useModalOverlayLock(visible);
   const boys = HOSTELS.filter((h) => h.category === 'boys');
   const girls = HOSTELS.filter((h) => h.category === 'girls');
   const insets = useSafeAreaInsets();
