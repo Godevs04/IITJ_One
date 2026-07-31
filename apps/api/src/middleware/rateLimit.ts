@@ -10,6 +10,7 @@ import { RedisAwareStore } from './redisAwareRateLimitStore';
 // in-memory behavior these limiters already had when Redis is unset.
 
 export const publicRateLimiter = rateLimit({
+  skip: () => process.env.NODE_ENV === 'test',
   windowMs: 60 * 1000,
   max: config.rateLimit.publicPerMin,
   standardHeaders: true,
@@ -19,6 +20,7 @@ export const publicRateLimiter = rateLimit({
 });
 
 export const suggestionsRateLimiter = rateLimit({
+  skip: () => process.env.NODE_ENV === 'test',
   windowMs: 60 * 1000,
   max: 10,
   standardHeaders: true,
@@ -28,6 +30,7 @@ export const suggestionsRateLimiter = rateLimit({
 });
 
 export const devicesRateLimiter = rateLimit({
+  skip: () => process.env.NODE_ENV === 'test',
   windowMs: 60 * 1000,
   max: 20,
   standardHeaders: true,
@@ -39,6 +42,7 @@ export const devicesRateLimiter = rateLimit({
 // Client batches every 30s or every 20 events — a few per minute per IP is
 // expected; this just guards against a runaway client or abuse.
 export const analyticsEventsRateLimiter = rateLimit({
+  skip: () => process.env.NODE_ENV === 'test',
   windowMs: 60 * 1000,
   max: 30,
   standardHeaders: true,
@@ -49,6 +53,7 @@ export const analyticsEventsRateLimiter = rateLimit({
 
 // Heartbeat fires every 60s per session — generous headroom for shared NATs.
 export const analyticsPingRateLimiter = rateLimit({
+  skip: () => process.env.NODE_ENV === 'test',
   windowMs: 60 * 1000,
   max: 120,
   standardHeaders: true,
@@ -61,6 +66,7 @@ export const analyticsPingRateLimiter = rateLimit({
 // its own view POST, not batched like the generic analytics pipeline) — generous
 // headroom, same reasoning as the ping limiter, for shared NATs plus a big list.
 export const campaignTrackRateLimiter = rateLimit({
+  skip: () => process.env.NODE_ENV === 'test',
   windowMs: 60 * 1000,
   max: 200,
   standardHeaders: true,
@@ -73,6 +79,7 @@ export const campaignTrackRateLimiter = rateLimit({
 // aware when available — see busFusion.ts/rideSocket.ts); this only guards
 // the REST session-lifecycle endpoint, which a rider hits once per ride at most.
 export const rideStartRateLimiter = rateLimit({
+  skip: () => process.env.NODE_ENV === 'test',
   windowMs: 60 * 1000,
   max: 10,
   standardHeaders: true,
@@ -82,6 +89,7 @@ export const rideStartRateLimiter = rateLimit({
 });
 
 export const adminLoginRateLimiter = rateLimit({
+  skip: () => process.env.NODE_ENV === 'test',
   windowMs: config.rateLimit.adminLoginWindowMs,
   // In development/test, allow many more login attempts for automated testing
   max: isProduction ? config.rateLimit.adminLoginMax : 100,
