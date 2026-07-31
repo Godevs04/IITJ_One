@@ -694,10 +694,20 @@ export async function publishBothMessMenus(
   try {
     let vegVersion = 0;
     let nonVegVersion = 0;
-    await session.withTransaction(async () => {
-      vegVersion = await publishMessMenuInSession(veg.input, veg.rawJson, adminEmail, veg.expectedVersion, session);
-      nonVegVersion = await publishMessMenuInSession(nonVeg.input, nonVeg.rawJson, adminEmail, nonVeg.expectedVersion, session);
-    });
+    try {
+      await session.withTransaction(async () => {
+        vegVersion = await publishMessMenuInSession(veg.input, veg.rawJson, adminEmail, veg.expectedVersion, session);
+        nonVegVersion = await publishMessMenuInSession(nonVeg.input, nonVeg.rawJson, adminEmail, nonVeg.expectedVersion, session);
+      });
+    } catch (e: any) {
+      // Fallback for standalone Mongo instances (local dev / CI) that don't support transactions
+      if (e.message?.toLowerCase().includes('replica set') || e.message?.toLowerCase().includes('transaction')) {
+        vegVersion = await publishMessMenuInSession(veg.input, veg.rawJson, adminEmail, veg.expectedVersion, undefined);
+        nonVegVersion = await publishMessMenuInSession(nonVeg.input, nonVeg.rawJson, adminEmail, nonVeg.expectedVersion, undefined);
+      } else {
+        throw e;
+      }
+    }
     return { vegVersion, nonVegVersion };
   } finally {
     await session.endSession();
