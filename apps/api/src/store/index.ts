@@ -1,7 +1,9 @@
 import type { ClientSession } from 'mongodb';
 import { isDbConnected, collections, ObjectId, getMongoClient } from '../db';
 import { sortMessMenuDays, monthNumberToName } from '@iitj1/types';
+import { isStrictObjectId } from '../utils/objectId';
 import { busesConflict } from '../services/transportScheduleExceptionStatus';
+import { destroyRemovedCloudinaryImages } from '../services/cloudinary';
 import { invalidateModule, invalidateAll, cached, cache } from '../cache';
 import {
   initFallbackStore,
@@ -347,9 +349,10 @@ export async function updateNotice(
   adminEmail: string,
 ): Promise<NoticeDoc | null> {
   if (isDbConnected()) {
+    const queryId = isStrictObjectId(id) ? new ObjectId(id) : id;
     const result = await collections
       .notices()
-      .findOneAndUpdate({ _id: new ObjectId(id) }, { $set: patch }, { returnDocument: 'after' });
+      .findOneAndUpdate({ _id: queryId as any }, { $set: patch }, { returnDocument: 'after' });
     if (!result) return null;
     await bumpVersion('notices', result.campusId, adminEmail, 'update', `Notice ${id} updated`);
     return { ...result, _id: result._id?.toString() };
@@ -363,10 +366,11 @@ export async function updateNotice(
 
 export async function deleteNotice(id: string, adminEmail: string): Promise<boolean> {
   if (isDbConnected()) {
-    const existing = await collections.notices().findOne({ _id: new ObjectId(id) });
+    const queryId = isStrictObjectId(id) ? new ObjectId(id) : id;
+    const existing = await collections.notices().findOne({ _id: queryId as any });
     if (!existing || existing.deletedAt) return false;
     await collections.notices().updateOne(
-      { _id: new ObjectId(id) },
+      { _id: queryId as any },
       { $set: { deletedAt: new Date() } },
     );
     await bumpVersion('notices', existing.campusId, adminEmail, 'delete', `Notice ${id} soft-deleted`);
@@ -383,8 +387,9 @@ export async function deleteNotice(id: string, adminEmail: string): Promise<bool
 
 export async function restoreNotice(id: string, adminEmail: string): Promise<NoticeDoc | null> {
   if (isDbConnected()) {
+    const queryId = isStrictObjectId(id) ? new ObjectId(id) : id;
     const result = await collections.notices().findOneAndUpdate(
-      { _id: new ObjectId(id), deletedAt: { $ne: null } },
+      { _id: queryId as any, deletedAt: { $ne: null } },
       { $set: { deletedAt: null } },
       { returnDocument: 'after' },
     );
@@ -2134,22 +2139,37 @@ export async function createCampaign(input: CampaignCreateInput, adminEmail: str
   return saved;
 }
 
+function campaignImageUrls(doc: Pick<CampaignDoc, 'visuals'> | undefined | null): string[] {
+  if (!doc?.visuals) return [];
+  return [...(doc.visuals.images ?? []), ...(doc.visuals.imageUrl ? [doc.visuals.imageUrl] : [])];
+}
+
 export async function updateCampaign(
   id: string,
   patch: Partial<CampaignCreateInput>,
   adminEmail: string,
 ): Promise<CampaignDoc | null> {
+  // Only a visuals-touching update can orphan a Cloudinary asset — read the
+  // prior images first so they can be diffed against the result below.
+  const before = patch.visuals ? campaignImageUrls(await getCampaignById(id)) : [];
+
   const withUpdatedAt = { ...patch, updatedAt: new Date().toISOString(), updatedBy: adminEmail };
+  let saved: CampaignDoc | null;
   if (isDbConnected()) {
     const result = await collections
       .campaigns()
       .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: withUpdatedAt }, { returnDocument: 'after' });
     if (!result) return null;
     await bumpVersion('campaigns', result.campusId, adminEmail, 'update', `Campaign "${result.title}" updated`);
-    return withCampaignStringId(result);
+    saved = withCampaignStringId(result);
+  } else {
+    saved = fallbackUpdateCampaign(id, withUpdatedAt);
+    if (saved) await bumpVersion('campaigns', saved.campusId, adminEmail, 'update', `Campaign "${saved.title}" updated`);
   }
-  const saved = fallbackUpdateCampaign(id, withUpdatedAt);
-  if (saved) await bumpVersion('campaigns', saved.campusId, adminEmail, 'update', `Campaign "${saved.title}" updated`);
+
+  if (saved && before.length > 0) {
+    void destroyRemovedCloudinaryImages(before, campaignImageUrls(saved));
+  }
   return saved;
 }
 

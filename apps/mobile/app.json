@@ -38,7 +38,7 @@
       "versionCode": 1,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/branding/logo.png",
+        "foregroundImage": "./assets/branding/adaptive-icon-foreground.png",
         "backgroundColor": "#022543"
       },
       "splash": {
@@ -49,8 +49,7 @@
       "permissions": [
         "android.permission.POST_NOTIFICATIONS",
         "android.permission.CAMERA",
-        "android.permission.READ_MEDIA_IMAGES",
-        "android.permission.ACCESS_BACKGROUND_LOCATION"
+        "android.permission.READ_MEDIA_IMAGES"
       ],
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
@@ -120,9 +119,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "IITJ One uses your location only while you're actively sharing your ride, to help other students see where the bus is. Location is never shared outside an active ride.",
-          "locationAlwaysAndWhenInUsePermission": "IITJ One continues sharing your location briefly in the background only while you're actively sharing a ride, so other students still see the bus if you switch apps. Location is never shared outside an active ride.",
-          "isAndroidForegroundServiceEnabled": true
+          "locationWhenInUsePermission": "IITJ One uses your location only while you're actively sharing your ride, to help other students see where the bus is. Location is never shared outside an active ride."
         }
       ],
       "expo-sqlite",

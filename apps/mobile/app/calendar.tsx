@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
+import { API_BASE_URL } from '@/services/api';
 import { useModalOverlayLock } from '@/services/overlayGate';
 import type { CalendarDoc, CalendarEvent } from '@/types/campus';
 import { useThemeColors } from '@/theme/ThemeProvider';
@@ -47,9 +48,9 @@ export default function CalendarScreen() {
     await sync();
   }, [sync]);
 
-  // Derive static PDF URL from LAN API hostname
+  // Derive static PDF URL from the same validated API base every other request uses.
   const pdfUrl = useMemo(() => {
-    const apiBase = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:6002').replace(/\/api\/v1\/?$/, '');
+    const apiBase = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
     return `${apiBase}/uploads/Academic-Calendar-AY-2026-27.pdf`;
   }, []);
 

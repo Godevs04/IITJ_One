@@ -5,6 +5,7 @@ import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { openCampaignDetails } from '@/utils/campaignNav';
 import { campaignAccessibilityLabel, runCampaignCta } from '@/utils/campaignActions';
+import { optimizeCloudinaryUrl } from '@/utils/cloudinary';
 import { trackCampaignEvent } from '@/services/campaignTracking';
 import type { CampaignDoc } from '@/types/campus';
 
@@ -60,7 +61,7 @@ function DiscoverCampaignCardImpl({ campaign, trackView = true }: DiscoverCampai
           ]}
         >
           {primaryImage ? (
-            <Image source={{ uri: primaryImage }} style={styles.image} resizeMode="cover" />
+            <Image source={{ uri: optimizeCloudinaryUrl(primaryImage, 800) }} style={styles.image} resizeMode="cover" />
           ) : (
             <Ionicons name="megaphone-outline" size={28} color={theme.iconMuted} />
           )}

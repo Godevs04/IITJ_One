@@ -6,6 +6,7 @@ import {
   AppTypography,
   CategoryColors,
 } from '@/theme/tokens';
+import { optimizeCloudinaryUrl } from '@/utils/cloudinary';
 
 interface NoticeCardProps {
   title: string;
@@ -51,7 +52,7 @@ export function NoticeCard({
         <View style={[styles.importantBar, { backgroundColor: theme.accent }]} />
       )}
       {imageUrl ? (
-        <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+        <Image source={{ uri: optimizeCloudinaryUrl(imageUrl, 800) }} style={styles.image} resizeMode="cover" />
       ) : null}
       <View style={styles.content}>
         <View style={styles.headerRow}>

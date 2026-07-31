@@ -5,6 +5,7 @@ import { ApiError, apiFetch } from '@/lib/api';
 import { Button } from '@/components/Button';
 import { Field, Input } from '@/components/Field';
 import { useToast } from '@/components/Toast';
+import { optimizeCloudinaryUrl } from '@/lib/cloudinary';
 
 type SignResponse = {
   configured: boolean;
@@ -99,7 +100,7 @@ export function CloudinaryUploadField({
         {value ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={value}
+            src={optimizeCloudinaryUrl(value, 300)}
             alt={`${label} preview`}
             className="mt-1 h-28 w-auto rounded-xl border border-border object-cover"
           />

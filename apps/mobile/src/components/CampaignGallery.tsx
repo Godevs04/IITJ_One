@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Dimensions, Image, ScrollView, StyleSheet, View, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppSpacing } from '@/theme/tokens';
+import { optimizeCloudinaryUrl } from '@/utils/cloudinary';
 
 interface CampaignGalleryProps {
   images: string[];
@@ -22,6 +23,9 @@ export function CampaignGallery({ images, themeColor, height = 240 }: CampaignGa
     if (next !== index) setIndex(next);
   }
 
+  // Retina-ish width, capped so a wide tablet window doesn't request an oversized asset.
+  const imageWidth = Math.min(Math.round(width * 2), 1600);
+
   return (
     <View style={[styles.wrap, { backgroundColor: themeColor || theme.surfaceMuted }]}>
       <ScrollView
@@ -33,7 +37,7 @@ export function CampaignGallery({ images, themeColor, height = 240 }: CampaignGa
         {images.map((uri, i) => (
           <Image
             key={`${uri}-${i}`}
-            source={{ uri }}
+            source={{ uri: optimizeCloudinaryUrl(uri, imageWidth) }}
             style={{ width, height }}
             resizeMode="cover"
             accessibilityLabel={images.length > 1 ? `Campaign photo ${i + 1} of ${images.length}` : 'Campaign photo'}

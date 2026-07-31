@@ -3,6 +3,7 @@
 import { Button } from './Button';
 import { StatusPill } from './ui';
 import { PLACEMENT_LABELS, DISPLAY_TYPE_LABELS } from '@/lib/campaignLabels';
+import { optimizeCloudinaryUrl } from '@/lib/cloudinary';
 import type { CampaignDoc } from '@/lib/types';
 
 interface CampaignPreviewModalProps {
@@ -40,7 +41,7 @@ export function CampaignPreviewModal({ campaign, onClose }: CampaignPreviewModal
           >
             {primaryImage ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={primaryImage} alt={campaign.title} className="h-40 w-full object-cover" />
+              <img src={optimizeCloudinaryUrl(primaryImage, 640)} alt={campaign.title} className="h-40 w-full object-cover" />
             ) : (
               <div className="flex h-40 w-full items-center justify-center bg-sand text-xs text-muted">
                 No image

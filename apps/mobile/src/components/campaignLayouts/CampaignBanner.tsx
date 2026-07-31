@@ -5,6 +5,7 @@ import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { openCampaignDetails } from '@/utils/campaignNav';
 import { campaignAccessibilityLabel } from '@/utils/campaignActions';
+import { optimizeCloudinaryUrl } from '@/utils/cloudinary';
 import { trackCampaignEvent } from '@/services/campaignTracking';
 import type { CampaignDoc } from '@/types/campus';
 
@@ -47,7 +48,7 @@ function BannerItem({ campaign }: { campaign: CampaignDoc }) {
     >
       <View style={[styles.thumb, { backgroundColor: campaign.visuals?.themeColor || theme.surfaceMuted }]}>
         {image ? (
-          <Image source={{ uri: image }} style={styles.thumbImage} resizeMode="cover" />
+          <Image source={{ uri: optimizeCloudinaryUrl(image, 112) }} style={styles.thumbImage} resizeMode="cover" />
         ) : (
           <Ionicons name="megaphone-outline" size={22} color={theme.iconMuted} />
         )}

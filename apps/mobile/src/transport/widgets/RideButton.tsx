@@ -101,7 +101,7 @@ export function RideButton({ direction: fixedDirection, tripId }: RideButtonProp
     );
   }
 
-  const isGpsHealthy = gpsStatus === 'active' || gpsStatus === 'active_background';
+  const isGpsHealthy = gpsStatus === 'active';
 
   return (
     <View style={styles.container}>
@@ -125,7 +125,7 @@ export function RideButton({ direction: fixedDirection, tripId }: RideButtonProp
           {ride.status === 'stopping' ? 'Stopping…' : 'Stop Sharing'}
         </Text>
       </Pressable>
-      {gpsStatus !== 'active' && gpsStatus !== 'active_background' && GPS_WARNING_MESSAGES[gpsStatus] ? (
+      {gpsStatus !== 'active' && GPS_WARNING_MESSAGES[gpsStatus] ? (
         <Text style={[styles.errorText, { color: theme.error }]}>{GPS_WARNING_MESSAGES[gpsStatus]}</Text>
       ) : connectionState !== 'connected' ? (
         <Text style={[styles.errorText, { color: theme.error }]}>
@@ -134,14 +134,12 @@ export function RideButton({ direction: fixedDirection, tripId }: RideButtonProp
       ) : isGpsHealthy ? (
         <View style={styles.helperRow}>
           <Ionicons
-            name={gpsStatus === 'active_background' ? 'shield-checkmark' : 'information-circle-outline'}
+            name={'information-circle-outline'}
             size={12}
             color={theme.textMuted}
           />
           <Text style={[styles.helperText, { color: theme.textMuted }]}>
-            {gpsStatus === 'active_background'
-              ? 'Sharing your location — will keep sharing even if you switch apps.'
-              : 'Sharing your location to help others. Keep this screen open to keep sharing.'}
+            Sharing your location to help others. Keep this app open to keep sharing.
           </Text>
         </View>
       ) : null}

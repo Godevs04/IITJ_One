@@ -41,7 +41,7 @@ class SyncedERickshawServiceProvider implements ERickshawServiceProvider {
   }
 
   callDriver(phone: string): void {
-    console.log(`[E-Rickshaw] User initiated call to ${phone}`);
+    if (__DEV__) console.log(`[E-Rickshaw] User initiated call to ${phone}`);
   }
 }
 
