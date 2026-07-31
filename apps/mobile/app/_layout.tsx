@@ -182,6 +182,8 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="search" options={{ headerShown: false }} />
         <Stack.Screen name="map" options={{ title: 'Campus Map' }} />
+        <Stack.Screen name="discover/index" options={{ title: 'Discover' }} />
+        <Stack.Screen name="discover/[id]" options={{ title: 'Campaign' }} />
         <Stack.Screen name="campus-directory/index" options={{ title: 'Campus Directory' }} />
         <Stack.Screen name="campus-directory/leadership" options={{ title: 'Leadership' }} />
         <Stack.Screen name="campus-directory/departments" options={{ title: 'Departments' }} />

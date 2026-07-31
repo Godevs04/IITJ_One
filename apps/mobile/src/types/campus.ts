@@ -280,6 +280,12 @@ export type {
   OrganizationType,
   DepartmentDoc,
   OrganizationDoc,
+  CampaignType,
+  CampaignPlacement,
+  CampaignDisplayType,
+  CampaignActionType,
+  CampaignStatus,
+  CampaignDoc,
   PersonDoc,
   RoleDoc,
 } from '@iitj1/types';

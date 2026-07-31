@@ -39,6 +39,7 @@ import type {
   OrganizationDoc,
   PersonDoc,
   RoleDoc,
+  CampaignDoc,
 } from './types';
 
 let client: MongoClient | null = null;
@@ -196,6 +197,13 @@ async function ensureIndexes(): Promise<void> {
   await db.collection('roles').createIndex({ campusId: 1, organizationId: 1 });
   await db.collection('roles').createIndex({ campusId: 1, active: 1 });
 
+  // Discover (Campaign Platform) — genuinely multi-document per campus like notices,
+  // soft-delete (deletedAt) like notices, no TTL (unlike notices) since campaigns'
+  // analytics counters are worth keeping around after they end.
+  await db.collection('campaigns').createIndex({ campusId: 1, status: 1 });
+  await db.collection('campaigns').createIndex({ campusId: 1, placement: 1 });
+  await db.collection('campaigns').createIndex({ campusId: 1, startDate: 1, endDate: 1 });
+
   // Mess menu JSON import: up to 2 live docs per (campus, menuType) — one draft, one
   // published — so a plain {campusId:1} unique index (the singleton loop below) doesn't
   // fit; compound key instead, same style as the trips precedent above.
@@ -282,6 +290,7 @@ export const collections = {
   organizations: () => col<OrganizationDoc>('organizations'),
   people: () => col<PersonDoc>('people'),
   roles: () => col<RoleDoc>('roles'),
+  campaigns: () => col<CampaignDoc>('campaigns'),
 };
 
 export async function disconnectDb(): Promise<void> {

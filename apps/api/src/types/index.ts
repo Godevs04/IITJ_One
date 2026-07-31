@@ -25,7 +25,8 @@ export type ModuleName =
   | 'campusDirectoryDepartments'
   | 'campusDirectoryPeople'
   | 'campusDirectoryOrganizations'
-  | 'campusDirectoryRoles';
+  | 'campusDirectoryRoles'
+  | 'campaigns';
 
 export interface MetaVersions {
   menu: number;
@@ -53,6 +54,7 @@ export interface MetaVersions {
   campusDirectoryPeople: number;
   campusDirectoryOrganizations: number;
   campusDirectoryRoles: number;
+  campaigns: number;
 }
 
 export type {
@@ -297,6 +299,14 @@ export type {
   RoleCreateInput,
   RoleUpdateInput,
   RoleDoc,
+  CampaignType,
+  CampaignPlacement,
+  CampaignDisplayType,
+  CampaignActionType,
+  CampaignStatus,
+  CampaignCreateInput,
+  CampaignUpdateInput,
+  CampaignDoc,
 } from '@iitj1/types';
 
 export interface AdminDoc {

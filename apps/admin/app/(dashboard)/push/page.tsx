@@ -34,6 +34,7 @@ const DEEP_LINK_SCREENS = [
   { value: 'menu', label: 'Mess' },
   { value: 'mess-qr', label: 'Mess QR' },
   { value: 'notices', label: 'Notices' },
+  { value: 'discover', label: 'Discover (campaign list)' },
   { value: 'calendar', label: 'Calendar' },
   { value: 'laundry', label: 'Laundry' },
   { value: 'healthCenter', label: 'Health Center' },

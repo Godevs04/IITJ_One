@@ -43,6 +43,13 @@ const NAV: { label: string; items: NavItem[] }[] = [
     label: 'Campus data',
     items: [
       {
+        label: 'Discover (Campaigns)',
+        children: [
+          { href: '/campaigns', label: 'Dashboard' },
+          { href: '/campaigns/list', label: 'Campaign List' },
+        ],
+      },
+      {
         label: 'Campus Directory',
         children: [
           { href: '/campus-directory', label: 'Dashboard' },

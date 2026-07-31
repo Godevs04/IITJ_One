@@ -69,6 +69,13 @@ import {
   fallbackCreateRole,
   fallbackUpdateRole,
   fallbackDeleteRole,
+  fallbackListCampaigns,
+  fallbackGetActiveCampaigns,
+  fallbackGetCampaignById,
+  fallbackCreateCampaign,
+  fallbackUpdateCampaign,
+  fallbackSoftDeleteCampaign,
+  fallbackRestoreCampaign,
   getFallbackState,
 } from './fallback';
 import type {
@@ -114,6 +121,8 @@ import type {
   PersonCreateInput,
   RoleDoc,
   RoleCreateInput,
+  CampaignDoc,
+  CampaignCreateInput,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
 
@@ -2000,6 +2009,223 @@ export async function deleteRole(id: string, adminEmail: string): Promise<boolea
   }
   await bumpVersion('campusDirectoryRoles', existing.campusId, adminEmail, 'delete', `Role "${existing.title}" deleted`);
   return true;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Discover (Campaign Platform) — multi-document per campus like notices,
+// soft delete (deletedAt) like notices. getActiveCampaigns() below is the
+// public/mobile-facing read: enabled + published + within the date window,
+// unpaginated (same "download the whole thing, cache offline" model as
+// notices/Campus Directory). listCampaigns() is the paginated/searchable
+// admin read, matching every other admin list in this file.
+// ─────────────────────────────────────────────────────────────────────────
+
+interface CampaignListOpts {
+  search?: string;
+  type?: string;
+  placement?: string;
+  status?: string;
+  /** Computed lifecycle filter (published-not-expired vs published-expired) — see adminCampaignsQuerySchema. */
+  effectiveStatus?: 'draft' | 'published' | 'expired' | 'paused' | 'archived';
+  featured?: boolean;
+  isEnabled?: boolean;
+  sort?: 'asc' | 'desc';
+}
+
+function withCampaignStringId(doc: CampaignDoc): CampaignDoc {
+  return { ...doc, _id: doc._id?.toString() };
+}
+
+export async function getActiveCampaigns(campusId: string, placement?: string): Promise<CampaignDoc[]> {
+  if (isDbConnected()) {
+    const now = new Date();
+    const filter: Record<string, unknown> = {
+      campusId,
+      isEnabled: true,
+      status: 'published',
+      startDate: { $lte: now.toISOString() },
+      endDate: { $gte: now.toISOString() },
+      $or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
+    };
+    if (placement) filter.placement = placement;
+    const items = await collections.campaigns().find(filter).sort({ priority: 1 }).toArray();
+    return items.map(withCampaignStringId);
+  }
+  return fallbackGetActiveCampaigns(campusId, placement);
+}
+
+export async function listCampaigns(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampaignListOpts = {},
+): Promise<{ items: CampaignDoc[]; total: number }> {
+  const skip = (page - 1) * pageSize;
+  if (isDbConnected()) {
+    const notDeleted = { $or: [{ deletedAt: null }, { deletedAt: { $exists: false } }] };
+    const filter: Record<string, unknown> = { campusId, ...notDeleted };
+    if (opts.type) filter.type = opts.type;
+    if (opts.placement) filter.placement = opts.placement;
+    if (opts.status) filter.status = opts.status;
+    if (opts.featured !== undefined) filter.featured = opts.featured;
+    if (opts.isEnabled !== undefined) filter.isEnabled = opts.isEnabled;
+    if (opts.effectiveStatus) {
+      const nowIso = new Date().toISOString();
+      if (opts.effectiveStatus === 'published') {
+        filter.status = 'published';
+        filter.endDate = { $gte: nowIso };
+      } else if (opts.effectiveStatus === 'expired') {
+        filter.status = 'published';
+        filter.endDate = { $lt: nowIso };
+      } else {
+        filter.status = opts.effectiveStatus;
+      }
+    }
+    if (opts.search) {
+      // Mongo only honors one top-level `$or` — combine the not-deleted $or and
+      // the search $or via $and instead of letting the second silently overwrite the first.
+      delete filter.$or;
+      filter.$and = [notDeleted, searchFilter(['title', 'category'], opts.search)];
+    }
+    const [items, total] = await Promise.all([
+      collections.campaigns().find(filter).sort({ title: opts.sort === 'desc' ? -1 : 1 }).skip(skip).limit(pageSize).toArray(),
+      collections.campaigns().countDocuments(filter),
+    ]);
+    return { items: items.map(withCampaignStringId), total };
+  }
+  return fallbackListCampaigns(campusId, page, pageSize, opts);
+}
+
+export async function getCampaignById(id: string): Promise<CampaignDoc | null> {
+  if (isDbConnected()) {
+    const result = await collections.campaigns().findOne({ _id: new ObjectId(id) } as never);
+    return result ? withCampaignStringId(result) : null;
+  }
+  return fallbackGetCampaignById(id);
+}
+
+export async function createCampaign(input: CampaignCreateInput, adminEmail: string): Promise<CampaignDoc> {
+  const now = new Date().toISOString();
+  const doc: Omit<CampaignDoc, '_id'> = {
+    ...input,
+    createdAt: now,
+    createdBy: adminEmail,
+    updatedAt: now,
+    updatedBy: adminEmail,
+    deletedAt: null,
+  };
+  if (isDbConnected()) {
+    const result = await collections.campaigns().insertOne(doc as CampaignDoc);
+    await bumpVersion('campaigns', doc.campusId, adminEmail, 'create', `Campaign "${doc.title}" created`);
+    return { ...doc, _id: result.insertedId.toString() };
+  }
+  const saved = fallbackCreateCampaign(doc);
+  await bumpVersion('campaigns', doc.campusId, adminEmail, 'create', `Campaign "${doc.title}" created`);
+  return saved;
+}
+
+export async function updateCampaign(
+  id: string,
+  patch: Partial<CampaignCreateInput>,
+  adminEmail: string,
+): Promise<CampaignDoc | null> {
+  const withUpdatedAt = { ...patch, updatedAt: new Date().toISOString(), updatedBy: adminEmail };
+  if (isDbConnected()) {
+    const result = await collections
+      .campaigns()
+      .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: withUpdatedAt }, { returnDocument: 'after' });
+    if (!result) return null;
+    await bumpVersion('campaigns', result.campusId, adminEmail, 'update', `Campaign "${result.title}" updated`);
+    return withCampaignStringId(result);
+  }
+  const saved = fallbackUpdateCampaign(id, withUpdatedAt);
+  if (saved) await bumpVersion('campaigns', saved.campusId, adminEmail, 'update', `Campaign "${saved.title}" updated`);
+  return saved;
+}
+
+export async function deleteCampaign(id: string, adminEmail: string): Promise<boolean> {
+  const existing = await getCampaignById(id);
+  if (!existing || existing.deletedAt) return false;
+  const now = new Date().toISOString();
+  if (isDbConnected()) {
+    await collections
+      .campaigns()
+      .updateOne({ _id: new ObjectId(id) } as never, { $set: { deletedAt: now, isEnabled: false, updatedAt: now, updatedBy: adminEmail } });
+    await bumpVersion('campaigns', existing.campusId, adminEmail, 'delete', `Campaign "${existing.title}" deleted`);
+    return true;
+  }
+  const saved = fallbackSoftDeleteCampaign(id);
+  if (saved) await bumpVersion('campaigns', existing.campusId, adminEmail, 'delete', `Campaign "${existing.title}" deleted`);
+  return !!saved;
+}
+
+export async function restoreCampaign(id: string, adminEmail: string): Promise<CampaignDoc | null> {
+  if (isDbConnected()) {
+    const result = await collections
+      .campaigns()
+      .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: { deletedAt: null, updatedAt: new Date().toISOString(), updatedBy: adminEmail } }, { returnDocument: 'after' });
+    if (!result) return null;
+    await bumpVersion('campaigns', result.campusId, adminEmail, 'update', `Campaign "${result.title}" restored`);
+    return withCampaignStringId(result);
+  }
+  const saved = fallbackRestoreCampaign(id);
+  if (saved) await bumpVersion('campaigns', saved.campusId, adminEmail, 'update', `Campaign "${saved.title}" restored`);
+  return saved;
+}
+
+// Best-effort, per-process duplicate-request collapsing for the public track
+// endpoint — the same device double-tapping, a card remounting quickly, or a
+// client retry shouldn't count as two separate views/clicks. Not persisted
+// and not shared across instances; like the rate limiters' own in-memory
+// fallback (redisAwareRateLimitStore.ts), this degrades gracefully — worst
+// case is an under-strict window on one instance — rather than requiring a
+// new collection or any auth.
+const RECENT_TRACK_WINDOW_MS = 60_000;
+const RECENT_TRACK_MAX_ENTRIES = 5000;
+const recentTrackKeys = new Map<string, number>();
+
+function wasRecentlyTracked(key: string): boolean {
+  const now = Date.now();
+  const last = recentTrackKeys.get(key);
+  if (last !== undefined && now - last < RECENT_TRACK_WINDOW_MS) return true;
+  recentTrackKeys.set(key, now);
+  if (recentTrackKeys.size > RECENT_TRACK_MAX_ENTRIES) {
+    for (const [k, seenAt] of recentTrackKeys) {
+      if (now - seenAt >= RECENT_TRACK_WINDOW_MS) recentTrackKeys.delete(k);
+    }
+  }
+  return false;
+}
+
+/**
+ * Increments the campaign's own impressionCount/clickCount rollup (Phase 6 analytics
+ * integration) — fired from the public, unauthenticated /campaigns/:id/track endpoint,
+ * so every real user view/tap contributes. Deliberately does NOT call bumpVersion: these
+ * counters change far more often than the campaign's actual content, and bumping the
+ * synced module version on every view would force every client to needlessly resync.
+ * Detailed per-event analytics (with session/platform/etc.) still goes through the
+ * existing generic AnalyticsEventDoc pipeline — this is only the lightweight aggregate.
+ *
+ * `dedupeKey` (the caller's deviceId, falling back to IP) collapses repeats within
+ * RECENT_TRACK_WINDOW_MS into a single count — see wasRecentlyTracked above.
+ */
+export async function incrementCampaignMetric(
+  id: string,
+  action: 'view' | 'click',
+  dedupeKey?: string,
+): Promise<{ counted: boolean }> {
+  if (dedupeKey && wasRecentlyTracked(`${dedupeKey}:${id}:${action}`)) {
+    return { counted: false };
+  }
+  const field = action === 'view' ? 'impressionCount' : 'clickCount';
+  if (isDbConnected()) {
+    await collections.campaigns().updateOne({ _id: new ObjectId(id) } as never, { $inc: { [field]: 1 } });
+    return { counted: true };
+  }
+  const existing = fallbackGetCampaignById(id);
+  if (!existing) return { counted: true };
+  fallbackUpdateCampaign(id, { [field]: (existing[field] ?? 0) + 1 } as Partial<CampaignDoc>);
+  return { counted: true };
 }
 
 // --- Trip (operational, no bumpVersion — not a synced module) ---

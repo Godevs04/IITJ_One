@@ -65,6 +65,13 @@ export const AppEvents = {
   FEEDBACK_PROMPT_DISMISSED: 'feedback_prompt_dismissed',
   FEEDBACK_PROMPT_FEEDBACK_CLICKED: 'feedback_prompt_feedback_clicked',
   FEEDBACK_SUBMITTED: 'feedback_submitted',
+
+  // Discover (Campaign Platform)
+  CAMPAIGN_VIEWED: 'campaign_viewed',
+  CAMPAIGN_CLICKED: 'campaign_clicked',
+  CAMPAIGN_OPENED: 'campaign_opened',
+  CAMPAIGN_DISMISSED: 'campaign_dismissed',
+  CAMPAIGN_CTA_CLICKED: 'campaign_cta_clicked',
 } as const;
 
 export type AppEventName = (typeof AppEvents)[keyof typeof AppEvents];

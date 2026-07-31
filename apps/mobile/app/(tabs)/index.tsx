@@ -6,12 +6,14 @@ import { HomeHeader } from '@/components/HomeHeader';
 import { MessQrCard } from '@/components/MessQrCard';
 import { QuickAccessTile, type QuickAccessVariant } from '@/components/QuickAccessTile';
 import { ScreenShell } from '@/components/ScreenShell';
+import { HomeCampaignSlots } from '@/components/campaignLayouts/HomeCampaignSlots';
+import { matchesAppVersionTargeting } from '@/utils/campaignTargeting';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
 import { listTimetableEntries } from '@/services/localDb';
 import { Analytics, AppEvents } from '@/services/firebase';
 import { usePostHog } from 'posthog-react-native';
-import type { CalendarDoc, MessMenuDoc, TransportDoc, HolidaysDoc, TransportAlertsDoc, TemporaryTransportScheduleDoc } from '@/types/campus';
+import type { CalendarDoc, MessMenuDoc, TransportDoc, HolidaysDoc, TransportAlertsDoc, TemporaryTransportScheduleDoc, CampaignDoc } from '@/types/campus';
 import {
   expirySeconds,
   formatExpiryLabel,
@@ -329,6 +331,7 @@ export default function HomeScreen() {
   const notices = useCampusModule<CachedNotice[]>('notices');
   const alerts = useCampusModule<TransportAlertsDoc>('transportAlerts');
   const tempSchedule = useCampusModule<TemporaryTransportScheduleDoc>('temporaryTransportSchedule');
+  const campaigns = useCampusModule<CampaignDoc[]>('campaigns');
 
   const { mealKey, targetDay } = (() => {
     const now = nowMinutes();
@@ -440,6 +443,14 @@ export default function HomeScreen() {
       .sort((a, b) => a.startDate.localeCompare(b.startDate))
       .slice(0, 3);
   }, [calendar]);
+
+  // Home only renders campaigns explicitly placed here by the admin (placement:
+  // 'home_hero') — Discover is the complete listing of every campaign regardless
+  // of placement. Each one's own displayType then decides which layout it gets
+  // (see HomeCampaignSlots/registry.tsx) — never hardcoded per campaign here.
+  const homeCampaigns = useMemo(() => {
+    return (campaigns ?? []).filter((c) => c.placement === 'home_hero' && matchesAppVersionTargeting(c));
+  }, [campaigns]);
 
   const classTime = nextClass ? to12Hour(nextClass.entry.startTime) : null;
 
@@ -616,6 +627,22 @@ export default function HomeScreen() {
           ))}
         </View>
       </View>
+
+      {homeCampaigns.length > 0 ? (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
+              Discover
+            </Text>
+            <Pressable onPress={() => router.push('/discover' as never)} hitSlop={8}>
+              <Text style={[styles.viewAll, { color: theme.linkText }]}>
+                See All
+              </Text>
+            </Pressable>
+          </View>
+          <HomeCampaignSlots campaigns={homeCampaigns} />
+        </View>
+      ) : null}
 
       {upcomingEvents.length > 0 ? (
         <View style={styles.section}>

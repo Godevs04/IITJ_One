@@ -12,6 +12,11 @@ import {
   personUpdateSchema,
   roleCreateSchema,
   roleUpdateSchema,
+  CAMPAIGN_TYPES,
+  CAMPAIGN_PLACEMENTS,
+  CAMPAIGN_STATUSES,
+  campaignCreateSchema,
+  campaignUpdateSchema,
 } from '@iitj1/types';
 
 export { transportTripSchema };
@@ -399,4 +404,37 @@ export const adminRolesQuerySchema = campusQuerySchema.merge(paginationQuerySche
   category: z.string().optional(),
   active: z.coerce.boolean().optional(),
   sort: campusDirectorySortSchema,
+});
+
+// --- Discover (Campaign Platform) ---
+
+export { campaignCreateSchema, campaignUpdateSchema };
+
+export const adminCampaignsQuerySchema = campusQuerySchema.merge(paginationQuerySchema).extend({
+  search: z.string().optional(),
+  type: z.enum(CAMPAIGN_TYPES).optional(),
+  placement: z.enum(CAMPAIGN_PLACEMENTS).optional(),
+  status: z.enum(CAMPAIGN_STATUSES).optional(),
+  /**
+   * Computed lifecycle view for the admin Campaign List's tabs — not a stored
+   * field. 'published' means status=published AND endDate hasn't passed yet;
+   * 'expired' means status=published AND endDate has passed. Other values
+   * pass straight through to the stored `status` filter. Mirrors the
+   * draft/scheduled/active/expired/archived computed-status precedent used
+   * for transport schedule exceptions.
+   */
+  effectiveStatus: z.enum(['draft', 'published', 'expired', 'paused', 'archived']).optional(),
+  featured: z.coerce.boolean().optional(),
+  isEnabled: z.coerce.boolean().optional(),
+  sort: campusDirectorySortSchema,
+});
+
+export const publicCampaignsQuerySchema = campusQuerySchema.extend({
+  placement: z.enum(CAMPAIGN_PLACEMENTS).optional(),
+});
+
+/** Body for POST /campaigns/:id/track — increments the campaign's own impressionCount/clickCount rollup. Detailed per-event analytics goes through the existing POST /analytics/events pipeline instead; this is only the lightweight aggregate. `deviceId` is optional and only used for short-window duplicate-request collapsing (see incrementCampaignMetric) — never persisted, never required. */
+export const campaignTrackBodySchema = z.object({
+  action: z.enum(['view', 'click']),
+  deviceId: z.string().trim().max(100).optional(),
 });

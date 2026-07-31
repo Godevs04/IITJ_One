@@ -9,8 +9,9 @@ import {
   getLiveUserCount,
   getSearchStats,
   getNotificationEventStats,
+  getCampaignPerformance,
 } from '../../services/analytics';
-import { getNotificationsSentSince } from '../../store';
+import { getNotificationsSentSince, getCampaignById } from '../../store';
 import type { AnalyticsDailyDoc } from '../../types';
 
 const router = Router();
@@ -151,6 +152,39 @@ router.get(
       categoryBreakdown: eventStats.categoryBreakdown,
       days,
     });
+  }),
+);
+
+/** GET /admin/analytics/campaigns — per-campaign Views/Clicks/Opens/CTA-clicks/Dismissals/CTR, plus aggregate totals, over the period. Titles are looked up only for the top 10 by views, so this stays cheap regardless of how many campaigns have ever been tracked. */
+router.get(
+  '/campaigns',
+  validateQuery(analyticsDateRangeQuerySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { days } = (req as typeof req & { validatedQuery: { days: number } }).validatedQuery;
+    const entries = await getCampaignPerformance(daysAgo(days));
+
+    const top = entries.slice(0, 10);
+    const withTitles = await Promise.all(
+      top.map(async (entry) => {
+        const campaign = await getCampaignById(entry.campaignId);
+        return { ...entry, title: campaign?.title ?? '(deleted campaign)' };
+      }),
+    );
+
+    const totals = entries.reduce(
+      (acc, e) => {
+        acc.views += e.views;
+        acc.clicks += e.clicks;
+        acc.opens += e.opens;
+        acc.ctaClicks += e.ctaClicks;
+        acc.dismissals += e.dismissals;
+        return acc;
+      },
+      { views: 0, clicks: 0, opens: 0, ctaClicks: 0, dismissals: 0 },
+    );
+    const ctr = totals.views > 0 ? Math.round((totals.clicks / totals.views) * 1000) / 10 : 0;
+
+    res.json({ totals: { ...totals, ctr }, topCampaigns: withTitles, days });
   }),
 );
 

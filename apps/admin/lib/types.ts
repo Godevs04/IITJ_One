@@ -5,9 +5,24 @@ import type {
   OrganizationDoc,
   PersonDoc,
   RoleDoc,
+  CampaignType,
+  CampaignPlacement,
+  CampaignDisplayType,
+  CampaignActionType,
+  CampaignStatus,
+  CampaignDoc,
 } from '@iitj1/types';
 
 export type { OrganizationType, DepartmentDoc, OrganizationDoc, PersonDoc, RoleDoc };
+export type { CampaignType, CampaignPlacement, CampaignDisplayType, CampaignActionType, CampaignStatus, CampaignDoc };
+
+export interface AdminCampaignsResponse {
+  campusId: string;
+  campaigns: CampaignDoc[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 
 export interface AdminDepartmentsResponse {
   campusId: string;
@@ -507,6 +522,28 @@ export interface AnalyticsNotifications {
   ctr: number;
   topCategory: string | null;
   categoryBreakdown: Record<string, number>;
+  days: number;
+}
+
+export interface AnalyticsCampaigns {
+  totals: {
+    views: number;
+    clicks: number;
+    opens: number;
+    ctaClicks: number;
+    dismissals: number;
+    ctr: number;
+  };
+  topCampaigns: {
+    campaignId: string;
+    title: string;
+    views: number;
+    clicks: number;
+    opens: number;
+    ctaClicks: number;
+    dismissals: number;
+    ctr: number;
+  }[];
   days: number;
 }
 

@@ -34,6 +34,7 @@ import campusDirectoryDepartmentsRouter from './campusDirectoryDepartments';
 import campusDirectoryOrganizationsRouter from './campusDirectoryOrganizations';
 import campusDirectoryPeopleRouter from './campusDirectoryPeople';
 import campusDirectoryRolesRouter from './campusDirectoryRoles';
+import campaignsRouter from './campaigns';
 
 const router = Router();
 
@@ -92,5 +93,6 @@ router.use('/campusDirectory/departments', campusDirectoryDepartmentsRouter);
 router.use('/campusDirectory/organizations', campusDirectoryOrganizationsRouter);
 router.use('/campusDirectory/people', campusDirectoryPeopleRouter);
 router.use('/campusDirectory/roles', campusDirectoryRolesRouter);
+router.use('/campaigns', campaignsRouter);
 
 export default router;

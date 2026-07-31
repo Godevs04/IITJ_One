@@ -320,6 +320,7 @@ function handleNotificationReceived(message: RemoteMessage): void {
 function handleNotificationTap(message: RemoteMessage): void {
   const screen = message.data?.screen;
   const category = message.data?.category;
+  const campaignId = message.data?.id;
 
   Analytics.trackEvent('notification_opened', { category: category ?? 'general', screen: screen ?? 'home' });
   void crashLog(`Notification tapped: ${screen ?? 'home'}`);
@@ -329,8 +330,12 @@ function handleNotificationTap(message: RemoteMessage): void {
     markAsRead(message.messageId);
   }
 
-  // Deep-link navigation
-  const route = screen ? SCREEN_ROUTES[screen] ?? '/' : '/';
+  // Discover/Campaign pushes carry a dynamic `id` alongside `screen: 'discover'`,
+  // which the static SCREEN_ROUTES lookup below can't express — resolve that case
+  // separately (falls back to the bare Discover list if no id is present).
+  const route = screen === 'discover'
+    ? (campaignId ? `/discover/${campaignId}` : '/discover')
+    : screen ? SCREEN_ROUTES[screen] ?? '/' : '/';
   // Small delay to ensure navigation is ready
   setTimeout(() => {
     router.push(route as never);

@@ -41,6 +41,7 @@ import type {
   OrganizationDoc,
   PersonDoc,
   RoleDoc,
+  CampaignDoc,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
 import { busesConflict, dateRangesOverlap } from '../services/transportScheduleExceptionStatus';
@@ -96,6 +97,8 @@ interface FallbackState {
   organizations: OrganizationDoc[];
   people: PersonDoc[];
   roles: RoleDoc[];
+  /** Discover (Campaign Platform) — no seed content by design, admins populate from scratch. */
+  campaigns: CampaignDoc[];
 }
 
 let state: FallbackState | null = null;
@@ -948,6 +951,7 @@ function buildDefaultState(): FallbackState {
     organizations: [],
     people: [],
     roles: [],
+    campaigns: [],
   };
 }
 
@@ -1500,6 +1504,91 @@ export function fallbackDeleteRole(id: string): boolean {
   if (idx < 0) return false;
   s.roles.splice(idx, 1);
   return true;
+}
+
+// --- Discover (Campaign Platform) — soft delete, mirrors notices ---
+
+interface CampaignListOptions {
+  search?: string;
+  type?: string;
+  placement?: string;
+  status?: string;
+  effectiveStatus?: 'draft' | 'published' | 'expired' | 'paused' | 'archived';
+  featured?: boolean;
+  isEnabled?: boolean;
+  sort?: 'asc' | 'desc';
+}
+
+export function fallbackListCampaigns(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampaignListOptions = {},
+): { items: CampaignDoc[]; total: number } {
+  const q = opts.search?.toLowerCase();
+  const now = Date.now();
+  let all = getFallbackState().campaigns.filter(
+    (c) =>
+      c.campusId === campusId &&
+      !c.deletedAt &&
+      (!opts.type || c.type === opts.type) &&
+      (!opts.placement || c.placement === opts.placement) &&
+      (!opts.status || c.status === opts.status) &&
+      (opts.featured === undefined || c.featured === opts.featured) &&
+      (opts.isEnabled === undefined || c.isEnabled === opts.isEnabled) &&
+      (!q || c.title.toLowerCase().includes(q) || c.category?.toLowerCase().includes(q)) &&
+      (!opts.effectiveStatus ||
+        (opts.effectiveStatus === 'published'
+          ? c.status === 'published' && new Date(c.endDate).getTime() >= now
+          : opts.effectiveStatus === 'expired'
+            ? c.status === 'published' && new Date(c.endDate).getTime() < now
+            : c.status === opts.effectiveStatus)),
+  );
+  all = [...all].sort((a, b) => (opts.sort === 'desc' ? b.title.localeCompare(a.title) : a.title.localeCompare(b.title)));
+  const skip = (page - 1) * pageSize;
+  return { items: all.slice(skip, skip + pageSize), total: all.length };
+}
+
+/** Active-for-mobile: enabled, published, not deleted, within the start/end date window. */
+export function fallbackGetActiveCampaigns(campusId: string, placement?: string): CampaignDoc[] {
+  const now = Date.now();
+  return getFallbackState().campaigns.filter(
+    (c) =>
+      c.campusId === campusId &&
+      !c.deletedAt &&
+      c.isEnabled &&
+      c.status === 'published' &&
+      (!placement || c.placement === placement) &&
+      new Date(c.startDate).getTime() <= now &&
+      now <= new Date(c.endDate).getTime(),
+  );
+}
+
+export function fallbackGetCampaignById(id: string): CampaignDoc | null {
+  return getFallbackState().campaigns.find((c) => c._id === id) ?? null;
+}
+
+export function fallbackCreateCampaign(doc: Omit<CampaignDoc, '_id'>): CampaignDoc {
+  const s = getFallbackState();
+  const saved = { ...doc, _id: nextId() };
+  s.campaigns.push(saved);
+  return saved;
+}
+
+export function fallbackUpdateCampaign(id: string, patch: Partial<CampaignDoc>): CampaignDoc | null {
+  const s = getFallbackState();
+  const idx = s.campaigns.findIndex((c) => c._id === id);
+  if (idx < 0) return null;
+  s.campaigns[idx] = { ...s.campaigns[idx], ...patch };
+  return s.campaigns[idx];
+}
+
+export function fallbackSoftDeleteCampaign(id: string): CampaignDoc | null {
+  return fallbackUpdateCampaign(id, { deletedAt: new Date().toISOString(), isEnabled: false });
+}
+
+export function fallbackRestoreCampaign(id: string): CampaignDoc | null {
+  return fallbackUpdateCampaign(id, { deletedAt: null });
 }
 
 export function fallbackGetTripsForCampusAndDate(campusId: string, serviceDate: string): TripDoc[] {

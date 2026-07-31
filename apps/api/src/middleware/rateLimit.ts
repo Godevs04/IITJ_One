@@ -57,6 +57,18 @@ export const analyticsPingRateLimiter = rateLimit({
   store: new RedisAwareStore('analytics-ping'),
 });
 
+// A Discover screen can mount many campaign cards near-simultaneously (each fires
+// its own view POST, not batched like the generic analytics pipeline) — generous
+// headroom, same reasoning as the ping limiter, for shared NATs plus a big list.
+export const campaignTrackRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many tracking requests, please try again later' },
+  store: new RedisAwareStore('campaign-track'),
+});
+
 // GPS pings themselves travel over Socket.IO (throttled separately, Redis-
 // aware when available — see busFusion.ts/rideSocket.ts); this only guards
 // the REST session-lifecycle endpoint, which a rider hits once per ride at most.

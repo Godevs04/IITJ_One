@@ -474,6 +474,78 @@ export async function getNotificationEventStats(since: Date): Promise<Notificati
   return { opened: opened.length, received: received.length, topCategory, categoryBreakdown };
 }
 
+const CAMPAIGN_EVENT_FIELD = {
+  campaign_viewed: 'views',
+  campaign_clicked: 'clicks',
+  campaign_opened: 'opens',
+  campaign_cta_clicked: 'ctaClicks',
+  campaign_dismissed: 'dismissals',
+} as const;
+const CAMPAIGN_EVENT_NAMES = Object.keys(CAMPAIGN_EVENT_FIELD) as (keyof typeof CAMPAIGN_EVENT_FIELD)[];
+
+export interface CampaignPerformanceEntry {
+  campaignId: string;
+  views: number;
+  clicks: number;
+  opens: number;
+  ctaClicks: number;
+  dismissals: number;
+  /** clicks / views, as a percentage — 0 when there are no views yet. */
+  ctr: number;
+}
+
+function buildPerformanceEntries(rows: { campaignId: string; event: string; count: number }[]): CampaignPerformanceEntry[] {
+  const byId = new Map<string, CampaignPerformanceEntry>();
+  for (const row of rows) {
+    const field = CAMPAIGN_EVENT_FIELD[row.event as keyof typeof CAMPAIGN_EVENT_FIELD];
+    if (!field || !row.campaignId) continue;
+    const entry = byId.get(row.campaignId) ?? {
+      campaignId: row.campaignId, views: 0, clicks: 0, opens: 0, ctaClicks: 0, dismissals: 0, ctr: 0,
+    };
+    entry[field] = row.count;
+    byId.set(row.campaignId, entry);
+  }
+  const list = Array.from(byId.values());
+  for (const entry of list) {
+    entry.ctr = entry.views > 0 ? Math.round((entry.clicks / entry.views) * 1000) / 10 : 0;
+  }
+  return list.sort((a, b) => b.views - a.views);
+}
+
+/**
+ * Per-campaign breakdown of the 5 Discover tracking events (Phase 6), derived
+ * from the same generic AnalyticsEventDoc pipeline every other analytics
+ * function here reads — not a new analytics system, just a new grouping
+ * (by params.campaign_id instead of by campus/day) alongside getSearchStats/
+ * getNotificationEventStats above.
+ */
+export async function getCampaignPerformance(since: Date): Promise<CampaignPerformanceEntry[]> {
+  if (isDbConnected()) {
+    const rows = await collections
+      .analyticsEvents()
+      .aggregate<{ _id: { campaignId: string; event: string }; count: number }>([
+        { $match: { event: { $in: CAMPAIGN_EVENT_NAMES }, timestamp: { $gte: since }, 'params.campaign_id': { $exists: true } } },
+        { $group: { _id: { campaignId: '$params.campaign_id', event: '$event' }, count: { $sum: 1 } } },
+      ])
+      .toArray();
+    return buildPerformanceEntries(rows.map((r) => ({ campaignId: r._id.campaignId, event: r._id.event, count: r.count })));
+  }
+
+  const events = fallbackGetAnalyticsEventsInRange(since, new Date(8640000000000000));
+  const counts = new Map<string, number>();
+  for (const e of events) {
+    const campaignId = e.params?.campaign_id;
+    if (!campaignId || !CAMPAIGN_EVENT_NAMES.includes(e.event as keyof typeof CAMPAIGN_EVENT_FIELD)) continue;
+    const key = `${campaignId}:${e.event}`;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const rows = Array.from(counts.entries()).map(([key, count]) => {
+    const [campaignId, event] = key.split(':');
+    return { campaignId, event, count };
+  });
+  return buildPerformanceEntries(rows);
+}
+
 export async function getLiveUserCount(): Promise<number> {
   const since = new Date(Date.now() - 2 * 60 * 1000);
   if (isDbConnected()) {

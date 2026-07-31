@@ -38,6 +38,7 @@ export const SYNC_MODULES = [
   'messMenuVeg', 'messMenuNonVeg',
   'campusDirectoryDepartments', 'campusDirectoryPeople',
   'campusDirectoryOrganizations', 'campusDirectoryRoles',
+  'campaigns',
 ] as const;
 
 export type SyncModule = (typeof SYNC_MODULES)[number];
@@ -109,6 +110,7 @@ const VERSION_KEY: Record<SyncModule, string> = {
   messMenuVeg: 'messMenuVeg', messMenuNonVeg: 'messMenuNonVeg',
   campusDirectoryDepartments: 'campusDirectoryDepartments', campusDirectoryPeople: 'campusDirectoryPeople',
   campusDirectoryOrganizations: 'campusDirectoryOrganizations', campusDirectoryRoles: 'campusDirectoryRoles',
+  campaigns: 'campaigns',
 };
 
 /**
@@ -136,6 +138,7 @@ const WRAPPED_LIST_KEY: Partial<Record<SyncModule, string>> = {
   campusDirectoryPeople: 'people',
   campusDirectoryOrganizations: 'organizations',
   campusDirectoryRoles: 'roles',
+  campaigns: 'campaigns',
 };
 
 function normalizeModuleData(module: SyncModule, raw: unknown): unknown {
