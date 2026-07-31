@@ -26,6 +26,13 @@ export const SYNC_MODULES = [
   'holidays',
   'transportAlerts',
   'temporaryTransportSchedule',
+  'messMenuVeg',
+  'messMenuNonVeg',
+  'campusDirectoryDepartments',
+  'campusDirectoryPeople',
+  'campusDirectoryOrganizations',
+  'campusDirectoryRoles',
+  'campaigns',
 ] as const;
 
 export type SyncModule = (typeof SYNC_MODULES)[number];
@@ -49,6 +56,13 @@ const VERSION_KEY: Record<SyncModule, string> = {
   holidays: 'holidays',
   transportAlerts: 'transportAlerts',
   temporaryTransportSchedule: 'temporaryTransportSchedule',
+  messMenuVeg: 'messMenuVeg',
+  messMenuNonVeg: 'messMenuNonVeg',
+  campusDirectoryDepartments: 'campusDirectoryDepartments',
+  campusDirectoryPeople: 'campusDirectoryPeople',
+  campusDirectoryOrganizations: 'campusDirectoryOrganizations',
+  campusDirectoryRoles: 'campusDirectoryRoles',
+  campaigns: 'campaigns',
 };
 
 export interface SyncResult {
@@ -72,8 +86,9 @@ export async function syncCampusData(
         const versionKey = VERSION_KEY[module];
         const serverVersion = manifest.versions[versionKey] ?? 0;
         const localVersion = getCachedVersion(module);
+        const hasCache = getCachedJson(module) !== null;
 
-        if (serverVersion <= localVersion) return;
+        if (serverVersion === localVersion && hasCache) return;
 
         try {
           const raw = await getModule<unknown>(module, CAMPUS_ID);

@@ -22,7 +22,7 @@ function ServiceInfoCard({
     <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <View style={styles.cardHeader}>
         <View style={[styles.headerIcon, { backgroundColor: theme.primaryTint }]}>
-          <Ionicons name="car-outline" size={24} color={theme.primary} />
+          <Ionicons name="car-outline" size={24} color={theme.linkText} />
         </View>
         <View style={styles.headerText}>
           <Text style={[styles.cardTitle, { color: theme.text }]}>
@@ -44,7 +44,7 @@ function ServiceInfoCard({
             key={vehicle.type}
             style={[styles.vehicleItem, { backgroundColor: theme.surfaceMuted, borderColor: theme.border }]}
           >
-            <Ionicons name="battery-charging-outline" size={18} color={theme.primary} />
+            <Ionicons name="battery-charging-outline" size={18} color={theme.linkText} />
             <Text style={[styles.vehicleText, { color: theme.text }]}>
               {vehicle.count}× {vehicle.type}
             </Text>
@@ -77,7 +77,7 @@ function DriverCard({
     >
       <View style={styles.driverInfo}>
         <View style={[styles.driverAvatar, { backgroundColor: theme.primaryTint }]}>
-          <Ionicons name="person-circle-outline" size={28} color={theme.primary} />
+          <Ionicons name="person-circle-outline" size={28} color={theme.linkText} />
         </View>
         <View style={styles.driverDetails}>
           <View style={styles.driverNameRow}>
@@ -102,7 +102,7 @@ function DriverCard({
         </View>
       </View>
       <View style={[styles.callButton, { backgroundColor: theme.primaryTint }]}>
-        <Ionicons name="call-outline" size={18} color={theme.primary} />
+        <Ionicons name="call-outline" size={18} color={theme.linkText} />
       </View>
     </Pressable>
   );
@@ -140,7 +140,7 @@ function FareCard({
             <View style={styles.farePrices}>
               {routeFares.map((fare, idx) => (
                 <View key={idx} style={styles.fareItem}>
-                  <Text style={[styles.farePrice, { color: theme.primary }]}>
+                  <Text style={[styles.farePrice, { color: theme.linkText }]}>
                     ₹{fare.price}
                   </Text>
                   {fare.description ? (
@@ -210,7 +210,7 @@ export default function ERickshawScreen() {
 
       <View style={[styles.ctaSection, { backgroundColor: theme.primaryTint, borderColor: theme.border }]}>
         <View style={styles.ctaIcon}>
-          <Ionicons name="bulb-outline" size={24} color={theme.primary} />
+          <Ionicons name="bulb-outline" size={24} color={theme.linkText} />
         </View>
         <View style={styles.ctaContent}>
           <Text style={[styles.ctaTitle, { color: theme.text }]}>

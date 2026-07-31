@@ -4,6 +4,7 @@ import healthRouter from './health';
 import syncRouter from './sync';
 import homeRouter from './home';
 import menuRouter from './menu';
+import messMenuRouter from './messMenu';
 import noticesRouter from './notices';
 import transportRouter from './transport';
 import calendarRouter from './calendar';
@@ -27,6 +28,11 @@ import suggestionsRouter from './suggestions';
 import devicesRouter from './devices';
 import analyticsRouter from './analytics';
 import docsRouter from './docs';
+import campusDirectoryDepartmentsRouter from './campusDirectoryDepartments';
+import campusDirectoryOrganizationsRouter from './campusDirectoryOrganizations';
+import campusDirectoryPeopleRouter from './campusDirectoryPeople';
+import campusDirectoryRolesRouter from './campusDirectoryRoles';
+import campaignsRouter from './campaigns';
 
 const router = Router();
 
@@ -37,6 +43,7 @@ router.use('/health', healthRouter);
 router.use('/sync', syncRouter);
 router.use('/home', homeRouter);
 router.use('/menu', menuRouter);
+router.use('/messMenu', messMenuRouter);
 router.use('/notices', noticesRouter);
 // More-specific mount registered before '/transport' as a defensive convention —
 // doesn't rely on transportRouter's fallthrough behavior for sub-paths.
@@ -61,5 +68,10 @@ router.use('/temporaryTransportSchedule', temporaryTransportScheduleRouter);
 router.use('/suggestions', suggestionsRouter);
 router.use('/devices', devicesRouter);
 router.use('/analytics', analyticsRouter);
+router.use('/campusDirectory/departments', campusDirectoryDepartmentsRouter);
+router.use('/campusDirectory/organizations', campusDirectoryOrganizationsRouter);
+router.use('/campusDirectory/people', campusDirectoryPeopleRouter);
+router.use('/campusDirectory/roles', campusDirectoryRolesRouter);
+router.use('/campaigns', campaignsRouter);
 
 export default router;

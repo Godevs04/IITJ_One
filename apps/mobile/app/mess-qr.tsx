@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Text, View, PanResponder } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Text, View, PanResponder, Platform } from 'react-native';
 import { Stack, router, useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as Brightness from 'expo-brightness';
@@ -117,10 +117,12 @@ export default function MessQrScreen() {
       return () => {
         deactivateKeepAwake('mess-qr');
         void allowScreenCaptureAsync();
-        if (initialVal !== null) {
-          void Brightness.setBrightnessAsync(initialVal);
-        } else {
+        if (Platform.OS === 'android') {
           void Brightness.restoreSystemBrightnessAsync();
+        } else {
+          if (initialVal !== null) {
+            void Brightness.setBrightnessAsync(initialVal);
+          }
         }
       };
     }, [mode])

@@ -16,6 +16,7 @@ import type {
   AnalyticsFeatures,
   AnalyticsSearch,
   AnalyticsNotifications,
+  AnalyticsCampaigns,
   AnalyticsLive,
   AnalyticsDevices,
   AnalyticsTrends,
@@ -61,6 +62,7 @@ export default function AnalyticsPage() {
   const [features, setFeatures] = useState<SectionState<AnalyticsFeatures>>(initial);
   const [notifications, setNotifications] = useState<SectionState<AnalyticsNotifications>>(initial);
   const [search, setSearch] = useState<SectionState<AnalyticsSearch>>(initial);
+  const [campaigns, setCampaigns] = useState<SectionState<AnalyticsCampaigns>>(initial);
   const [devices, setDevices] = useState<SectionState<AnalyticsDevices>>(initial);
 
   const liveTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -90,6 +92,7 @@ export default function AnalyticsPage() {
     setFeatures((s) => ({ ...s, loading: true }));
     setNotifications((s) => ({ ...s, loading: true }));
     setSearch((s) => ({ ...s, loading: true }));
+    setCampaigns((s) => ({ ...s, loading: true }));
     setDevices((s) => ({ ...s, loading: true }));
 
     const query = { days: rangeDays };
@@ -110,6 +113,9 @@ export default function AnalyticsPage() {
       apiFetch<AnalyticsSearch>('/admin/analytics/search', { query })
         .then((data) => setSearch({ data, loading: false, error: null }))
         .catch((err) => setSearch({ data: null, loading: false, error: err instanceof Error ? err.message : 'Failed to load' })),
+      apiFetch<AnalyticsCampaigns>('/admin/analytics/campaigns', { query })
+        .then((data) => setCampaigns({ data, loading: false, error: null }))
+        .catch((err) => setCampaigns({ data: null, loading: false, error: err instanceof Error ? err.message : 'Failed to load' })),
       apiFetch<AnalyticsDevices>('/admin/analytics/devices', { query })
         .then((data) => setDevices({ data, loading: false, error: null }))
         .catch((err) => setDevices({ data: null, loading: false, error: err instanceof Error ? err.message : 'Failed to load' })),
@@ -321,6 +327,34 @@ export default function AnalyticsPage() {
             ) : null}
           </ChartCard>
         </div>
+
+        {/* Campaign performance (Discover) */}
+        <ChartCard
+          title="Campaign performance"
+          subtitle="Views, clicks, opens, CTA clicks, and dismissals across every Discover campaign — from the same tracking pipeline as Feature usage above"
+          loading={campaigns.loading}
+          error={campaigns.error}
+          empty={!campaigns.data || campaigns.data.totals.views === 0}
+        >
+          {campaigns.data ? (
+            <div className="space-y-5">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                <StatTile label="Views" value={campaigns.data.totals.views} />
+                <StatTile label="Clicks" value={campaigns.data.totals.clicks} tone="sandstone" />
+                <StatTile label="CTR" value={campaigns.data.totals.ctr} suffix="%" tone="sage" />
+                <StatTile label="Opens" value={campaigns.data.totals.opens} />
+                <StatTile label="CTA clicks" value={campaigns.data.totals.ctaClicks} tone="sandstone" />
+                <StatTile label="Dismissals" value={campaigns.data.totals.dismissals} tone="danger" />
+              </div>
+              {campaigns.data.topCampaigns.length > 0 ? (
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Top campaigns by views</p>
+                  <BarList items={campaigns.data.topCampaigns.map((c) => ({ label: c.title, value: c.views }))} />
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </ChartCard>
 
         {/* Devices */}
         <ChartCard

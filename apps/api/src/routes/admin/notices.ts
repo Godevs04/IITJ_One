@@ -11,16 +11,13 @@ import { asyncHandler } from '../../middleware/asyncHandler';
 const router = Router();
 
 function assertNoticeId(id: string, res: Response): boolean {
-  if (!isDbConnected()) {
-    // Fallback ids look like "fallback-1"
-    if (!id.trim()) {
-      res.status(400).json({ error: 'Invalid notice id' });
-      return false;
-    }
-    return true;
-  }
-  if (!isStrictObjectId(id)) {
+  if (!id.trim()) {
     res.status(400).json({ error: 'Invalid notice id' });
+    return false;
+  }
+  // Allow non-ObjectIds (like "fallback-1") even if connected, to support deleting legacy/imported data.
+  if (isDbConnected() && !isStrictObjectId(id) && !id.startsWith('fallback-')) {
+    res.status(400).json({ error: `Invalid notice id: "${id}"` });
     return false;
   }
   return true;

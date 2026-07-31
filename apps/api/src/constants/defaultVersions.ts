@@ -26,5 +26,12 @@ export function defaultVersions(): MetaVersions {
     temporaryTransportSchedule: 1,
     transportScheduleExceptions: 1,
     vehicles: 1,
+    messMenuVeg: 1,
+    messMenuNonVeg: 1,
+    campusDirectoryDepartments: 1,
+    campusDirectoryPeople: 1,
+    campusDirectoryOrganizations: 1,
+    campusDirectoryRoles: 1,
+    campaigns: 1,
   };
 }

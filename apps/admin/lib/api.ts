@@ -219,12 +219,12 @@ export async function fetchModuleVersion(module: string): Promise<number | undef
  * load — if another admin saved in the meantime, the server responds 409
  * instead of silently overwriting their edit.
  */
-export async function putAdminModule(
+export async function putAdminModule<T = void>(
   modulePath: string,
   body: unknown,
   expectedVersion?: number,
-): Promise<void> {
-  await apiFetch(modulePath, {
+): Promise<T> {
+  return apiFetch<T>(modulePath, {
     method: 'PUT',
     body,
     headers: expectedVersion == null ? undefined : { 'X-Expected-Version': String(expectedVersion) },

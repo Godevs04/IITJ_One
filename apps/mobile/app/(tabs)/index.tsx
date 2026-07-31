@@ -6,12 +6,14 @@ import { HomeHeader } from '@/components/HomeHeader';
 import { MessQrCard } from '@/components/MessQrCard';
 import { QuickAccessTile, type QuickAccessVariant } from '@/components/QuickAccessTile';
 import { ScreenShell } from '@/components/ScreenShell';
+import { HomeCampaignSlots } from '@/components/campaignLayouts/HomeCampaignSlots';
+import { matchesAppVersionTargeting } from '@/utils/campaignTargeting';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
 import { listTimetableEntries } from '@/services/localDb';
 import { Analytics, AppEvents } from '@/services/firebase';
 import { usePostHog } from 'posthog-react-native';
-import type { CalendarDoc, MenuDoc, TransportDoc, HolidaysDoc, TransportAlertsDoc, TemporaryTransportScheduleDoc } from '@/types/campus';
+import type { CalendarDoc, MessMenuDoc, TransportDoc, HolidaysDoc, TransportAlertsDoc, TemporaryTransportScheduleDoc, CampaignDoc } from '@/types/campus';
 import {
   expirySeconds,
   formatExpiryLabel,
@@ -53,8 +55,10 @@ interface CachedNotice {
   body: string;
   category: string;
   isImportant: boolean;
+  startDate: string;
   expiryDate: string;
   publishedAt?: string;
+  deletedAt?: string | null;
 }
 
 function to12Hour(time: string): { value: string; meridiem: string } {
@@ -62,39 +66,6 @@ function to12Hour(time: string): { value: string; meridiem: string } {
   const meridiem = h >= 12 ? 'PM' : 'AM';
   const hour12 = h % 12 || 12;
   return { value: `${hour12}:${String(m || 0).padStart(2, '0')}`, meridiem };
-}
-
-function splitDishes(value: string | undefined | null): string[] {
-  if (!value) return [];
-  return value
-    .split(/[,;]/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
-function isMainDish(dish: string): boolean {
-  const d = dish.toLowerCase().trim();
-  
-  const exactBlacklist = [
-    'tea', 'milk', 'coffee', 'butter', 'jam', 'pickle', 'pickles',
-    'sprout', 'sprouts', 'banana', 'salad', 'green salad', 'raita', 
-    'papad', 'sauce', 'chutney', 'curd', 'bread', 'butter, jam', 
-    'bread, butter, jam', 'tea, milk', 'coffee, milk'
-  ];
-  
-  if (exactBlacklist.includes(d)) {
-    return false;
-  }
-  
-  if (
-    d === 'tea' || d === 'milk' || d === 'coffee' || d === 'curd' || 
-    d === 'pickle' || d === 'papad' || d === 'salad' || d === 'raita' ||
-    d.startsWith('sprouts') || d.startsWith('sprout') || d.startsWith('banana')
-  ) {
-    return false;
-  }
-  
-  return true;
 }
 
 /** Bento status tile: uppercase label, headline, icon, large mono data row */
@@ -135,7 +106,7 @@ function StatusCard({
             {label}
           </Text>
           <Text
-            style={[styles.cardHeadline, { color: theme.primary }]}
+            style={[styles.cardHeadline, { color: theme.linkText }]}
             numberOfLines={1}
           >
             {headline}
@@ -255,8 +226,8 @@ function TransportWidget({
           {/* To Campus Section */}
           <View style={styles.widgetSection}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-              <Ionicons name="arrow-down-circle-outline" size={16} color={theme.primary} />
-              <Text style={[styles.sectionHeadingLabel, { color: theme.primary }]}>
+              <Ionicons name="arrow-down-circle-outline" size={16} color={theme.linkText} />
+              <Text style={[styles.sectionHeadingLabel, { color: theme.linkText }]}>
                 To Campus
               </Text>
             </View>
@@ -266,7 +237,7 @@ function TransportWidget({
                   <Text style={[styles.widgetBusText, { color: theme.text }]}>
                     {arrival.trip.bus} • {arrival.trip.startTime}
                   </Text>
-                  <Text style={[styles.widgetCountdown, { color: theme.primary }]}>
+                  <Text style={[styles.widgetCountdown, { color: theme.linkText }]}>
                     {formatCountdownText(arrival.secondsUntil)}
                   </Text>
                 </View>
@@ -352,13 +323,15 @@ export default function HomeScreen() {
 
   useEffect(() => { Analytics.trackEvent(AppEvents.HOME_OPENED); }, []);
 
-  const menu = useCampusModule<MenuDoc>('menu');
+  const vegMenu = useCampusModule<MessMenuDoc>('messMenuVeg');
+  const nonVegMenu = useCampusModule<MessMenuDoc>('messMenuNonVeg');
   const transport = useCampusModule<TransportDoc>('transport');
   const calendar = useCampusModule<CalendarDoc>('calendar');
   const holidays = useCampusModule<HolidaysDoc>('holidays');
   const notices = useCampusModule<CachedNotice[]>('notices');
   const alerts = useCampusModule<TransportAlertsDoc>('transportAlerts');
   const tempSchedule = useCampusModule<TemporaryTransportScheduleDoc>('temporaryTransportSchedule');
+  const campaigns = useCampusModule<CampaignDoc[]>('campaigns');
 
   const { mealKey, targetDay } = (() => {
     const now = nowMinutes();
@@ -394,8 +367,15 @@ export default function HomeScreen() {
     return { mealKey: key, targetDay: day };
   })();
 
-  const activeMenu = menu?.days.find((d) => d.dayName === targetDay);
-  const meal = activeMenu?.[mealKey];
+  const targetLower = targetDay.trim().toLowerCase();
+  const vegDayMenu = vegMenu?.days?.find(
+    (d) => d.day.trim().toLowerCase() === targetLower,
+  );
+  const nonVegDayMenu = nonVegMenu?.days?.find(
+    (d) => d.day.trim().toLowerCase() === targetLower,
+  );
+  const vegMeal = vegDayMenu?.meals?.[mealKey];
+  const nonVegMeal = nonVegDayMenu?.meals?.[mealKey];
 
   const hasCriticalAlert = useMemo(() => {
     if (!alerts?.alerts) return false;
@@ -443,9 +423,18 @@ export default function HomeScreen() {
     await loadLocal();
   }, [sync, loadLocal]);
 
-  const topNotices = [...(notices ?? [])]
-    .sort((a, b) => Number(b.isImportant) - Number(a.isImportant))
-    .slice(0, 3);
+  const topNotices = useMemo(() => {
+    const nowTime = now.getTime();
+    return [...(notices ?? [])]
+      .filter((n) => {
+        if (n.deletedAt) return false;
+        const start = new Date(n.startDate).getTime();
+        const end = new Date(n.expiryDate).getTime();
+        return start <= nowTime && nowTime < end;
+      })
+      .sort((a, b) => Number(b.isImportant) - Number(a.isImportant))
+      .slice(0, 3);
+  }, [notices, now]);
 
   const upcomingEvents = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
@@ -455,17 +444,21 @@ export default function HomeScreen() {
       .slice(0, 3);
   }, [calendar]);
 
+  // Home only renders campaigns explicitly placed here by the admin (placement:
+  // 'home_hero') — Discover is the complete listing of every campaign regardless
+  // of placement. Each one's own displayType then decides which layout it gets
+  // (see HomeCampaignSlots/registry.tsx) — never hardcoded per campaign here.
+  const homeCampaigns = useMemo(() => {
+    return (campaigns ?? []).filter((c) => c.placement === 'home_hero' && matchesAppVersionTargeting(c));
+  }, [campaigns]);
+
   const classTime = nextClass ? to12Hour(nextClass.entry.startTime) : null;
 
-  const vegDishes = useMemo(() => {
-    if (!meal) return [];
-    return splitDishes(meal.veg).filter(isMainDish);
-  }, [meal]);
-
-  const nonVegDishes = useMemo(() => {
-    if (!meal) return [];
-    return splitDishes(meal.nonVeg).filter(isMainDish);
-  }, [meal]);
+  // "Main dishes" only — each mess's own compulsoryItems (tea, bread, etc.) are
+  // deliberately excluded from this compact widget, same as the old isMainDish
+  // blacklist's intent, now driven by explicit data tagging instead of guessing.
+  const vegDishes = useMemo(() => vegMeal?.vegItems ?? [], [vegMeal]);
+  const nonVegDishes = useMemo(() => nonVegMeal?.nonVegItems ?? [], [nonVegMeal]);
 
   debugListKeys('HomeScreen', 'vegDishes', vegDishes, (_, index) => `${index}`);
   debugListKeys('HomeScreen', 'nonVegDishes', nonVegDishes, (_, index) => `${index}`);
@@ -495,14 +488,14 @@ export default function HomeScreen() {
           label="Next Class"
           headline={nextClass.entry.className}
           icon="school-outline"
-          iconColor={theme.primary}
+          iconColor={theme.linkText}
           value={classTime.value}
           unit={
             nextClass.entry.room
               ? `${classTime.meridiem} @ ${nextClass.entry.room}`
               : classTime.meridiem
           }
-          valueColor={theme.primary}
+          valueColor={theme.linkText}
           onPress={() => router.push('/timetable')}
         />
       ) : null}
@@ -529,7 +522,7 @@ export default function HomeScreen() {
               {targetDay === todayDayName() ? "TODAY'S MENU" : "TOMORROW'S MENU"}
             </Text>
             <View style={styles.mealPillContainer}>
-              {activeMenu && (
+              {(vegDayMenu || nonVegDayMenu) && (
                 <Text style={[styles.mealCountdownText, { color: theme.accent }]}>
                   {getMealTimeStatus(mealKey).timeLeftString}
                 </Text>
@@ -635,6 +628,22 @@ export default function HomeScreen() {
         </View>
       </View>
 
+      {homeCampaigns.length > 0 ? (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
+              Discover
+            </Text>
+            <Pressable onPress={() => router.push('/discover' as never)} hitSlop={8}>
+              <Text style={[styles.viewAll, { color: theme.linkText }]}>
+                See All
+              </Text>
+            </Pressable>
+          </View>
+          <HomeCampaignSlots campaigns={homeCampaigns} />
+        </View>
+      ) : null}
+
       {upcomingEvents.length > 0 ? (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -642,7 +651,7 @@ export default function HomeScreen() {
               Upcoming
             </Text>
             <Pressable onPress={() => router.push('/calendar')} hitSlop={8}>
-              <Text style={[styles.viewAll, { color: theme.primary }]}>
+              <Text style={[styles.viewAll, { color: theme.linkText }]}>
                 Calendar
               </Text>
             </Pressable>
@@ -657,7 +666,7 @@ export default function HomeScreen() {
                 pressed && styles.pressed,
               ]}
             >
-              <Text style={[styles.eventType, { color: theme.primary }]}>
+              <Text style={[styles.eventType, { color: theme.linkText }]}>
                 {event.type}
               </Text>
               <Text style={[styles.eventTitle, { color: theme.text }]} numberOfLines={1}>
@@ -680,7 +689,7 @@ export default function HomeScreen() {
               Important notices
             </Text>
             <Pressable onPress={() => router.push('/(tabs)/notices')} hitSlop={8}>
-              <Text style={[styles.viewAll, { color: theme.primary }]}>
+              <Text style={[styles.viewAll, { color: theme.linkText }]}>
                 View All
               </Text>
             </Pressable>

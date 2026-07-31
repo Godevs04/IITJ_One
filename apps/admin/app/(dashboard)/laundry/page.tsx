@@ -10,6 +10,7 @@ import {
   DAY_NAMES,
   DEFAULT_LAUNDRY_SCHEDULES,
   HOSTEL_IDS,
+  getHostelLabel,
   type LaundryDoc,
   type LaundrySchedule,
 } from '@iitj1/types';
@@ -121,7 +122,7 @@ export default function LaundryAdminPage() {
                 >
                   {HOSTEL_IDS.map((id) => (
                     <option key={id} value={id}>
-                      {id}
+                      {getHostelLabel(id)}
                     </option>
                   ))}
                 </Select>

@@ -6,15 +6,21 @@ interface ButtonProps {
   label: string;
   onPress: () => void;
   disabled?: boolean;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
-export function PrimaryButton({ label, onPress, disabled }: ButtonProps) {
+export function PrimaryButton({ label, onPress, disabled, accessibilityLabel, accessibilityHint }: ButtonProps) {
   const theme = useThemeColors();
 
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ disabled: !!disabled }}
       style={({ pressed }) => [
         styles.primary,
         { backgroundColor: theme.primary },
@@ -27,13 +33,17 @@ export function PrimaryButton({ label, onPress, disabled }: ButtonProps) {
   );
 }
 
-export function SecondaryButton({ label, onPress, disabled }: ButtonProps) {
+export function SecondaryButton({ label, onPress, disabled, accessibilityLabel, accessibilityHint }: ButtonProps) {
   const theme = useThemeColors();
 
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ disabled: !!disabled }}
       style={({ pressed }) => [
         styles.secondary,
         { borderColor: theme.primary },
@@ -41,7 +51,7 @@ export function SecondaryButton({ label, onPress, disabled }: ButtonProps) {
         pressed && !disabled && styles.pressed,
       ]}
     >
-      <Text style={[styles.secondaryText, { color: theme.primary }]}>{label}</Text>
+      <Text style={[styles.secondaryText, { color: theme.linkText }]}>{label}</Text>
     </Pressable>
   );
 }

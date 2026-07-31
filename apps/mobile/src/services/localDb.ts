@@ -31,13 +31,12 @@ export interface Note {
 }
 
 let db: SQLite.SQLiteDatabase | null = null;
+let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
-export async function getLocalDb(): Promise<SQLite.SQLiteDatabase> {
-  if (db) return db;
+async function openLocalDb(): Promise<SQLite.SQLiteDatabase> {
+  const database = await SQLite.openDatabaseAsync('iitj1-local.db');
 
-  db = await SQLite.openDatabaseAsync('iitj1-local.db');
-
-  await db.execAsync(`
+  await database.execAsync(`
     PRAGMA journal_mode = WAL;
 
     CREATE TABLE IF NOT EXISTS timetable (
@@ -64,14 +63,28 @@ export async function getLocalDb(): Promise<SQLite.SQLiteDatabase> {
 
   // Migration: add show_on_home column for existing databases (no-op if already present)
   try {
-    await db.execAsync(
+    await database.execAsync(
       'ALTER TABLE timetable ADD COLUMN show_on_home INTEGER NOT NULL DEFAULT 0;',
     );
   } catch {
     // Column already exists — ignore
   }
 
-  return db;
+  db = database;
+  return database;
+}
+
+/**
+ * Caches the in-flight open promise, not just the resolved db, so overlapping
+ * calls (e.g. two effects firing before the first openDatabaseAsync resolves)
+ * await the same open attempt instead of each opening their own connection —
+ * on web, a second concurrent openDatabaseAsync for the same file throws
+ * NoModificationAllowedError since only one OPFS access handle can exist per file.
+ */
+export async function getLocalDb(): Promise<SQLite.SQLiteDatabase> {
+  if (db) return db;
+  if (!dbPromise) dbPromise = openLocalDb();
+  return dbPromise;
 }
 
 function parseDays(raw: string): string[] {

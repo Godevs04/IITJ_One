@@ -1,6 +1,9 @@
 import type { ClientSession } from 'mongodb';
 import { isDbConnected, collections, ObjectId, getMongoClient } from '../db';
+import { sortMessMenuDays, monthNumberToName } from '@iitj1/types';
+import { isStrictObjectId } from '../utils/objectId';
 import { busesConflict } from '../services/transportScheduleExceptionStatus';
+import { destroyRemovedCloudinaryImages } from '../services/cloudinary';
 import { invalidateModule, invalidateAll, cached, cache } from '../cache';
 import {
   initFallbackStore,
@@ -48,6 +51,33 @@ import {
   fallbackInsertGpsPing,
   fallbackUpsertBusState,
   fallbackGetBusStatesByTripIds,
+  fallbackListDepartments,
+  fallbackGetDepartmentById,
+  fallbackCreateDepartment,
+  fallbackUpdateDepartment,
+  fallbackDeleteDepartment,
+  fallbackListOrganizations,
+  fallbackGetOrganizationById,
+  fallbackCreateOrganization,
+  fallbackUpdateOrganization,
+  fallbackDeleteOrganization,
+  fallbackListPeople,
+  fallbackGetPersonById,
+  fallbackCreatePerson,
+  fallbackUpdatePerson,
+  fallbackDeletePerson,
+  fallbackListRoles,
+  fallbackGetRoleById,
+  fallbackCreateRole,
+  fallbackUpdateRole,
+  fallbackDeleteRole,
+  fallbackListCampaigns,
+  fallbackGetActiveCampaigns,
+  fallbackGetCampaignById,
+  fallbackCreateCampaign,
+  fallbackUpdateCampaign,
+  fallbackSoftDeleteCampaign,
+  fallbackRestoreCampaign,
   getFallbackState,
 } from './fallback';
 import type {
@@ -82,6 +112,19 @@ import type {
   SessionDoc,
   GpsPingDoc,
   BusStateDoc,
+  MessMenuInput,
+  MessMenuDoc,
+  MessMenuHistoryEntry,
+  DepartmentDoc,
+  DepartmentCreateInput,
+  OrganizationDoc,
+  OrganizationCreateInput,
+  PersonDoc,
+  PersonCreateInput,
+  RoleDoc,
+  RoleCreateInput,
+  CampaignDoc,
+  CampaignCreateInput,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
 
@@ -285,7 +328,7 @@ export async function getAllNotices(
   initFallbackStore();
   const all = getFallbackState()
     .notices.filter((n) => n.campusId === campusId && (!category || n.category === category))
-    .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
+    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
   return { items: all.slice(skip, skip + pageSize), total: all.length };
 }
 
@@ -306,9 +349,10 @@ export async function updateNotice(
   adminEmail: string,
 ): Promise<NoticeDoc | null> {
   if (isDbConnected()) {
+    const queryId = isStrictObjectId(id) ? new ObjectId(id) : id;
     const result = await collections
       .notices()
-      .findOneAndUpdate({ _id: new ObjectId(id) }, { $set: patch }, { returnDocument: 'after' });
+      .findOneAndUpdate({ _id: queryId as any }, { $set: patch }, { returnDocument: 'after' });
     if (!result) return null;
     await bumpVersion('notices', result.campusId, adminEmail, 'update', `Notice ${id} updated`);
     return { ...result, _id: result._id?.toString() };
@@ -322,10 +366,11 @@ export async function updateNotice(
 
 export async function deleteNotice(id: string, adminEmail: string): Promise<boolean> {
   if (isDbConnected()) {
-    const existing = await collections.notices().findOne({ _id: new ObjectId(id) });
+    const queryId = isStrictObjectId(id) ? new ObjectId(id) : id;
+    const existing = await collections.notices().findOne({ _id: queryId as any });
     if (!existing || existing.deletedAt) return false;
     await collections.notices().updateOne(
-      { _id: new ObjectId(id) },
+      { _id: queryId as any },
       { $set: { deletedAt: new Date() } },
     );
     await bumpVersion('notices', existing.campusId, adminEmail, 'delete', `Notice ${id} soft-deleted`);
@@ -342,8 +387,9 @@ export async function deleteNotice(id: string, adminEmail: string): Promise<bool
 
 export async function restoreNotice(id: string, adminEmail: string): Promise<NoticeDoc | null> {
   if (isDbConnected()) {
+    const queryId = isStrictObjectId(id) ? new ObjectId(id) : id;
     const result = await collections.notices().findOneAndUpdate(
-      { _id: new ObjectId(id), deletedAt: { $ne: null } },
+      { _id: queryId as any, deletedAt: { $ne: null } },
       { $set: { deletedAt: null } },
       { returnDocument: 'after' },
     );
@@ -515,6 +561,179 @@ export async function syncHealthCenter(doc: HealthCenterDoc, source: string): Pr
   await bumpVersion('healthCenter', doc.campusId, source, 'update', 'Health Center info synced from source');
 }
 
+function messMenuSyncModule(menuType: 'veg' | 'non-veg'): ModuleName {
+  return menuType === 'veg' ? 'messMenuVeg' : 'messMenuNonVeg';
+}
+
+/** Public/mobile-facing — drafts never leak here, only the currently live published doc. */
+export async function getMessMenu(campusId: string, menuType: 'veg' | 'non-veg'): Promise<MessMenuDoc | null> {
+  if (isDbConnected()) return collections.messMenus().findOne({ campusId, menuType, status: 'published' });
+  initFallbackStore();
+  const s = getFallbackState();
+  return menuType === 'veg' ? s.messMenuVeg : s.messMenuNonVeg;
+}
+
+/** Admin-only — reloads a previously saved draft for editing. */
+export async function getMessMenuDraft(campusId: string, menuType: 'veg' | 'non-veg'): Promise<MessMenuDoc | null> {
+  if (isDbConnected()) return collections.messMenus().findOne({ campusId, menuType, status: 'draft' });
+  initFallbackStore();
+  const s = getFallbackState();
+  return menuType === 'veg' ? s.messMenuVegDraft : s.messMenuNonVegDraft;
+}
+
+/**
+ * No sync-version bump (drafts are invisible to mobile) and no optimistic
+ * lock (a draft is a single admin's scratch space — last-write-wins is fine,
+ * unlike the published doc other admins/students actually rely on).
+ */
+export async function saveMessMenuDraft(input: MessMenuInput, adminEmail: string): Promise<void> {
+  const now = new Date().toISOString();
+  const doc: MessMenuDoc = {
+    ...input,
+    days: sortMessMenuDays(input.days),
+    status: 'draft',
+    version: 0,
+    publishedAt: null,
+    publishedBy: null,
+    updatedAt: now,
+    updatedBy: adminEmail,
+  };
+  if (isDbConnected()) {
+    await collections.messMenus().replaceOne(
+      { campusId: input.campusId, menuType: input.menuType, status: 'draft' },
+      doc,
+      { upsert: true },
+    );
+  } else {
+    initFallbackStore();
+    const s = getFallbackState();
+    if (input.menuType === 'veg') s.messMenuVegDraft = doc;
+    else s.messMenuNonVegDraft = doc;
+  }
+}
+
+async function publishMessMenuInSession(
+  input: MessMenuInput,
+  rawJson: unknown,
+  adminEmail: string,
+  expectedVersion: number | undefined,
+  session: ClientSession | undefined,
+): Promise<number> {
+  const syncModule = messMenuSyncModule(input.menuType);
+  // Not threaded through the transaction: this is an optimistic-lock check that
+  // throws before any writes happen, matching every other module's non-transactional
+  // assertVersionMatches usage elsewhere in this file. The writes below ARE atomic
+  // with each other via `session`, which is the guarantee "Publish Both" needs.
+  await assertVersionMatches(syncModule, input.campusId, expectedVersion);
+  const current = await getMessMenu(input.campusId, input.menuType);
+  const now = new Date().toISOString();
+  const doc: MessMenuDoc = {
+    ...input,
+    days: sortMessMenuDays(input.days),
+    status: 'published',
+    version: (current?.version ?? 0) + 1,
+    publishedAt: now,
+    publishedBy: adminEmail,
+    updatedAt: now,
+    updatedBy: adminEmail,
+  };
+  const history: MessMenuHistoryEntry = {
+    campusId: input.campusId,
+    menuType: input.menuType,
+    version: doc.version,
+    rawJson,
+    normalizedDoc: doc,
+    publishedAt: now,
+    publishedBy: adminEmail,
+  };
+  if (isDbConnected()) {
+    await collections.messMenus().replaceOne(
+      { campusId: input.campusId, menuType: input.menuType, status: 'published' },
+      doc,
+      { upsert: true, session },
+    );
+    await collections.messMenuHistory().insertOne(history, { session });
+  } else {
+    initFallbackStore();
+    const s = getFallbackState();
+    if (input.menuType === 'veg') s.messMenuVeg = doc;
+    else s.messMenuNonVeg = doc;
+    s.messMenuHistory.push(history);
+  }
+  await bumpVersion(
+    syncModule,
+    input.campusId,
+    adminEmail,
+    'update',
+    `Mess menu (${input.menuType}) v${doc.version} published for ${monthNumberToName(input.month)} ${input.year}`,
+    session,
+  );
+  return doc.version;
+}
+
+export async function publishMessMenu(
+  input: MessMenuInput,
+  rawJson: unknown,
+  adminEmail: string,
+  expectedVersion?: number,
+): Promise<number> {
+  return publishMessMenuInSession(input, rawJson, adminEmail, expectedVersion, undefined);
+}
+
+/**
+ * Publishes both menu types in one request. Uses a real Mongo transaction
+ * (Atlas is always a replica set) so a partial-failure state — veg live,
+ * non-veg not — can't happen from a single "Publish Both" click.
+ */
+export async function publishBothMessMenus(
+  veg: { input: MessMenuInput; rawJson: unknown; expectedVersion?: number },
+  nonVeg: { input: MessMenuInput; rawJson: unknown; expectedVersion?: number },
+  adminEmail: string,
+): Promise<{ vegVersion: number; nonVegVersion: number }> {
+  if (!isDbConnected()) {
+    const vegVersion = await publishMessMenuInSession(veg.input, veg.rawJson, adminEmail, veg.expectedVersion, undefined);
+    const nonVegVersion = await publishMessMenuInSession(nonVeg.input, nonVeg.rawJson, adminEmail, nonVeg.expectedVersion, undefined);
+    return { vegVersion, nonVegVersion };
+  }
+  const session = getMongoClient().startSession();
+  try {
+    let vegVersion = 0;
+    let nonVegVersion = 0;
+    try {
+      await session.withTransaction(async () => {
+        vegVersion = await publishMessMenuInSession(veg.input, veg.rawJson, adminEmail, veg.expectedVersion, session);
+        nonVegVersion = await publishMessMenuInSession(nonVeg.input, nonVeg.rawJson, adminEmail, nonVeg.expectedVersion, session);
+      });
+    } catch (e: any) {
+      // Fallback for standalone Mongo instances (local dev / CI) that don't support transactions
+      if (e.message?.toLowerCase().includes('replica set') || e.message?.toLowerCase().includes('transaction')) {
+        vegVersion = await publishMessMenuInSession(veg.input, veg.rawJson, adminEmail, veg.expectedVersion, undefined);
+        nonVegVersion = await publishMessMenuInSession(nonVeg.input, nonVeg.rawJson, adminEmail, nonVeg.expectedVersion, undefined);
+      } else {
+        throw e;
+      }
+    }
+    return { vegVersion, nonVegVersion };
+  } finally {
+    await session.endSession();
+  }
+}
+
+export async function listMessMenuHistory(
+  campusId: string,
+  menuType: 'veg' | 'non-veg',
+  limit = 20,
+): Promise<MessMenuHistoryEntry[]> {
+  if (isDbConnected()) {
+    return collections.messMenuHistory().find({ campusId, menuType }).sort({ version: -1 }).limit(limit).toArray();
+  }
+  initFallbackStore();
+  return getFallbackState()
+    .messMenuHistory.filter((h) => h.campusId === campusId && h.menuType === menuType)
+    .sort((a, b) => b.version - a.version)
+    .slice(0, limit);
+}
+
 export async function getAbout(campusId: string): Promise<AboutDoc | null> {
   if (isDbConnected()) return collections.about().findOne({ campusId });
   initFallbackStore();
@@ -628,17 +847,22 @@ export async function getSuggestions(
   status?: SuggestionDoc['status'],
   page = 1,
   pageSize = 20,
+  category?: SuggestionDoc['category'],
 ): Promise<{ items: SuggestionDoc[]; total: number }> {
   const skip = (page - 1) * pageSize;
   if (isDbConnected()) {
-    const filter = status ? { status } : {};
+    const filter: Record<string, unknown> = {};
+    if (status) filter.status = status;
+    if (category) filter.category = category;
     const [items, total] = await Promise.all([
       collections.suggestions().find(filter).sort({ submittedAt: -1 }).skip(skip).limit(pageSize).toArray(),
       collections.suggestions().countDocuments(filter),
     ]);
     return { items, total };
   }
-  const all = fallbackGetSuggestions().filter((s) => !status || (s.status ?? 'new') === status);
+  const all = fallbackGetSuggestions().filter(
+    (s) => (!status || (s.status ?? 'new') === status) && (!category || s.category === category),
+  );
   return { items: all.slice(skip, skip + pageSize), total: all.length };
 }
 
@@ -1429,6 +1653,609 @@ export async function deleteVehicle(id: string, adminEmail: string): Promise<boo
     cache.del(vehicleCacheKey(id));
   }
   return !!saved;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Campus Directory — Departments, Organizations, People, Roles.
+// Genuinely multi-document per campus (like vehicles/notices above), hard
+// delete (no cross-collection cascade in Phase 1 — see module roadmap).
+// Public getX() below returns the full active-only list, unpaginated, for
+// mobile's offline sync cache; admin listX() is paginated/searchable/sortable.
+// ─────────────────────────────────────────────────────────────────────────
+
+interface CampusDirectoryListOpts {
+  search?: string;
+  active?: boolean;
+  sort?: 'asc' | 'desc';
+}
+
+function withDepartmentStringId(doc: DepartmentDoc): DepartmentDoc {
+  return { ...doc, _id: doc._id?.toString() };
+}
+function withOrganizationStringId(doc: OrganizationDoc): OrganizationDoc {
+  return { ...doc, _id: doc._id?.toString() };
+}
+function withPersonStringId(doc: PersonDoc): PersonDoc {
+  return { ...doc, _id: doc._id?.toString() };
+}
+function withRoleStringId(doc: RoleDoc): RoleDoc {
+  return { ...doc, _id: doc._id?.toString() };
+}
+
+function searchFilter(fields: string[], search?: string): Record<string, unknown> {
+  if (!search) return {};
+  return { $or: fields.map((f) => ({ [f]: { $regex: search, $options: 'i' } })) };
+}
+
+// --- Departments ---
+
+export async function getDepartments(campusId: string): Promise<DepartmentDoc[]> {
+  if (isDbConnected()) {
+    const items = await collections
+      .departments()
+      .find({ campusId, active: true })
+      .sort({ name: 1 })
+      .toArray();
+    return items.map(withDepartmentStringId);
+  }
+  return fallbackListDepartments(campusId, 1, Number.MAX_SAFE_INTEGER, { active: true }).items;
+}
+
+export async function listDepartments(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampusDirectoryListOpts = {},
+): Promise<{ items: DepartmentDoc[]; total: number }> {
+  const skip = (page - 1) * pageSize;
+  if (isDbConnected()) {
+    const filter: Record<string, unknown> = { campusId, ...searchFilter(['name', 'shortName'], opts.search) };
+    if (opts.active !== undefined) filter.active = opts.active;
+    const [items, total] = await Promise.all([
+      collections.departments().find(filter).sort({ name: opts.sort === 'desc' ? -1 : 1 }).skip(skip).limit(pageSize).toArray(),
+      collections.departments().countDocuments(filter),
+    ]);
+    return { items: items.map(withDepartmentStringId), total };
+  }
+  return fallbackListDepartments(campusId, page, pageSize, opts);
+}
+
+export async function getDepartmentById(id: string): Promise<DepartmentDoc | null> {
+  if (isDbConnected()) {
+    const result = await collections.departments().findOne({ _id: new ObjectId(id) } as never);
+    return result ? withDepartmentStringId(result) : null;
+  }
+  return fallbackGetDepartmentById(id);
+}
+
+export async function createDepartment(input: DepartmentCreateInput, adminEmail: string): Promise<DepartmentDoc> {
+  const now = new Date().toISOString();
+  const doc: Omit<DepartmentDoc, '_id'> = { ...input, createdAt: now, updatedAt: now };
+  if (isDbConnected()) {
+    const result = await collections.departments().insertOne(doc as DepartmentDoc);
+    await bumpVersion('campusDirectoryDepartments', doc.campusId, adminEmail, 'create', `Department "${doc.name}" created`);
+    return { ...doc, _id: result.insertedId.toString() };
+  }
+  const saved = fallbackCreateDepartment(doc);
+  await bumpVersion('campusDirectoryDepartments', doc.campusId, adminEmail, 'create', `Department "${doc.name}" created`);
+  return saved;
+}
+
+export async function updateDepartment(
+  id: string,
+  patch: Partial<DepartmentCreateInput>,
+  adminEmail: string,
+): Promise<DepartmentDoc | null> {
+  const withUpdatedAt = { ...patch, updatedAt: new Date().toISOString() };
+  if (isDbConnected()) {
+    const result = await collections
+      .departments()
+      .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: withUpdatedAt }, { returnDocument: 'after' });
+    if (!result) return null;
+    await bumpVersion('campusDirectoryDepartments', result.campusId, adminEmail, 'update', `Department "${result.name}" updated`);
+    return withDepartmentStringId(result);
+  }
+  const saved = fallbackUpdateDepartment(id, withUpdatedAt);
+  if (saved) await bumpVersion('campusDirectoryDepartments', saved.campusId, adminEmail, 'update', `Department "${saved.name}" updated`);
+  return saved;
+}
+
+export async function deleteDepartment(id: string, adminEmail: string): Promise<boolean> {
+  const existing = await getDepartmentById(id);
+  if (!existing) return false;
+  if (isDbConnected()) {
+    await collections.departments().deleteOne({ _id: new ObjectId(id) } as never);
+  } else if (!fallbackDeleteDepartment(id)) {
+    return false;
+  }
+  await bumpVersion('campusDirectoryDepartments', existing.campusId, adminEmail, 'delete', `Department "${existing.name}" deleted`);
+  return true;
+}
+
+// --- Organizations ---
+
+export async function getOrganizations(campusId: string): Promise<OrganizationDoc[]> {
+  if (isDbConnected()) {
+    const items = await collections
+      .organizations()
+      .find({ campusId, active: true })
+      .sort({ name: 1 })
+      .toArray();
+    return items.map(withOrganizationStringId);
+  }
+  return fallbackListOrganizations(campusId, 1, Number.MAX_SAFE_INTEGER, { active: true }).items;
+}
+
+export async function listOrganizations(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampusDirectoryListOpts & { type?: string } = {},
+): Promise<{ items: OrganizationDoc[]; total: number }> {
+  const skip = (page - 1) * pageSize;
+  if (isDbConnected()) {
+    const filter: Record<string, unknown> = { campusId, ...searchFilter(['name', 'category'], opts.search) };
+    if (opts.active !== undefined) filter.active = opts.active;
+    if (opts.type) filter.type = opts.type;
+    const [items, total] = await Promise.all([
+      collections.organizations().find(filter).sort({ name: opts.sort === 'desc' ? -1 : 1 }).skip(skip).limit(pageSize).toArray(),
+      collections.organizations().countDocuments(filter),
+    ]);
+    return { items: items.map(withOrganizationStringId), total };
+  }
+  return fallbackListOrganizations(campusId, page, pageSize, opts);
+}
+
+export async function getOrganizationById(id: string): Promise<OrganizationDoc | null> {
+  if (isDbConnected()) {
+    const result = await collections.organizations().findOne({ _id: new ObjectId(id) } as never);
+    return result ? withOrganizationStringId(result) : null;
+  }
+  return fallbackGetOrganizationById(id);
+}
+
+export async function createOrganization(input: OrganizationCreateInput, adminEmail: string): Promise<OrganizationDoc> {
+  const now = new Date().toISOString();
+  const doc: Omit<OrganizationDoc, '_id'> = { ...input, createdAt: now, updatedAt: now };
+  if (isDbConnected()) {
+    const result = await collections.organizations().insertOne(doc as OrganizationDoc);
+    await bumpVersion('campusDirectoryOrganizations', doc.campusId, adminEmail, 'create', `Organization "${doc.name}" created`);
+    return { ...doc, _id: result.insertedId.toString() };
+  }
+  const saved = fallbackCreateOrganization(doc);
+  await bumpVersion('campusDirectoryOrganizations', doc.campusId, adminEmail, 'create', `Organization "${doc.name}" created`);
+  return saved;
+}
+
+export async function updateOrganization(
+  id: string,
+  patch: Partial<OrganizationCreateInput>,
+  adminEmail: string,
+): Promise<OrganizationDoc | null> {
+  const withUpdatedAt = { ...patch, updatedAt: new Date().toISOString() };
+  if (isDbConnected()) {
+    const result = await collections
+      .organizations()
+      .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: withUpdatedAt }, { returnDocument: 'after' });
+    if (!result) return null;
+    await bumpVersion('campusDirectoryOrganizations', result.campusId, adminEmail, 'update', `Organization "${result.name}" updated`);
+    return withOrganizationStringId(result);
+  }
+  const saved = fallbackUpdateOrganization(id, withUpdatedAt);
+  if (saved) {
+    await bumpVersion('campusDirectoryOrganizations', saved.campusId, adminEmail, 'update', `Organization "${saved.name}" updated`);
+  }
+  return saved;
+}
+
+export async function deleteOrganization(id: string, adminEmail: string): Promise<boolean> {
+  const existing = await getOrganizationById(id);
+  if (!existing) return false;
+  if (isDbConnected()) {
+    await collections.organizations().deleteOne({ _id: new ObjectId(id) } as never);
+  } else if (!fallbackDeleteOrganization(id)) {
+    return false;
+  }
+  await bumpVersion('campusDirectoryOrganizations', existing.campusId, adminEmail, 'delete', `Organization "${existing.name}" deleted`);
+  return true;
+}
+
+// --- People ---
+
+export async function getPeople(campusId: string): Promise<PersonDoc[]> {
+  if (isDbConnected()) {
+    const items = await collections.people().find({ campusId, active: true }).sort({ name: 1 }).toArray();
+    return items.map(withPersonStringId);
+  }
+  return fallbackListPeople(campusId, 1, Number.MAX_SAFE_INTEGER, { active: true }).items;
+}
+
+export async function listPeople(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampusDirectoryListOpts & { departmentId?: string } = {},
+): Promise<{ items: PersonDoc[]; total: number }> {
+  const skip = (page - 1) * pageSize;
+  if (isDbConnected()) {
+    const filter: Record<string, unknown> = { campusId, ...searchFilter(['name', 'designation', 'email'], opts.search) };
+    if (opts.active !== undefined) filter.active = opts.active;
+    if (opts.departmentId) filter.departmentId = opts.departmentId;
+    const [items, total] = await Promise.all([
+      collections.people().find(filter).sort({ name: opts.sort === 'desc' ? -1 : 1 }).skip(skip).limit(pageSize).toArray(),
+      collections.people().countDocuments(filter),
+    ]);
+    return { items: items.map(withPersonStringId), total };
+  }
+  return fallbackListPeople(campusId, page, pageSize, opts);
+}
+
+export async function getPersonById(id: string): Promise<PersonDoc | null> {
+  if (isDbConnected()) {
+    const result = await collections.people().findOne({ _id: new ObjectId(id) } as never);
+    return result ? withPersonStringId(result) : null;
+  }
+  return fallbackGetPersonById(id);
+}
+
+export async function createPerson(input: PersonCreateInput, adminEmail: string): Promise<PersonDoc> {
+  const now = new Date().toISOString();
+  const doc: Omit<PersonDoc, '_id'> = { ...input, createdAt: now, updatedAt: now };
+  if (isDbConnected()) {
+    const result = await collections.people().insertOne(doc as PersonDoc);
+    await bumpVersion('campusDirectoryPeople', doc.campusId, adminEmail, 'create', `Person "${doc.name}" created`);
+    return { ...doc, _id: result.insertedId.toString() };
+  }
+  const saved = fallbackCreatePerson(doc);
+  await bumpVersion('campusDirectoryPeople', doc.campusId, adminEmail, 'create', `Person "${doc.name}" created`);
+  return saved;
+}
+
+export async function updatePerson(
+  id: string,
+  patch: Partial<PersonCreateInput>,
+  adminEmail: string,
+): Promise<PersonDoc | null> {
+  const withUpdatedAt = { ...patch, updatedAt: new Date().toISOString() };
+  if (isDbConnected()) {
+    const result = await collections
+      .people()
+      .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: withUpdatedAt }, { returnDocument: 'after' });
+    if (!result) return null;
+    await bumpVersion('campusDirectoryPeople', result.campusId, adminEmail, 'update', `Person "${result.name}" updated`);
+    return withPersonStringId(result);
+  }
+  const saved = fallbackUpdatePerson(id, withUpdatedAt);
+  if (saved) await bumpVersion('campusDirectoryPeople', saved.campusId, adminEmail, 'update', `Person "${saved.name}" updated`);
+  return saved;
+}
+
+export async function deletePerson(id: string, adminEmail: string): Promise<boolean> {
+  const existing = await getPersonById(id);
+  if (!existing) return false;
+  if (isDbConnected()) {
+    await collections.people().deleteOne({ _id: new ObjectId(id) } as never);
+  } else if (!fallbackDeletePerson(id)) {
+    return false;
+  }
+  await bumpVersion('campusDirectoryPeople', existing.campusId, adminEmail, 'delete', `Person "${existing.name}" deleted`);
+  return true;
+}
+
+// --- Roles ---
+
+export async function getRoles(campusId: string): Promise<RoleDoc[]> {
+  if (isDbConnected()) {
+    const items = await collections.roles().find({ campusId, active: true }).sort({ priority: 1 }).toArray();
+    return items.map(withRoleStringId);
+  }
+  return fallbackListRoles(campusId, 1, Number.MAX_SAFE_INTEGER, { active: true }).items;
+}
+
+export async function listRoles(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampusDirectoryListOpts & { personId?: string; organizationId?: string; category?: string } = {},
+): Promise<{ items: RoleDoc[]; total: number }> {
+  const skip = (page - 1) * pageSize;
+  if (isDbConnected()) {
+    const filter: Record<string, unknown> = { campusId, ...searchFilter(['title'], opts.search) };
+    if (opts.active !== undefined) filter.active = opts.active;
+    if (opts.personId) filter.personId = opts.personId;
+    if (opts.organizationId) filter.organizationId = opts.organizationId;
+    if (opts.category) filter.category = opts.category;
+    const [items, total] = await Promise.all([
+      collections.roles().find(filter).sort({ title: opts.sort === 'desc' ? -1 : 1 }).skip(skip).limit(pageSize).toArray(),
+      collections.roles().countDocuments(filter),
+    ]);
+    return { items: items.map(withRoleStringId), total };
+  }
+  return fallbackListRoles(campusId, page, pageSize, opts);
+}
+
+export async function getRoleById(id: string): Promise<RoleDoc | null> {
+  if (isDbConnected()) {
+    const result = await collections.roles().findOne({ _id: new ObjectId(id) } as never);
+    return result ? withRoleStringId(result) : null;
+  }
+  return fallbackGetRoleById(id);
+}
+
+export async function createRole(input: RoleCreateInput, adminEmail: string): Promise<RoleDoc> {
+  const now = new Date().toISOString();
+  const doc: Omit<RoleDoc, '_id'> = { ...input, createdAt: now, updatedAt: now };
+  if (isDbConnected()) {
+    const result = await collections.roles().insertOne(doc as RoleDoc);
+    await bumpVersion('campusDirectoryRoles', doc.campusId, adminEmail, 'create', `Role "${doc.title}" created`);
+    return { ...doc, _id: result.insertedId.toString() };
+  }
+  const saved = fallbackCreateRole(doc);
+  await bumpVersion('campusDirectoryRoles', doc.campusId, adminEmail, 'create', `Role "${doc.title}" created`);
+  return saved;
+}
+
+export async function updateRole(
+  id: string,
+  patch: Partial<RoleCreateInput>,
+  adminEmail: string,
+): Promise<RoleDoc | null> {
+  const withUpdatedAt = { ...patch, updatedAt: new Date().toISOString() };
+  if (isDbConnected()) {
+    const result = await collections
+      .roles()
+      .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: withUpdatedAt }, { returnDocument: 'after' });
+    if (!result) return null;
+    await bumpVersion('campusDirectoryRoles', result.campusId, adminEmail, 'update', `Role "${result.title}" updated`);
+    return withRoleStringId(result);
+  }
+  const saved = fallbackUpdateRole(id, withUpdatedAt);
+  if (saved) await bumpVersion('campusDirectoryRoles', saved.campusId, adminEmail, 'update', `Role "${saved.title}" updated`);
+  return saved;
+}
+
+export async function deleteRole(id: string, adminEmail: string): Promise<boolean> {
+  const existing = await getRoleById(id);
+  if (!existing) return false;
+  if (isDbConnected()) {
+    await collections.roles().deleteOne({ _id: new ObjectId(id) } as never);
+  } else if (!fallbackDeleteRole(id)) {
+    return false;
+  }
+  await bumpVersion('campusDirectoryRoles', existing.campusId, adminEmail, 'delete', `Role "${existing.title}" deleted`);
+  return true;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Discover (Campaign Platform) — multi-document per campus like notices,
+// soft delete (deletedAt) like notices. getActiveCampaigns() below is the
+// public/mobile-facing read: enabled + published + within the date window,
+// unpaginated (same "download the whole thing, cache offline" model as
+// notices/Campus Directory). listCampaigns() is the paginated/searchable
+// admin read, matching every other admin list in this file.
+// ─────────────────────────────────────────────────────────────────────────
+
+interface CampaignListOpts {
+  search?: string;
+  type?: string;
+  placement?: string;
+  status?: string;
+  /** Computed lifecycle filter (published-not-expired vs published-expired) — see adminCampaignsQuerySchema. */
+  effectiveStatus?: 'draft' | 'published' | 'expired' | 'paused' | 'archived';
+  featured?: boolean;
+  isEnabled?: boolean;
+  sort?: 'asc' | 'desc';
+}
+
+function withCampaignStringId(doc: CampaignDoc): CampaignDoc {
+  return { ...doc, _id: doc._id?.toString() };
+}
+
+export async function getActiveCampaigns(campusId: string, placement?: string): Promise<CampaignDoc[]> {
+  if (isDbConnected()) {
+    const now = new Date();
+    const filter: Record<string, unknown> = {
+      campusId,
+      isEnabled: true,
+      status: 'published',
+      startDate: { $lte: now.toISOString() },
+      endDate: { $gte: now.toISOString() },
+      $or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
+    };
+    if (placement) filter.placement = placement;
+    const items = await collections.campaigns().find(filter).sort({ priority: 1 }).toArray();
+    return items.map(withCampaignStringId);
+  }
+  return fallbackGetActiveCampaigns(campusId, placement);
+}
+
+export async function listCampaigns(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampaignListOpts = {},
+): Promise<{ items: CampaignDoc[]; total: number }> {
+  const skip = (page - 1) * pageSize;
+  if (isDbConnected()) {
+    const notDeleted = { $or: [{ deletedAt: null }, { deletedAt: { $exists: false } }] };
+    const filter: Record<string, unknown> = { campusId, ...notDeleted };
+    if (opts.type) filter.type = opts.type;
+    if (opts.placement) filter.placement = opts.placement;
+    if (opts.status) filter.status = opts.status;
+    if (opts.featured !== undefined) filter.featured = opts.featured;
+    if (opts.isEnabled !== undefined) filter.isEnabled = opts.isEnabled;
+    if (opts.effectiveStatus) {
+      const nowIso = new Date().toISOString();
+      if (opts.effectiveStatus === 'published') {
+        filter.status = 'published';
+        filter.endDate = { $gte: nowIso };
+      } else if (opts.effectiveStatus === 'expired') {
+        filter.status = 'published';
+        filter.endDate = { $lt: nowIso };
+      } else {
+        filter.status = opts.effectiveStatus;
+      }
+    }
+    if (opts.search) {
+      // Mongo only honors one top-level `$or` — combine the not-deleted $or and
+      // the search $or via $and instead of letting the second silently overwrite the first.
+      delete filter.$or;
+      filter.$and = [notDeleted, searchFilter(['title', 'category'], opts.search)];
+    }
+    const [items, total] = await Promise.all([
+      collections.campaigns().find(filter).sort({ title: opts.sort === 'desc' ? -1 : 1 }).skip(skip).limit(pageSize).toArray(),
+      collections.campaigns().countDocuments(filter),
+    ]);
+    return { items: items.map(withCampaignStringId), total };
+  }
+  return fallbackListCampaigns(campusId, page, pageSize, opts);
+}
+
+export async function getCampaignById(id: string): Promise<CampaignDoc | null> {
+  if (isDbConnected()) {
+    const result = await collections.campaigns().findOne({ _id: new ObjectId(id) } as never);
+    return result ? withCampaignStringId(result) : null;
+  }
+  return fallbackGetCampaignById(id);
+}
+
+export async function createCampaign(input: CampaignCreateInput, adminEmail: string): Promise<CampaignDoc> {
+  const now = new Date().toISOString();
+  const doc: Omit<CampaignDoc, '_id'> = {
+    ...input,
+    createdAt: now,
+    createdBy: adminEmail,
+    updatedAt: now,
+    updatedBy: adminEmail,
+    deletedAt: null,
+  };
+  if (isDbConnected()) {
+    const result = await collections.campaigns().insertOne(doc as CampaignDoc);
+    await bumpVersion('campaigns', doc.campusId, adminEmail, 'create', `Campaign "${doc.title}" created`);
+    return { ...doc, _id: result.insertedId.toString() };
+  }
+  const saved = fallbackCreateCampaign(doc);
+  await bumpVersion('campaigns', doc.campusId, adminEmail, 'create', `Campaign "${doc.title}" created`);
+  return saved;
+}
+
+function campaignImageUrls(doc: Pick<CampaignDoc, 'visuals'> | undefined | null): string[] {
+  if (!doc?.visuals) return [];
+  return [...(doc.visuals.images ?? []), ...(doc.visuals.imageUrl ? [doc.visuals.imageUrl] : [])];
+}
+
+export async function updateCampaign(
+  id: string,
+  patch: Partial<CampaignCreateInput>,
+  adminEmail: string,
+): Promise<CampaignDoc | null> {
+  // Only a visuals-touching update can orphan a Cloudinary asset — read the
+  // prior images first so they can be diffed against the result below.
+  const before = patch.visuals ? campaignImageUrls(await getCampaignById(id)) : [];
+
+  const withUpdatedAt = { ...patch, updatedAt: new Date().toISOString(), updatedBy: adminEmail };
+  let saved: CampaignDoc | null;
+  if (isDbConnected()) {
+    const result = await collections
+      .campaigns()
+      .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: withUpdatedAt }, { returnDocument: 'after' });
+    if (!result) return null;
+    await bumpVersion('campaigns', result.campusId, adminEmail, 'update', `Campaign "${result.title}" updated`);
+    saved = withCampaignStringId(result);
+  } else {
+    saved = fallbackUpdateCampaign(id, withUpdatedAt);
+    if (saved) await bumpVersion('campaigns', saved.campusId, adminEmail, 'update', `Campaign "${saved.title}" updated`);
+  }
+
+  if (saved && before.length > 0) {
+    void destroyRemovedCloudinaryImages(before, campaignImageUrls(saved));
+  }
+  return saved;
+}
+
+export async function deleteCampaign(id: string, adminEmail: string): Promise<boolean> {
+  const existing = await getCampaignById(id);
+  if (!existing || existing.deletedAt) return false;
+  const now = new Date().toISOString();
+  if (isDbConnected()) {
+    await collections
+      .campaigns()
+      .updateOne({ _id: new ObjectId(id) } as never, { $set: { deletedAt: now, isEnabled: false, updatedAt: now, updatedBy: adminEmail } });
+    await bumpVersion('campaigns', existing.campusId, adminEmail, 'delete', `Campaign "${existing.title}" deleted`);
+    return true;
+  }
+  const saved = fallbackSoftDeleteCampaign(id);
+  if (saved) await bumpVersion('campaigns', existing.campusId, adminEmail, 'delete', `Campaign "${existing.title}" deleted`);
+  return !!saved;
+}
+
+export async function restoreCampaign(id: string, adminEmail: string): Promise<CampaignDoc | null> {
+  if (isDbConnected()) {
+    const result = await collections
+      .campaigns()
+      .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: { deletedAt: null, updatedAt: new Date().toISOString(), updatedBy: adminEmail } }, { returnDocument: 'after' });
+    if (!result) return null;
+    await bumpVersion('campaigns', result.campusId, adminEmail, 'update', `Campaign "${result.title}" restored`);
+    return withCampaignStringId(result);
+  }
+  const saved = fallbackRestoreCampaign(id);
+  if (saved) await bumpVersion('campaigns', saved.campusId, adminEmail, 'update', `Campaign "${saved.title}" restored`);
+  return saved;
+}
+
+// Best-effort, per-process duplicate-request collapsing for the public track
+// endpoint — the same device double-tapping, a card remounting quickly, or a
+// client retry shouldn't count as two separate views/clicks. Not persisted
+// and not shared across instances; like the rate limiters' own in-memory
+// fallback (redisAwareRateLimitStore.ts), this degrades gracefully — worst
+// case is an under-strict window on one instance — rather than requiring a
+// new collection or any auth.
+const RECENT_TRACK_WINDOW_MS = 60_000;
+const RECENT_TRACK_MAX_ENTRIES = 5000;
+const recentTrackKeys = new Map<string, number>();
+
+function wasRecentlyTracked(key: string): boolean {
+  const now = Date.now();
+  const last = recentTrackKeys.get(key);
+  if (last !== undefined && now - last < RECENT_TRACK_WINDOW_MS) return true;
+  recentTrackKeys.set(key, now);
+  if (recentTrackKeys.size > RECENT_TRACK_MAX_ENTRIES) {
+    for (const [k, seenAt] of recentTrackKeys) {
+      if (now - seenAt >= RECENT_TRACK_WINDOW_MS) recentTrackKeys.delete(k);
+    }
+  }
+  return false;
+}
+
+/**
+ * Increments the campaign's own impressionCount/clickCount rollup (Phase 6 analytics
+ * integration) — fired from the public, unauthenticated /campaigns/:id/track endpoint,
+ * so every real user view/tap contributes. Deliberately does NOT call bumpVersion: these
+ * counters change far more often than the campaign's actual content, and bumping the
+ * synced module version on every view would force every client to needlessly resync.
+ * Detailed per-event analytics (with session/platform/etc.) still goes through the
+ * existing generic AnalyticsEventDoc pipeline — this is only the lightweight aggregate.
+ *
+ * `dedupeKey` (the caller's deviceId, falling back to IP) collapses repeats within
+ * RECENT_TRACK_WINDOW_MS into a single count — see wasRecentlyTracked above.
+ */
+export async function incrementCampaignMetric(
+  id: string,
+  action: 'view' | 'click',
+  dedupeKey?: string,
+): Promise<{ counted: boolean }> {
+  if (dedupeKey && wasRecentlyTracked(`${dedupeKey}:${id}:${action}`)) {
+    return { counted: false };
+  }
+  const field = action === 'view' ? 'impressionCount' : 'clickCount';
+  if (isDbConnected()) {
+    await collections.campaigns().updateOne({ _id: new ObjectId(id) } as never, { $inc: { [field]: 1 } });
+    return { counted: true };
+  }
+  const existing = fallbackGetCampaignById(id);
+  if (!existing) return { counted: true };
+  fallbackUpdateCampaign(id, { [field]: (existing[field] ?? 0) + 1 } as Partial<CampaignDoc>);
+  return { counted: true };
 }
 
 // --- Trip (operational, no bumpVersion — not a synced module) ---

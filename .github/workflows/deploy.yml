@@ -32,6 +32,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Lowercase repository name for Docker tag
+        run: echo "REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -48,8 +51,8 @@ jobs:
           file: apps/api/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/iitj1-api:${{ github.sha }}
-            ghcr.io/${{ github.repository }}/iitj1-api:latest
+            ghcr.io/${{ env.REPO_LOWER }}/iitj1-api:${{ github.sha }}
+            ghcr.io/${{ env.REPO_LOWER }}/iitj1-api:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -60,8 +63,8 @@ jobs:
           file: apps/admin/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/iitj1-admin:${{ github.sha }}
-            ghcr.io/${{ github.repository }}/iitj1-admin:latest
+            ghcr.io/${{ env.REPO_LOWER }}/iitj1-admin:${{ github.sha }}
+            ghcr.io/${{ env.REPO_LOWER }}/iitj1-admin:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

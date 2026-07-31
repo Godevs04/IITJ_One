@@ -22,7 +22,7 @@ export function GlobalSearchResultCard({ entry, query, matchedField }: GlobalSea
   return (
     <View style={[styles.container, { borderColor: theme.border, backgroundColor: theme.surface }]}>
       <View style={[styles.iconBox, { backgroundColor: theme.primaryTint }]}>
-        <Ionicons name={entry.icon} size={18} color={theme.primary} />
+        <Ionicons name={entry.icon} size={18} color={theme.linkText} />
       </View>
 
       <View style={styles.content}>
@@ -38,7 +38,7 @@ export function GlobalSearchResultCard({ entry, query, matchedField }: GlobalSea
                 style={[
                   styles.subtitleText,
                   {
-                    color: segment.isMatch ? theme.primary : theme.textMuted,
+                    color: segment.isMatch ? theme.linkText : theme.textMuted,
                     fontWeight: segment.isMatch ? '600' : '400',
                   },
                 ]}

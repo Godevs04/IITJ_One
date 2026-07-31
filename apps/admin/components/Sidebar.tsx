@@ -34,13 +34,31 @@ const NAV: { label: string; items: NavItem[] }[] = [
   {
     label: 'Content',
     items: [
-      { href: '/menu', label: 'Mess Menu' },
+      { href: '/mess-menu', label: 'Mess Menu' },
+      { href: '/menu', label: 'Mess Menu (Legacy CSV)' },
       { href: '/notices', label: 'Notices' },
     ],
   },
   {
     label: 'Campus data',
     items: [
+      {
+        label: 'Discover (Campaigns)',
+        children: [
+          { href: '/campaigns', label: 'Dashboard' },
+          { href: '/campaigns/list', label: 'Campaign List' },
+        ],
+      },
+      {
+        label: 'Campus Directory',
+        children: [
+          { href: '/campus-directory', label: 'Dashboard' },
+          { href: '/campus-directory/departments', label: 'Departments' },
+          { href: '/campus-directory/people', label: 'People' },
+          { href: '/campus-directory/roles', label: 'Roles' },
+          { href: '/campus-directory/organizations', label: 'Organizations' },
+        ],
+      },
       {
         label: 'Transport',
         children: [

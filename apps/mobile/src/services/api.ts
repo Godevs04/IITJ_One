@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import type { SuggestionCategory } from '@iitj1/types';
 import type { ActiveScheduleExceptionResponse } from '@/types/campus';
 
 const DEFAULT_API_URL = 'http://localhost:6002/api/v1';
@@ -94,8 +95,8 @@ export function getManifest(campusId = CAMPUS_ID) {
   return apiGet<SyncManifest>('/sync/manifest', { campus: campusId });
 }
 
-export function getModule<T>(module: string, campusId = CAMPUS_ID) {
-  return apiGet<T>(`/${module}`, { campus: campusId });
+export function getModule<T>(module: string, campusId = CAMPUS_ID, extraParams?: Record<string, string>) {
+  return apiGet<T>(`/${module}`, { campus: campusId, ...extraParams });
 }
 
 /**
@@ -111,6 +112,16 @@ export function getActiveScheduleException(campusId = CAMPUS_ID) {
   return apiGet<ActiveScheduleExceptionResponse>('/transport/temporary/active', { campus: campusId });
 }
 
-export function submitSuggestion(message: string) {
-  return apiPost<{ success: boolean; id?: string }>('/suggestions', { message });
+export interface SubmitSuggestionPayload {
+  message: string;
+  category: SuggestionCategory;
+  name?: string;
+  email?: string;
+  deviceId?: string;
+  platform?: string;
+  appVersion?: string;
+}
+
+export function submitSuggestion(payload: SubmitSuggestionPayload) {
+  return apiPost<{ success: boolean; id?: string }>('/suggestions', payload);
 }

@@ -1,4 +1,4 @@
-import { DEFAULT_LAUNDRY_SCHEDULES, DEFAULT_WIFI_DOC, DEFAULT_ERICKSHAW_DOC, DEFAULT_MEAL_WINDOWS, DEFAULT_CAMPUS_LOCATIONS, DEFAULT_HEALTH_CENTER_DOC } from '@iitj1/types';
+import { DEFAULT_LAUNDRY_SCHEDULES, DEFAULT_WIFI_DOC, DEFAULT_ERICKSHAW_DOC, DEFAULT_MEAL_WINDOWS, DEFAULT_WEEKEND_MEAL_WINDOWS, DEFAULT_CAMPUS_LOCATIONS, DEFAULT_HEALTH_CENTER_DOC } from '@iitj1/types';
 import { config } from '../config';
 import { loadMenuFromFiles, loadTransportFromFile } from '../services/parsers';
 import type {
@@ -35,6 +35,13 @@ import type {
   SessionDoc,
   GpsPingDoc,
   BusStateDoc,
+  MessMenuDoc,
+  MessMenuHistoryEntry,
+  DepartmentDoc,
+  OrganizationDoc,
+  PersonDoc,
+  RoleDoc,
+  CampaignDoc,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
 import { busesConflict, dateRangesOverlap } from '../services/transportScheduleExceptionStatus';
@@ -72,6 +79,26 @@ interface FallbackState {
   rideSessions: SessionDoc[];
   gpsPings: GpsPingDoc[];
   busStates: BusStateDoc[];
+  /**
+   * Unlike every other module above, mess menu has no sensible default
+   * content — fabricating a plausible-looking fake weekly menu would risk
+   * silently showing invented dish names to students as if real. `null`
+   * means "nothing published yet," matching the DB-connected path's
+   * `Promise<MessMenuDoc | null>` return type and the public route's
+   * 404-on-null handling.
+   */
+  messMenuVeg: MessMenuDoc | null;
+  messMenuNonVeg: MessMenuDoc | null;
+  messMenuVegDraft: MessMenuDoc | null;
+  messMenuNonVegDraft: MessMenuDoc | null;
+  messMenuHistory: MessMenuHistoryEntry[];
+  /** Campus Directory — no seed content by design (see db seeding note), admins populate from scratch. */
+  departments: DepartmentDoc[];
+  organizations: OrganizationDoc[];
+  people: PersonDoc[];
+  roles: RoleDoc[];
+  /** Discover (Campaign Platform) — no seed content by design, admins populate from scratch. */
+  campaigns: CampaignDoc[];
 }
 
 let state: FallbackState | null = null;
@@ -104,6 +131,592 @@ function loadSeedMenu() {
     return [];
   }
 }
+
+export const DEFAULT_AUGUST_NON_VEG_MENU: MessMenuDoc = {
+  campusId: 'iitj',
+  menuType: 'non-veg',
+  month: 8,
+  year: 2026,
+  status: 'published',
+  version: 1,
+  publishedAt: '2026-07-30T20:43:00.000Z',
+  publishedBy: 'admin@iitjone.in',
+  updatedAt: '2026-07-30T20:43:00.000Z',
+  updatedBy: 'admin@iitjone.in',
+  days: [
+    {
+      day: 'Monday',
+      meals: {
+        breakfast: {
+          vegItems: ['Poha(Namkeen)', 'Sambar and Jalebi'],
+          nonVegItems: ['Boiled egg (2)'],
+          compulsoryItems: ['Toasted white/whole wheat bread', 'Butter', 'Jam', 'Sugar', 'Cornflakes', 'Sprouts-boiled chana', 'Milk(Non-Toned)', 'Tea', 'Coffee', 'Bournvita'],
+        },
+        lunch: {
+          vegItems: ['Bhindi Peanut Fry', 'Malai Kofta', 'Moong dal'],
+          nonVegItems: ['Seasonal fruits (2 Types)', 'Masala Chaas'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+        snacks: {
+          vegItems: ['Dhokla or khandvi(Besan)', 'Mirchi Chutney', 'Imli Chutney'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Ghugni', 'Sabut Masoor dal', 'Moong dal barfi (2 Piece)'],
+          nonVegItems: ['Egg Burji'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+      },
+    },
+    {
+      day: 'Tuesday',
+      meals: {
+        breakfast: {
+          vegItems: ['Masala paratha', 'Mix sabji', 'pudhina chutney'],
+          nonVegItems: ['Banana(2)'],
+          compulsoryItems: ['Toasted white/whole wheat bread', 'Butter', 'Jam', 'Sugar', 'Oats', 'Sprouts-boiled chana', 'Milk(Non-Toned)', 'Tea', 'Coffee', 'Bournvita'],
+        },
+        lunch: {
+          vegItems: ['Veg Korma', 'Methi Matar Malai', 'Urad chilka dal'],
+          nonVegItems: ['Curd', 'Roohhafza'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+        snacks: {
+          vegItems: ['Aloo Samosa or Aloo tikki chat', 'Chutney', 'dahi', 'chole'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Soyachunks gravy', 'Tinde ki Sabji', 'Dal Makhani', 'Lemon Rice'],
+          nonVegItems: [],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+      },
+    },
+    {
+      day: 'Wednesday',
+      meals: {
+        breakfast: {
+          vegItems: ['Uttapam or Namkeen siwaiya', 'Sambhar', 'Coconut Chutney'],
+          nonVegItems: ['Boiled egg (2)'],
+          compulsoryItems: ['Toasted white/whole wheat bread', 'Butter', 'Jam', 'Sugar', 'Cornflakes', 'Sprouts-boiled chana', 'Milk(Non-Toned)', 'Tea', 'Coffee', 'Bournvita'],
+        },
+        lunch: {
+          vegItems: ['Aloo parval', 'Baigan ka bharta', 'Mix dal'],
+          nonVegItems: ['Veg Raita', 'Rasna'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+        snacks: {
+          vegItems: ['Pasta or maggi', 'Chutney or ketchup'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Mix Veg', 'Masoor dal', 'Fruit Custard'],
+          nonVegItems: ['Butter Chiken'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+      },
+    },
+    {
+      day: 'Thursday',
+      meals: {
+        breakfast: {
+          vegItems: ['Masala Poori', 'Chole or Safed Mattar ki Sabzi and Kheer'],
+          nonVegItems: ['Banana(2)'],
+          compulsoryItems: ['Toasted white/whole wheat bread', 'Butter', 'Jam', 'Sugar', 'Oats', 'Sprouts-boiled chana', 'Milk(Non-Toned)', 'Tea', 'Coffee', 'Bournvita'],
+        },
+        lunch: {
+          vegItems: ['Kadi Pakora', 'Aloo-Jeera', 'Kali massor Dal'],
+          nonVegItems: ['Seasonal fruits( amrood or pears  or apple)', 'Lassi'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+        snacks: {
+          vegItems: ['Cheese Grilled Sandwich (2pcs)', 'ketchup'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Pindi Chola', 'Soyachunks matar Masala', 'Lobia dal', 'Veg Pulao'],
+          nonVegItems: [],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat', 'Ghee'],
+        },
+      },
+    },
+    {
+      day: 'Friday',
+      meals: {
+        breakfast: {
+          vegItems: ['Idli+Fried Idli or Idli+Mendu Vada', 'Sambhar', 'Coconut Chutney', 'Tomato Chutney'],
+          nonVegItems: ['Boiled egg (2)'],
+          compulsoryItems: ['Toasted white/whole wheat bread', 'Butter', 'Jam', 'Sugar', 'Cornflakes', 'Sprouts-boiled chana', 'Milk(Non-Toned)', 'Tea', 'Coffee', 'Bournvita'],
+        },
+        lunch: {
+          vegItems: ['Lauki channa', 'Arbi', 'Rajma dal'],
+          nonVegItems: ['Pudina Chaas', 'Aam panna'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+        snacks: {
+          vegItems: ['Pyaz kachori or Moong Dal kachori', 'Chutney'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Sev Tamatar', 'Dal Fry', 'Veg Biryani', 'Rasmalai(2 Piece)'],
+          nonVegItems: ['Egg Butter Masala'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat', 'Ghee'],
+        },
+      },
+    },
+    {
+      day: 'Saturday',
+      meals: {
+        breakfast: {
+          vegItems: ['Dal stuffed paratha', 'kala Chaane ki saabji'],
+          nonVegItems: ['Boiled egg (2)'],
+          compulsoryItems: ['Toasted white/whole wheat bread', 'Butter', 'Jam', 'Sugar', 'Oats', 'Sprouts-boiled chana', 'Milk(Non-Toned)', 'Tea', 'Coffee', 'Bournvita'],
+        },
+        lunch: {
+          vegItems: ['Gawar fali sabji', 'mix Veg Pakoda', 'Moong dal'],
+          nonVegItems: ['Curd', 'Roohhafza'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+        snacks: {
+          vegItems: ['Dahi papdi chat Chutney'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Soya Masala dry', 'Chole Bhature', 'Dal Tadka'],
+          nonVegItems: [],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat', 'Ghee'],
+        },
+      },
+    },
+    {
+      day: 'Sunday',
+      meals: {
+        breakfast: {
+          vegItems: ['Masala dosa', 'Coconut Chutney', 'sambhar'],
+          nonVegItems: ['Boiled Egg (2)'],
+          compulsoryItems: ['Toasted white/whole wheat bread', 'Butter', 'Jam', 'Sugar', 'Cornflakes', 'Sprouts-boiled chana', 'Milk(Non-Toned)', 'Tea', 'Coffee', 'Bournvita'],
+        },
+        lunch: {
+          vegItems: ['Veg fried Rice', 'Kaddu masala', 'Green moong chilka', 'Manchurian'],
+          nonVegItems: ['Boondi Raita pudina'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat Papad', 'Ghee'],
+        },
+        snacks: {
+          vegItems: ['Paani puri', 'emili pani'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Veg Korma', 'Arhar Dal', 'Ice cream(Chocolate or Butterscotch)'],
+          nonVegItems: ['Chicken Biryani', 'veg Raita'],
+          compulsoryItems: ['Plain Rice', 'Atta Roti', 'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)', 'Pickle', 'Lizzat', 'Ghee'],
+        },
+      },
+    },
+  ],
+};
+
+export const DEFAULT_AUGUST_VEG_MENU: MessMenuDoc = {
+  campusId: 'iitj',
+  menuType: 'veg',
+  month: 8,
+  year: 2026,
+  status: 'published',
+  version: 1,
+  publishedAt: '2026-07-30T20:48:00.000Z',
+  publishedBy: 'admin@iitjone.in',
+  updatedAt: '2026-07-30T20:48:00.000Z',
+  updatedBy: 'admin@iitjone.in',
+  days: [
+    {
+      day: 'Monday',
+      meals: {
+        breakfast: {
+          vegItems: ['Poha(Namkeen)', 'Sambar and Jalebi/ Dalia'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Banana (2)',
+            'Toasted white/whole wheat bread',
+            'Butter',
+            'Jam',
+            'Sugar',
+            'oats',
+            'Sprouts-boiled chana',
+            'Milk(Non-Toned)',
+            'Tea',
+            'Coffee',
+            'Bournvita/Horlicks',
+          ],
+        },
+        lunch: {
+          vegItems: ['Curd rice', 'Chana+Arhar daal', 'Kala chana', 'Bhindi peanut fry'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Curd',
+            'Rasna',
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+        snacks: {
+          vegItems: ['Samosa', 'chutney'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Dal Makhani', 'Capsicum-Aloo Masala'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+      },
+    },
+    {
+      day: 'Tuesday',
+      meals: {
+        breakfast: {
+          vegItems: ['Sewai Upma', 'Chatni'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Banana(2)',
+            'Toasted white/whole wheat bread',
+            'Butter',
+            'Jam',
+            'Sugar',
+            'Cornflakes',
+            'Sprouts-boiled chana',
+            'Milk(Non-Toned)',
+            'Tea',
+            'Coffee',
+            'Bournvita/Horlicks',
+          ],
+        },
+        lunch: {
+          vegItems: ['Dal Panchmahal', 'Veg Korma', 'Sev tamatar ki sabji'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Mango',
+            'Jeera - Chhach',
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad/Aloo masala chips',
+            'Ghee',
+          ],
+        },
+        snacks: {
+          vegItems: ['Aloo grilled sandwich'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Lemon Rice', 'Mix Dal', 'Aaloo Mutter Masala', 'Lauki Chana', 'Kheer'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Plain Rice',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+      },
+    },
+    {
+      day: 'Wednesday',
+      meals: {
+        breakfast: {
+          vegItems: ['Idli+Fried Idli / Idli+Mendu Vada', 'Sambhar', 'Coconut Chutney', 'Tomato Chutney'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Banana (2)',
+            'Toasted white/whole wheat bread',
+            'Butter',
+            'Jam',
+            'Sugar',
+            'Oats',
+            'Sprouts-boiled chana',
+            'Milk(Non-Toned)',
+            'Tea',
+            'Coffee',
+            'Bournvita/Horlicks',
+          ],
+        },
+        lunch: {
+          vegItems: ['Masoor Dal', 'Besan Gatte ki sabji', 'Bhindi Do Pyaza'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Curd',
+            'Roohaafza',
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+        snacks: {
+          vegItems: ['Bhelpuri'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Lasooni Dal Tadka', 'Aloo Pyaaj ki  Sabji'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+      },
+    },
+    {
+      day: 'Thursday',
+      meals: {
+        breakfast: {
+          vegItems: ['Poori', 'aalu tamatar Sabzi'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Banana(2)',
+            'Toasted white/whole wheat bread',
+            'Butter',
+            'Jam',
+            'Sugar',
+            'Cornflakes',
+            'Sprouts-boiled chana',
+            'Milk(Non-Toned)',
+            'Tea',
+            'Coffee',
+            'Bournvita/Horlicks',
+          ],
+        },
+        lunch: {
+          vegItems: ['Channa Dal Fry', 'Curry Pakoda', 'Dahi Chauli'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Veg raita',
+            'Nimboo pani',
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+        snacks: {
+          vegItems: ['Veg-cutlet'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: [
+            'Khichdi',
+            'Masoor Dal',
+            'Dry Tinda Masala',
+            'Lobiya',
+            'Milk barfi (2 pieces)/ Fruit custard',
+          ],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+      },
+    },
+    {
+      day: 'Friday',
+      meals: {
+        breakfast: {
+          vegItems: ['Pongal with sambhar and chutney /Uttapam', 'Sambhar', 'Coconut Chutney'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Banana (2)',
+            'Toasted white/whole wheat bread',
+            'Butter',
+            'Jam',
+            'Sugar',
+            'Oats Sprouts-boiled chana',
+            'Milk(Non-Toned)',
+            'Tea',
+            'Coffee',
+            'Bournvita/Horlicks',
+          ],
+        },
+        lunch: {
+          vegItems: ['Rajma Dal', 'Aloo matar tamatar', 'Mix Veg Dry'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Mango',
+            'Butter Milk',
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+        snacks: {
+          vegItems: ['Aloo - tikki chaat'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Mong  Dal', 'Veg Biriyani', 'Pindi chole'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+      },
+    },
+    {
+      day: 'Saturday',
+      meals: {
+        breakfast: {
+          vegItems: ['Aloo Pyaz Paratha', 'Curd', 'Mint Chutney', 'Pickle'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Banana',
+            'Toasted white/whole wheat bread',
+            'Butter',
+            'Jam',
+            'Sugar',
+            'Oats',
+            'Sprouts-boiled chana',
+            'Milk(Non-Toned)',
+            'Tea',
+            'Coffee',
+            'Bournvita/Horlicks',
+          ],
+        },
+        lunch: {
+          vegItems: ['Veg pakoda Sabji', 'Dal tadka', 'Gawarfalii'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Curd',
+            'Roohhafza',
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+        snacks: {
+          vegItems: ['Maggie/Veg Noodles'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: [
+            'Veg Pulao',
+            'Dal Tadka',
+            'Chole Bhature',
+            'Dry Aloo Masala',
+            'Ice cream (Butterscotch/ Chocolate)',
+          ],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+      },
+    },
+    {
+      day: 'Sunday',
+      meals: {
+        breakfast: {
+          vegItems: ['Masala dosa', 'Sambhar'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Banana(2)',
+            'Toasted white/whole wheat bread',
+            'Butter',
+            'Jam',
+            'Sugar',
+            'Cornflakes',
+            'Sprouts-boiled chana',
+            'Milk(Non-Toned)',
+            'Tea',
+            'Coffee',
+            'Bournvita/Horlicks',
+          ],
+        },
+        lunch: {
+          vegItems: ['Veg Fried Rice', 'Dal Makhani', 'Green Mung chilka', 'Veg manchurian'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Bundi Raita',
+            'Nimboo Pani',
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+        snacks: {
+          vegItems: ['Pani-Puri'],
+          nonVegItems: [],
+          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+        },
+        dinner: {
+          vegItems: ['Plain rice', 'Chana Dal tadka', 'white chola', 'Gulab jamun(2 piece)'],
+          nonVegItems: [],
+          compulsoryItems: [
+            'Plain Rice',
+            'Atta/Multigrain Roti',
+            'Salad(Beetroot+tomato+onion+carrot+lemon+chilli)',
+            'Pickle',
+            'Lizzat Papad',
+            'Ghee',
+          ],
+        },
+      },
+    },
+  ],
+};
 
 function buildDefaultState(): FallbackState {
   const campusId = config.campusId;
@@ -301,6 +914,7 @@ function buildDefaultState(): FallbackState {
     mealWindows: {
       campusId,
       windows: { ...DEFAULT_MEAL_WINDOWS },
+      weekendWindows: { ...DEFAULT_WEEKEND_MEAL_WINDOWS },
     },
     holidays: {
       campusId,
@@ -328,6 +942,16 @@ function buildDefaultState(): FallbackState {
     rideSessions: [],
     gpsPings: [],
     busStates: [],
+    messMenuVeg: DEFAULT_AUGUST_VEG_MENU,
+    messMenuNonVeg: DEFAULT_AUGUST_NON_VEG_MENU,
+    messMenuVegDraft: null,
+    messMenuNonVegDraft: null,
+    messMenuHistory: [],
+    departments: [],
+    organizations: [],
+    people: [],
+    roles: [],
+    campaigns: [],
   };
 }
 
@@ -379,17 +1003,17 @@ export function fallbackFindAdminByEmail(email: string): AdminDoc | undefined {
 
 
 export function fallbackGetNotices(campusId: string, category?: string): NoticeDoc[] {
-  const now = new Date();
+  const nowMs = Date.now();
   return getFallbackState()
     .notices.filter(
       (n) =>
         n.campusId === campusId &&
         !n.deletedAt &&
-        n.startDate <= now &&
-        n.expiryDate > now &&
+        new Date(n.startDate).getTime() <= nowMs &&
+        new Date(n.expiryDate).getTime() > nowMs &&
         (!category || n.category === category),
     )
-    .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
+    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 }
 
 export function fallbackAddNotice(notice: NoticeDoc): NoticeDoc {
@@ -683,6 +1307,288 @@ export function fallbackUpdateVehicle(id: string, patch: Partial<VehicleDoc>): V
 
 export function fallbackSoftDeleteVehicle(id: string): VehicleDoc | null {
   return fallbackUpdateVehicle(id, { deletedAt: new Date(), isActive: false });
+}
+
+// --- Campus Directory (hard delete — no cross-collection cascade in Phase 1) ---
+
+interface CampusDirectoryListOptions {
+  search?: string;
+  active?: boolean;
+  sort?: 'asc' | 'desc';
+}
+
+function matchesSearch(haystacks: (string | undefined)[], search?: string): boolean {
+  if (!search) return true;
+  const q = search.toLowerCase();
+  return haystacks.some((h) => h?.toLowerCase().includes(q));
+}
+
+export function fallbackListDepartments(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampusDirectoryListOptions = {},
+): { items: DepartmentDoc[]; total: number } {
+  let all = getFallbackState().departments.filter(
+    (d) =>
+      d.campusId === campusId &&
+      (opts.active === undefined || d.active === opts.active) &&
+      matchesSearch([d.name, d.shortName], opts.search),
+  );
+  all = [...all].sort((a, b) => (opts.sort === 'desc' ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name)));
+  const skip = (page - 1) * pageSize;
+  return { items: all.slice(skip, skip + pageSize), total: all.length };
+}
+
+export function fallbackGetDepartmentById(id: string): DepartmentDoc | null {
+  return getFallbackState().departments.find((d) => d._id === id) ?? null;
+}
+
+export function fallbackCreateDepartment(doc: Omit<DepartmentDoc, '_id'>): DepartmentDoc {
+  const s = getFallbackState();
+  const saved = { ...doc, _id: nextId() };
+  s.departments.push(saved);
+  return saved;
+}
+
+export function fallbackUpdateDepartment(id: string, patch: Partial<DepartmentDoc>): DepartmentDoc | null {
+  const s = getFallbackState();
+  const idx = s.departments.findIndex((d) => d._id === id);
+  if (idx < 0) return null;
+  s.departments[idx] = { ...s.departments[idx], ...patch };
+  return s.departments[idx];
+}
+
+export function fallbackDeleteDepartment(id: string): boolean {
+  const s = getFallbackState();
+  const idx = s.departments.findIndex((d) => d._id === id);
+  if (idx < 0) return false;
+  s.departments.splice(idx, 1);
+  return true;
+}
+
+export function fallbackListOrganizations(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampusDirectoryListOptions & { type?: string } = {},
+): { items: OrganizationDoc[]; total: number } {
+  let all = getFallbackState().organizations.filter(
+    (o) =>
+      o.campusId === campusId &&
+      (opts.active === undefined || o.active === opts.active) &&
+      (!opts.type || o.type === opts.type) &&
+      matchesSearch([o.name, o.category], opts.search),
+  );
+  all = [...all].sort((a, b) => (opts.sort === 'desc' ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name)));
+  const skip = (page - 1) * pageSize;
+  return { items: all.slice(skip, skip + pageSize), total: all.length };
+}
+
+export function fallbackGetOrganizationById(id: string): OrganizationDoc | null {
+  return getFallbackState().organizations.find((o) => o._id === id) ?? null;
+}
+
+export function fallbackCreateOrganization(doc: Omit<OrganizationDoc, '_id'>): OrganizationDoc {
+  const s = getFallbackState();
+  const saved = { ...doc, _id: nextId() };
+  s.organizations.push(saved);
+  return saved;
+}
+
+export function fallbackUpdateOrganization(id: string, patch: Partial<OrganizationDoc>): OrganizationDoc | null {
+  const s = getFallbackState();
+  const idx = s.organizations.findIndex((o) => o._id === id);
+  if (idx < 0) return null;
+  s.organizations[idx] = { ...s.organizations[idx], ...patch };
+  return s.organizations[idx];
+}
+
+export function fallbackDeleteOrganization(id: string): boolean {
+  const s = getFallbackState();
+  const idx = s.organizations.findIndex((o) => o._id === id);
+  if (idx < 0) return false;
+  s.organizations.splice(idx, 1);
+  return true;
+}
+
+export function fallbackListPeople(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampusDirectoryListOptions & { departmentId?: string } = {},
+): { items: PersonDoc[]; total: number } {
+  let all = getFallbackState().people.filter(
+    (p) =>
+      p.campusId === campusId &&
+      (opts.active === undefined || p.active === opts.active) &&
+      (!opts.departmentId || p.departmentId === opts.departmentId) &&
+      matchesSearch([p.name, p.designation, p.email], opts.search),
+  );
+  all = [...all].sort((a, b) => (opts.sort === 'desc' ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name)));
+  const skip = (page - 1) * pageSize;
+  return { items: all.slice(skip, skip + pageSize), total: all.length };
+}
+
+export function fallbackGetPersonById(id: string): PersonDoc | null {
+  return getFallbackState().people.find((p) => p._id === id) ?? null;
+}
+
+export function fallbackCreatePerson(doc: Omit<PersonDoc, '_id'>): PersonDoc {
+  const s = getFallbackState();
+  const saved = { ...doc, _id: nextId() };
+  s.people.push(saved);
+  return saved;
+}
+
+export function fallbackUpdatePerson(id: string, patch: Partial<PersonDoc>): PersonDoc | null {
+  const s = getFallbackState();
+  const idx = s.people.findIndex((p) => p._id === id);
+  if (idx < 0) return null;
+  s.people[idx] = { ...s.people[idx], ...patch };
+  return s.people[idx];
+}
+
+export function fallbackDeletePerson(id: string): boolean {
+  const s = getFallbackState();
+  const idx = s.people.findIndex((p) => p._id === id);
+  if (idx < 0) return false;
+  s.people.splice(idx, 1);
+  return true;
+}
+
+export function fallbackListRoles(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampusDirectoryListOptions & { personId?: string; organizationId?: string; category?: string } = {},
+): { items: RoleDoc[]; total: number } {
+  let all = getFallbackState().roles.filter(
+    (r) =>
+      r.campusId === campusId &&
+      (opts.active === undefined || r.active === opts.active) &&
+      (!opts.personId || r.personId === opts.personId) &&
+      (!opts.organizationId || r.organizationId === opts.organizationId) &&
+      (!opts.category || r.category === opts.category) &&
+      matchesSearch([r.title], opts.search),
+  );
+  all = [...all].sort((a, b) =>
+    opts.sort === 'desc' ? b.title.localeCompare(a.title) : a.title.localeCompare(b.title),
+  );
+  const skip = (page - 1) * pageSize;
+  return { items: all.slice(skip, skip + pageSize), total: all.length };
+}
+
+export function fallbackGetRoleById(id: string): RoleDoc | null {
+  return getFallbackState().roles.find((r) => r._id === id) ?? null;
+}
+
+export function fallbackCreateRole(doc: Omit<RoleDoc, '_id'>): RoleDoc {
+  const s = getFallbackState();
+  const saved = { ...doc, _id: nextId() };
+  s.roles.push(saved);
+  return saved;
+}
+
+export function fallbackUpdateRole(id: string, patch: Partial<RoleDoc>): RoleDoc | null {
+  const s = getFallbackState();
+  const idx = s.roles.findIndex((r) => r._id === id);
+  if (idx < 0) return null;
+  s.roles[idx] = { ...s.roles[idx], ...patch };
+  return s.roles[idx];
+}
+
+export function fallbackDeleteRole(id: string): boolean {
+  const s = getFallbackState();
+  const idx = s.roles.findIndex((r) => r._id === id);
+  if (idx < 0) return false;
+  s.roles.splice(idx, 1);
+  return true;
+}
+
+// --- Discover (Campaign Platform) — soft delete, mirrors notices ---
+
+interface CampaignListOptions {
+  search?: string;
+  type?: string;
+  placement?: string;
+  status?: string;
+  effectiveStatus?: 'draft' | 'published' | 'expired' | 'paused' | 'archived';
+  featured?: boolean;
+  isEnabled?: boolean;
+  sort?: 'asc' | 'desc';
+}
+
+export function fallbackListCampaigns(
+  campusId: string,
+  page = 1,
+  pageSize = 20,
+  opts: CampaignListOptions = {},
+): { items: CampaignDoc[]; total: number } {
+  const q = opts.search?.toLowerCase();
+  const now = Date.now();
+  let all = getFallbackState().campaigns.filter(
+    (c) =>
+      c.campusId === campusId &&
+      !c.deletedAt &&
+      (!opts.type || c.type === opts.type) &&
+      (!opts.placement || c.placement === opts.placement) &&
+      (!opts.status || c.status === opts.status) &&
+      (opts.featured === undefined || c.featured === opts.featured) &&
+      (opts.isEnabled === undefined || c.isEnabled === opts.isEnabled) &&
+      (!q || c.title.toLowerCase().includes(q) || c.category?.toLowerCase().includes(q)) &&
+      (!opts.effectiveStatus ||
+        (opts.effectiveStatus === 'published'
+          ? c.status === 'published' && new Date(c.endDate).getTime() >= now
+          : opts.effectiveStatus === 'expired'
+            ? c.status === 'published' && new Date(c.endDate).getTime() < now
+            : c.status === opts.effectiveStatus)),
+  );
+  all = [...all].sort((a, b) => (opts.sort === 'desc' ? b.title.localeCompare(a.title) : a.title.localeCompare(b.title)));
+  const skip = (page - 1) * pageSize;
+  return { items: all.slice(skip, skip + pageSize), total: all.length };
+}
+
+/** Active-for-mobile: enabled, published, not deleted, within the start/end date window. */
+export function fallbackGetActiveCampaigns(campusId: string, placement?: string): CampaignDoc[] {
+  const now = Date.now();
+  return getFallbackState().campaigns.filter(
+    (c) =>
+      c.campusId === campusId &&
+      !c.deletedAt &&
+      c.isEnabled &&
+      c.status === 'published' &&
+      (!placement || c.placement === placement) &&
+      new Date(c.startDate).getTime() <= now &&
+      now <= new Date(c.endDate).getTime(),
+  );
+}
+
+export function fallbackGetCampaignById(id: string): CampaignDoc | null {
+  return getFallbackState().campaigns.find((c) => c._id === id) ?? null;
+}
+
+export function fallbackCreateCampaign(doc: Omit<CampaignDoc, '_id'>): CampaignDoc {
+  const s = getFallbackState();
+  const saved = { ...doc, _id: nextId() };
+  s.campaigns.push(saved);
+  return saved;
+}
+
+export function fallbackUpdateCampaign(id: string, patch: Partial<CampaignDoc>): CampaignDoc | null {
+  const s = getFallbackState();
+  const idx = s.campaigns.findIndex((c) => c._id === id);
+  if (idx < 0) return null;
+  s.campaigns[idx] = { ...s.campaigns[idx], ...patch };
+  return s.campaigns[idx];
+}
+
+export function fallbackSoftDeleteCampaign(id: string): CampaignDoc | null {
+  return fallbackUpdateCampaign(id, { deletedAt: new Date().toISOString(), isEnabled: false });
+}
+
+export function fallbackRestoreCampaign(id: string): CampaignDoc | null {
+  return fallbackUpdateCampaign(id, { deletedAt: null });
 }
 
 export function fallbackGetTripsForCampusAndDate(campusId: string, serviceDate: string): TripDoc[] {

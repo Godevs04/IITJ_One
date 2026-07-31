@@ -1,17 +1,26 @@
-import * as Notifications from 'expo-notifications';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import type { TimetableEntry } from './localDb';
 import { parseTimeToMinutes } from '@/utils/date';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+let Notifications: any = null;
 
+if (!isExpoGo) {
+  try {
+    Notifications = require('expo-notifications');
+    Notifications?.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+  } catch (e) {
+    console.warn('Failed to load expo-notifications', e);
+  }
+}
 const DAY_MAP: Record<string, number> = {
   sun: 1,
   mon: 2,
@@ -27,6 +36,7 @@ function notificationId(entryId: string, day: string): string {
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {
+  if (!Notifications) return false;
   const { status: existing } = await Notifications.getPermissionsAsync();
   if (existing === 'granted') return true;
   const { status } = await Notifications.requestPermissionsAsync();
@@ -34,6 +44,7 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export async function cancelClassNotifications(entryId: string, days: string[]): Promise<void> {
+  if (!Notifications) return;
   await Promise.all(
     days.map((day) =>
       Notifications.cancelScheduledNotificationAsync(notificationId(entryId, day)),

@@ -1,4 +1,3 @@
-export * from './modules';
 export * from './laundry';
 export * from './wifi';
 export * from './erickshaw';
@@ -11,3 +10,7 @@ export * from './transportScheduleException';
 export * from './geo';
 export * from './busStops';
 export * from './healthCenter';
+export * from './messMenu';
+export * from './suggestions';
+export * from './campusDirectory';
+export * from './campaigns';

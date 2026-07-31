@@ -1,5 +1,23 @@
 import { z } from 'zod';
-import { transportTripSchema } from '@iitj1/types';
+import {
+  transportTripSchema,
+  messMenuPutSchema,
+  SUGGESTION_CATEGORIES,
+  ORGANIZATION_TYPES,
+  departmentCreateSchema,
+  departmentUpdateSchema,
+  organizationCreateSchema,
+  organizationUpdateSchema,
+  personCreateSchema,
+  personUpdateSchema,
+  roleCreateSchema,
+  roleUpdateSchema,
+  CAMPAIGN_TYPES,
+  CAMPAIGN_PLACEMENTS,
+  CAMPAIGN_STATUSES,
+  campaignCreateSchema,
+  campaignUpdateSchema,
+} from '@iitj1/types';
 
 export { transportTripSchema };
 
@@ -11,6 +29,22 @@ export const noticesQuerySchema = campusQuerySchema.extend({
   category: z.string().optional(),
 });
 
+export const messMenuQuerySchema = campusQuerySchema.extend({
+  menuType: z.enum(['veg', 'non-veg']),
+});
+
+export const messMenuHistoryQuerySchema = messMenuQuerySchema.extend({
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export const publishBothMessMenusSchema = z
+  .object({
+    veg: messMenuPutSchema,
+    nonVeg: messMenuPutSchema,
+  })
+  .refine((body) => body.veg.menuType === 'veg', { message: '"veg" must have menuType "veg"', path: ['veg', 'menuType'] })
+  .refine((body) => body.nonVeg.menuType === 'non-veg', { message: '"nonVeg" must have menuType "non-veg"', path: ['nonVeg', 'menuType'] });
+
 export const paginationQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
@@ -20,6 +54,7 @@ export const adminNoticesQuerySchema = noticesQuerySchema.merge(paginationQueryS
 
 export const adminSuggestionsQuerySchema = paginationQuerySchema.extend({
   status: z.enum(['new', 'read', 'archived']).optional(),
+  category: z.enum(SUGGESTION_CATEGORIES).optional(),
 });
 
 export const adminAuditQuerySchema = paginationQuerySchema;
@@ -67,7 +102,20 @@ export const overrideTripStatusSchema = z.object({
 });
 
 export const suggestionBodySchema = z.object({
-  message: z.string().trim().min(1).max(2000),
+  message: z.string().trim().min(10, 'Message must be at least 10 characters').max(1000, 'Message must be at most 1000 characters'),
+  category: z.enum(SUGGESTION_CATEGORIES),
+  // Optional contact details — no auth on this app, so these are the only way
+  // to identify a submitter, and only if they choose to provide them.
+  name: z.string().trim().max(100).optional(),
+  // Empty string means "left blank" (anonymous), not an invalid email — only
+  // validate the format when something was actually typed.
+  email: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().trim().email('Invalid email address').optional(),
+  ),
+  deviceId: z.string().trim().max(200).optional(),
+  platform: z.string().trim().max(50).optional(),
+  appVersion: z.string().trim().max(50).optional(),
 });
 
 export const loginBodySchema = z.object({
@@ -301,6 +349,8 @@ export const menuImportSchema = z.object({
 
 export { holidaysPutSchema, transportAlertsPutSchema, temporaryTransportSchedulePutSchema, healthCenterPutSchema } from '@iitj1/types';
 
+export { messMenuPutSchema };
+
 export {
   transportScheduleExceptionCreateSchema,
   transportScheduleExceptionUpdateSchema,
@@ -311,3 +361,80 @@ export const adminTransportScheduleExceptionsQuerySchema = campusQuerySchema.mer
 });
 
 export const activeTransportScheduleExceptionQuerySchema = campusQuerySchema;
+
+// --- Campus Directory ---------------------------------------------------
+
+export {
+  departmentCreateSchema,
+  departmentUpdateSchema,
+  organizationCreateSchema,
+  organizationUpdateSchema,
+  personCreateSchema,
+  personUpdateSchema,
+  roleCreateSchema,
+  roleUpdateSchema,
+};
+
+const campusDirectorySortSchema = z.enum(['asc', 'desc']).default('asc');
+
+export const adminDepartmentsQuerySchema = campusQuerySchema.merge(paginationQuerySchema).extend({
+  search: z.string().optional(),
+  active: z.coerce.boolean().optional(),
+  sort: campusDirectorySortSchema,
+});
+
+export const adminOrganizationsQuerySchema = campusQuerySchema.merge(paginationQuerySchema).extend({
+  search: z.string().optional(),
+  type: z.enum(ORGANIZATION_TYPES).optional(),
+  active: z.coerce.boolean().optional(),
+  sort: campusDirectorySortSchema,
+});
+
+export const adminPeopleQuerySchema = campusQuerySchema.merge(paginationQuerySchema).extend({
+  search: z.string().optional(),
+  departmentId: z.string().optional(),
+  active: z.coerce.boolean().optional(),
+  sort: campusDirectorySortSchema,
+});
+
+export const adminRolesQuerySchema = campusQuerySchema.merge(paginationQuerySchema).extend({
+  search: z.string().optional(),
+  personId: z.string().optional(),
+  organizationId: z.string().optional(),
+  category: z.string().optional(),
+  active: z.coerce.boolean().optional(),
+  sort: campusDirectorySortSchema,
+});
+
+// --- Discover (Campaign Platform) ---
+
+export { campaignCreateSchema, campaignUpdateSchema };
+
+export const adminCampaignsQuerySchema = campusQuerySchema.merge(paginationQuerySchema).extend({
+  search: z.string().optional(),
+  type: z.enum(CAMPAIGN_TYPES).optional(),
+  placement: z.enum(CAMPAIGN_PLACEMENTS).optional(),
+  status: z.enum(CAMPAIGN_STATUSES).optional(),
+  /**
+   * Computed lifecycle view for the admin Campaign List's tabs — not a stored
+   * field. 'published' means status=published AND endDate hasn't passed yet;
+   * 'expired' means status=published AND endDate has passed. Other values
+   * pass straight through to the stored `status` filter. Mirrors the
+   * draft/scheduled/active/expired/archived computed-status precedent used
+   * for transport schedule exceptions.
+   */
+  effectiveStatus: z.enum(['draft', 'published', 'expired', 'paused', 'archived']).optional(),
+  featured: z.coerce.boolean().optional(),
+  isEnabled: z.coerce.boolean().optional(),
+  sort: campusDirectorySortSchema,
+});
+
+export const publicCampaignsQuerySchema = campusQuerySchema.extend({
+  placement: z.enum(CAMPAIGN_PLACEMENTS).optional(),
+});
+
+/** Body for POST /campaigns/:id/track — increments the campaign's own impressionCount/clickCount rollup. Detailed per-event analytics goes through the existing POST /analytics/events pipeline instead; this is only the lightweight aggregate. `deviceId` is optional and only used for short-window duplicate-request collapsing (see incrementCampaignMetric) — never persisted, never required. */
+export const campaignTrackBodySchema = z.object({
+  action: z.enum(['view', 'click']),
+  deviceId: z.string().trim().max(100).optional(),
+});

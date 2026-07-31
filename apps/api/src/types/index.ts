@@ -1,3 +1,5 @@
+import type { SuggestionCategory } from '@iitj1/types';
+
 export type ModuleName =
   | 'menu'
   | 'notices'
@@ -17,7 +19,14 @@ export type ModuleName =
   | 'transportAlerts'
   | 'temporaryTransportSchedule'
   | 'transportScheduleExceptions'
-  | 'vehicles';
+  | 'vehicles'
+  | 'messMenuVeg'
+  | 'messMenuNonVeg'
+  | 'campusDirectoryDepartments'
+  | 'campusDirectoryPeople'
+  | 'campusDirectoryOrganizations'
+  | 'campusDirectoryRoles'
+  | 'campaigns';
 
 export interface MetaVersions {
   menu: number;
@@ -39,6 +48,13 @@ export interface MetaVersions {
   temporaryTransportSchedule: number;
   transportScheduleExceptions: number;
   vehicles: number;
+  messMenuVeg: number;
+  messMenuNonVeg: number;
+  campusDirectoryDepartments: number;
+  campusDirectoryPeople: number;
+  campusDirectoryOrganizations: number;
+  campusDirectoryRoles: number;
+  campaigns: number;
 }
 
 export type {
@@ -263,6 +279,34 @@ export type {
   DoctorScheduleEntry,
   DoctorScheduleDay,
   HealthCenterDoc,
+  MealItems,
+  MessMenuMeals,
+  MessMenuDay,
+  MessMenuInput,
+  MessMenuDoc,
+  MessMenuHistoryEntry,
+  SuggestionCategory,
+  OrganizationType,
+  DepartmentCreateInput,
+  DepartmentUpdateInput,
+  DepartmentDoc,
+  OrganizationCreateInput,
+  OrganizationUpdateInput,
+  OrganizationDoc,
+  PersonCreateInput,
+  PersonUpdateInput,
+  PersonDoc,
+  RoleCreateInput,
+  RoleUpdateInput,
+  RoleDoc,
+  CampaignType,
+  CampaignPlacement,
+  CampaignDisplayType,
+  CampaignActionType,
+  CampaignStatus,
+  CampaignCreateInput,
+  CampaignUpdateInput,
+  CampaignDoc,
 } from '@iitj1/types';
 
 export interface AdminDoc {
@@ -291,6 +335,15 @@ export interface SuggestionDoc {
   message: string;
   submittedAt: Date;
   status?: SuggestionStatus;
+  /** Optional fields added for the Feedback & Suggestions upgrade — every
+   * pre-existing record simply lacks them, which is a valid state, not an
+   * error. */
+  category?: SuggestionCategory;
+  name?: string;
+  email?: string;
+  deviceId?: string;
+  platform?: string;
+  appVersion?: string;
 }
 
 export interface DeviceDoc {

@@ -22,7 +22,7 @@ const SCHEMA_VERSION_KEY = 'schemaVersion';
 const MIGRATIONS: Record<number, () => void | Promise<void>> = {
   1: () => {
     clearAllCache();
-    console.log('🧹 [Cache Migration] Flushed AsyncStorage module cache due to schema version 2 bump');
+    if (__DEV__) console.log('🧹 [Cache Migration] Flushed AsyncStorage module cache due to schema version 2 bump');
   },
 };
 

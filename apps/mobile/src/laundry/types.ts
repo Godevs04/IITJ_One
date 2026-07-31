@@ -1,5 +1,6 @@
 import type { DayName, HostelId } from '@iitj1/types';
 export type { DayName, LaundrySchedule } from '@iitj1/types';
+export { getHostelLabel } from '@iitj1/types';
 export type Hostel = HostelId;
 
 export interface HostelOption {
@@ -16,7 +17,8 @@ export const HOSTELS: HostelOption[] = [
   { id: 'G3', category: 'boys' },
   { id: 'G5', category: 'boys' },
   { id: 'G6', category: 'boys' },
-  { id: 'O3', category: 'boys' },
+  { id: 'O3E', category: 'boys' },
+  { id: 'O3W', category: 'boys' },
   { id: 'O4', category: 'boys' },
   { id: 'Y3', category: 'boys' },
   { id: 'Y4', category: 'boys' },

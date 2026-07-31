@@ -55,9 +55,9 @@ export function CampusDataProvider({ children }: { children: ReactNode }) {
         setError(null); // Offline is not an error — app works from cache
       } else if (state.globalStatus === 'success') {
         setError(null);
-        setRevision((r) => r + 1); // Trigger re-reads across all screens
         Analytics.trackEvent(AppEvents.SYNC_COMPLETED);
       }
+      setRevision((r) => r + 1); // Always trigger re-reads across all screens when sync state updates
     });
     return unsub;
   }, []);

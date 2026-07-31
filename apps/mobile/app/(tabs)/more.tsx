@@ -24,6 +24,8 @@ const SECTIONS: MoreSection[] = [
   {
     title: 'Campus tools',
     links: [
+      { title: 'Discover', icon: 'compass-outline', route: '/discover' as never },
+      { title: 'Campus Directory', icon: 'people-circle-outline', route: '/campus-directory' },
       { title: 'Campus Map', icon: 'map-outline', route: '/map' },
       { title: 'Academic Calendar', icon: 'calendar-outline', route: '/calendar' },
       { title: 'Campus Apps', icon: 'apps-outline', route: '/apps' },
@@ -48,7 +50,7 @@ const SECTIONS: MoreSection[] = [
     title: 'Settings & support',
     links: [
       { title: 'Settings', icon: 'settings-outline', route: '/settings' },
-      { title: 'Suggest Something', icon: 'bulb-outline', route: '/suggest' },
+      { title: 'Feedback & Suggestions', icon: 'chatbubble-ellipses-outline', route: '/suggest' },
       { title: 'About IITJ One', icon: 'information-circle-outline', route: '/about' },
     ],
   },

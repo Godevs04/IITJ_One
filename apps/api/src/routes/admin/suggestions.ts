@@ -1,4 +1,5 @@
 import { Router, Response } from 'express';
+import type { SuggestionCategory } from '@iitj1/types';
 import { validateBody, validateQuery } from '../../middleware/validate';
 import { suggestionStatusSchema, adminSuggestionsQuerySchema } from '../../models/schemas';
 import { AuthRequest } from '../../middleware/auth';
@@ -10,12 +11,12 @@ import { asyncHandler } from '../../middleware/asyncHandler';
 const router = Router();
 
 router.get('/', validateQuery(adminSuggestionsQuerySchema), asyncHandler(async (req, res: Response) => {
-  const { status, page, limit } = (
+  const { status, page, limit, category } = (
     req as typeof req & {
-      validatedQuery: { status?: 'new' | 'read' | 'archived'; page: number; limit: number };
+      validatedQuery: { status?: 'new' | 'read' | 'archived'; page: number; limit: number; category?: SuggestionCategory };
     }
   ).validatedQuery;
-  const { items, total } = await getSuggestions(status, page, limit);
+  const { items, total } = await getSuggestions(status, page, limit, category);
   res.json({ suggestions: items, total, page, pageSize: limit });
 }));
 

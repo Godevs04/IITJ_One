@@ -5,6 +5,7 @@
  * importing it here — no other wiring required.
  */
 import './providers/homeProvider';
+import './providers/campaignsProvider';
 import './providers/messProvider';
 import './providers/transportProvider';
 import './providers/directoryProvider';

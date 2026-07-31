@@ -72,7 +72,7 @@ export function ScreenShell({
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={theme.primary}
+              tintColor={theme.linkText}
             />
           ) : undefined
         }

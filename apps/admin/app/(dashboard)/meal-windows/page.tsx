@@ -8,6 +8,7 @@ import { Card, LoadingBlock, PageHeader } from '@/components/ui';
 import { useToast } from '@/components/Toast';
 import {
   DEFAULT_MEAL_WINDOWS,
+  DEFAULT_WEEKEND_MEAL_WINDOWS,
   MEAL_KEYS,
   type MealKey,
   type MealWindowConfig,
@@ -19,6 +20,7 @@ export default function MealWindowsAdminPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [windows, setWindows] = useState<MealWindowsDoc['windows']>({ ...DEFAULT_MEAL_WINDOWS });
+  const [weekendWindows, setWeekendWindows] = useState<MealWindowsDoc['windows']>({ ...DEFAULT_WEEKEND_MEAL_WINDOWS });
   const [version, setVersion] = useState<number | undefined>();
 
   const load = useCallback(async () => {
@@ -29,12 +31,14 @@ export default function MealWindowsAdminPage() {
         fetchModuleVersion('mealWindows'),
       ]);
       setWindows(data.windows ?? { ...DEFAULT_MEAL_WINDOWS });
+      setWeekendWindows(data.weekendWindows ?? { ...DEFAULT_WEEKEND_MEAL_WINDOWS });
       setVersion(moduleVersion);
     } catch (err) {
       if (!(err instanceof ApiError && err.status === 404)) {
         push('error', 'Load failed', err instanceof Error ? err.message : '');
       }
       setWindows({ ...DEFAULT_MEAL_WINDOWS });
+      setWeekendWindows({ ...DEFAULT_WEEKEND_MEAL_WINDOWS });
     } finally {
       setLoading(false);
     }
@@ -51,10 +55,17 @@ export default function MealWindowsAdminPage() {
     }));
   }
 
+  function updateWeekendWindow(key: MealKey, patch: Partial<MealWindowConfig>) {
+    setWeekendWindows((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], ...patch },
+    }));
+  }
+
   async function save() {
     setSaving(true);
     try {
-      await putAdminModule('/admin/mealWindows', { campusId, windows }, version);
+      await putAdminModule('/admin/mealWindows', { campusId, windows, weekendWindows }, version);
       push('success', 'Meal windows published');
       await load();
     } catch (err) {
@@ -85,7 +96,13 @@ export default function MealWindowsAdminPage() {
         subtitle="Clock ranges used by Home and Menu to mark the current meal."
         actions={
           <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => setWindows({ ...DEFAULT_MEAL_WINDOWS })}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setWindows({ ...DEFAULT_MEAL_WINDOWS });
+                setWeekendWindows({ ...DEFAULT_WEEKEND_MEAL_WINDOWS });
+              }}
+            >
               Reset defaults
             </Button>
             <Button loading={saving} onClick={() => void save()}>
@@ -95,41 +112,84 @@ export default function MealWindowsAdminPage() {
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {MEAL_KEYS.map((key) => {
-          const row = windows[key];
-          return (
-            <Card key={key} className="space-y-3">
-              <h2 className="text-base font-semibold capitalize text-ink">{key}</h2>
-              <Field label="Label">
-                <Input
-                  value={row.label}
-                  onChange={(e) => updateWindow(key, { label: e.target.value })}
-                />
-              </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Start" hint='e.g. "7:00 AM"'>
+      <div className="space-y-4">
+        <h2 className="text-lg font-bold text-ink">Weekday Meal Windows (Monday – Friday)</h2>
+        <div className="grid gap-4 md:grid-cols-2">
+          {MEAL_KEYS.map((key) => {
+            const row = windows[key];
+            return (
+              <Card key={`weekday-${key}`} className="space-y-3">
+                <h3 className="text-base font-semibold capitalize text-ink">{key}</h3>
+                <Field label="Label">
                   <Input
-                    value={row.start}
-                    onChange={(e) => updateWindow(key, { start: e.target.value })}
+                    value={row.label}
+                    onChange={(e) => updateWindow(key, { label: e.target.value })}
                   />
                 </Field>
-                <Field label="End" hint='e.g. "10:00 AM"'>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Start" hint='e.g. "7:30 AM"'>
+                    <Input
+                      value={row.start}
+                      onChange={(e) => updateWindow(key, { start: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="End" hint='e.g. "10:00 AM"'>
+                    <Input
+                      value={row.end}
+                      onChange={(e) => updateWindow(key, { end: e.target.value })}
+                    />
+                  </Field>
+                </div>
+                <Field label="Time label (display)">
                   <Input
-                    value={row.end}
-                    onChange={(e) => updateWindow(key, { end: e.target.value })}
+                    value={row.timeLabel}
+                    onChange={(e) => updateWindow(key, { timeLabel: e.target.value })}
                   />
                 </Field>
-              </div>
-              <Field label="Time label (display)">
-                <Input
-                  value={row.timeLabel}
-                  onChange={(e) => updateWindow(key, { timeLabel: e.target.value })}
-                />
-              </Field>
-            </Card>
-          );
-        })}
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="space-y-4 pt-4">
+        <h2 className="text-lg font-bold text-ink">Weekend Meal Windows (Saturday & Sunday)</h2>
+        <div className="grid gap-4 md:grid-cols-2">
+          {MEAL_KEYS.map((key) => {
+            const row = weekendWindows[key];
+            return (
+              <Card key={`weekend-${key}`} className="space-y-3">
+                <h3 className="text-base font-semibold capitalize text-ink">{key}</h3>
+                <Field label="Label">
+                  <Input
+                    value={row.label}
+                    onChange={(e) => updateWeekendWindow(key, { label: e.target.value })}
+                  />
+                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Start" hint='e.g. "8:00 AM"'>
+                    <Input
+                      value={row.start}
+                      onChange={(e) => updateWeekendWindow(key, { start: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="End" hint='e.g. "10:30 AM"'>
+                    <Input
+                      value={row.end}
+                      onChange={(e) => updateWeekendWindow(key, { end: e.target.value })}
+                    />
+                  </Field>
+                </div>
+                <Field label="Time label (display)">
+                  <Input
+                    value={row.timeLabel}
+                    onChange={(e) => updateWeekendWindow(key, { timeLabel: e.target.value })}
+                  />
+                </Field>
+              </Card>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

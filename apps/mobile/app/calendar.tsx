@@ -8,6 +8,8 @@ import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
+import { API_BASE_URL } from '@/services/api';
+import { useModalOverlayLock } from '@/services/overlayGate';
 import type { CalendarDoc, CalendarEvent } from '@/types/campus';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
@@ -29,6 +31,7 @@ export default function CalendarScreen() {
   const calendar = useCampusModule<CalendarDoc>('calendar');
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('all');
   const [showPdf, setShowPdf] = useState(false);
+  useModalOverlayLock(showPdf);
   const webViewRef = useRef<any>(null);
 
   const events = useMemo(() => {
@@ -45,9 +48,9 @@ export default function CalendarScreen() {
     await sync();
   }, [sync]);
 
-  // Derive static PDF URL from LAN API hostname
+  // Derive static PDF URL from the same validated API base every other request uses.
   const pdfUrl = useMemo(() => {
-    const apiBase = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:6002').replace(/\/api\/v1\/?$/, '');
+    const apiBase = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
     return `${apiBase}/uploads/Academic-Calendar-AY-2026-27.pdf`;
   }, []);
 
@@ -164,16 +167,16 @@ export default function CalendarScreen() {
           pressed && styles.pressed,
         ]}
       >
-        <Ionicons name="document-text-outline" size={24} color={theme.primary} />
+        <Ionicons name="document-text-outline" size={24} color={theme.linkText} />
         <View style={{ flex: 1 }}>
-          <Text style={[styles.pdfBannerTitle, { color: theme.primary }]}>
+          <Text style={[styles.pdfBannerTitle, { color: theme.linkText }]}>
             View Official PDF Calendar
           </Text>
           <Text style={[styles.pdfBannerSubtitle, { color: theme.textMuted }]}>
             Open AY 2026-27 official calendar with zoom & search
           </Text>
         </View>
-        <Ionicons name="chevron-forward" size={20} color={theme.primary} />
+        <Ionicons name="chevron-forward" size={20} color={theme.linkText} />
       </Pressable>
 
       <View style={styles.filters}>
@@ -194,7 +197,7 @@ export default function CalendarScreen() {
               <Text
                 style={[
                   styles.chipText,
-                  { color: active ? theme.primary : theme.textMuted },
+                  { color: active ? theme.linkText : theme.textMuted },
                 ]}
               >
                 {f}
@@ -259,7 +262,7 @@ export default function CalendarScreen() {
             renderLoading={() => (
               <ActivityIndicator
                 size="large"
-                color={theme.primary}
+                color={theme.linkText}
                 style={StyleSheet.absoluteFillObject}
               />
             )}
@@ -279,7 +282,7 @@ function EventRow({ event }: { event: CalendarEvent }) {
         { backgroundColor: theme.surface, borderColor: theme.border },
       ]}
     >
-      <Text style={[styles.type, { color: theme.primary }]}>
+      <Text style={[styles.type, { color: theme.linkText }]}>
         {event.type.toUpperCase()}
       </Text>
       <Text style={[styles.title, { color: theme.text }]}>{event.title}</Text>

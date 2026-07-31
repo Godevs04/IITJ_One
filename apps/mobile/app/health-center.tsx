@@ -86,8 +86,19 @@ export default function HealthCenterScreen() {
   const theme = useThemeColors();
   const { syncing, sync, error } = useCampusSync(false);
   const synced = useCampusModule<HealthCenterDoc>('healthCenter');
-  const doc: Omit<HealthCenterDoc, 'campusId'> = synced ?? {
+  const doc: Omit<HealthCenterDoc, 'campusId'> = {
     ...DEFAULT_HEALTH_CENTER_DOC,
+    ...synced,
+    medicalOfficers: synced?.medicalOfficers?.length ? synced.medicalOfficers : DEFAULT_HEALTH_CENTER_DOC.medicalOfficers,
+    visitingSpecialists: synced?.visitingSpecialists?.length
+      ? synced.visitingSpecialists
+      : DEFAULT_HEALTH_CENTER_DOC.visitingSpecialists,
+    doctorSchedules: synced?.doctorSchedules?.length ? synced.doctorSchedules : DEFAULT_HEALTH_CENTER_DOC.doctorSchedules,
+    hospitals: synced?.hospitals?.length ? synced.hospitals : DEFAULT_HEALTH_CENTER_DOC.hospitals,
+    contacts: (synced?.contacts?.length ? synced.contacts : DEFAULT_HEALTH_CENTER_DOC.contacts).filter(
+      (c) => !['Campus Security', 'Ambulance', 'Fire'].includes(c.label) && !['100', '108', '101'].includes(c.phone),
+    ),
+    services: synced?.services?.length ? synced.services : DEFAULT_HEALTH_CENTER_DOC.services,
   };
 
   const dateTabs = useMemo(

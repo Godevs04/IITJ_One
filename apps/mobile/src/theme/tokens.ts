@@ -33,6 +33,7 @@ export const AppColors = {
   stitchOnSurface: '#1A1C1E',
   errorContainer: '#FFDAD6',
   errorContainerDark: '#442726',
+  indigoGlow: '#7BA7D9',
 } as const;
 
 export const AppSpacing = {
@@ -137,6 +138,15 @@ export interface ThemeColors {
   border: string;
   primary: string;
   onPrimary: string;
+  /**
+   * Same brand accent as `primary`, but guaranteed readable as bare text/icon color
+   * directly on the screen background — `primary` itself is also used as a *button*
+   * background (paired with `onPrimary` text), so in dark mode it's a dark navy that
+   * looks fine filled but is nearly invisible (WCAG contrast ~1.1–1.6) as foreground
+   * text against the same dark surfaces. Use this for any Text/Icon `color:` that
+   * isn't paired with its own `primary`-colored background.
+   */
+  linkText: string;
   accent: string;
   primaryTint: string;
   secondary: string;
@@ -181,6 +191,7 @@ export function getThemeColors(scheme: ColorScheme): ThemeColors {
       border: AppColors.surfaceNightRaised,
       primary: AppColors.jodhpurIndigo,
       onPrimary: AppColors.desertSand,
+      linkText: AppColors.indigoGlow,
       accent: AppColors.duskDark,
       primaryTint: AppColors.surfaceNightRaised,
       secondary: AppColors.sandstoneDark,
@@ -224,6 +235,7 @@ export function getThemeColors(scheme: ColorScheme): ThemeColors {
     border: AppColors.borderNeutral,
     primary: AppColors.stitchPrimary,
     onPrimary: AppColors.white,
+    linkText: AppColors.stitchPrimary,
     accent: AppColors.tharDusk,
     primaryTint: AppColors.indigoTint,
     secondary: AppColors.stitchSecondary,

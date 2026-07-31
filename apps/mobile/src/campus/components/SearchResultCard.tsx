@@ -52,7 +52,7 @@ export function SearchResultCard({
     <View style={[styles.container, { borderColor: theme.border }]}>
       <View style={styles.header}>
         <View style={[styles.categoryIcon, { backgroundColor: theme.primaryTint }]}>
-          <Ionicons name={categoryInfo.icon} size={18} color={theme.primary} />
+          <Ionicons name={categoryInfo.icon} size={18} color={theme.linkText} />
         </View>
 
         <View style={styles.content}>
@@ -68,7 +68,7 @@ export function SearchResultCard({
                   style={[
                     styles.fieldText,
                     {
-                      color: segment.isMatch ? theme.primary : theme.textMuted,
+                      color: segment.isMatch ? theme.linkText : theme.textMuted,
                       fontWeight: segment.isMatch ? '600' : '400',
                       backgroundColor: segment.isMatch
                         ? theme.primaryTint
@@ -84,8 +84,8 @@ export function SearchResultCard({
         </View>
 
         <View style={[styles.badge, { backgroundColor: theme.primaryTint }]}>
-          <Ionicons name={MATCH_TYPE_ICONS[matchType]} size={12} color={theme.primary} />
-          <Text style={[styles.badgeText, { color: theme.primary }]}>
+          <Ionicons name={MATCH_TYPE_ICONS[matchType]} size={12} color={theme.linkText} />
+          <Text style={[styles.badgeText, { color: theme.linkText }]}>
             {MATCH_TYPE_LABELS[matchType]}
           </Text>
         </View>

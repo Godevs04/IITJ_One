@@ -35,6 +35,10 @@ export const SYNC_MODULES = [
   'menu', 'notices', 'transport', 'calendar', 'portals', 'apps', 'map',
   'services', 'healthCenter', 'about', 'laundry', 'wifi', 'erickshaw',
   'mealWindows', 'holidays', 'transportAlerts', 'temporaryTransportSchedule',
+  'messMenuVeg', 'messMenuNonVeg',
+  'campusDirectoryDepartments', 'campusDirectoryPeople',
+  'campusDirectoryOrganizations', 'campusDirectoryRoles',
+  'campaigns',
 ] as const;
 
 export type SyncModule = (typeof SYNC_MODULES)[number];
@@ -103,13 +107,44 @@ const VERSION_KEY: Record<SyncModule, string> = {
   healthCenter: 'healthCenter', about: 'about', laundry: 'laundry', wifi: 'wifi',
   erickshaw: 'erickshaw', mealWindows: 'mealWindows', holidays: 'holidays',
   transportAlerts: 'transportAlerts', temporaryTransportSchedule: 'temporaryTransportSchedule',
+  messMenuVeg: 'messMenuVeg', messMenuNonVeg: 'messMenuNonVeg',
+  campusDirectoryDepartments: 'campusDirectoryDepartments', campusDirectoryPeople: 'campusDirectoryPeople',
+  campusDirectoryOrganizations: 'campusDirectoryOrganizations', campusDirectoryRoles: 'campusDirectoryRoles',
+  campaigns: 'campaigns',
+};
+
+/**
+ * messMenuVeg/messMenuNonVeg aren't real URL paths — the actual endpoint is
+ * the single `/messMenu` route disambiguated by a `menuType` query param.
+ * getModule()'s `module` argument is otherwise used literally as the URL
+ * path, so these two need a path + query override. Campus Directory's four
+ * modules are nested under `/campusDirectory/*` rather than being top-level
+ * paths, so they need the same path override (no query needed).
+ */
+const MODULE_ENDPOINT: Partial<Record<SyncModule, { path: string; query: Record<string, string> }>> = {
+  messMenuVeg: { path: 'messMenu', query: { menuType: 'veg' } },
+  messMenuNonVeg: { path: 'messMenu', query: { menuType: 'non-veg' } },
+  campusDirectoryDepartments: { path: 'campusDirectory/departments', query: {} },
+  campusDirectoryPeople: { path: 'campusDirectory/people', query: {} },
+  campusDirectoryOrganizations: { path: 'campusDirectory/organizations', query: {} },
+  campusDirectoryRoles: { path: 'campusDirectory/roles', query: {} },
 };
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
 
+const WRAPPED_LIST_KEY: Partial<Record<SyncModule, string>> = {
+  notices: 'notices',
+  campusDirectoryDepartments: 'departments',
+  campusDirectoryPeople: 'people',
+  campusDirectoryOrganizations: 'organizations',
+  campusDirectoryRoles: 'roles',
+  campaigns: 'campaigns',
+};
+
 function normalizeModuleData(module: SyncModule, raw: unknown): unknown {
-  if (module === 'notices' && raw && typeof raw === 'object' && 'notices' in raw) {
-    return (raw as { notices: unknown }).notices;
+  const key = WRAPPED_LIST_KEY[module];
+  if (key && raw && typeof raw === 'object' && key in raw) {
+    return (raw as Record<string, unknown>)[key];
   }
   return raw;
 }
@@ -266,9 +301,10 @@ class SyncEngine {
         SYNC_MODULES.map(async (module) => {
           const serverVersion = manifest.versions[VERSION_KEY[module]] ?? 0;
           const localVersion = getCachedVersion(module);
+          const hasCache = getCachedJson(module) !== null;
 
-          // Incremental: skip if already up-to-date
-          if (serverVersion <= localVersion) {
+          // Incremental: skip only if local version matches server version and cache exists
+          if (serverVersion === localVersion && hasCache) {
             this.updateModuleStatus(module, 'success', null);
             return;
           }
@@ -322,7 +358,8 @@ class SyncEngine {
 
     for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
       try {
-        const raw = await getModule<unknown>(module, CAMPUS_ID);
+        const endpoint = MODULE_ENDPOINT[module];
+        const raw = await getModule<unknown>(endpoint?.path ?? module, CAMPUS_ID, endpoint?.query);
         const data = normalizeModuleData(module, raw);
         this.state.modules[module].retryCount = 0;
         return { outcome: 'success', data };

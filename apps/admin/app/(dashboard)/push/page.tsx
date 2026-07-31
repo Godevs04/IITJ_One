@@ -13,6 +13,7 @@ import {
   StatusPill,
 } from '@/components/ui';
 import { useToast } from '@/components/Toast';
+import { optimizeCloudinaryUrl } from '@/lib/cloudinary';
 import type { PushHistoryDoc } from '@/lib/types';
 
 const TOPICS = [
@@ -34,6 +35,7 @@ const DEEP_LINK_SCREENS = [
   { value: 'menu', label: 'Mess' },
   { value: 'mess-qr', label: 'Mess QR' },
   { value: 'notices', label: 'Notices' },
+  { value: 'discover', label: 'Discover (campaign list)' },
   { value: 'calendar', label: 'Calendar' },
   { value: 'laundry', label: 'Laundry' },
   { value: 'healthCenter', label: 'Health Center' },
@@ -225,7 +227,7 @@ export default function PushAdminPage() {
                 {imageUrl.trim() ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={imageUrl.trim()}
+                    src={optimizeCloudinaryUrl(imageUrl.trim(), 500)}
                     alt=""
                     className="mt-2 max-h-32 w-full rounded-lg object-cover"
                   />

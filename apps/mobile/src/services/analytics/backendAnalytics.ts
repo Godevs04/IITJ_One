@@ -65,7 +65,7 @@ let sessionId: string | null = null;
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 let initialized = false;
 
-function currentAppVersion(): string {
+export function currentAppVersion(): string {
   return Constants.expoConfig?.version ?? '1.0.0';
 }
 

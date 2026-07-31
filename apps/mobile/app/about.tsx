@@ -80,7 +80,7 @@ function ContactRow({
       ]}
     >
       <View style={styles.contactLeft}>
-        <Ionicons name={icon} size={20} color={theme.primary} />
+        <Ionicons name={icon} size={20} color={theme.linkText} />
         <View>
           <Text style={[styles.contactLabel, { color: theme.textMuted }]}>
             {label}
@@ -116,7 +116,7 @@ export default function AboutScreen() {
       error={error}
     >
       <View style={[styles.disclaimer, { backgroundColor: theme.primaryTint }]}>
-        <Text style={[styles.disclaimerText, { color: theme.primary }]}>
+        <Text style={[styles.disclaimerText, { color: theme.linkText }]}>
           {DISCLAIMER}
         </Text>
       </View>

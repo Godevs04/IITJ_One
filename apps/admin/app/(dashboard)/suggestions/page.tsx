@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { SUGGESTION_CATEGORIES, SUGGESTION_CATEGORY_LABELS, type SuggestionCategory } from '@iitj1/types';
 import { apiFetch } from '@/lib/api';
 import { Button } from '@/components/Button';
 import {
@@ -15,13 +16,19 @@ import type { SuggestionDoc } from '@/lib/types';
 
 type Status = 'new' | 'read' | 'archived';
 
-const FILTERS: Array<Status | 'all'> = ['all', 'new', 'read', 'archived'];
+const STATUS_FILTERS: Array<Status | 'all'> = ['all', 'new', 'read', 'archived'];
+const CATEGORY_FILTERS: Array<SuggestionCategory | 'all'> = ['all', ...SUGGESTION_CATEGORIES];
+
+function categoryLabel(category: SuggestionCategory | 'all'): string {
+  return category === 'all' ? 'All' : SUGGESTION_CATEGORY_LABELS[category];
+}
 
 export default function SuggestionsAdminPage() {
   const { push } = useToast();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<SuggestionDoc[]>([]);
   const [filter, setFilter] = useState<Status | 'all'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<SuggestionCategory | 'all'>('all');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -35,6 +42,7 @@ export default function SuggestionsAdminPage() {
         {
           query: {
             status: filter === 'all' ? undefined : filter,
+            category: categoryFilter === 'all' ? undefined : categoryFilter,
             page: String(page),
             limit: String(pageSize),
           },
@@ -47,7 +55,7 @@ export default function SuggestionsAdminPage() {
     } finally {
       setLoading(false);
     }
-  }, [push, filter, page]);
+  }, [push, filter, categoryFilter, page]);
 
   useEffect(() => {
     void load();
@@ -55,6 +63,11 @@ export default function SuggestionsAdminPage() {
 
   function changeFilter(f: Status | 'all') {
     setFilter(f);
+    setPage(1);
+  }
+
+  function changeCategoryFilter(c: SuggestionCategory | 'all') {
+    setCategoryFilter(c);
     setPage(1);
   }
 
@@ -83,8 +96,8 @@ export default function SuggestionsAdminPage() {
   return (
     <div>
       <PageHeader
-        title="Suggestions inbox"
-        subtitle="Anonymous feedback from the mobile Suggest Something screen — no student PII."
+        title="Feedback & Suggestions inbox"
+        subtitle="Feedback from the mobile Feedback & Suggestions screen — contact details are optional and only present if the student chose to share them."
         actions={
           <Button variant="secondary" onClick={() => void load()}>
             Refresh
@@ -92,8 +105,8 @@ export default function SuggestionsAdminPage() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        {FILTERS.map((f) => (
+      <div className="mb-2 flex flex-wrap gap-2">
+        {STATUS_FILTERS.map((f) => (
           <button
             key={f}
             type="button"
@@ -109,17 +122,39 @@ export default function SuggestionsAdminPage() {
         ))}
       </div>
 
+      <div className="mb-4 flex flex-wrap gap-2">
+        {CATEGORY_FILTERS.map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => changeCategoryFilter(c)}
+            className={`rounded-xl border px-3 py-1.5 text-sm transition ${
+              categoryFilter === c
+                ? 'border-indigo bg-indigo-tint text-indigo'
+                : 'border-border bg-white text-muted hover:text-ink'
+            }`}
+          >
+            {categoryLabel(c)}
+          </button>
+        ))}
+      </div>
+
       {rows.length === 0 ? (
         <EmptyState title="Inbox empty" message="No suggestions in this filter." />
       ) : (
         <div className="-mx-1 overflow-x-auto scroll-thin px-1">
-          <div className="min-w-[640px] overflow-hidden rounded-2xl border border-border bg-white shadow-card">
+          <div className="min-w-[960px] overflow-hidden rounded-2xl border border-border bg-white shadow-card">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-border bg-sand/60 text-xs uppercase tracking-wide text-muted">
               <tr>
                 <th className="px-4 py-3 font-medium">When</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Category</th>
                 <th className="px-4 py-3 font-medium">Message</th>
+                <th className="px-4 py-3 font-medium">Name</th>
+                <th className="px-4 py-3 font-medium">Email</th>
+                <th className="px-4 py-3 font-medium">Platform</th>
+                <th className="px-4 py-3 font-medium">App Version</th>
                 <th className="px-4 py-3 font-medium">Triage</th>
               </tr>
             </thead>
@@ -147,7 +182,18 @@ export default function SuggestionsAdminPage() {
                         }
                       />
                     </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-ink">
+                      {s.category ? SUGGESTION_CATEGORY_LABELS[s.category] : '—'}
+                    </td>
                     <td className="max-w-xs px-4 py-3 text-ink sm:max-w-md">{s.message}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-ink">
+                      {s.name?.trim() ? s.name : <span className="italic text-muted">Anonymous</span>}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-ink">
+                      {s.email?.trim() ? s.email : '—'}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-muted">{s.platform ?? '—'}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-muted">{s.appVersion ?? '—'}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
                         {status !== 'read' ? (

@@ -1,12 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { WEEKDAYS, monthNumberToName } from '@iitj1/types';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
 import { useSwipeGesture } from '@/navigation/SwipeContext';
-import type { MenuDoc } from '@/types/campus';
+import { useModalOverlayLock } from '@/services/overlayGate';
+import type { MessMenuDoc } from '@/types/campus';
 import { getMealTimeStatus, getMealWindows } from '@/utils/date';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
@@ -27,73 +29,43 @@ const MEAL_ICONS: Record<string, string> = {
   dinner: 'restaurant-outline',
 };
 
-function splitDishes(value: string): string[] {
-  return value
-    .split(/[,;]/)
-    .map((s) => s.trim())
-    .filter(Boolean);
+const WEEKDAY_NAMES_BY_JS_DAY = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+function todayWeekdayName(): string {
+  return WEEKDAY_NAMES_BY_JS_DAY[new Date().getDay()];
 }
 
 export default function MenuScreen() {
   const theme = useThemeColors();
   const { syncing, sync, error } = useCampusSync(false);
   const { lockSwipe, unlockSwipe } = useSwipeGesture();
-  const menu = useCampusModule<MenuDoc>('menu');
-  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
+  const vegMenu = useCampusModule<MessMenuDoc>('messMenuVeg');
+  const nonVegMenu = useCampusModule<MessMenuDoc>('messMenuNonVeg');
   const [dietPreference, setDietPreference] = useState<'veg' | 'nonVeg'>('veg');
+  const [selectedWeekday, setSelectedWeekday] = useState<string>(() => todayWeekdayName());
   const [showCharges, setShowCharges] = useState(false);
+  useModalOverlayLock(showCharges);
 
-  const scrollViewRef = useRef<ScrollView>(null);
-  const { width: screenWidth } = useWindowDimensions();
+  const menu =
+    dietPreference === 'veg'
+      ? (vegMenu ?? nonVegMenu)
+      : (nonVegMenu ?? vegMenu);
 
-  const isDateToday = useCallback((d: Date) => {
-    const today = new Date();
-    return (
-      d.getDate() === today.getDate() &&
-      d.getMonth() === today.getMonth() &&
-      d.getFullYear() === today.getFullYear()
-    );
-  }, []);
-
-  const getYearMonthString = useCallback((d: Date) => {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    return `${y}-${m}`;
-  }, []);
-
-  const getWeekdayName = useCallback((d: Date) => {
-    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    return dayNames[d.getDay()];
-  }, []);
-
-  const isMenuAvailable = useMemo(() => {
-    if (!menu) return false;
-    return getYearMonthString(selectedDate) === menu.month;
-  }, [menu, selectedDate, getYearMonthString]);
-
+  // Robust case-insensitive weekday matching with fallback to first day if missing
   const dayMenu = useMemo(() => {
-    if (!menu || !isMenuAvailable) return null;
-    const weekday = getWeekdayName(selectedDate);
-    return menu.days.find((d) => d.dayName === weekday) || null;
-  }, [menu, selectedDate, isMenuAvailable, getWeekdayName]);
+    if (!menu?.days || menu.days.length === 0) return null;
+    const target = selectedWeekday.trim().toLowerCase();
+    return (
+      menu.days.find((d) => d.day.trim().toLowerCase() === target) ??
+      menu.days[0]
+    );
+  }, [menu, selectedWeekday]);
 
   const onRefresh = useCallback(async () => {
     await sync();
   }, [sync]);
 
-  const scrollDays = useMemo(() => {
-    const list = [];
-    const today = new Date();
-    // 15 days before and 15 days after today
-    for (let i = -15; i <= 15; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      list.push(d);
-    }
-    return list;
-  }, []);
-
-  debugListKeys('MenuScreen', 'dayStrip', scrollDays, (day) => day.toISOString());
+  debugListKeys('MenuScreen', 'weekdayStrip', WEEKDAYS, (day) => day);
   debugListKeys('MenuScreen', 'mealCharges', [
     { meal: 'Breakfast', veg: '₹45', nonVeg: '₹45' },
     { meal: 'Lunch', veg: '₹75', nonVeg: '₹80' },
@@ -101,51 +73,21 @@ export default function MenuScreen() {
     { meal: 'Dinner', veg: '₹75', nonVeg: '₹80' },
   ], (item) => item.meal);
 
-  const isSelectedToday = useMemo(() => isDateToday(selectedDate), [selectedDate, isDateToday]);
+  const isSelectedToday =
+    selectedWeekday.trim().toLowerCase() === todayWeekdayName().trim().toLowerCase();
 
-  const formattedMonth = useMemo(() => {
-    const options: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric' };
-    return selectedDate.toLocaleDateString('en-US', options);
-  }, [selectedDate]);
-
-  // Center scroll helper
-  const centerIndex = useCallback((index: number, animated = true) => {
-    const itemWidth = 70; // 62px width + 8px gap
-    const offset = index * itemWidth - screenWidth / 2 + itemWidth / 2;
-    scrollViewRef.current?.scrollTo({ x: offset, animated });
-  }, [screenWidth]);
-
-  // Auto scroll to today on load
-  useEffect(() => {
-    if (!menu) return;
-    const timer = setTimeout(() => {
-      centerIndex(15, false); // Today is at index 15 in the scrollDays list
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [menu, centerIndex]);
-
-  const handleSelectDate = useCallback((d: Date, index: number) => {
-    setSelectedDate(d);
-    centerIndex(index, true);
-  }, [centerIndex]);
-
-  const handleGoToToday = useCallback(() => {
-    const today = new Date();
-    setSelectedDate(today);
-    centerIndex(15, true);
-  }, [centerIndex]);
+  const subtitle = menu ? `${monthNumberToName(menu.month)} ${menu.year} — weekly rotation` : undefined;
 
   return (
     <ScreenShell
       title="Mess Menu"
-      subtitle={`Month: ${formattedMonth}`}
+      subtitle={subtitle}
       onRefresh={onRefresh}
       refreshing={syncing}
       error={error}
     >
       {menu ? (
         <ScrollView
-          ref={scrollViewRef}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.dayStripScroll}
@@ -153,48 +95,37 @@ export default function MenuScreen() {
           onScrollEndDrag={unlockSwipe}
           onMomentumScrollEnd={unlockSwipe}
         >
-          {scrollDays.map((d, idx) => {
-            const active = selectedDate.getDate() === d.getDate() &&
-                           selectedDate.getMonth() === d.getMonth() &&
-                           selectedDate.getFullYear() === d.getFullYear();
-            
-            const dayNum = String(d.getDate());
-            const shortDay = getWeekdayName(d).slice(0, 3).toUpperCase();
-            const isToday = isDateToday(d);
+          {WEEKDAYS.map((day) => {
+            const active = day === selectedWeekday;
+            const isToday = day === todayWeekdayName();
 
             return (
-              <View key={d.toISOString()} style={styles.dayCardWrapper}>
+              <View key={day} style={styles.dayCardWrapper}>
                 {active ? (
                   <View style={[styles.activeDayOuter, { borderColor: theme.primary }]}>
                     <Pressable
-                      onPress={() => handleSelectDate(d, idx)}
+                      onPress={() => setSelectedWeekday(day)}
                       style={[styles.dayCard, { backgroundColor: theme.primary }]}
                     >
                       <Text style={[styles.activeDayNameText, { color: theme.onPrimary }]}>
-                        {shortDay}
-                      </Text>
-                      <Text style={[styles.activeDayNumText, { color: theme.onPrimary }]}>
-                        {dayNum}
+                        {day.slice(0, 3).toUpperCase()}
                       </Text>
                     </Pressable>
                   </View>
                 ) : (
                   <Pressable
-                    onPress={() => handleSelectDate(d, idx)}
+                    onPress={() => setSelectedWeekday(day)}
                     style={[styles.dayCard, { backgroundColor: theme.chipBackground }]}
                   >
                     <Text style={[
-                      styles.dayNameText, 
-                      { color: isToday ? theme.accent : theme.textMuted, fontWeight: isToday ? 'bold' : '600' }
+                      styles.dayNameText,
+                      { color: isToday ? theme.accent : theme.textMuted, fontWeight: isToday ? 'bold' : '600' },
                     ]}>
-                      {shortDay}
+                      {day.slice(0, 3).toUpperCase()}
                     </Text>
-                    <Text style={[
-                      styles.dayNumText, 
-                      { color: isToday ? theme.accent : theme.text, fontWeight: isToday ? 'bold' : '700' }
-                    ]}>
-                      {dayNum}
-                    </Text>
+                    {isToday ? (
+                      <Text style={[styles.dayNumText, { color: theme.accent, fontSize: 10 }]}>Today</Text>
+                    ) : null}
                   </Pressable>
                 )}
               </View>
@@ -215,7 +146,7 @@ export default function MenuScreen() {
         >
           {!isSelectedToday && (
             <Pressable
-              onPress={handleGoToToday}
+              onPress={() => setSelectedWeekday(todayWeekdayName())}
               style={[
                 styles.toggleButton,
                 {
@@ -224,8 +155,8 @@ export default function MenuScreen() {
                 },
               ]}
             >
-              <Ionicons name="today-outline" size={15} color={theme.primary} />
-              <Text style={[styles.toggleButtonText, { color: theme.primary, fontWeight: 'bold' }]}>
+              <Ionicons name="today-outline" size={15} color={theme.linkText} />
+              <Text style={[styles.toggleButtonText, { color: theme.linkText, fontWeight: 'bold' }]}>
                 Today
               </Text>
             </Pressable>
@@ -248,7 +179,7 @@ export default function MenuScreen() {
                 { color: dietPreference === 'veg' ? theme.veg : theme.textMuted },
               ]}
             >
-              Vegetarian
+              Veg Mess
             </Text>
           </Pressable>
           <Pressable
@@ -269,7 +200,7 @@ export default function MenuScreen() {
                 { color: dietPreference === 'nonVeg' ? theme.nonVeg : theme.textMuted },
               ]}
             >
-              Non-Vegetarian
+              Non-Veg Mess
             </Text>
           </Pressable>
           <Pressable
@@ -292,15 +223,14 @@ export default function MenuScreen() {
 
       {dayMenu ? (
         MEALS.map((meal) => {
-          const items = dayMenu[meal];
-          const dishesStr = dietPreference === 'veg' ? items.veg : items.nonVeg;
-          const dishes = splitDishes(dishesStr);
+          const items = dayMenu.meals[meal];
 
-          debugListKeys('MenuScreen', `${meal}Dishes`, dishes, (_, index) => `${index}`);
+          debugListKeys('MenuScreen', `${meal}VegItems`, items.vegItems, (_, index) => `${index}`);
+          debugListKeys('MenuScreen', `${meal}NonVegItems`, items.nonVegItems, (_, index) => `${index}`);
 
           const isToday = isSelectedToday;
-          const timeStatus = isToday ? getMealTimeStatus(meal) : null;
-          const mealWindow = getMealWindows()[meal];
+          const timeStatus = isToday ? getMealTimeStatus(meal, selectedWeekday) : null;
+          const mealWindow = getMealWindows(selectedWeekday)[meal];
 
           const isActive = timeStatus?.status === 'active';
 
@@ -322,9 +252,9 @@ export default function MenuScreen() {
                   <Ionicons
                     name={MEAL_ICONS[meal] as any}
                     size={22}
-                    color={theme.primary}
+                    color={theme.linkText}
                   />
-                  <Text style={[styles.mealTitle, { color: theme.primary }]}>
+                  <Text style={[styles.mealTitle, { color: theme.linkText }]}>
                     {MEAL_LABELS[meal]}
                   </Text>
                 </View>
@@ -361,41 +291,62 @@ export default function MenuScreen() {
               {/* Divider */}
               <View style={[styles.cardDivider, { backgroundColor: theme.border }]} />
 
-              {/* Dishes Grid */}
-              <View style={styles.dishesGrid}>
-                {dishes.map((dish, idx) => {
-                  return (
-                    <View key={idx} style={styles.dishGridItem}>
-                      <View style={styles.dishRow}>
-                        <View style={[styles.dishDot, { backgroundColor: dietPreference === 'veg' ? theme.veg : theme.nonVeg }]} />
-                        <View style={styles.dishTextContainer}>
-                          <Text style={[styles.dishText, { color: theme.text }]}>
-                            {dish}
-                          </Text>
+              {/* Veg / Non-Veg / Always Served sections */}
+              {items.vegItems.length > 0 ? (
+                <View style={styles.dishSection}>
+                  <Text style={[styles.dishSectionLabel, { color: theme.veg }]}>VEG</Text>
+                  <View style={styles.dishesGrid}>
+                    {items.vegItems.map((dish, idx) => (
+                      <View key={idx} style={styles.dishGridItem}>
+                        <View style={styles.dishRow}>
+                          <View style={[styles.dishDot, { backgroundColor: theme.veg }]} />
+                          <Text style={[styles.dishText, { color: theme.text }]}>{dish}</Text>
                         </View>
                       </View>
-                    </View>
-                  );
-                })}
-              </View>
+                    ))}
+                  </View>
+                </View>
+              ) : null}
+
+              {items.nonVegItems.length > 0 ? (
+                <View style={styles.dishSection}>
+                  <Text style={[styles.dishSectionLabel, { color: theme.nonVeg }]}>NON-VEG</Text>
+                  <View style={styles.dishesGrid}>
+                    {items.nonVegItems.map((dish, idx) => (
+                      <View key={idx} style={styles.dishGridItem}>
+                        <View style={styles.dishRow}>
+                          <View style={[styles.dishDot, { backgroundColor: theme.nonVeg }]} />
+                          <Text style={[styles.dishText, { color: theme.text }]}>{dish}</Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              ) : null}
+
+              {items.compulsoryItems.length > 0 ? (
+                <View style={styles.dishSection}>
+                  <Text style={[styles.dishSectionLabel, { color: theme.textMuted }]}>ALWAYS SERVED</Text>
+                  <View style={styles.dishesGrid}>
+                    {items.compulsoryItems.map((dish, idx) => (
+                      <View key={idx} style={styles.dishGridItem}>
+                        <View style={styles.dishRow}>
+                          <View style={[styles.dishDot, { backgroundColor: theme.textMuted }]} />
+                          <Text style={[styles.dishText, { color: theme.text }]}>{dish}</Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              ) : null}
             </View>
           );
         })
-      ) : menu ? (
-        <EmptyState
-          icon="calendar-outline"
-          title="Menu not available"
-          message={`No menu is available for ${selectedDate.toLocaleDateString('en-US', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          })}.`}
-        />
       ) : (
         <EmptyState
           icon="restaurant-outline"
-          title="No menu loaded"
-          message="Pull down to sync campus menu data."
+          title={`${dietPreference === 'veg' ? 'Veg' : 'Non-Veg'} menu not available`}
+          message="This month's menu hasn't been published yet — pull down to sync, or check back later."
         />
       )}
 
@@ -426,7 +377,7 @@ export default function MenuScreen() {
 
             <ScrollView showsVerticalScrollIndicator={false}>
               {/* Regular Users */}
-              <Text style={[styles.sectionHeading, { color: theme.primary }]}>
+              <Text style={[styles.sectionHeading, { color: theme.linkText }]}>
                 Regular Users (Per Day)
               </Text>
               <Text style={[styles.sectionDescription, { color: theme.textMuted }]}>
@@ -446,7 +397,7 @@ export default function MenuScreen() {
               </View>
 
               {/* Meal-wise Users */}
-              <Text style={[styles.sectionHeading, { color: theme.primary, marginTop: AppSpacing.md }]}>
+              <Text style={[styles.sectionHeading, { color: theme.linkText, marginTop: AppSpacing.md }]}>
                 Meal-wise Users (Pay & Use)
               </Text>
               <Text style={[styles.sectionDescription, { color: theme.textMuted }]}>
@@ -474,8 +425,8 @@ export default function MenuScreen() {
 
               {/* Footer / Queries */}
               <View style={[styles.queryContainer, { backgroundColor: theme.primaryTint }]}>
-                <Ionicons name="mail-outline" size={18} color={theme.primary} />
-                <Text style={[styles.queryText, { color: theme.primary }]}>
+                <Ionicons name="mail-outline" size={18} color={theme.linkText} />
+                <Text style={[styles.queryText, { color: theme.linkText }]}>
                   For queries, contact Mess Office at mess@iitj.ac.in
                 </Text>
               </View>
@@ -488,27 +439,13 @@ export default function MenuScreen() {
 }
 
 const styles = StyleSheet.create({
-  navigationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: AppSpacing.xs,
-  },
-  navArrow: {
-    width: 38,
-    height: 66,
-    borderRadius: 8,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   dayStripScroll: {
     flexDirection: 'row',
     gap: AppSpacing.sm,
     paddingVertical: AppSpacing.sm,
   },
   dayCardWrapper: {
-    height: 80,
+    height: 66,
     width: 62,
     justifyContent: 'center',
     alignItems: 'center',
@@ -521,8 +458,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dayCard: {
-    width: 52,
-    height: 66,
+    width: 58,
+    height: 58,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -531,22 +468,16 @@ const styles = StyleSheet.create({
   dayNameText: {
     ...AppTypography.caption,
     fontWeight: '600',
-    fontSize: 10,
+    fontSize: 11,
   },
   dayNumText: {
-    ...AppTypography.body,
+    ...AppTypography.caption,
     fontWeight: '700',
-    fontSize: 16,
   },
   activeDayNameText: {
     ...AppTypography.caption,
     fontWeight: '600',
-    fontSize: 10,
-  },
-  activeDayNumText: {
-    ...AppTypography.body,
-    fontWeight: '700',
-    fontSize: 16,
+    fontSize: 11,
   },
   toggleStripScroll: {
     marginTop: AppSpacing.md,
@@ -626,6 +557,16 @@ const styles = StyleSheet.create({
     height: 1,
     marginVertical: AppSpacing.sm,
   },
+  dishSection: {
+    marginBottom: AppSpacing.sm,
+  },
+  dishSectionLabel: {
+    ...AppTypography.caption,
+    fontWeight: '700',
+    fontSize: 10,
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
   dishesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -640,13 +581,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: AppSpacing.xs,
   },
-  dishTextContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 4,
-  },
   dishDot: {
     width: 6,
     height: 6,
@@ -657,20 +591,7 @@ const styles = StyleSheet.create({
     ...AppTypography.bodySmall,
     fontSize: 13,
     lineHeight: 18,
-  },
-  specialDishText: {
-    fontWeight: '600',
-  },
-  miniSpecialBadge: {
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: AppRadius.sm,
-    marginLeft: 2,
-  },
-  miniSpecialBadgeText: {
-    ...AppTypography.caption,
-    fontSize: 9,
-    fontWeight: '700',
+    flex: 1,
   },
   modalOverlay: {
     flex: 1,
@@ -769,4 +690,3 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 });
-

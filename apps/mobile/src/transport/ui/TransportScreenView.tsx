@@ -495,8 +495,8 @@ export function TransportScreenView({
               pressed && styles.pressed,
             ]}
           >
-            <Ionicons name="information-circle-outline" size={16} color={theme.primary} />
-            <Text style={[styles.updatesText, { color: theme.primary }]}>
+            <Ionicons name="information-circle-outline" size={16} color={theme.linkText} />
+            <Text style={[styles.updatesText, { color: theme.linkText }]}>
               For latest official schedule updates, click here
             </Text>
           </Pressable>
@@ -548,7 +548,7 @@ export function TransportScreenView({
                   <Ionicons
                     name={alert.priority === 'critical' ? 'warning' : 'notifications'}
                     size={16}
-                    color={alert.priority === 'critical' ? '#EF4444' : theme.primary}
+                    color={alert.priority === 'critical' ? '#EF4444' : theme.linkText}
                   />
                   <Text style={{ fontSize: 13, fontWeight: '700', color: theme.text }}>
                     {alert.title}

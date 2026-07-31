@@ -92,7 +92,7 @@ function TripCardComponent({ item, isFavorited, onToggleFavorite, direction, liv
       case 'boarding':
         return theme.accent;
       default:
-        return theme.primary;
+        return theme.linkText;
     }
   };
 

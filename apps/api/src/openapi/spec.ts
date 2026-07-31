@@ -76,6 +76,13 @@ export const openApiSpec = {
         schema: { type: 'string' },
         description: 'Mongo ObjectId of the materialized trip',
       },
+      MenuTypeQuery: {
+        name: 'menuType',
+        in: 'query',
+        required: true,
+        schema: { type: 'string', enum: ['veg', 'non-veg'] },
+        description: 'Which mess menu document (veg or non-veg)',
+      },
     },
     schemas: {
       Error: {
@@ -318,6 +325,38 @@ export const openApiSpec = {
             },
           },
         ],
+      },
+      MessMenuDoc: {
+        allOf: [
+          { $ref: '#/components/schemas/CampusIdBody' },
+          {
+            type: 'object',
+            properties: {
+              menuType: { type: 'string', enum: ['veg', 'non-veg'] },
+              month: { type: 'integer', minimum: 1, maximum: 12, description: 'Numeric month, never a localized string' },
+              year: { type: 'integer' },
+              days: { type: 'array', items: { type: 'object', additionalProperties: true }, minItems: 7, maxItems: 7 },
+              status: { type: 'string', enum: ['draft', 'published'] },
+              version: { type: 'integer', description: 'Independent per-document version, bumped only on publish' },
+              publishedAt: { type: 'string', nullable: true },
+              publishedBy: { type: 'string', nullable: true },
+              updatedAt: { type: 'string' },
+              updatedBy: { type: 'string' },
+            },
+          },
+        ],
+      },
+      MessMenuHistoryEntry: {
+        type: 'object',
+        properties: {
+          campusId: { type: 'string' },
+          menuType: { type: 'string', enum: ['veg', 'non-veg'] },
+          version: { type: 'integer' },
+          rawJson: { type: 'object', additionalProperties: true },
+          normalizedDoc: { $ref: '#/components/schemas/MessMenuDoc' },
+          publishedAt: { type: 'string' },
+          publishedBy: { type: 'string' },
+        },
       },
       LaundryDoc: {
         allOf: [
@@ -669,6 +708,18 @@ export const openApiSpec = {
         responses: { '200': { description: 'Services doc' }, '404': { description: 'Not found' } },
       },
     },
+    '/messMenu': {
+      get: {
+        tags: ['Public modules'],
+        summary: 'Mess menu (veg or non-veg), currently published only',
+        operationId: 'getMessMenu',
+        parameters: [
+          { $ref: '#/components/parameters/CampusQuery' },
+          { $ref: '#/components/parameters/MenuTypeQuery' },
+        ],
+        responses: { '200': { description: 'Mess menu doc' }, '404': { description: 'Not published yet' } },
+      },
+    },
     '/healthCenter': {
       get: {
         tags: ['Public modules'],
@@ -910,6 +961,95 @@ export const openApiSpec = {
     '/admin/map': modulePut('Admin — campus data', 'putMap', 'MapDoc', 'Publish map locations'),
     '/admin/services': modulePut('Admin — campus data', 'putServices', 'ServicesDoc', 'Publish services'),
     '/admin/healthCenter': modulePut('Admin — campus data', 'putHealthCenter', 'HealthCenterDoc', 'Publish Health Center info'),
+    '/admin/messMenu': modulePut('Admin — campus data', 'publishMessMenu', 'MessMenuDoc', 'Publish mess menu (veg or non-veg)'),
+    '/admin/messMenu/draft': {
+      put: {
+        tags: ['Admin — campus data'],
+        summary: 'Save mess menu draft (not visible to mobile)',
+        operationId: 'saveMessMenuDraft',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/MessMenuDoc' } } },
+        },
+        responses: {
+          '200': { description: 'Draft saved', content: { 'application/json': { schema: { $ref: '#/components/schemas/Success' } } } },
+          '400': { description: 'Validation failed' },
+          '401': { description: 'Unauthorized' },
+        },
+      },
+      get: {
+        tags: ['Admin — campus data'],
+        summary: 'Load saved mess menu draft',
+        operationId: 'getMessMenuDraft',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: '#/components/parameters/CampusQuery' },
+          { $ref: '#/components/parameters/MenuTypeQuery' },
+        ],
+        responses: {
+          '200': { description: 'Draft doc', content: { 'application/json': { schema: { $ref: '#/components/schemas/MessMenuDoc' } } } },
+          '404': { description: 'No draft saved' },
+        },
+      },
+    },
+    '/admin/messMenu/publish-both': {
+      post: {
+        tags: ['Admin — campus data'],
+        summary: 'Publish veg and non-veg mess menus atomically',
+        operationId: 'publishBothMessMenus',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  veg: { $ref: '#/components/schemas/MessMenuDoc' },
+                  nonVeg: { $ref: '#/components/schemas/MessMenuDoc' },
+                },
+                required: ['veg', 'nonVeg'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Both published' },
+          '400': { description: 'Validation failed' },
+          '401': { description: 'Unauthorized' },
+        },
+      },
+    },
+    '/admin/messMenu/history': {
+      get: {
+        tags: ['Admin — campus data'],
+        summary: 'List past published versions of a mess menu',
+        operationId: 'listMessMenuHistory',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: '#/components/parameters/CampusQuery' },
+          { $ref: '#/components/parameters/MenuTypeQuery' },
+        ],
+        responses: {
+          '200': {
+            description: 'History list',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    campusId: { type: 'string' },
+                    menuType: { type: 'string', enum: ['veg', 'non-veg'] },
+                    history: { type: 'array', items: { $ref: '#/components/schemas/MessMenuHistoryEntry' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/admin/about': modulePut('Admin — campus data', 'putAbout', 'AboutDoc', 'Publish about'),
     '/admin/laundry': modulePut('Admin — campus data', 'putLaundry', 'LaundryDoc', 'Publish laundry'),
     '/admin/wifi': modulePut('Admin — campus data', 'putWifi', 'WifiDoc', 'Publish Wi-Fi'),

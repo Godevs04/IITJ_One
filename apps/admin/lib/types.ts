@@ -1,3 +1,61 @@
+import type {
+  SuggestionCategory,
+  OrganizationType,
+  DepartmentDoc,
+  OrganizationDoc,
+  PersonDoc,
+  RoleDoc,
+  CampaignType,
+  CampaignPlacement,
+  CampaignDisplayType,
+  CampaignActionType,
+  CampaignStatus,
+  CampaignDoc,
+} from '@iitj1/types';
+
+export type { OrganizationType, DepartmentDoc, OrganizationDoc, PersonDoc, RoleDoc };
+export type { CampaignType, CampaignPlacement, CampaignDisplayType, CampaignActionType, CampaignStatus, CampaignDoc };
+
+export interface AdminCampaignsResponse {
+  campusId: string;
+  campaigns: CampaignDoc[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface AdminDepartmentsResponse {
+  campusId: string;
+  departments: DepartmentDoc[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface AdminOrganizationsResponse {
+  campusId: string;
+  organizations: OrganizationDoc[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface AdminPeopleResponse {
+  campusId: string;
+  people: PersonDoc[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface AdminRolesResponse {
+  campusId: string;
+  roles: RoleDoc[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface AdminUser {
   email: string;
   name: string;
@@ -217,6 +275,14 @@ export interface SuggestionDoc {
   submittedAt?: string;
   createdAt?: string;
   status?: 'new' | 'read' | 'archived';
+  /** Optional fields added for the Feedback & Suggestions upgrade — older
+   * records simply lack them. */
+  category?: SuggestionCategory;
+  name?: string;
+  email?: string;
+  deviceId?: string;
+  platform?: string;
+  appVersion?: string;
 }
 
 export interface PushHistoryDoc {
@@ -456,6 +522,28 @@ export interface AnalyticsNotifications {
   ctr: number;
   topCategory: string | null;
   categoryBreakdown: Record<string, number>;
+  days: number;
+}
+
+export interface AnalyticsCampaigns {
+  totals: {
+    views: number;
+    clicks: number;
+    opens: number;
+    ctaClicks: number;
+    dismissals: number;
+    ctr: number;
+  };
+  topCampaigns: {
+    campaignId: string;
+    title: string;
+    views: number;
+    clicks: number;
+    opens: number;
+    ctaClicks: number;
+    dismissals: number;
+    ctr: number;
+  }[];
   days: number;
 }
 

@@ -20,6 +20,7 @@ import {
   DEFAULT_LAUNDRY_PREFERENCES,
   HOSTELS,
   REMINDER_OPTIONS,
+  getHostelLabel,
   type Hostel,
   type LaundryPreferences,
   type NotificationPermissionStatus,
@@ -32,6 +33,7 @@ import {
   rescheduleLaundryNotifications,
 } from '@/laundry/services/laundryNotifications';
 import { useCampusData } from '@/state/CampusDataProvider';
+import { useModalOverlayLock } from '@/services/overlayGate';
 import { debugListKeys } from '@/debug/listDebug';
 import { Analytics, AppEvents } from '@/services/firebase';
 import { useCampusSync } from '@/hooks/useCampusSync';
@@ -169,7 +171,7 @@ export default function LaundryScreen() {
     [prefs, persist, applyReminders],
   );
 
-  const hostelLabel = prefs.hostel ?? 'Select your hostel';
+  const hostelLabel = prefs.hostel ? getHostelLabel(prefs.hostel) : 'Select your hostel';
   const boys = HOSTELS.filter((h) => h.category === 'boys');
   const girls = HOSTELS.filter((h) => h.category === 'girls');
   debugListKeys('LaundryScreen', 'boysHostels', boys, (hostel) => hostel.id);
@@ -287,7 +289,7 @@ export default function LaundryScreen() {
           </View>
           {prefs.notificationPermissionStatus === 'denied' ? (
             <Pressable onPress={() => Linking.openSettings()}>
-              <Text style={[styles.settingsLink, { color: theme.primary }]}>Open device settings</Text>
+              <Text style={[styles.settingsLink, { color: theme.linkText }]}>Open device settings</Text>
             </Pressable>
           ) : null}
         </View>
@@ -351,6 +353,7 @@ function HostelPickerModal({
   onClose: () => void;
   theme: ReturnType<typeof useThemeColors>;
 }) {
+  useModalOverlayLock(visible);
   const boys = HOSTELS.filter((h) => h.category === 'boys');
   const girls = HOSTELS.filter((h) => h.category === 'girls');
   const insets = useSafeAreaInsets();
@@ -411,8 +414,8 @@ function HostelOptionRow({
         { borderColor: theme.border, backgroundColor: selected ? theme.primaryTint : theme.surface },
       ]}
     >
-      <Text style={[styles.hostelOptionText, { color: theme.text }]}>{hostel}</Text>
-      {selected ? <Ionicons name="checkmark" size={18} color={theme.primary} /> : null}
+      <Text style={[styles.hostelOptionText, { color: theme.text }]}>{getHostelLabel(hostel)}</Text>
+      {selected ? <Ionicons name="checkmark" size={18} color={theme.linkText} /> : null}
     </Pressable>
   );
 }
