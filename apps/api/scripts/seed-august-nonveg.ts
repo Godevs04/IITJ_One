@@ -33,8 +33,8 @@ const augustNonVegMenu: MessMenuInput = {
           ],
         },
         lunch: {
-          vegItems: ['Bhindi Peanut Fry', 'Malai Kofta', 'Moong dal'],
-          nonVegItems: ['Seasonal fruits (2 Types)', 'Masala Chaas'],
+          vegItems: ['Bhindi Peanut Fry', 'Malai Kofta', 'Moong dal', 'Seasonal fruits (2 Types)', 'Masala Chaas'],
+          nonVegItems: [],
           compulsoryItems: [
             'Plain Rice',
             'Atta Roti',
@@ -67,8 +67,8 @@ const augustNonVegMenu: MessMenuInput = {
       day: 'Tuesday',
       meals: {
         breakfast: {
-          vegItems: ['Masala paratha', 'Mix sabji', 'pudhina chutney'],
-          nonVegItems: ['Banana(2)'],
+          vegItems: ['Masala paratha', 'Mix sabji', 'pudhina chutney', 'Banana(2)'],
+          nonVegItems: [],
           compulsoryItems: [
             'Toasted white/whole wheat bread',
             'Butter',
@@ -83,8 +83,8 @@ const augustNonVegMenu: MessMenuInput = {
           ],
         },
         lunch: {
-          vegItems: ['Veg Korma', 'Methi Matar Malai', 'Urad chilka dal'],
-          nonVegItems: ['Curd', 'Roohhafza'],
+          vegItems: ['Veg Korma', 'Methi Matar Malai', 'Urad chilka dal', 'Curd', 'Roohhafza'],
+          nonVegItems: [],
           compulsoryItems: [
             'Plain Rice',
             'Atta Roti',
@@ -97,7 +97,11 @@ const augustNonVegMenu: MessMenuInput = {
         snacks: {
           vegItems: ['Aloo Samosa or Aloo tikki chat', 'Chutney', 'dahi', 'chole'],
           nonVegItems: [],
-          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+          compulsoryItems: [
+            'Milk(Non-Toned)',
+            'Tea',
+            'Coffee',
+          ],
         },
         dinner: {
           vegItems: ['Soyachunks gravy', 'Tinde ki Sabji', 'Dal Makhani', 'Lemon Rice'],
@@ -133,8 +137,8 @@ const augustNonVegMenu: MessMenuInput = {
           ],
         },
         lunch: {
-          vegItems: ['Aloo parval', 'Baigan ka bharta', 'Mix dal'],
-          nonVegItems: ['Veg Raita', 'Rasna'],
+          vegItems: ['Aloo parval', 'Baigan ka bharta', 'Mix dal', 'Veg Raita', 'Rasna'],
+          nonVegItems: [],
           compulsoryItems: [
             'Plain Rice',
             'Atta Roti',
@@ -147,11 +151,15 @@ const augustNonVegMenu: MessMenuInput = {
         snacks: {
           vegItems: ['Pasta or maggi', 'Chutney or ketchup'],
           nonVegItems: [],
-          compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
+          compulsoryItems: [
+            'Milk(Non-Toned)',
+            'Tea',
+            'Coffee',
+          ],
         },
         dinner: {
           vegItems: ['Mix Veg', 'Masoor dal', 'Fruit Custard'],
-          nonVegItems: ['Butter Chiken'],
+          nonVegItems: ['Butter Chicken'],
           compulsoryItems: [
             'Plain Rice',
             'Atta Roti',
@@ -167,8 +175,8 @@ const augustNonVegMenu: MessMenuInput = {
       day: 'Thursday',
       meals: {
         breakfast: {
-          vegItems: ['Masala Poori', 'Chole or Safed Mattar ki Sabzi and Kheer'],
-          nonVegItems: ['Banana(2)'],
+          vegItems: ['Masala Poori', 'Chole or Safed Mattar ki Sabzi and Kheer', 'Banana(2)'],
+          nonVegItems: [],
           compulsoryItems: [
             'Toasted white/whole wheat bread',
             'Butter',
@@ -183,8 +191,8 @@ const augustNonVegMenu: MessMenuInput = {
           ],
         },
         lunch: {
-          vegItems: ['Kadi Pakora', 'Aloo-Jeera', 'Kali massor Dal'],
-          nonVegItems: ['Seasonal fruits( amrood or pears  or apple)', 'Lassi'],
+          vegItems: ['Kadi Pakora', 'Aloo-Jeera', 'Kali massor Dal', 'Seasonal fruits (amrood or pears or apple)', 'Lassi'],
+          nonVegItems: [],
           compulsoryItems: [
             'Plain Rice',
             'Atta Roti',
@@ -207,7 +215,7 @@ const augustNonVegMenu: MessMenuInput = {
             'Atta Roti',
             'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)',
             'Pickle',
-            'Lizzat',
+            'Lizzat Papad',
             'Ghee',
           ],
         },
@@ -238,8 +246,8 @@ const augustNonVegMenu: MessMenuInput = {
           ],
         },
         lunch: {
-          vegItems: ['Lauki channa', 'Arbi', 'Rajma dal'],
-          nonVegItems: ['Pudina Chaas', 'Aam panna'],
+          vegItems: ['Lauki channa', 'Arbi', 'Rajma dal', 'Pudina Chaas', 'Aam panna'],
+          nonVegItems: [],
           compulsoryItems: [
             'Plain Rice',
             'Atta Roti',
@@ -262,7 +270,7 @@ const augustNonVegMenu: MessMenuInput = {
             'Atta Roti',
             'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)',
             'Pickle',
-            'Lizzat',
+            'Lizzat Papad',
             'Ghee',
           ],
         },
@@ -288,8 +296,8 @@ const augustNonVegMenu: MessMenuInput = {
           ],
         },
         lunch: {
-          vegItems: ['Gawar fali sabji', 'mix Veg Pakoda', 'Moong dal'],
-          nonVegItems: ['Curd', 'Roohhafza'],
+          vegItems: ['Gawar fali sabji', 'mix Veg Pakoda', 'Moong dal', 'Curd', 'Roohhafza'],
+          nonVegItems: [],
           compulsoryItems: [
             'Plain Rice',
             'Atta Roti',
@@ -312,7 +320,7 @@ const augustNonVegMenu: MessMenuInput = {
             'Atta Roti',
             'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)',
             'Pickle',
-            'Lizzat',
+            'Lizzat Papad',
             'Ghee',
           ],
         },
@@ -338,8 +346,8 @@ const augustNonVegMenu: MessMenuInput = {
           ],
         },
         lunch: {
-          vegItems: ['Veg fried Rice', 'Kaddu masala', 'Green moong chilka', 'Manchurian'],
-          nonVegItems: ['Boondi Raita pudina'],
+          vegItems: ['Veg fried Rice', 'Kaddu masala', 'Green moong chilka', 'Manchurian', 'Boondi Raita pudina'],
+          nonVegItems: [],
           compulsoryItems: [
             'Plain Rice',
             'Atta Roti',
@@ -355,14 +363,14 @@ const augustNonVegMenu: MessMenuInput = {
           compulsoryItems: ['Milk(Non-Toned)', 'Tea', 'Coffee'],
         },
         dinner: {
-          vegItems: ['Veg Korma', 'Arhar Dal', 'Ice cream(Chocolate or Butterscotch)'],
-          nonVegItems: ['Chicken Biryani', 'veg Raita'],
+          vegItems: ['Veg Korma', 'Arhar Dal', 'Ice cream(Chocolate or Butterscotch)', 'veg Raita'],
+          nonVegItems: ['Chicken Biryani'],
           compulsoryItems: [
             'Plain Rice',
             'Atta Roti',
             'Salad(Beetroot+tomato+onion+cucumber+lemon+chilli)',
             'Pickle',
-            'Lizzat',
+            'Lizzat Papad',
             'Ghee',
           ],
         },
