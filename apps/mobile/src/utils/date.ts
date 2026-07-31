@@ -123,9 +123,17 @@ export const MEAL_WINDOWS: Record<MealKey, MealWindow> = {
 export function getMealWindows(dayNameOrDate?: string | Date): Record<MealKey, MealWindow> {
   const doc = readCachedModule<MealWindowsDoc>('mealWindows');
   const isWeekend = isWeekendDay(dayNameOrDate);
-  const windows = isWeekend
-    ? (doc?.weekendWindows ?? DEFAULT_WEEKEND_MEAL_WINDOWS)
-    : (doc?.windows ?? DEFAULT_MEAL_WINDOWS);
+  // Prefer synced doc → weekend defaults → weekday defaults (never leave windows undefined).
+  const windows =
+    (isWeekend ? doc?.weekendWindows : doc?.windows) ??
+    (isWeekend ? DEFAULT_WEEKEND_MEAL_WINDOWS : undefined) ??
+    doc?.windows ??
+    DEFAULT_MEAL_WINDOWS ??
+    DEFAULT_WEEKEND_MEAL_WINDOWS;
+
+  if (!windows?.breakfast || !windows?.lunch || !windows?.snacks || !windows?.dinner) {
+    return MEAL_WINDOWS;
+  }
 
   return {
     breakfast: toMealWindow(windows.breakfast),
