@@ -1,9 +1,8 @@
 import dotenv from 'dotenv';
 import path from 'path';
-import { connectDb, disconnectDb } from '../src/db';
-import { publishMessMenu } from '../src/store';
-import { initFallbackStore, getFallbackState } from '../src/store/fallback';
-import type { MessMenuInput, MessMenuDoc } from '@iitj1/types';
+import { connectDb, disconnectDb, isDbConnected } from '../src/db';
+import { publishMessMenu, getMeta } from '../src/store';
+import type { MessMenuInput } from '@iitj1/types';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -380,28 +379,21 @@ async function main(): Promise<void> {
   console.log('[seed] Seeding August 2026 Veg Mess Menu...');
   try {
     await connectDb();
+    if (!isDbConnected()) {
+      throw new Error('MongoDB is not connected — set MONGODB_URI and retry');
+    }
+    const meta = await getMeta(augustVegMenu.campusId);
+    const expectedVersion = meta.versions.messMenuVeg;
     const version = await publishMessMenu(
       augustVegMenu,
       augustVegMenu,
       'admin@iitjone.in',
+      expectedVersion,
     );
     console.log(`[seed] August 2026 Veg Mess Menu published successfully! (Version v${version})`);
   } catch (err) {
-    console.warn('[seed] MongoDB seeding failed or unavailable, seeding in-memory fallback:', (err as Error).message);
-    initFallbackStore();
-    const s = getFallbackState();
-    const now = new Date().toISOString();
-    const doc: MessMenuDoc = {
-      ...augustVegMenu,
-      status: 'published',
-      version: (s.messMenuVeg?.version ?? 0) + 1,
-      publishedAt: now,
-      publishedBy: 'admin@iitjone.in',
-      updatedAt: now,
-      updatedBy: 'admin@iitjone.in',
-    };
-    s.messMenuVeg = doc;
-    console.log(`[seed] In-memory fallback updated with August 2026 Veg Mess Menu v${doc.version}`);
+    console.error('[seed] Failed:', (err as Error).message);
+    process.exitCode = 1;
   } finally {
     await disconnectDb().catch(() => undefined);
   }
