@@ -85,21 +85,42 @@ export default function SupportPage() {
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
       <PageHeader eyebrow="Support" title="We're here to help." subtitle="Questions, bugs, or ideas — here's how to reach us." />
 
-      <Card className="mt-8">
+      <Card className="mt-8 border-indigo/20 bg-indigo/5 p-6 dark:bg-indigo/10">
         <div className="space-y-4">
-          <a
-            href={`mailto:${SUPPORT_EMAIL}`}
-            className="flex items-center gap-3 text-sm text-ink hover:text-indigo"
-          >
-            <Mail className="h-4 w-4 shrink-0 text-indigo" aria-hidden />
-            {SUPPORT_EMAIL}
-          </a>
+          <h2 className="text-base font-semibold text-ink">Need Help or Reporting an Issue?</h2>
+          <p className="text-sm leading-relaxed text-ink/80">
+            If you&apos;re experiencing a problem with <strong>IITJ One</strong>, email us at{' '}
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="font-semibold text-indigo hover:underline">
+              {SUPPORT_EMAIL}
+            </a>.
+          </p>
+          <div className="rounded-xl border border-border/50 bg-white/80 p-4 text-xs leading-relaxed text-muted dark:bg-surface/80">
+            <p className="font-medium text-ink">Please include in your support email:</p>
+            <ul className="mt-1.5 list-disc space-y-1 pl-4">
+              <li>Your device model (e.g., iPhone 15 Pro, iPad Air)</li>
+              <li>iOS version (e.g., iOS 17.5)</li>
+              <li>A clear description of the problem or error</li>
+            </ul>
+          </div>
+          <div className="pt-1">
+            <a
+              href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('IITJ One Support Request')}&body=${encodeURIComponent(
+                'Device Model:\niOS Version:\n\nDescription of problem:\n'
+              )}`}
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-indigo/90"
+            >
+              <Mail className="h-4 w-4 shrink-0" aria-hidden />
+              Email Support ({SUPPORT_EMAIL})
+            </a>
+          </div>
         </div>
       </Card>
 
-      <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
         <LinkButton
-          href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Bug Report')}`}
+          href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Bug Report')}&body=${encodeURIComponent(
+            'Device Model:\niOS Version:\n\nDescription of bug:\n'
+          )}`}
           variant="primary"
           className="flex-1"
         >
