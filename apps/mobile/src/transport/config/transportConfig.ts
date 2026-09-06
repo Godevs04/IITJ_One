@@ -38,7 +38,7 @@ export interface TransportConfig {
   socketUrlOverride: string | null;
   /** Verbose console logging for the transport tooling. */
   debugLogging: boolean;
-  /** GPS publish cadence, ms — currently hardcoded as PUBLISH_INTERVAL_MS in gpsPublisher.ts (matches the backend's 3s ingest throttle; changing this on its own would desync from that throttle). */
+  /** Reserved for a future rider-GPS feature; unused while device location is disabled. */
   gpsPublishIntervalMs: number;
 }
 

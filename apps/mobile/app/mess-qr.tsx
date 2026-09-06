@@ -133,16 +133,17 @@ export default function MessQrScreen() {
   }));
 
   async function requestPermissionOrPrompt(useCamera: boolean): Promise<boolean> {
-    const permission = useCamera
-      ? await ImagePicker.requestCameraPermissionsAsync()
-      : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!useCamera) {
+      // Android Photo Picker and iOS PHPicker grant access only to the selected
+      // item — no broad gallery permission is required.
+      return true;
+    }
 
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
       Alert.alert(
         'Permission needed',
-        useCamera
-          ? 'Enable camera access in your device settings to take a photo of your QR.'
-          : 'Enable photo library access in your device settings to import your QR.',
+        'Enable camera access in your device settings to take a photo of your QR.',
         [
           { text: 'Cancel', style: 'cancel' },
           { text: 'Open Settings', onPress: () => Linking.openSettings() },

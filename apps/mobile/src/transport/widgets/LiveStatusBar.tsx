@@ -1,9 +1,8 @@
-import { ActivityIndicator, StyleSheet, Text, View, Pressable } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { formatRelativeTime } from '@/utils/date';
-import type { RideState } from '../state/LiveTrackingProvider';
 import type { TransportLiveTrip } from '../services/liveTrackingApi';
 import type { SocketConnectionState } from '../services/liveTrackingSocket';
 
@@ -13,8 +12,6 @@ interface LiveStatusBarProps {
   lastUpdated: string | null;
   loading: boolean;
   error: string | null;
-  ride: RideState;
-  onStopRide: () => void;
 }
 
 type BusLiveness = 'live' | 'no_one_sharing' | 'connecting' | 'offline';
@@ -30,7 +27,7 @@ const LIVENESS_META: Record<BusLiveness, { icon: keyof typeof Ionicons.glyphMap;
   offline: { icon: 'cloud-offline-outline', color: '#9CA3AF', label: 'Offline' },
 };
 
-export function LiveStatusBar({ trips, connectionState, lastUpdated, loading, error, ride, onStopRide }: LiveStatusBarProps) {
+export function LiveStatusBar({ trips, connectionState, lastUpdated, loading, error }: LiveStatusBarProps) {
   const theme = useThemeColors();
 
   // First-load skeleton — only while nothing has ever come back yet, so a
@@ -79,16 +76,6 @@ export function LiveStatusBar({ trips, connectionState, lastUpdated, loading, er
           </Text>
         </View>
       ) : null}
-
-      {ride.status === 'active' ? (
-        <View style={[styles.banner, { backgroundColor: theme.vegTint, borderColor: theme.veg }]}>
-          <Ionicons name="navigate" size={14} color={theme.veg} />
-          <Text style={[styles.bannerText, { color: theme.veg, flex: 1 }]}>You're sharing your location for this ride.</Text>
-          <Pressable onPress={onStopRide} hitSlop={8} accessibilityRole="button" accessibilityLabel="Stop sharing your ride">
-            <Text style={[styles.bannerAction, { color: theme.veg }]}>Stop</Text>
-          </Pressable>
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -128,11 +115,5 @@ const styles = StyleSheet.create({
   bannerText: {
     ...AppTypography.caption,
     fontSize: 11,
-  },
-  bannerAction: {
-    ...AppTypography.caption,
-    fontSize: 11,
-    fontWeight: '700',
-    textDecorationLine: 'underline',
   },
 });

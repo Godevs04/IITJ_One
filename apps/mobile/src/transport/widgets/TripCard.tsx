@@ -298,7 +298,7 @@ function TripCardComponent({ item, isFavorited, onToggleFavorite, direction, liv
         </View>
       ) : null}
 
-      {showRideButton ? <RideButton direction={direction} tripId={liveTrip?.tripId} /> : null}
+      {showRideButton ? <RideButton /> : null}
     </View>
   );
 }
