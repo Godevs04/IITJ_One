@@ -24,7 +24,6 @@ import { LiveStatusBar } from '../widgets/LiveStatusBar';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { debugListKeys } from '@/debug/listDebug';
-import type { RideState } from '../state/LiveTrackingProvider';
 import type { RideDirection, TransportLiveTrip } from '../services/liveTrackingApi';
 import type { SocketConnectionState } from '../services/liveTrackingSocket';
 
@@ -43,8 +42,6 @@ interface TransportScreenViewProps {
   liveError: string | null;
   lastUpdated: string | null;
   connectionState: SocketConnectionState;
-  ride: RideState;
-  onStopRide: () => void;
 }
 
 const CONNECTION_INDICATOR: Record<SocketConnectionState, { icon: keyof typeof Ionicons.glyphMap; color: string }> = {
@@ -81,8 +78,6 @@ export function TransportScreenView({
   liveError,
   lastUpdated,
   connectionState,
-  ride,
-  onStopRide,
 }: TransportScreenViewProps) {
   const { colors: theme, darkMode } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
@@ -389,8 +384,6 @@ export function TransportScreenView({
         lastUpdated={lastUpdated}
         loading={liveLoading}
         error={liveError}
-        ride={ride}
-        onStopRide={onStopRide}
       />
 
       {/* Dynamic Schedule Filter Tabs & Updates Banner */}

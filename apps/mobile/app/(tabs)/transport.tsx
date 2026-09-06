@@ -21,8 +21,6 @@ export default function TransportScreen() {
     error: liveError,
     lastUpdated,
     connectionState,
-    ride,
-    stopRide,
     refresh: refreshLive,
   } = useLiveTracking();
 
@@ -64,8 +62,6 @@ export default function TransportScreen() {
       liveError={liveError}
       lastUpdated={lastUpdated}
       connectionState={connectionState}
-      ride={ride}
-      onStopRide={stopRide}
     />
   );
 }
