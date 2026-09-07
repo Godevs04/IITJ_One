@@ -10,7 +10,7 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json tsconfig.base.json ./
 COPY packages/types/package.json ./packages/types/
 COPY apps/admin/package.json ./apps/admin/
 # Workspace globs require sibling package.json files to exist
