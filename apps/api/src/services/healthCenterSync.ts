@@ -563,6 +563,11 @@ export async function runDoctorScheduleOnlySync(campusId: string = config.campus
 let schedulerStarted = false;
 
 export function startHealthCenterSyncScheduler(): void {
+  // CI starts this process, then immediately runs the API test suite. The
+  // sync fetches every worksheet tab from the live Google Sheet in parallel
+  // (one HTTP GET per day of the semester) — that load races Socket.IO
+  // emit/throttle assertions whose windows are only a few seconds.
+  if (config.nodeEnv === 'test') return;
   if (schedulerStarted) return;
   schedulerStarted = true;
 

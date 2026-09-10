@@ -564,6 +564,7 @@ let schedulerStarted = false;
 let lastFinalizedDate: string | null = null;
 
 export function startAnalyticsAggregationScheduler(intervalMs = 10 * 60 * 1000): void {
+  if (config.nodeEnv === 'test') return;
   if (schedulerStarted) return;
   schedulerStarted = true;
 
