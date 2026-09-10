@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "IITJ One",
-    "slug": "iitj-one",
-    "version": "1.0.2",
+      "slug": "iitj-one",
+      "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/branding/logo.png",
     "scheme": "iitj1",
@@ -20,7 +20,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "3",
+      "buildNumber": "4",
       "bundleIdentifier": "app.iitjone",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
@@ -35,7 +35,7 @@
     },
     "android": {
       "package": "app.iitjone",
-      "versionCode": 3,
+      "versionCode": 4,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/branding/adaptive-icon-foreground.png",

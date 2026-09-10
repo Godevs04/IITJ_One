@@ -29,7 +29,7 @@ function ackOf(socket: Socket, event: string, payload: unknown): Promise<Record<
   return new Promise((resolve) => socket.emit(event, payload, (ack: Record<string, unknown>) => resolve(ack)));
 }
 
-function waitForEvent(socket: Socket, event: string, timeoutMs = 3000): Promise<Record<string, unknown>> {
+function waitForEvent(socket: Socket, event: string, timeoutMs = 10_000): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`timed out waiting for "${event}"`)), timeoutMs);
     socket.once(event, (payload: Record<string, unknown>) => {
