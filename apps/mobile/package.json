@@ -2,7 +2,7 @@
   "name": "@iitj1/mobile",
   "version": "1.0.0",
   "private": true,
-  "main": "expo-router/entry",
+  "main": "index.js",
   "scripts": {
     "prestart": "node ../../scripts/set-lan-ip.js",
     "start": "expo start --port 6001 --lan",

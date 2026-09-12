@@ -58,6 +58,17 @@ module.exports = ({ config }) => {
       ? 'https://api.iitjone.in/api/v1'
       : undefined);
 
+  const configuredProjectId = config.extra?.eas?.projectId;
+  const envProjectId = process.env.EXPO_PUBLIC_EAS_PROJECT_ID;
+  const projectId =
+    (envProjectId &&
+    envProjectId !== 'your-eas-project-id' &&
+    envProjectId.trim().length > 0
+      ? envProjectId
+      : null) ||
+    configuredProjectId ||
+    'c307eca8-e310-4cfa-aca6-8c06b8fcd39f';
+
   const next = {
     ...config,
     name,
@@ -84,10 +95,7 @@ module.exports = ({ config }) => {
       posthogHost: process.env.POSTHOG_HOST || 'https://eu.i.posthog.com',
       eas: {
         ...(config.extra?.eas ?? {}),
-        projectId:
-          process.env.EXPO_PUBLIC_EAS_PROJECT_ID ||
-          config.extra?.eas?.projectId ||
-          'c307eca8-e310-4cfa-aca6-8c06b8fcd39f',
+        projectId,
       },
     },
   };

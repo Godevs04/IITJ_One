@@ -18,6 +18,20 @@ const root = path.resolve(__dirname, '..');
 const isEas = process.env.EAS_BUILD === 'true';
 const platform = process.env.EAS_BUILD_PLATFORM; // 'android' | 'ios'
 
+// Guard: EAS must run from apps/mobile (Expo Router). Building the monorepo
+// root makes Metro use expo/AppEntry.js → Unable to resolve ../../App.
+const pkg = require(path.join(root, 'package.json'));
+const entry = path.join(root, 'index.js');
+if (pkg.main !== 'index.js' || !fs.existsSync(entry)) {
+  console.error(`
+[eas-pre-install] Invalid mobile entry.
+Expected apps/mobile/package.json "main": "index.js" and apps/mobile/index.js.
+Got main=${JSON.stringify(pkg.main)}.
+Run: cd apps/mobile && eas build --platform <ios|android> --profile production
+`);
+  if (isEas) process.exit(1);
+}
+
 function materialize(envKey, destName) {
   const src = process.env[envKey];
   const dest = path.join(root, destName);
