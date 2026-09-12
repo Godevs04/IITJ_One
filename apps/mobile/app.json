@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "IITJ One",
-      "slug": "iitj1",
+      "slug": "iitj-one",
       "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/branding/logo.png",
@@ -142,7 +142,7 @@
         "projectId": "c307eca8-e310-4cfa-aca6-8c06b8fcd39f"
       }
     },
-    "owner": "teamgodevs",
+    "owner": "godevs",
     "androidStatusBar": {
       "barStyle": "light-content",
       "backgroundColor": "#022543"
