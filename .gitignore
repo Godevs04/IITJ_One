@@ -78,3 +78,8 @@ temp/
 .kiro/
 
 testsprite_tests\tmp\config.json
+
+# Scratch copy of the monorepo produced by local Docker build testing —
+# mirrors apps/ and packages/ source, so without this every file would be
+# committed twice.
+.docker-test/

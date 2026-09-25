@@ -10,7 +10,7 @@ const available = [
 
 export function OfflineSection() {
   return (
-    <section aria-labelledby="offline-heading" className="mx-auto max-w-8xl px-4 py-16 sm:px-6 lg:px-8">
+    <section aria-labelledby="offline-heading" className="mx-auto max-w-8xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
       <GlassPanel className="grid gap-10 md:grid-cols-2 md:items-center">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sandstone">Offline-first, by design</p>
@@ -22,7 +22,7 @@ export function OfflineSection() {
             completely offline.
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {available.map((item) => (
             <div key={item.label} className="flex items-center gap-3">
               <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-tint text-indigo">

@@ -82,7 +82,7 @@ const FAQ_CATEGORIES: FaqCategory[] = [
 
 export default function SupportPage() {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-2xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
       <PageHeader eyebrow="Support" title="We're here to help." subtitle="Questions, bugs, or ideas — here's how to reach us." />
 
       <Card className="mt-8 border-indigo/20 bg-indigo/5 p-6 dark:bg-indigo/10">
@@ -107,10 +107,10 @@ export default function SupportPage() {
               href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('IITJ One Support Request')}&body=${encodeURIComponent(
                 'Device Model:\niOS Version:\n\nDescription of problem:\n'
               )}`}
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-indigo/90"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo px-4 py-2.5 text-center text-xs font-semibold text-white transition-colors hover:bg-indigo/90 sm:w-auto"
             >
               <Mail className="h-4 w-4 shrink-0" aria-hidden />
-              Email Support ({SUPPORT_EMAIL})
+              <span className="break-all">Email Support ({SUPPORT_EMAIL})</span>
             </a>
           </div>
         </div>

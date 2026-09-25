@@ -46,6 +46,8 @@ html {
   min-height: 100%;
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  background-color: rgb(var(--color-sand));
+  transition: background-color 0.25s ease;
 }
 
 html,
@@ -54,22 +56,52 @@ body {
   min-height: 100dvh;
 }
 
+/*
+ * Horizontal containment has to sit on BOTH html and body — on iOS Safari,
+ * overflow-x on body alone doesn't stop the page panning sideways. `clip` is
+ * preferred over `hidden` because `hidden` turns the element into a scroll
+ * container, which breaks the sticky nav in components/layout/Nav.tsx.
+ */
+html,
 body {
-  color: rgb(var(--color-ink));
   overflow-x: hidden;
-  background:
-    radial-gradient(1200px 600px at 8% -10%, rgba(198, 134, 66, 0.14), transparent 55%),
-    radial-gradient(900px 500px at 100% 0%, rgba(29, 63, 94, 0.08), transparent 50%),
-    rgb(var(--color-sand));
-  background-attachment: fixed;
-  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-[data-theme='dark'] body {
+@supports (overflow: clip) {
+  html,
+  body {
+    overflow-x: clip;
+  }
+}
+
+body {
+  color: rgb(var(--color-ink));
+  transition: color 0.25s ease;
+}
+
+/*
+ * The ambient gradient lives on a fixed pseudo-element rather than on
+ * `body { background-attachment: fixed }`. iOS Safari doesn't honour fixed
+ * attachment: it sizes the gradient to the whole document instead of the
+ * viewport, so on a long page the orbs render stretched and washed out, and
+ * it forces a full-page repaint on every scroll frame. A fixed layer gives
+ * the identical look on desktop and actually works on mobile.
+ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1200px 600px at 8% -10%, rgba(198, 134, 66, 0.14), transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, rgba(29, 63, 94, 0.08), transparent 50%);
+}
+
+[data-theme='dark'] body::before {
   background:
     radial-gradient(1200px 600px at 8% -10%, rgba(217, 160, 95, 0.1), transparent 55%),
-    radial-gradient(900px 500px at 100% 0%, rgba(62, 100, 136, 0.14), transparent 50%),
-    rgb(var(--color-sand));
+    radial-gradient(900px 500px at 100% 0%, rgba(62, 100, 136, 0.14), transparent 50%);
 }
 
 @layer utilities {

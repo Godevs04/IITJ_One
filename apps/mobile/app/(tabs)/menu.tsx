@@ -35,6 +35,39 @@ function todayWeekdayName(): string {
   return WEEKDAY_NAMES_BY_JS_DAY[new Date().getDay()];
 }
 
+type DishSectionProps = {
+  label: string;
+  labelColor: string;
+  dotColor: string;
+  textColor: string;
+  items: string[];
+  /** 1 = one dish per row (long names), 2 = compact grid (short names). */
+  columns: 1 | 2;
+};
+
+function DishSection({ label, labelColor, dotColor, textColor, items, columns }: DishSectionProps) {
+  if (items.length === 0) return null;
+
+  return (
+    <View style={styles.dishSection}>
+      <Text style={[styles.dishSectionLabel, { color: labelColor }]}>{label}</Text>
+      <View style={styles.dishesGrid}>
+        {items.map((dish, idx) => (
+          <View
+            key={`${dish}-${idx}`}
+            style={columns === 2 ? styles.dishGridItemHalf : styles.dishGridItemFull}
+          >
+            <View style={styles.dishRow}>
+              <View style={[styles.dishDot, { backgroundColor: dotColor }]} />
+              <Text style={[styles.dishText, { color: textColor }]}>{dish}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 export default function MenuScreen() {
   const theme = useThemeColors();
   const { syncing, sync, error } = useCampusSync(false);
@@ -46,19 +79,19 @@ export default function MenuScreen() {
   const [showCharges, setShowCharges] = useState(false);
   useModalOverlayLock(showCharges);
 
-  const menu =
-    dietPreference === 'veg'
-      ? (vegMenu ?? nonVegMenu)
-      : (nonVegMenu ?? vegMenu);
+  // Never cross-fall back: showing the non-veg menu under the "Veg Mess" toggle
+  // (or vice versa) is worse than showing nothing.
+  const menu = dietPreference === 'veg' ? vegMenu : nonVegMenu;
+  // The day/diet strips stay mounted as long as *either* menu exists, so the
+  // user can always toggle back out of an unpublished one.
+  const anyMenu = vegMenu ?? nonVegMenu;
 
-  // Robust case-insensitive weekday matching with fallback to first day if missing
+  // Case-insensitive weekday matching. No fallback to days[0] — silently
+  // rendering Monday while the Friday chip is highlighted is a wrong menu.
   const dayMenu = useMemo(() => {
     if (!menu?.days || menu.days.length === 0) return null;
     const target = selectedWeekday.trim().toLowerCase();
-    return (
-      menu.days.find((d) => d.day.trim().toLowerCase() === target) ??
-      menu.days[0]
-    );
+    return menu.days.find((d) => d.day.trim().toLowerCase() === target) ?? null;
   }, [menu, selectedWeekday]);
 
   const onRefresh = useCallback(async () => {
@@ -76,7 +109,9 @@ export default function MenuScreen() {
   const isSelectedToday =
     selectedWeekday.trim().toLowerCase() === todayWeekdayName().trim().toLowerCase();
 
-  const subtitle = menu ? `${monthNumberToName(menu.month)} ${menu.year} — weekly rotation` : undefined;
+  const subtitle = anyMenu
+    ? `${monthNumberToName(anyMenu.month)} ${anyMenu.year} — weekly rotation`
+    : undefined;
 
   return (
     <ScreenShell
@@ -86,7 +121,7 @@ export default function MenuScreen() {
       refreshing={syncing}
       error={error}
     >
-      {menu ? (
+      {anyMenu ? (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -100,41 +135,56 @@ export default function MenuScreen() {
             const isToday = day === todayWeekdayName();
 
             return (
-              <View key={day} style={styles.dayCardWrapper}>
-                {active ? (
-                  <View style={[styles.activeDayOuter, { borderColor: theme.primary }]}>
-                    <Pressable
-                      onPress={() => setSelectedWeekday(day)}
-                      style={[styles.dayCard, { backgroundColor: theme.primary }]}
-                    >
-                      <Text style={[styles.activeDayNameText, { color: theme.onPrimary }]}>
-                        {day.slice(0, 3).toUpperCase()}
-                      </Text>
-                    </Pressable>
-                  </View>
-                ) : (
-                  <Pressable
-                    onPress={() => setSelectedWeekday(day)}
-                    style={[styles.dayCard, { backgroundColor: theme.chipBackground }]}
-                  >
-                    <Text style={[
-                      styles.dayNameText,
-                      { color: isToday ? theme.accent : theme.textMuted, fontWeight: isToday ? 'bold' : '600' },
-                    ]}>
-                      {day.slice(0, 3).toUpperCase()}
-                    </Text>
-                    {isToday ? (
-                      <Text style={[styles.dayNumText, { color: theme.accent, fontSize: 10 }]}>Today</Text>
-                    ) : null}
-                  </Pressable>
-                )}
-              </View>
+              // One Pressable for both states so every chip keeps the exact same
+              // box. The old active variant nested the card in a bordered outer
+              // View, making it 66×66 inside a 62-wide slot — it overflowed into
+              // its neighbours and sat taller than the rest of the strip.
+              <Pressable
+                key={day}
+                onPress={() => setSelectedWeekday(day)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+                accessibilityLabel={isToday ? `${day}, today` : day}
+                style={[
+                  styles.dayCard,
+                  {
+                    backgroundColor: active ? theme.primary : theme.chipBackground,
+                    borderColor: active ? theme.primary : 'transparent',
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.dayNameText,
+                    {
+                      color: active ? theme.onPrimary : isToday ? theme.accent : theme.textMuted,
+                      fontWeight: active || isToday ? '700' : '600',
+                    },
+                  ]}
+                >
+                  {day.slice(0, 3).toUpperCase()}
+                </Text>
+                {/* Always rendered so the label stays vertically centred whether
+                    or not the chip is today. */}
+                <View
+                  style={[
+                    styles.todayDot,
+                    {
+                      backgroundColor: isToday
+                        ? active
+                          ? theme.onPrimary
+                          : theme.accent
+                        : 'transparent',
+                    },
+                  ]}
+                />
+              </Pressable>
             );
           })}
         </ScrollView>
       ) : null}
 
-      {menu ? (
+      {anyMenu ? (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -291,62 +341,51 @@ export default function MenuScreen() {
               {/* Divider */}
               <View style={[styles.cardDivider, { backgroundColor: theme.border }]} />
 
-              {/* Veg / Non-Veg / Always Served sections */}
-              {items.vegItems.length > 0 ? (
-                <View style={styles.dishSection}>
-                  <Text style={[styles.dishSectionLabel, { color: theme.veg }]}>VEG</Text>
-                  <View style={styles.dishesGrid}>
-                    {items.vegItems.map((dish, idx) => (
-                      <View key={idx} style={styles.dishGridItem}>
-                        <View style={styles.dishRow}>
-                          <View style={[styles.dishDot, { backgroundColor: theme.veg }]} />
-                          <Text style={[styles.dishText, { color: theme.text }]}>{dish}</Text>
-                        </View>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              ) : null}
-
-              {items.nonVegItems.length > 0 ? (
-                <View style={styles.dishSection}>
-                  <Text style={[styles.dishSectionLabel, { color: theme.nonVeg }]}>NON-VEG</Text>
-                  <View style={styles.dishesGrid}>
-                    {items.nonVegItems.map((dish, idx) => (
-                      <View key={idx} style={styles.dishGridItem}>
-                        <View style={styles.dishRow}>
-                          <View style={[styles.dishDot, { backgroundColor: theme.nonVeg }]} />
-                          <Text style={[styles.dishText, { color: theme.text }]}>{dish}</Text>
-                        </View>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              ) : null}
-
-              {items.compulsoryItems.length > 0 ? (
-                <View style={styles.dishSection}>
-                  <Text style={[styles.dishSectionLabel, { color: theme.textMuted }]}>ALWAYS SERVED</Text>
-                  <View style={styles.dishesGrid}>
-                    {items.compulsoryItems.map((dish, idx) => (
-                      <View key={idx} style={styles.dishGridItem}>
-                        <View style={styles.dishRow}>
-                          <View style={[styles.dishDot, { backgroundColor: theme.textMuted }]} />
-                          <Text style={[styles.dishText, { color: theme.text }]}>{dish}</Text>
-                        </View>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              ) : null}
+              {/* Veg / Non-Veg / Always Served sections.
+                  Dish names are long and uneven ("Idli+Fried Idli / Idli+Mendu
+                  Vada", "Salad(Beetroot+tomato+onion+carrot+lemon+chilli)"), so
+                  they get one full-width row each. Only the compulsory items are
+                  short and uniform enough to survive two columns. */}
+              <DishSection
+                label="VEG"
+                labelColor={theme.veg}
+                dotColor={theme.veg}
+                textColor={theme.text}
+                items={items.vegItems}
+                columns={1}
+              />
+              <DishSection
+                label="NON-VEG"
+                labelColor={theme.nonVeg}
+                dotColor={theme.nonVeg}
+                textColor={theme.text}
+                items={items.nonVegItems}
+                columns={1}
+              />
+              <DishSection
+                label="ALWAYS SERVED"
+                labelColor={theme.textMuted}
+                dotColor={theme.textMuted}
+                textColor={theme.text}
+                items={items.compulsoryItems}
+                columns={2}
+              />
             </View>
           );
         })
       ) : (
         <EmptyState
           icon="restaurant-outline"
-          title={`${dietPreference === 'veg' ? 'Veg' : 'Non-Veg'} menu not available`}
-          message="This month's menu hasn't been published yet — pull down to sync, or check back later."
+          title={
+            menu
+              ? `No ${selectedWeekday} menu`
+              : `${dietPreference === 'veg' ? 'Veg' : 'Non-Veg'} menu not available`
+          }
+          message={
+            menu
+              ? `The published ${dietPreference === 'veg' ? 'veg' : 'non-veg'} menu has no entry for ${selectedWeekday} — pick another day, or pull down to sync.`
+              : "This month's menu hasn't been published yet — pull down to sync, or check back later."
+          }
         />
       )}
 
@@ -444,40 +483,24 @@ const styles = StyleSheet.create({
     gap: AppSpacing.sm,
     paddingVertical: AppSpacing.sm,
   },
-  dayCardWrapper: {
-    height: 66,
-    width: 62,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  activeDayOuter: {
-    borderWidth: 2,
-    padding: 2,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   dayCard: {
-    width: 58,
-    height: 58,
-    borderRadius: 8,
+    width: 62,
+    height: 62,
+    borderRadius: 12,
+    borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
   },
   dayNameText: {
     ...AppTypography.caption,
     fontWeight: '600',
     fontSize: 11,
   },
-  dayNumText: {
-    ...AppTypography.caption,
-    fontWeight: '700',
-  },
-  activeDayNameText: {
-    ...AppTypography.caption,
-    fontWeight: '600',
-    fontSize: 11,
+  todayDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
   toggleStripScroll: {
     marginTop: AppSpacing.md,
@@ -571,10 +594,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
-  dishGridItem: {
+  dishGridItemFull: {
+    width: '100%',
+    paddingVertical: 3,
+  },
+  dishGridItemHalf: {
     width: '50%',
     paddingRight: AppSpacing.sm,
-    paddingVertical: AppSpacing.xs,
+    paddingVertical: 3,
   },
   dishRow: {
     flexDirection: 'row',

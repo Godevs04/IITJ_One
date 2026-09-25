@@ -5,7 +5,7 @@ import { Reveal } from '@/components/motion/Reveal';
 
 export function FeatureGrid() {
   return (
-    <section id="features" aria-labelledby="features-heading" className="mx-auto max-w-8xl px-4 py-16 sm:px-6 lg:px-8">
+    <section id="features" aria-labelledby="features-heading" className="mx-auto max-w-8xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
       <div className="max-w-2xl">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sandstone">Everything, in one app</p>
         <h2 id="features-heading" className="mt-2 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">

@@ -3,7 +3,7 @@ import { DISCLAIMER, MISSION } from '@/lib/constants';
 
 export function AboutSection() {
   return (
-    <section id="about" aria-labelledby="about-heading" className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
+    <section id="about" aria-labelledby="about-heading" className="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sandstone">About</p>
       <h2 id="about-heading" className="mt-2 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
         A campus companion, not a social platform

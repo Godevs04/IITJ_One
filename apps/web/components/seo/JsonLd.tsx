@@ -1,4 +1,4 @@
-import { BRAND_NAME, SITE_URL, TAGLINE } from '@/lib/constants';
+import { BRAND_NAME, SITE_URL, TAGLINE, PLAY_STORE_URL, APP_STORE_URL } from '@/lib/constants';
 import { FAQ_ITEMS } from '@/lib/faq';
 
 /** Renders a single JSON-LD <script> tag. No library — structured data is plain objects. */
@@ -40,12 +40,15 @@ export function SoftwareApplicationJsonLd() {
         '@type': 'SoftwareApplication',
         name: BRAND_NAME,
         applicationCategory: 'UtilitiesApplication',
-        operatingSystem: 'Android',
+        // The app shipped on both platforms; listing Android alone was
+        // understating it to crawlers and rich results.
+        operatingSystem: ['Android', 'iOS'].join(', '),
         offers: {
           '@type': 'Offer',
           price: '0',
           priceCurrency: 'INR',
         },
+        installUrl: [PLAY_STORE_URL, APP_STORE_URL].filter(Boolean),
         description: TAGLINE,
       }}
     />
