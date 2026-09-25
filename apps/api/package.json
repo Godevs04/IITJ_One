@@ -13,6 +13,7 @@
     "start": "node dist/index.js",
     "seed": "tsx src/scripts/seed.ts",
     "seed:mess:august": "tsx scripts/seed-august-veg.ts && tsx scripts/seed-august-nonveg.ts",
+    "seed:mess:september": "tsx scripts/seed-september-veg.ts && tsx scripts/seed-september-nonveg.ts",
     "test": "node --import tsx --test --test-concurrency=1 src/tests/*.test.ts",
     "test:rc": "tsx scripts/rc/runCi.ts",
     "typecheck": "tsc --noEmit"
