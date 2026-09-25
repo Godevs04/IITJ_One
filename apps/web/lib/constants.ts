@@ -23,8 +23,20 @@ export const DISCLAIMER =
 export const SUPPORT_EMAIL = 'support@iitjone.in';
 export const SUPPORT_URL = `${SITE_URL}/support`;
 
-export const PLAY_STORE_URL = process.env.NEXT_PUBLIC_PLAY_STORE_URL || '';
-export const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL || '';
+/**
+ * Live store listings. These are public, permanent facts about a published
+ * app, not secrets — so they're committed as defaults rather than left to an
+ * env var that a host can forget to set and silently flip the site back to
+ * "Coming soon". The env vars still override, e.g. for a staging build.
+ */
+export const PLAY_STORE_URL =
+  process.env.NEXT_PUBLIC_PLAY_STORE_URL ||
+  'https://play.google.com/store/apps/details?id=app.iitjone';
+export const APP_STORE_URL =
+  process.env.NEXT_PUBLIC_APP_STORE_URL || 'https://apps.apple.com/in/app/iitjone/id6792112088';
+
+/** True once at least one store listing is live — gates all pre-launch copy. */
+export const IS_PUBLISHED = Boolean(PLAY_STORE_URL || APP_STORE_URL);
 
 export type FeatureKey = 'mess' | 'transport' | 'calendar' | 'laundry' | 'wifi' | 'health-center' | 'campus-apps';
 

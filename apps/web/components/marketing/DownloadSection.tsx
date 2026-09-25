@@ -3,19 +3,20 @@ import { Card } from '@/components/ui/Card';
 import { LinkButton } from '@/components/ui/Button';
 import { StatusPill } from '@/components/ui/Badge';
 import { SoftwareApplicationJsonLd } from '@/components/seo/JsonLd';
-import { PLAY_STORE_URL, APP_STORE_URL } from '@/lib/constants';
+import { PLAY_STORE_URL, APP_STORE_URL, IS_PUBLISHED } from '@/lib/constants';
 
 export function DownloadSection() {
   return (
-    <section id="download" aria-labelledby="download-heading" className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
+    <section id="download" aria-labelledby="download-heading" className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
       <SoftwareApplicationJsonLd />
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sandstone">Download</p>
       <h2 id="download-heading" className="mt-2 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
-        Launching soon
+        {IS_PUBLISHED ? 'Get IITJ One' : 'Launching soon'}
       </h2>
       <p className="mt-3 text-balance text-base text-muted">
-        IITJ One is on its way to Google Play and the App Store. Free for every IIT Jodhpur student, forever — no
-        account required.
+        {IS_PUBLISHED
+          ? 'IITJ One is live on Google Play and the App Store. Free for every IIT Jodhpur student, forever — no account required.'
+          : 'IITJ One is on its way to Google Play and the App Store. Free for every IIT Jodhpur student, forever — no account required.'}
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -62,9 +63,11 @@ export function DownloadSection() {
         </Card>
       </div>
 
-      <div className="mt-6 rounded-2xl border border-dashed border-border bg-white/50 px-5 py-6 text-sm text-muted dark:bg-white/5">
-        A QR code linking straight to the store listing will appear here once the app is published.
-      </div>
+      {IS_PUBLISHED ? null : (
+        <div className="mt-6 rounded-2xl border border-dashed border-border bg-white/50 px-5 py-6 text-sm text-muted dark:bg-white/5">
+          A QR code linking straight to the store listing will appear here once the app is published.
+        </div>
+      )}
     </section>
   );
 }

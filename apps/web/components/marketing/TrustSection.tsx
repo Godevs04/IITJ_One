@@ -11,7 +11,7 @@ const stats = [
 
 export function TrustSection() {
   return (
-    <section aria-labelledby="trust-heading" className="mx-auto max-w-8xl px-4 py-16 sm:px-6 lg:px-8">
+    <section aria-labelledby="trust-heading" className="mx-auto max-w-8xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
       <h2 id="trust-heading" className="sr-only">
         Why IITJ One
       </h2>

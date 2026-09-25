@@ -17,8 +17,9 @@ export const FAQ_ITEMS: FaqItem[] = [
       'Yes. Mess menu, notices, transport, calendar, and more all work offline once you’ve opened the app at least once.',
   },
   {
-    question: 'When is IITJ One launching?',
-    answer: 'IITJ One is launching soon on Google Play and the App Store — check the Download page for updates.',
+    question: 'Where can I download IITJ One?',
+    answer:
+      'IITJ One is available now on both Google Play and the App Store — free, with no account required. Use the Download section on the homepage for direct links to both listings.',
   },
   {
     question: 'What data does IITJ One collect?',

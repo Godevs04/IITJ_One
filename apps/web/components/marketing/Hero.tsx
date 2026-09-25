@@ -24,7 +24,7 @@ export function Hero() {
   return (
     <section className="relative overflow-hidden border-b border-border/70">
       <AmbientGlow variant="hero" />
-      <div className="relative mx-auto grid max-w-8xl gap-10 px-4 py-16 sm:px-6 md:grid-cols-2 md:items-center md:py-24 lg:px-8">
+      <div className="relative mx-auto grid max-w-8xl gap-10 px-4 py-12 sm:px-6 sm:py-16 md:grid-cols-2 md:items-center md:py-24 lg:px-8">
         <div className="reveal">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sandstone">
             Campus companion for IIT Jodhpur

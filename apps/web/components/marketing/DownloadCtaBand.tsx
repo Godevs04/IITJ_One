@@ -4,8 +4,8 @@ import { TAGLINE } from '@/lib/constants';
 
 export function DownloadCtaBand() {
   return (
-    <section className="relative mx-auto max-w-8xl overflow-hidden px-4 py-16 sm:px-6 lg:px-8">
-      <div className="relative overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-indigo-deep via-[#123652] to-indigo px-6 py-14 text-center shadow-glow sm:px-12">
+    <section className="relative mx-auto max-w-8xl overflow-hidden px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+      <div className="relative overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-indigo-deep via-[#123652] to-indigo px-5 py-12 text-center shadow-glow sm:px-12 sm:py-14">
         <AmbientGlow />
         <h2 className="text-2xl font-semibold tracking-tight text-sand sm:text-3xl">{TAGLINE}</h2>
         <p className="mx-auto mt-3 max-w-xl text-balance text-sm text-sand/80 sm:text-base">

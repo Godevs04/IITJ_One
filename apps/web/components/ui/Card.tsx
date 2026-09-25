@@ -13,7 +13,7 @@ export function Card({ children, className = '' }: { children: ReactNode; classN
 export function GlassPanel({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <div
-      className={`rounded-3xl border border-border bg-white/90 p-7 shadow-elevated backdrop-blur dark:bg-surface/80 ${className}`}
+      className={`rounded-3xl border border-border bg-white/90 p-5 shadow-elevated sm:p-7 backdrop-blur dark:bg-surface/80 ${className}`}
     >
       {children}
     </div>

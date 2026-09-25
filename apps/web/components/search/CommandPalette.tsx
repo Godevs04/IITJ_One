@@ -50,7 +50,7 @@ export function CommandPalette() {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-start justify-center bg-ink/40 px-4 pt-24 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-start justify-center overscroll-contain bg-ink/40 px-4 pt-16 backdrop-blur-sm sm:pt-24"
       role="presentation"
       onClick={close}
     >
@@ -91,7 +91,7 @@ export function CommandPalette() {
           </button>
         </div>
 
-        <ul id="command-palette-results" role="listbox" className="max-h-80 overflow-y-auto scroll-thin py-2">
+        <ul id="command-palette-results" role="listbox" className="max-h-[50vh] overflow-y-auto overscroll-contain scroll-thin py-2 sm:max-h-80">
           {results.length === 0 ? (
             <li className="px-4 py-6 text-center text-sm text-muted">No results</li>
           ) : (

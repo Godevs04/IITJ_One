@@ -18,6 +18,10 @@ export function TiltCard({ children }: { children: ReactNode }) {
   const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-8, 8]), { stiffness: 200, damping: 24 });
 
   function handlePointerMove(e: PointerEvent<HTMLDivElement>) {
+    // Mouse only. On touch, `pointerleave` isn't guaranteed to fire after the
+    // finger lifts, so a tap or a scroll that starts on the card would leave it
+    // frozen mid-tilt for the rest of the session.
+    if (e.pointerType !== 'mouse') return;
     const rect = ref.current?.getBoundingClientRect();
     if (!rect) return;
     x.set((e.clientX - rect.left) / rect.width - 0.5);
@@ -34,6 +38,8 @@ export function TiltCard({ children }: { children: ReactNode }) {
       ref={ref}
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
+      onPointerCancel={handlePointerLeave}
+      onPointerUp={handlePointerLeave}
       style={{ rotateX, rotateY, transformPerspective: 800 }}
       className="[transform-style:preserve-3d]"
     >
