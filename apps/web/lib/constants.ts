@@ -10,7 +10,17 @@
  * Only /privacy, /terms, and /support are separate routes.
  */
 
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3002';
+/**
+ * Canonical origin for sitemap, canonical tags, and OG URLs. It must be the
+ * host that serves pages with a 200 — if the host redirects apex <-> www,
+ * every sitemap URL becomes a redirect and Google indexes nothing cleanly.
+ * Falls back to the production domain in production builds so a missing env
+ * var can never ship "localhost" canonicals.
+ */
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.NODE_ENV === 'production' ? 'https://www.iitjone.in' : 'http://localhost:3002')
+).replace(/\/$/, '');
 
 export const BRAND_NAME = 'IITJ One';
 export const TAGLINE = 'The Smartest Way to Navigate IIT Jodhpur.';
@@ -113,6 +123,17 @@ export const PRIMARY_NAV: NavLink[] = [
 ];
 
 export const FOOTER_LINKS: { heading: string; links: NavLink[] }[] = [
+  {
+    heading: 'Campus guides',
+    links: [
+      { label: 'IITJ Mess Menu', href: '/iit-jodhpur-mess-menu' },
+      { label: 'IITJ Bus Timings', href: '/iit-jodhpur-bus-timings' },
+      { label: 'Academic Calendar', href: '/iit-jodhpur-academic-calendar' },
+      { label: 'IITJ Wi-Fi', href: '/iit-jodhpur-wifi' },
+      { label: 'Health Center', href: '/iit-jodhpur-health-center' },
+      { label: 'Campus Map', href: '/iit-jodhpur-campus-directory' },
+    ],
+  },
   {
     heading: 'Product',
     links: [

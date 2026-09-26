@@ -4,6 +4,7 @@ import { SUPPORT_EMAIL } from '@/lib/constants';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
+  alternates: { canonical: '/privacy' },
   description: 'What IITJ One collects, what it never collects, and why — anonymous analytics, no personal accounts.',
 };
 

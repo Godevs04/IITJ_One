@@ -6,12 +6,10 @@ import { AboutSection } from '@/components/marketing/AboutSection';
 import { FaqSection } from '@/components/marketing/FaqSection';
 import { DownloadSection } from '@/components/marketing/DownloadSection';
 import { DownloadCtaBand } from '@/components/marketing/DownloadCtaBand';
-import { OrganizationJsonLd } from '@/components/seo/JsonLd';
 
 export default function HomePage() {
   return (
     <>
-      <OrganizationJsonLd />
       <Hero />
       <FeatureGrid />
       <OfflineSection />

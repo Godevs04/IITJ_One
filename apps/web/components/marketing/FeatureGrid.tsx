@@ -1,4 +1,5 @@
 import { FEATURES } from '@/lib/constants';
+import { featurePageFor } from '@/lib/featurePages';
 import { FEATURE_ICONS } from '@/lib/featureIcons';
 import { FeatureCard } from './FeatureCard';
 import { Reveal } from '@/components/motion/Reveal';
@@ -12,13 +13,17 @@ export function FeatureGrid() {
           Every campus essential, built in
         </h2>
         <p className="mt-3 text-base text-muted">
-          Everything a student needs for campus life, in one consistently designed app.
+          Everything an IIT Jodhpur student needs for campus life, in one consistently designed app.
         </p>
       </div>
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {FEATURES.map((feature, index) => (
           <Reveal key={feature.key} delay={(index % 3) * 0.06}>
-            <FeatureCard feature={feature} Icon={FEATURE_ICONS[feature.key]} />
+            <FeatureCard
+              feature={feature}
+              Icon={FEATURE_ICONS[feature.key]}
+              href={featurePageFor(feature.key) ? `/${featurePageFor(feature.key)!.slug}` : undefined}
+            />
           </Reveal>
         ))}
       </div>

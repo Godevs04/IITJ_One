@@ -9,6 +9,7 @@ import { SuggestionForm } from './SuggestionForm';
 
 export const metadata: Metadata = {
   title: 'Support',
+  alternates: { canonical: '/support' },
   description: 'Get help with IITJ One — contact us, browse the FAQ, report a bug, or suggest a feature.',
 };
 

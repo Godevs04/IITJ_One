@@ -4,6 +4,7 @@ import { SUPPORT_EMAIL } from '@/lib/constants';
 
 export const metadata: Metadata = {
   title: 'Terms of Use',
+  alternates: { canonical: '/terms' },
   description: 'Terms for using IITJ One — a free, student-built campus companion app for IIT Jodhpur.',
 };
 

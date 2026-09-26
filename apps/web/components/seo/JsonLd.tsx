@@ -1,8 +1,19 @@
-import { BRAND_NAME, SITE_URL, TAGLINE, PLAY_STORE_URL, APP_STORE_URL } from '@/lib/constants';
+import { BRAND_NAME, SITE_URL, TAGLINE, PLAY_STORE_URL, APP_STORE_URL, SUPPORT_EMAIL } from '@/lib/constants';
 import { FAQ_ITEMS } from '@/lib/faq';
+import type { FaqItem } from '@/components/marketing/FaqAccordion';
+
+/**
+ * Names people actually type when looking for the app. Google uses
+ * `alternateName` when deciding which site name to show and which queries a
+ * brand site matches.
+ */
+const ALTERNATE_NAMES = ['IITJ1', 'IITJ One App', 'IIT Jodhpur App', 'IITJ App', 'IIT Jodhpur Campus App'];
+
+const ORG_ID = `${SITE_URL}/#organization`;
+const SITE_ID = `${SITE_URL}/#website`;
 
 /** Renders a single JSON-LD <script> tag. No library — structured data is plain objects. */
-function JsonLdScript({ data }: { data: Record<string, unknown> }) {
+export function JsonLdScript({ data }: { data: Record<string, unknown> }) {
   return (
     <script
       type="application/ld+json"
@@ -12,21 +23,41 @@ function JsonLdScript({ data }: { data: Record<string, unknown> }) {
   );
 }
 
-export function OrganizationJsonLd() {
+/** Site-wide identity: rendered once from the root layout. */
+export function SiteJsonLd() {
   return (
     <JsonLdScript
       data={{
         '@context': 'https://schema.org',
-        '@type': 'WebSite',
-        name: BRAND_NAME,
-        alternateName: 'IITJ1',
-        url: SITE_URL,
-        description: TAGLINE,
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: `${SITE_URL}/search?q={search_term_string}`,
-          'query-input': 'required name=search_term_string',
-        },
+        '@graph': [
+          {
+            '@type': 'Organization',
+            '@id': ORG_ID,
+            name: BRAND_NAME,
+            alternateName: ALTERNATE_NAMES,
+            url: SITE_URL,
+            logo: `${SITE_URL}/icon.png`,
+            email: SUPPORT_EMAIL,
+            description: `${BRAND_NAME} is a free, student-built campus companion app for IIT Jodhpur (IITJ) students.`,
+            sameAs: [PLAY_STORE_URL, APP_STORE_URL].filter(Boolean),
+          },
+          {
+            '@type': 'WebSite',
+            '@id': SITE_ID,
+            name: BRAND_NAME,
+            alternateName: ALTERNATE_NAMES,
+            url: SITE_URL,
+            description: TAGLINE,
+            inLanguage: 'en-IN',
+            publisher: { '@id': ORG_ID },
+            about: {
+              '@type': 'CollegeOrUniversity',
+              name: 'Indian Institute of Technology Jodhpur',
+              alternateName: ['IIT Jodhpur', 'IITJ'],
+              sameAs: ['https://www.iitj.ac.in', 'https://en.wikipedia.org/wiki/IIT_Jodhpur'],
+            },
+          },
+        ],
       }}
     />
   );
@@ -37,37 +68,55 @@ export function SoftwareApplicationJsonLd() {
     <JsonLdScript
       data={{
         '@context': 'https://schema.org',
-        '@type': 'SoftwareApplication',
+        '@type': 'MobileApplication',
         name: BRAND_NAME,
-        applicationCategory: 'UtilitiesApplication',
-        // The app shipped on both platforms; listing Android alone was
-        // understating it to crawlers and rich results.
-        operatingSystem: ['Android', 'iOS'].join(', '),
+        alternateName: ALTERNATE_NAMES,
+        url: SITE_URL,
+        applicationCategory: 'EducationalApplication',
+        operatingSystem: 'Android, iOS',
         offers: {
           '@type': 'Offer',
           price: '0',
           priceCurrency: 'INR',
         },
         installUrl: [PLAY_STORE_URL, APP_STORE_URL].filter(Boolean),
-        description: TAGLINE,
+        description: `${TAGLINE} IIT Jodhpur mess menu, bus timings, academic calendar, laundry, Wi-Fi, and Health Center contacts in one free app.`,
+        publisher: { '@id': ORG_ID },
       }}
     />
   );
 }
 
-export function FaqJsonLd() {
+export function FaqJsonLd({ items = FAQ_ITEMS }: { items?: FaqItem[] }) {
   return (
     <JsonLdScript
       data={{
         '@context': 'https://schema.org',
         '@type': 'FAQPage',
-        mainEntity: FAQ_ITEMS.map((item) => ({
+        mainEntity: items.map((item) => ({
           '@type': 'Question',
           name: item.question,
           acceptedAnswer: {
             '@type': 'Answer',
             text: item.answer,
           },
+        })),
+      }}
+    />
+  );
+}
+
+export function BreadcrumbJsonLd({ items }: { items: { name: string; path: string }[] }) {
+  return (
+    <JsonLdScript
+      data={{
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: items.map((item, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: item.name,
+          item: `${SITE_URL}${item.path}`,
         })),
       }}
     />
