@@ -6,6 +6,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
+      // Same-origin API proxy for the support form — nothing to index there.
+      disallow: '/backend/',
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
   };

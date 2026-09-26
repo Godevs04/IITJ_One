@@ -27,14 +27,15 @@ export function Hero() {
       <div className="relative mx-auto grid max-w-8xl gap-10 px-4 py-12 sm:px-6 sm:py-16 md:grid-cols-2 md:items-center md:py-24 lg:px-8">
         <div className="reveal">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sandstone">
-            Campus companion for IIT Jodhpur
+            The campus app for IIT Jodhpur (IITJ)
           </p>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight text-ink sm:text-5xl lg:text-6xl">
             {TAGLINE}
           </h1>
           <p className="mt-5 max-w-xl text-balance text-base text-muted sm:text-lg">
-            Mess menu, transport, notices, calendar, laundry, Wi-Fi, and Health Center contacts —
-            all offline-first, all in one app. No account, no login.
+            Today&apos;s IITJ mess menu, bus timings, notices, academic calendar, laundry, Wi-Fi, and Health
+            Center contacts — all offline-first, all in one free app for IIT Jodhpur students. No account, no
+            login.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <LinkButton href="/#download" variant="marketing">

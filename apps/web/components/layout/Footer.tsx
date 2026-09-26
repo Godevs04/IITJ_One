@@ -6,10 +6,12 @@ export function Footer() {
   return (
     <footer className="border-t border-border/70 bg-sand/60">
       <div className="mx-auto max-w-8xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-6">
-          <div className="col-span-2 sm:col-span-3 lg:col-span-2">
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:grid-cols-6">
+          <div className="col-span-2 sm:col-span-4 lg:col-span-2">
             <Logo />
-            <p className="mt-3 max-w-xs text-sm text-muted">{TAGLINE}</p>
+            <p className="mt-3 max-w-xs text-sm text-muted">
+              {TAGLINE} The free campus app for IIT Jodhpur (IITJ) students.
+            </p>
           </div>
 
           {FOOTER_LINKS.map((group) => (

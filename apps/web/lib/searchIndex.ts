@@ -1,5 +1,6 @@
 import { FEATURES } from './constants';
 import { FAQ_ITEMS } from './faq';
+import { featurePageFor } from './featurePages';
 
 export interface SearchEntry {
   title: string;
@@ -22,7 +23,7 @@ const PAGES: SearchEntry[] = [
 const FEATURE_ENTRIES: SearchEntry[] = FEATURES.map((f) => ({
   title: f.title,
   description: f.oneLiner,
-  href: '/#features',
+  href: featurePageFor(f.key) ? `/${featurePageFor(f.key)!.slug}` : '/#features',
   group: 'Features',
 }));
 

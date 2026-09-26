@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { BRAND_NAME, TAGLINE } from '@/lib/constants';
 
-export const alt = BRAND_NAME;
+export const alt = `${BRAND_NAME} — the campus app for IIT Jodhpur students`;
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -51,7 +51,7 @@ export default function OpengraphImage() {
           {TAGLINE}
         </div>
         <div style={{ fontSize: 28, color: 'rgba(244,236,224,0.75)', marginTop: 24, maxWidth: 820 }}>
-          Mess, transport, calendar, and more — offline-first, no account required.
+          IIT Jodhpur mess menu, bus timings, calendar, and more — free, offline-first, no login.
         </div>
       </div>
     ),
