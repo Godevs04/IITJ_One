@@ -52,7 +52,7 @@
     "@mapbox/node-pre-gyp": {
       "tar": "^7.5.22"
     },
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.5",
     "next": {
       "postcss": "^8.5.18"
     },
