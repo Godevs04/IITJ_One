@@ -1,3 +1,7 @@
+// Disables the strict expo-router check against @react-navigation/* imports,
+// allowing apps/mobile to use @react-navigation/material-top-tabs with withLayoutContext.
+process.env.EXPO_ROUTER_DISABLE_RN_NAVIGATION_CHECK = '1';
+
 const { getDefaultConfig } = require('expo/metro-config');
 const fs = require('fs');
 const path = require('path');

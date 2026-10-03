@@ -7,16 +7,10 @@
     "icon": "./assets/branding/logo.png",
     "scheme": "iitj1",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "primaryColor": "#022543",
     "description": "Campus companion for IIT Jodhpur — mess menu, notices, transport, map, and more.",
     "runtimeVersion": {
       "policy": "appVersion"
-    },
-    "splash": {
-      "image": "./assets/branding/marketing/ios-splash.png",
-      "resizeMode": "cover",
-      "backgroundColor": "#022543"
     },
     "ios": {
       "supportsTablet": true,
@@ -26,11 +20,6 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "UIBackgroundModes": ["remote-notification"]
-      },
-      "splash": {
-        "image": "./assets/branding/marketing/ios-splash.png",
-        "resizeMode": "cover",
-        "backgroundColor": "#022543"
       }
     },
     "android": {
@@ -39,11 +28,6 @@
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/branding/adaptive-icon-foreground.png",
-        "backgroundColor": "#022543"
-      },
-      "splash": {
-        "image": "./assets/branding/marketing/android-splash.png",
-        "resizeMode": "cover",
         "backgroundColor": "#022543"
       },
       "permissions": [

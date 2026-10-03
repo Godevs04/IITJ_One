@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import type { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
+import type { MaterialTopTabBarProps } from 'expo-router/js-top-tabs';
 import { useSegments } from 'expo-router';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing } from '@/theme/tokens';
@@ -36,7 +36,7 @@ export function BottomTabBar({ state, descriptors, navigation }: MaterialTopTabB
     return state.routes[state.index]?.name ?? 'index';
   }, [segments, state.index, state.routes]);
 
-  debugListKeys('BottomTabBar', 'routes', state.routes, (route) => route.key);
+  debugListKeys('BottomTabBar', 'routes', state.routes, (route: any) => route.key);
 
   return (
     <View
@@ -49,7 +49,7 @@ export function BottomTabBar({ state, descriptors, navigation }: MaterialTopTabB
         },
       ]}
     >
-      {state.routes.map((route, index) => {
+      {state.routes.map((route: any, index: number) => {
         const { options } = descriptors[route.key];
         const label =
           typeof options.title === 'string' ? options.title : route.name;

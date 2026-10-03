@@ -268,7 +268,7 @@ export default function CalendarScreen() {
               <ActivityIndicator
                 size="large"
                 color={theme.linkText}
-                style={StyleSheet.absoluteFillObject}
+                style={StyleSheet.absoluteFill}
               />
             )}
           />
