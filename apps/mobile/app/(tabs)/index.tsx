@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState, type ComponentProps } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState, type ComponentProps, type ReactNode } from 'react';
 import { router, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { DietMark } from '@/components/DietMark';
+import { useHomeLayout, type HomeSectionKey } from '@/services/homeLayout';
 import { DirectoryShortcuts } from '@/components/DirectoryShortcuts';
 import { HomeHeader } from '@/components/HomeHeader';
 import { MessQrCard } from '@/components/MessQrCard';
@@ -338,6 +339,8 @@ export default function HomeScreen() {
   const theme = useThemeColors();
   const posthog = usePostHog();
   const { syncing, sync, error: syncError } = useCampusSync();
+  const homeLayout = useHomeLayout();
+  const hiddenSections = useMemo(() => new Set(homeLayout.hidden), [homeLayout.hidden]);
   const [now, setNow] = useState(() => new Date());
   const [nextClass, setNextClass] = useState<NextClass | null>(null);
 
@@ -501,108 +504,87 @@ export default function HomeScreen() {
     return vegDishes.every((val, index) => val === nonVegDishes[index].name);
   }, [vegDishes, nonVegDishes]);
 
-  return (
-    <View style={styles.screen}>
-      <HomeHeader />
-      <ScreenShell onRefresh={onRefresh} refreshing={syncing} error={syncError}>
+  // Each Home section, keyed so the user's saved order/visibility (Customize Home) decides what renders.
+  const sections: Record<HomeSectionKey, ReactNode> = {
+    transport: (
       <TransportWidget
-        departure={nextDeparture}
-        arrival={nextArrival}
-        theme={theme}
-        onPress={() => router.push('/(tabs)/transport')}
-        hasCriticalAlert={hasCriticalAlert}
-      />
-
-      {showClassWidget && nextClass && classTime ? (
-        <StatusCard
-          label="Next Class"
-          headline={nextClass.entry.className}
-          icon="school-outline"
-          iconColor={theme.linkText}
-          value={classTime.value}
-          unit={
-            nextClass.entry.room
-              ? `${classTime.meridiem} @ ${nextClass.entry.room}`
-              : classTime.meridiem
-          }
-          valueColor={theme.linkText}
-          onPress={() => router.push('/timetable')}
+          departure={nextDeparture}
+          arrival={nextArrival}
+          theme={theme}
+          onPress={() => router.push('/(tabs)/transport')}
+          hasCriticalAlert={hasCriticalAlert}
         />
-      ) : null}
-
-      {vegDishes.length > 0 || nonVegDishes.length > 0 ? (
-        <Pressable
-          onPress={() => router.push('/(tabs)/menu')}
-          style={({ pressed }) => [
-            styles.menuCard,
-            { backgroundColor: theme.surface, borderColor: theme.border },
-            pressed && styles.pressed,
-          ]}
-        >
-          <View
-            style={[
-              styles.menuHeader,
-              {
-                backgroundColor: theme.surfaceMuted,
-                borderBottomColor: theme.border,
-              },
+    ),
+    nextClass: (
+      showClassWidget && nextClass && classTime ? (
+          <StatusCard
+            label="Next Class"
+            headline={nextClass.entry.className}
+            icon="school-outline"
+            iconColor={theme.linkText}
+            value={classTime.value}
+            unit={
+              nextClass.entry.room
+                ? `${classTime.meridiem} @ ${nextClass.entry.room}`
+                : classTime.meridiem
+            }
+            valueColor={theme.linkText}
+            onPress={() => router.push('/timetable')}
+          />
+        ) : null
+    ),
+    messMenu: (
+      vegDishes.length > 0 || nonVegDishes.length > 0 ? (
+          <Pressable
+            onPress={() => router.push('/(tabs)/menu')}
+            style={({ pressed }) => [
+              styles.menuCard,
+              { backgroundColor: theme.surface, borderColor: theme.border },
+              pressed && styles.pressed,
             ]}
           >
-            <Text style={[styles.cardLabel, { color: theme.textMuted }]}>
-              {targetDay === todayDayName() ? "TODAY'S MENU" : "TOMORROW'S MENU"}
-            </Text>
-            <View style={styles.mealPillContainer}>
-              {(vegDayMenu || nonVegDayMenu) && (
-                <Text style={[styles.mealCountdownText, { color: theme.accent }]}>
-                  {getMealTimeStatus(mealKey).timeLeftString}
-                </Text>
-              )}
-              <View style={[styles.mealPill, { backgroundColor: theme.secondaryTint }]}>
-                <Text style={[styles.mealPillText, { color: theme.secondary }]}>
-                  {mealKey.toUpperCase()}
-                </Text>
-              </View>
-            </View>
-          </View>
-          <View style={styles.menuBody}>
-            {isSameMenu ? (
-              // Unified single column layout
-              <View style={styles.unifiedColumn}>
-                <View style={styles.columnHeader}>
-                  <View style={styles.splitDotContainer}>
-                    <DietMark type="veg" size={12} />
-                    <DietMark type="nonVeg" size={12} />
-                  </View>
-                  <Text style={[styles.columnHeaderTitle, { color: theme.textMuted }]}>
-                    VEG & NON-VEG
+            <View
+              style={[
+                styles.menuHeader,
+                {
+                  backgroundColor: theme.surfaceMuted,
+                  borderBottomColor: theme.border,
+                },
+              ]}
+            >
+              <Text style={[styles.cardLabel, { color: theme.textMuted }]}>
+                {targetDay === todayDayName() ? "TODAY'S MENU" : "TOMORROW'S MENU"}
+              </Text>
+              <View style={styles.mealPillContainer}>
+                {(vegDayMenu || nonVegDayMenu) && (
+                  <Text style={[styles.mealCountdownText, { color: theme.accent }]}>
+                    {getMealTimeStatus(mealKey).timeLeftString}
+                  </Text>
+                )}
+                <View style={[styles.mealPill, { backgroundColor: theme.secondaryTint }]}>
+                  <Text style={[styles.mealPillText, { color: theme.secondary }]}>
+                    {mealKey.toUpperCase()}
                   </Text>
                 </View>
-                <View style={styles.dishList}>
-                  {vegDishes.map((dish, i) => (
-                    <View key={i} style={styles.menuItem}>
-                      <View style={[styles.menuDot, { backgroundColor: theme.secondary }]} />
-                      <Text style={[styles.menuItemText, { color: theme.text }]} numberOfLines={1}>
-                        {dish}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
               </View>
-            ) : (
-              // Split side-by-side columns layout
-              <View style={styles.splitColumns}>
-                {/* Left Column - Veg */}
-                <View style={[styles.column, { borderRightColor: theme.border, borderRightWidth: 1, paddingRight: AppSpacing.md }]}>
+            </View>
+            <View style={styles.menuBody}>
+              {isSameMenu ? (
+                // Unified single column layout
+                <View style={styles.unifiedColumn}>
                   <View style={styles.columnHeader}>
-                    <DietMark type="veg" size={12} />
-                    <Text style={[styles.columnHeaderTitle, { color: theme.veg }]}>
-                      VEGETARIAN
+                    <View style={styles.splitDotContainer}>
+                      <DietMark type="veg" size={12} />
+                      <DietMark type="nonVeg" size={12} />
+                    </View>
+                    <Text style={[styles.columnHeaderTitle, { color: theme.textMuted }]}>
+                      VEG & NON-VEG
                     </Text>
                   </View>
                   <View style={styles.dishList}>
                     {vegDishes.map((dish, i) => (
                       <View key={i} style={styles.menuItem}>
-                        <View style={[styles.menuDot, { backgroundColor: theme.veg }]} />
+                        <View style={[styles.menuDot, { backgroundColor: theme.secondary }]} />
                         <Text style={[styles.menuItemText, { color: theme.text }]} numberOfLines={1}>
                           {dish}
                         </Text>
@@ -610,131 +592,180 @@ export default function HomeScreen() {
                     ))}
                   </View>
                 </View>
-
-                {/* Right Column - Non-Veg */}
-                <View style={[styles.column, { paddingLeft: AppSpacing.md }]}>
-                  <View style={styles.columnHeader}>
-                    <DietMark type="nonVeg" size={12} />
-                    <Text style={[styles.columnHeaderTitle, { color: theme.nonVeg }]}>
-                      NON-VEG
-                    </Text>
+              ) : (
+                // Split side-by-side columns layout
+                <View style={styles.splitColumns}>
+                  {/* Left Column - Veg */}
+                  <View style={[styles.column, { borderRightColor: theme.border, borderRightWidth: 1, paddingRight: AppSpacing.md }]}>
+                    <View style={styles.columnHeader}>
+                      <DietMark type="veg" size={12} />
+                      <Text style={[styles.columnHeaderTitle, { color: theme.veg }]}>
+                        VEGETARIAN
+                      </Text>
+                    </View>
+                    <View style={styles.dishList}>
+                      {vegDishes.map((dish, i) => (
+                        <View key={i} style={styles.menuItem}>
+                          <View style={[styles.menuDot, { backgroundColor: theme.veg }]} />
+                          <Text style={[styles.menuItemText, { color: theme.text }]} numberOfLines={1}>
+                            {dish}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
                   </View>
-                  <View style={styles.dishList}>
-                    {nonVegDishes.map((dish, i) => (
-                      <View key={i} style={styles.menuItem}>
-                        <View style={[styles.menuDot, { backgroundColor: dish.isVeg ? theme.veg : theme.nonVeg }]} />
-                        <Text style={[styles.menuItemText, { color: theme.text }]} numberOfLines={1}>
-                          {dish.name}
-                        </Text>
-                      </View>
-                    ))}
+
+                  {/* Right Column - Non-Veg */}
+                  <View style={[styles.column, { paddingLeft: AppSpacing.md }]}>
+                    <View style={styles.columnHeader}>
+                      <DietMark type="nonVeg" size={12} />
+                      <Text style={[styles.columnHeaderTitle, { color: theme.nonVeg }]}>
+                        NON-VEG
+                      </Text>
+                    </View>
+                    <View style={styles.dishList}>
+                      {nonVegDishes.map((dish, i) => (
+                        <View key={i} style={styles.menuItem}>
+                          <View style={[styles.menuDot, { backgroundColor: dish.isVeg ? theme.veg : theme.nonVeg }]} />
+                          <Text style={[styles.menuItemText, { color: theme.text }]} numberOfLines={1}>
+                            {dish.name}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
                   </View>
                 </View>
-              </View>
-            )}
-          </View>
-        </Pressable>
-      ) : null}
-
+              )}
+            </View>
+          </Pressable>
+        ) : null
+    ),
+    messQr: (
       <MessQrCard />
-
+    ),
+    directories: (
       <DirectoryShortcuts />
-
+    ),
+    services: (
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
-          Institute services
-        </Text>
-        <View style={styles.grid}>
-          {QUICK_LINKS.map((item) => (
-            <QuickAccessTile
-              key={item.title}
-              title={item.title}
-              icon={item.icon}
-              variant={item.variant}
-              onPress={() => {
-                posthog.capture('quick_link_tapped', { link_title: item.title });
-                router.push(item.route);
-              }}
-            />
-          ))}
-        </View>
-      </View>
-
-      {homeCampaigns.length > 0 ? (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
-              Discover
-            </Text>
-            <Pressable onPress={() => router.push('/discover' as never)} hitSlop={8}>
-              <Text style={[styles.viewAll, { color: theme.linkText }]}>
-                See All
-              </Text>
-            </Pressable>
+          <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
+            Institute services
+          </Text>
+          <View style={styles.grid}>
+            {QUICK_LINKS.map((item) => (
+              <QuickAccessTile
+                key={item.title}
+                title={item.title}
+                icon={item.icon}
+                variant={item.variant}
+                onPress={() => {
+                  posthog.capture('quick_link_tapped', { link_title: item.title });
+                  router.push(item.route);
+                }}
+              />
+            ))}
           </View>
-          <HomeCampaignSlots campaigns={homeCampaigns} />
         </View>
-      ) : null}
-
-      {upcomingEvents.length > 0 ? (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
-              Upcoming
-            </Text>
-            <Pressable onPress={() => router.push('/calendar')} hitSlop={8}>
-              <Text style={[styles.viewAll, { color: theme.linkText }]}>
-                Calendar
+    ),
+    discover: (
+      homeCampaigns.length > 0 ? (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
+                Discover
               </Text>
-            </Pressable>
+              <Pressable onPress={() => router.push('/discover' as never)} hitSlop={8}>
+                <Text style={[styles.viewAll, { color: theme.linkText }]}>
+                  See All
+                </Text>
+              </Pressable>
+            </View>
+            <HomeCampaignSlots campaigns={homeCampaigns} />
           </View>
-          {upcomingEvents.map((event, i) => (
-            <Pressable
-              key={`${event.title}-${i}`}
-              onPress={() => router.push('/calendar')}
-              style={({ pressed }) => [
-                styles.eventRow,
-                { backgroundColor: theme.surface, borderColor: theme.border },
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={[styles.eventType, { color: theme.linkText }]}>
-                {event.type}
+        ) : null
+    ),
+    events: (
+      upcomingEvents.length > 0 ? (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
+                Upcoming
               </Text>
-              <Text style={[styles.eventTitle, { color: theme.text }]} numberOfLines={1}>
-                {event.title}
-              </Text>
-              <Text style={[styles.eventDate, { color: theme.textMuted }]}>
-                {event.startDate === event.endDate
-                  ? event.startDate
-                  : `${event.startDate} → ${event.endDate}`}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      ) : null}
-
-      {topNotices.length > 0 ? (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
-              Important notices
-            </Text>
-            <Pressable onPress={() => router.push('/(tabs)/notices')} hitSlop={8}>
-              <Text style={[styles.viewAll, { color: theme.linkText }]}>
-                View All
-              </Text>
-            </Pressable>
+              <Pressable onPress={() => router.push('/calendar')} hitSlop={8}>
+                <Text style={[styles.viewAll, { color: theme.linkText }]}>
+                  Calendar
+                </Text>
+              </Pressable>
+            </View>
+            {upcomingEvents.map((event, i) => (
+              <Pressable
+                key={`${event.title}-${i}`}
+                onPress={() => router.push('/calendar')}
+                style={({ pressed }) => [
+                  styles.eventRow,
+                  { backgroundColor: theme.surface, borderColor: theme.border },
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={[styles.eventType, { color: theme.linkText }]}>
+                  {event.type}
+                </Text>
+                <Text style={[styles.eventTitle, { color: theme.text }]} numberOfLines={1}>
+                  {event.title}
+                </Text>
+                <Text style={[styles.eventDate, { color: theme.textMuted }]}>
+                  {event.startDate === event.endDate
+                    ? event.startDate
+                    : `${event.startDate} → ${event.endDate}`}
+                </Text>
+              </Pressable>
+            ))}
           </View>
-          {topNotices.map((n, i) => (
-            <NoticeRow
-              key={`${n.title}-${i}`}
-              notice={n}
-              onPress={() => router.push('/(tabs)/notices')}
-            />
-          ))}
-        </View>
-      ) : null}
+        ) : null
+    ),
+    notices: (
+      topNotices.length > 0 ? (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
+                Important notices
+              </Text>
+              <Pressable onPress={() => router.push('/(tabs)/notices')} hitSlop={8}>
+                <Text style={[styles.viewAll, { color: theme.linkText }]}>
+                  View All
+                </Text>
+              </Pressable>
+            </View>
+            {topNotices.map((n, i) => (
+              <NoticeRow
+                key={`${n.title}-${i}`}
+                notice={n}
+                onPress={() => router.push('/(tabs)/notices')}
+              />
+            ))}
+          </View>
+        ) : null
+    ),
+  };
+
+  return (
+    <View style={styles.screen}>
+      <HomeHeader />
+      <ScreenShell onRefresh={onRefresh} refreshing={syncing} error={syncError}>
+      {homeLayout.order
+        .filter((key) => !hiddenSections.has(key))
+        .map((key) => (
+          <Fragment key={key}>{sections[key]}</Fragment>
+        ))}
+
+      <Pressable
+        onPress={() => router.push('/customize-home' as never)}
+        style={({ pressed }) => [styles.customizeLink, pressed && { opacity: 0.7 }]}
+        accessibilityRole="button"
+      >
+        <Ionicons name="options-outline" size={16} color={theme.linkText} />
+        <Text style={[styles.customizeText, { color: theme.linkText }]}>Customize home</Text>
+      </Pressable>
       </ScreenShell>
     </View>
   );
@@ -743,6 +774,17 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
+  },
+  customizeLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: AppSpacing.xs,
+    paddingVertical: AppSpacing.md,
+  },
+  customizeText: {
+    ...AppTypography.bodySmall,
+    fontWeight: '600',
   },
   card: {
     borderRadius: AppRadius.md,

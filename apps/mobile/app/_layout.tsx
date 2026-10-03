@@ -210,6 +210,7 @@ function RootNavigator() {
         <Stack.Screen name="health-center" options={{ title: 'Health Center' }} />
         <Stack.Screen name="about" options={{ title: 'About IITJ One' }} />
         <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+        <Stack.Screen name="customize-home" options={{ title: 'Customize Home' }} />
         <Stack.Screen name="mess-qr" options={{ title: 'My Mess QR' }} />
         <Stack.Screen name="timetable" options={{ headerShown: false }} />
         <Stack.Screen name="notes" options={{ title: 'Notes' }} />

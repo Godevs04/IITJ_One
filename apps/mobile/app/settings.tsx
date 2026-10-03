@@ -116,6 +116,11 @@ export default function SettingsScreen() {
 
       <View style={{ gap: AppSpacing.sm }}>
         <DirectoryRow
+          title="Customize Home"
+          subtitle="Reorder or hide Home screen sections"
+          onPress={() => router.push('/customize-home' as never)}
+        />
+        <DirectoryRow
           title="My Mess QR"
           subtitle="Stored only on this device"
           onPress={() => router.push('/mess-qr')}

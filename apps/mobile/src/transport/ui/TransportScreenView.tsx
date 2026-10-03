@@ -20,7 +20,12 @@ import { getScheduleKey, getTripsForDayType, evaluateTripStatus, isScheduleOverr
 import { parseRouteStops } from '../utils/coordinates';
 import { parseTimeToMinutes } from '@/utils/date';
 import { TripCard } from '../widgets/TripCard';
-import { busReminderId, getScheduledBusReminderIds, toggleBusReminder } from '../services/busReminders';
+import {
+  busReminderId,
+  busRemindersSupported,
+  getScheduledBusReminderIds,
+  toggleBusReminder,
+} from '../services/busReminders';
 import type { TripWithStatus } from '../models/BusTypes';
 import { LiveStatusBar } from '../widgets/LiveStatusBar';
 import { EmptyState } from '@/components/EmptyState';
@@ -162,8 +167,6 @@ export function TransportScreenView({
         Alert.alert('Leaving very soon', 'This bus leaves in under 5 minutes — too close to set a reminder.');
       } else if (result === 'denied') {
         Alert.alert('Notifications are off', 'Allow notifications for IITJ One in your phone settings to get bus reminders.');
-      } else {
-        Alert.alert('Not available', 'Bus reminders need the installed app (they do not work in Expo Go).');
       }
     },
     [reminderIds],
@@ -649,7 +652,7 @@ export function TransportScreenView({
                 liveDataStale={liveDataStale}
                 reminderSet={reminderIds.has(busReminderId(item.trip))}
                 // Reminders fire today, so only offer them on today's schedule.
-                onToggleReminder={dayTypeFilter === defaultDayType ? onToggleReminder : undefined}
+                onToggleReminder={busRemindersSupported && dayTypeFilter === defaultDayType ? onToggleReminder : undefined}
               />
             );
           })

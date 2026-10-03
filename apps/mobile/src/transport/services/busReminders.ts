@@ -1,11 +1,13 @@
 import Constants, { ExecutionEnvironment } from 'expo-constants';
+import { Platform } from 'react-native';
 import type { TransportTrip } from '@/types/campus';
 import { parseTimeToMinutes } from '@/utils/date';
 
 const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 let Notifications: any = null;
 
-if (!isExpoGo) {
+// Scheduled local notifications don't exist on web (the API throws there).
+if (!isExpoGo && Platform.OS !== 'web') {
   try {
     Notifications = require('expo-notifications');
     // Idempotent — same handler the laundry/timetable reminders register, so a
@@ -23,6 +25,9 @@ if (!isExpoGo) {
     console.warn('Failed to load expo-notifications', e);
   }
 }
+
+/** False in Expo Go and on web — the UI hides the reminder bell there. */
+export const busRemindersSupported = Notifications != null;
 
 const ID_PREFIX = 'bus-';
 /** Preferred lead time; drops to the short one when the bus is closer than that. */
@@ -43,8 +48,12 @@ export function busReminderId(trip: TransportTrip): string {
 
 export async function getScheduledBusReminderIds(): Promise<Set<string>> {
   if (!Notifications) return new Set();
-  const scheduled: { identifier: string }[] = await Notifications.getAllScheduledNotificationsAsync();
-  return new Set(scheduled.map((n) => n.identifier).filter((id) => id.startsWith(ID_PREFIX)));
+  try {
+    const scheduled: { identifier: string }[] = await Notifications.getAllScheduledNotificationsAsync();
+    return new Set(scheduled.map((n) => n.identifier).filter((id) => id.startsWith(ID_PREFIX)));
+  } catch {
+    return new Set();
+  }
 }
 
 async function ensurePermission(): Promise<boolean> {
