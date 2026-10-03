@@ -42,6 +42,12 @@ registerBackgroundHandler();
 
 void SplashScreen.preventAutoHideAsync();
 
+// Keep the tabs underneath any screen opened directly (push notification,
+// deep link, cold start) so the header back button always has somewhere to go.
+export const unstable_settings = {
+  initialRouteName: '(tabs)',
+};
+
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
   const [fontsLoaded] = useFonts({

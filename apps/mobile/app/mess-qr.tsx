@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, View, PanResponder, Platform } from 'react-native';
 import { Stack, router, useFocusEffect } from 'expo-router';
+import { goBack } from '@/navigation/goBack';
 import * as ImagePicker from 'expo-image-picker';
 import * as Brightness from 'expo-brightness';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
@@ -251,7 +252,7 @@ export default function MessQrScreen() {
             <Pressable onPress={openReCrop} hitSlop={16} accessibilityRole="button" accessibilityLabel="Edit QR">
               <Ionicons name="pencil" size={22} color="#fff" />
             </Pressable>
-            <Pressable onPress={() => router.back()} hitSlop={16} accessibilityRole="button" accessibilityLabel="Close">
+            <Pressable onPress={goBack} hitSlop={16} accessibilityRole="button" accessibilityLabel="Close">
               <Ionicons name="close" size={26} color="#fff" />
             </Pressable>
           </Animated.View>
@@ -292,7 +293,7 @@ export default function MessQrScreen() {
       </View>
       <PrimaryButton label="Upload from Gallery" onPress={() => void pickImage(false)} />
       <SecondaryButton label="Take Photo" onPress={() => void pickImage(true)} />
-      <SecondaryButton label="Cancel" onPress={() => router.back()} />
+      <SecondaryButton label="Cancel" onPress={goBack} />
       </View>
     </>
   );

@@ -86,7 +86,7 @@ export function BottomTabBar({ state, descriptors, navigation }: MaterialTopTabB
               style={[
                 styles.iconWrap,
                 isFocused && {
-                  backgroundColor: theme.primaryTint,
+                  backgroundColor: theme.tabActiveBackground,
                 },
               ]}
             >

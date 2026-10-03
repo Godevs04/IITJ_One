@@ -28,6 +28,35 @@ const CONFIDENCE_LABEL: Record<string, string> = {
   low: 'Low confidence',
 };
 
+const STATE_LABEL: Record<TripWithStatus['status'], string> = {
+  upcoming: 'Upcoming',
+  boarding: 'Boarding',
+  transit: 'In transit',
+  completed: 'Completed',
+};
+
+function formatMinutes(totalMinutes: number): string {
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+  if (hours === 0) return `${mins} min`;
+  return mins === 0 ? `${hours} h` : `${hours} h ${mins} min`;
+}
+
+/** The one line people look for: big, colored, readable at a glance in both themes. */
+function countdownText(item: TripWithStatus): string | null {
+  switch (item.status) {
+    case 'upcoming':
+    case 'boarding': {
+      const mins = Math.max(1, Math.ceil(item.secondsUntilStart / 60));
+      return `Leaves in ${formatMinutes(mins)}`;
+    }
+    case 'transit':
+      return `On the way · reaches ${item.trip.to} by ${item.trip.endTime}`;
+    default:
+      return null;
+  }
+}
+
 const LIVE_STATUS_LABEL: Record<string, string> = {
   WAITING: 'Waiting to depart',
   BOARDING: 'Boarding',
@@ -41,7 +70,8 @@ const LIVE_STATUS_LABEL: Record<string, string> = {
 
 function TripCardComponent({ item, isFavorited, onToggleFavorite, direction, liveTrip, liveDataStale }: TripCardProps) {
   const theme = useThemeColors();
-  const { trip, status, statusText, stops } = item;
+  const { trip, status, stops } = item;
+  const countdown = countdownText(item);
   const showRideButton = direction != null && status !== 'completed';
   const showLiveBadge = liveTrip != null && !liveDataStale;
   const confidenceColor = liveTrip
@@ -132,10 +162,30 @@ function TripCardComponent({ item, isFavorited, onToggleFavorite, direction, liv
         </View>
         <View style={[styles.statusBadge, { backgroundColor: getStatusBg(), borderColor: getStatusColor() }]}>
           <Text style={[styles.statusText, { color: getStatusColor() }]}>
-            {statusText.toUpperCase()}
+            {STATE_LABEL[status].toUpperCase()}
           </Text>
         </View>
       </View>
+
+      {countdown ? (
+        <View
+          style={[styles.countdownRow, { backgroundColor: getStatusBg() }]}
+          accessibilityRole="text"
+          accessibilityLabel={countdown}
+        >
+          <Ionicons
+            name={isTransit ? 'bus-outline' : 'time-outline'}
+            size={isTransit ? 18 : 22}
+            color={getStatusColor()}
+          />
+          <Text
+            style={[isTransit ? styles.transitText : styles.countdownText, { color: getStatusColor() }]}
+            numberOfLines={2}
+          >
+            {countdown}
+          </Text>
+        </View>
+      ) : null}
 
       {/* Route Stops Flow */}
       <View style={styles.stopsContainer}>
@@ -341,9 +391,28 @@ const styles = StyleSheet.create({
   },
   statusText: {
     ...AppTypography.caption,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.5,
+  },
+  countdownRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.sm,
+    borderRadius: AppRadius.md,
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: AppSpacing.sm,
+  },
+  countdownText: {
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: '700',
+    flexShrink: 1,
+  },
+  transitText: {
+    ...AppTypography.body,
+    fontWeight: '700',
+    flexShrink: 1,
   },
   stopsContainer: {
     paddingLeft: AppSpacing.xs,
@@ -385,12 +454,11 @@ const styles = StyleSheet.create({
     gap: AppSpacing.xs,
   },
   stopName: {
-    ...AppTypography.bodySmall,
+    ...AppTypography.body,
   },
   etaLabel: {
     ...AppTypography.caption,
-    fontSize: 10,
-    fontStyle: 'italic',
+    fontWeight: '700',
     marginLeft: AppSpacing.xs,
   },
   favoriteButton: {
@@ -398,8 +466,6 @@ const styles = StyleSheet.create({
   },
   routeText: {
     ...AppTypography.caption,
-    fontSize: 11,
-    fontStyle: 'italic',
   },
   pressed: {
     opacity: 0.7,
@@ -427,7 +493,7 @@ const styles = StyleSheet.create({
   },
   liveBadgeText: {
     ...AppTypography.caption,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.5,
   },

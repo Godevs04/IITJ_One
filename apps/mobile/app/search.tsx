@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
+import { goBack } from '@/navigation/goBack';
 import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '@/components/EmptyState';
 import { GlobalSearchResultCard } from '@/components/GlobalSearchResultCard';
@@ -64,7 +65,7 @@ export default function GlobalSearchScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={[styles.searchRow, { borderColor: theme.border, backgroundColor: theme.surface }]}>
-        <Pressable onPress={() => router.back()} hitSlop={10} accessibilityRole="button" accessibilityLabel="Back">
+        <Pressable onPress={goBack} hitSlop={12} style={styles.iconButton} accessibilityRole="button" accessibilityLabel="Back">
           <Ionicons name="arrow-back" size={22} color={theme.text} />
         </Pressable>
         <Ionicons name="search-outline" size={18} color={theme.textMuted} />
@@ -161,8 +162,19 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    ...AppTypography.body,
+    // No lineHeight here: on iOS a TextInput lineHeight pushes the text and
+    // placeholder off vertical centre inside the fixed-height bar.
+    fontSize: AppTypography.body.fontSize,
+    height: '100%',
     paddingVertical: 0,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+  },
+  iconButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   listContent: {
     padding: AppSpacing.lg,

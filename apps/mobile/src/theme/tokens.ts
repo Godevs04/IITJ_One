@@ -153,6 +153,8 @@ export interface ThemeColors {
   secondaryTint: string;
   tabBar: string;
   tabActive: string;
+  /** Pill behind the focused tab icon. */
+  tabActiveBackground: string;
   tabInactive: string;
   headerBackground: string;
   headerTint: string;
@@ -189,22 +191,26 @@ export function getThemeColors(scheme: ColorScheme): ThemeColors {
       text: AppColors.textPrimaryDark,
       textMuted: AppColors.textMutedDark,
       border: AppColors.surfaceNightRaised,
-      primary: AppColors.jodhpurIndigo,
-      onPrimary: AppColors.desertSand,
+      // Bright indigo with dark text: `primary` doubles as the selected-state
+      // background for chips/day strips, and the old navy (#1D3F5E) was
+      // indistinguishable from unselected dark chips (#213851).
+      primary: AppColors.indigoGlow,
+      onPrimary: AppColors.indigoNight,
       linkText: AppColors.indigoGlow,
       accent: AppColors.duskDark,
       primaryTint: AppColors.surfaceNightRaised,
       secondary: AppColors.sandstoneDark,
       secondaryTint: '#3D2A14',
       tabBar: AppColors.surfaceNight,
-      tabActive: AppColors.textPrimaryDark,
+      tabActive: AppColors.indigoGlow,
+      tabActiveBackground: '#2A4A6E',
       tabInactive: AppColors.textMutedDark,
       headerBackground: AppColors.surfaceNight,
       headerTint: AppColors.textPrimaryDark,
       inputBackground: AppColors.surfaceNightRaised,
       chipBackground: AppColors.surfaceNightRaised,
-      chipActiveBackground: AppColors.jodhpurIndigo,
-      chipActiveText: AppColors.desertSand,
+      chipActiveBackground: AppColors.indigoGlow,
+      chipActiveText: AppColors.indigoNight,
       chipText: AppColors.textMutedDark,
       iconMuted: AppColors.textMutedDark,
       quickAccessProminentBg: AppColors.jodhpurIndigo,
@@ -242,6 +248,7 @@ export function getThemeColors(scheme: ColorScheme): ThemeColors {
     secondaryTint: AppColors.sandstoneTint,
     tabBar: AppColors.white,
     tabActive: AppColors.stitchPrimary,
+    tabActiveBackground: AppColors.indigoTint,
     tabInactive: '#8A939E',
     headerBackground: AppColors.stitchPrimary,
     headerTint: AppColors.white,

@@ -3,7 +3,8 @@ import { Pressable, StyleSheet, Text, View, Modal, ActivityIndicator } from 'rea
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
+import { goBack } from '@/navigation/goBack';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
@@ -146,7 +147,7 @@ export default function CalendarScreen() {
         options={{
           headerLeft: () => (
             <Pressable
-              onPress={() => router.back()}
+              onPress={goBack}
               hitSlop={10}
               style={({ pressed }) => [
                 { padding: 8, marginLeft: -8, opacity: pressed ? 0.7 : 1 }

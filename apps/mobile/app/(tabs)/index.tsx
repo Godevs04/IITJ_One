@@ -135,6 +135,28 @@ function formatCountdownText(seconds: number): string {
   return `Leaves in ${hrs} hr ${remainingMins} min`;
 }
 
+/** Big enough to read at a glance; turns the urgent color inside 10 minutes. */
+function CountdownPill({
+  seconds,
+  color,
+  background,
+  theme,
+}: {
+  seconds: number;
+  color: string;
+  background: string;
+  theme: any;
+}) {
+  const urgent = seconds < 600;
+  return (
+    <View style={[styles.widgetCountdownPill, { backgroundColor: urgent ? theme.importantCardBg : background }]}>
+      <Text style={[styles.widgetCountdown, { color: urgent ? theme.countdownUrgent : color }]}>
+        {formatCountdownText(seconds)}
+      </Text>
+    </View>
+  );
+}
+
 function TransportWidget({
   departure,
   arrival,
@@ -202,9 +224,7 @@ function TransportWidget({
                   <Text style={[styles.widgetBusText, { color: theme.text }]}>
                     {departure.trip.bus} • {departure.trip.startTime}
                   </Text>
-                  <Text style={[styles.widgetCountdown, { color: theme.secondary }]}>
-                    {formatCountdownText(departure.secondsUntil)}
-                  </Text>
+                  <CountdownPill seconds={departure.secondsUntil} color={theme.secondary} background={theme.secondaryTint} theme={theme} />
                 </View>
                 <Text style={[styles.widgetRouteText, { color: theme.text }]}>
                   From: <Text style={{ color: theme.textMuted }}>{departure.trip.from}</Text>
@@ -237,9 +257,7 @@ function TransportWidget({
                   <Text style={[styles.widgetBusText, { color: theme.text }]}>
                     {arrival.trip.bus} • {arrival.trip.startTime}
                   </Text>
-                  <Text style={[styles.widgetCountdown, { color: theme.linkText }]}>
-                    {formatCountdownText(arrival.secondsUntil)}
-                  </Text>
+                  <CountdownPill seconds={arrival.secondsUntil} color={theme.linkText} background={theme.primaryTint} theme={theme} />
                 </View>
                 <Text style={[styles.widgetRouteText, { color: theme.text }]}>
                   From: <Text style={{ color: theme.textMuted }}>{arrival.trip.from}</Text>
@@ -458,7 +476,16 @@ export default function HomeScreen() {
   // deliberately excluded from this compact widget, same as the old isMainDish
   // blacklist's intent, now driven by explicit data tagging instead of guessing.
   const vegDishes = useMemo(() => vegMeal?.vegItems ?? [], [vegMeal]);
-  const nonVegDishes = useMemo(() => nonVegMeal?.nonVegItems ?? [], [nonVegMeal]);
+  // The non-veg mess serves its own veg dishes too — a meal is `vegItems` +
+  // `nonVegItems`. Showing only `nonVegItems` left the column blank on most
+  // lunches and showed just "Boiled egg" at breakfast. Non-veg dishes first.
+  const nonVegDishes = useMemo(
+    () => [
+      ...(nonVegMeal?.nonVegItems ?? []).map((name) => ({ name, isVeg: false })),
+      ...(nonVegMeal?.vegItems ?? []).map((name) => ({ name, isVeg: true })),
+    ],
+    [nonVegMeal],
+  );
 
   debugListKeys('HomeScreen', 'vegDishes', vegDishes, (_, index) => `${index}`);
   debugListKeys('HomeScreen', 'nonVegDishes', nonVegDishes, (_, index) => `${index}`);
@@ -466,9 +493,10 @@ export default function HomeScreen() {
   debugListKeys('HomeScreen', 'upcomingEvents', upcomingEvents, (event, index) => `${event.title}-${index}`);
   debugListKeys('HomeScreen', 'topNotices', topNotices, (notice, index) => `${notice.title}-${index}`);
 
+  // Both messes serving identical dishes collapses into one column.
   const isSameMenu = useMemo(() => {
     if (vegDishes.length !== nonVegDishes.length) return false;
-    return vegDishes.every((val, index) => val === nonVegDishes[index]);
+    return vegDishes.every((val, index) => val === nonVegDishes[index].name);
   }, [vegDishes, nonVegDishes]);
 
   return (
@@ -592,9 +620,9 @@ export default function HomeScreen() {
                   <View style={styles.dishList}>
                     {nonVegDishes.map((dish, i) => (
                       <View key={i} style={styles.menuItem}>
-                        <View style={[styles.menuDot, { backgroundColor: theme.nonVeg }]} />
+                        <View style={[styles.menuDot, { backgroundColor: dish.isVeg ? theme.veg : theme.nonVeg }]} />
                         <Text style={[styles.menuItemText, { color: theme.text }]} numberOfLines={1}>
-                          {dish}
+                          {dish.name}
                         </Text>
                       </View>
                     ))}
@@ -932,16 +960,23 @@ const styles = StyleSheet.create({
   widgetMainRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'baseline',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: AppSpacing.xs,
   },
   widgetBusText: {
     ...AppTypography.body,
     fontWeight: '600',
   },
+  widgetCountdownPill: {
+    borderRadius: AppRadius.full,
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: AppSpacing.xs,
+  },
   widgetCountdown: {
-    ...AppTypography.bodySmall,
-    fontFamily: 'monospace',
-    fontWeight: '600',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
   },
   widgetRouteText: {
     ...AppTypography.caption,
