@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { WEEKDAYS, monthNumberToName } from '@iitj1/types';
+import { DietMark } from '@/components/DietMark';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
@@ -35,6 +36,13 @@ function todayWeekdayName(): string {
   return WEEKDAY_NAMES_BY_JS_DAY[new Date().getDay()];
 }
 
+const MEAL_PRICES = [
+  { meal: 'Breakfast', veg: '₹45', nonVeg: '₹45' },
+  { meal: 'Lunch', veg: '₹75', nonVeg: '₹80' },
+  { meal: 'Snacks', veg: '₹35', nonVeg: '₹35' },
+  { meal: 'Dinner', veg: '₹75', nonVeg: '₹80' },
+];
+
 type DishSectionProps = {
   label: string;
   labelColor: string;
@@ -43,14 +51,56 @@ type DishSectionProps = {
   items: string[];
   /** 1 = one dish per row (long names), 2 = compact grid (short names). */
   columns: 1 | 2;
+  /** Food mark shown before the label. */
+  mark?: 'veg' | 'nonVeg';
 };
 
-function DishSection({ label, labelColor, dotColor, textColor, items, columns }: DishSectionProps) {
+function DietToggle({
+  type,
+  label,
+  selected,
+  onPress,
+}: {
+  type: 'veg' | 'nonVeg';
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  const theme = useThemeColors();
+  const color = type === 'veg' ? theme.veg : theme.nonVeg;
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      style={[
+        styles.toggleButton,
+        selected
+          ? { backgroundColor: color, borderColor: color }
+          : { backgroundColor: theme.chipBackground, borderColor: color },
+      ]}
+    >
+      {selected ? (
+        <Ionicons name="checkmark-circle" size={16} color={theme.onDiet} />
+      ) : (
+        <DietMark type={type} size={14} />
+      )}
+      <Text style={[styles.toggleButtonText, { color: selected ? theme.onDiet : color, fontWeight: '700' }]}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function DishSection({ label, labelColor, dotColor, textColor, items, columns, mark }: DishSectionProps) {
   if (items.length === 0) return null;
 
   return (
     <View style={styles.dishSection}>
-      <Text style={[styles.dishSectionLabel, { color: labelColor }]}>{label}</Text>
+      <View style={styles.dishSectionHeader}>
+        {mark ? <DietMark type={mark} size={12} /> : null}
+        <Text style={[styles.dishSectionLabel, { color: labelColor }]}>{label}</Text>
+      </View>
       <View style={styles.dishesGrid}>
         {items.map((dish, idx) => (
           <View
@@ -99,12 +149,7 @@ export default function MenuScreen() {
   }, [sync]);
 
   debugListKeys('MenuScreen', 'weekdayStrip', WEEKDAYS, (day) => day);
-  debugListKeys('MenuScreen', 'mealCharges', [
-    { meal: 'Breakfast', veg: '₹45', nonVeg: '₹45' },
-    { meal: 'Lunch', veg: '₹75', nonVeg: '₹80' },
-    { meal: 'Snacks', veg: '₹35', nonVeg: '₹35' },
-    { meal: 'Dinner', veg: '₹75', nonVeg: '₹80' },
-  ], (item) => item.meal);
+  debugListKeys('MenuScreen', 'mealCharges', MEAL_PRICES, (item) => item.meal);
 
   const isSelectedToday =
     selectedWeekday.trim().toLowerCase() === todayWeekdayName().trim().toLowerCase();
@@ -211,48 +256,18 @@ export default function MenuScreen() {
               </Text>
             </Pressable>
           )}
-          <Pressable
+          <DietToggle
+            type="veg"
+            label="Veg Mess"
+            selected={dietPreference === 'veg'}
             onPress={() => setDietPreference('veg')}
-            style={[
-              styles.toggleButton,
-              {
-                backgroundColor:
-                  dietPreference === 'veg' ? theme.vegTint : theme.chipBackground,
-                borderColor: dietPreference === 'veg' ? theme.veg : theme.border,
-              },
-            ]}
-          >
-            <View style={[styles.indicatorDot, { backgroundColor: theme.veg }]} />
-            <Text
-              style={[
-                styles.toggleButtonText,
-                { color: dietPreference === 'veg' ? theme.veg : theme.textMuted },
-              ]}
-            >
-              Veg Mess
-            </Text>
-          </Pressable>
-          <Pressable
+          />
+          <DietToggle
+            type="nonVeg"
+            label="Non-Veg Mess"
+            selected={dietPreference === 'nonVeg'}
             onPress={() => setDietPreference('nonVeg')}
-            style={[
-              styles.toggleButton,
-              {
-                backgroundColor:
-                  dietPreference === 'nonVeg' ? theme.errorTint : theme.chipBackground,
-                borderColor: dietPreference === 'nonVeg' ? theme.nonVeg : theme.border,
-              },
-            ]}
-          >
-            <View style={[styles.indicatorDot, { backgroundColor: theme.nonVeg }]} />
-            <Text
-              style={[
-                styles.toggleButtonText,
-                { color: dietPreference === 'nonVeg' ? theme.nonVeg : theme.textMuted },
-              ]}
-            >
-              Non-Veg Mess
-            </Text>
-          </Pressable>
+          />
           <Pressable
             onPress={() => setShowCharges(true)}
             style={[
@@ -263,9 +278,9 @@ export default function MenuScreen() {
               },
             ]}
           >
-            <Ionicons name="card-outline" size={15} color={theme.textMuted} />
-            <Text style={[styles.toggleButtonText, { color: theme.textMuted }]}>
-              Pay & Use
+            <Ionicons name="pricetag-outline" size={15} color={theme.linkText} />
+            <Text style={[styles.toggleButtonText, { color: theme.linkText }]}>
+              Mess prices
             </Text>
           </Pressable>
         </ScrollView>
@@ -348,6 +363,7 @@ export default function MenuScreen() {
                   short and uniform enough to survive two columns. */}
               <DishSection
                 label="VEG"
+                mark="veg"
                 labelColor={theme.veg}
                 dotColor={theme.veg}
                 textColor={theme.text}
@@ -356,6 +372,7 @@ export default function MenuScreen() {
               />
               <DishSection
                 label="NON-VEG"
+                mark="nonVeg"
                 labelColor={theme.nonVeg}
                 dotColor={theme.nonVeg}
                 textColor={theme.text}
@@ -415,52 +432,66 @@ export default function MenuScreen() {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Regular Users */}
-              <Text style={[styles.sectionHeading, { color: theme.linkText }]}>
-                Regular Users (Per Day)
-              </Text>
-              <Text style={[styles.sectionDescription, { color: theme.textMuted }]}>
-                Students, staff, or faculty members who consume all meals in the mess. ERP or register maintained.
-              </Text>
-
-              <View style={[styles.priceCard, { backgroundColor: theme.chipBackground }]}>
-                <View style={styles.priceRow}>
-                  <Text style={[styles.priceLabel, { color: theme.text }]}>Veg Mess</Text>
-                  <Text style={[styles.priceVal, { color: theme.veg }]}>₹170 + GST (~₹179)</Text>
+              {/* Option 1 — regular (monthly) users */}
+              <View style={[styles.planCard, { borderColor: theme.border, backgroundColor: theme.surfaceMuted }]}>
+                <View style={styles.planHeader}>
+                  <Ionicons name="calendar-outline" size={18} color={theme.linkText} />
+                  <Text style={[styles.planTitle, { color: theme.text }]}>Regular plan</Text>
+                  <View style={[styles.planBadge, { backgroundColor: theme.primaryTint }]}>
+                    <Text style={[styles.planBadgeText, { color: theme.linkText }]}>PER DAY · ALL MEALS</Text>
+                  </View>
                 </View>
-                <View style={[styles.modalDivider, { backgroundColor: theme.border }]} />
-                <View style={styles.priceRow}>
-                  <Text style={[styles.priceLabel, { color: theme.text }]}>Non-veg Mess</Text>
-                  <Text style={[styles.priceVal, { color: theme.nonVeg }]}>₹180 + GST (~₹189)</Text>
-                </View>
+                <Text style={[styles.sectionDescription, { color: theme.textMuted }]}>
+                  For students, staff and faculty who eat every meal in the mess. Billed per day via ERP or register.
+                </Text>
+                {[
+                  { type: 'veg' as const, label: 'Veg mess', price: '₹170 + GST', approx: '≈ ₹179 / day' },
+                  { type: 'nonVeg' as const, label: 'Non-veg mess', price: '₹180 + GST', approx: '≈ ₹189 / day' },
+                ].map((row) => (
+                  <View key={row.type} style={[styles.planRow, { borderTopColor: theme.border }]}>
+                    <DietMark type={row.type} size={14} />
+                    <Text style={[styles.priceLabel, { color: theme.text, flex: 1 }]}>{row.label}</Text>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={[styles.priceVal, { color: row.type === 'veg' ? theme.veg : theme.nonVeg }]}>{row.price}</Text>
+                      <Text style={[styles.planApprox, { color: theme.textMuted }]}>{row.approx}</Text>
+                    </View>
+                  </View>
+                ))}
               </View>
 
-              {/* Meal-wise Users */}
-              <Text style={[styles.sectionHeading, { color: theme.linkText, marginTop: AppSpacing.md }]}>
-                Meal-wise Users (Pay & Use)
-              </Text>
-              <Text style={[styles.sectionDescription, { color: theme.textMuted }]}>
-                Any user (students, staff, faculty, or visitors) availing only selected meals. Inclusive of GST.
-              </Text>
-
-              <View style={[styles.tableHeader, { borderBottomColor: theme.border }]}>
-                <Text style={[styles.th, { flex: 2, color: theme.textMuted }]}>Meal</Text>
-                <Text style={[styles.th, { flex: 1.5, textAlign: 'right', color: theme.textMuted }]}>Veg</Text>
-                <Text style={[styles.th, { flex: 1.5, textAlign: 'right', color: theme.textMuted }]}>Non-Veg</Text>
-              </View>
-
-              {[
-                { meal: 'Breakfast', veg: '₹45', nonVeg: '₹45' },
-                { meal: 'Lunch', veg: '₹75', nonVeg: '₹80' },
-                { meal: 'Snacks', veg: '₹35', nonVeg: '₹35' },
-                { meal: 'Dinner', veg: '₹75', nonVeg: '₹80' },
-              ].map((item, index) => (
-                <View key={index} style={[styles.tableRow, { borderBottomColor: theme.border }]}>
-                  <Text style={[styles.td, { flex: 2, fontWeight: '600', color: theme.text }]}>{item.meal}</Text>
-                  <Text style={[styles.td, { flex: 1.5, textAlign: 'right', color: theme.text }]}>{item.veg}</Text>
-                  <Text style={[styles.td, { flex: 1.5, textAlign: 'right', color: theme.text }]}>{item.nonVeg}</Text>
+              {/* Option 2 — pay & use, per meal */}
+              <View style={[styles.planCard, { borderColor: theme.border, backgroundColor: theme.surfaceMuted, marginTop: AppSpacing.md }]}>
+                <View style={styles.planHeader}>
+                  <Ionicons name="wallet-outline" size={18} color={theme.secondary} />
+                  <Text style={[styles.planTitle, { color: theme.text }]}>Pay & Use</Text>
+                  <View style={[styles.planBadge, { backgroundColor: theme.secondaryTint }]}>
+                    <Text style={[styles.planBadgeText, { color: theme.secondary }]}>PER MEAL</Text>
+                  </View>
                 </View>
-              ))}
+                <Text style={[styles.sectionDescription, { color: theme.textMuted }]}>
+                  For anyone eating only some meals — students, staff, faculty or visitors. Prices include GST.
+                </Text>
+
+                <View style={[styles.tableHeader, { borderBottomColor: theme.border }]}>
+                  <Text style={[styles.th, { flex: 2, color: theme.textMuted }]}>Meal</Text>
+                  <View style={[styles.thCell, { flex: 1.5 }]}>
+                    <DietMark type="veg" size={12} />
+                    <Text style={[styles.th, { color: theme.veg }]}>Veg</Text>
+                  </View>
+                  <View style={[styles.thCell, { flex: 1.5 }]}>
+                    <DietMark type="nonVeg" size={12} />
+                    <Text style={[styles.th, { color: theme.nonVeg }]}>Non-veg</Text>
+                  </View>
+                </View>
+
+                {MEAL_PRICES.map((item) => (
+                  <View key={item.meal} style={[styles.tableRow, { borderBottomColor: theme.border }]}>
+                    <Text style={[styles.td, { flex: 2, fontWeight: '600', color: theme.text }]}>{item.meal}</Text>
+                    <Text style={[styles.td, { flex: 1.5, textAlign: 'right', color: theme.veg, fontWeight: '700' }]}>{item.veg}</Text>
+                    <Text style={[styles.td, { flex: 1.5, textAlign: 'right', color: theme.nonVeg, fontWeight: '700' }]}>{item.nonVeg}</Text>
+                  </View>
+                ))}
+              </View>
 
               {/* Footer / Queries */}
               <View style={[styles.queryContainer, { backgroundColor: theme.primaryTint }]}>
@@ -524,11 +555,6 @@ const styles = StyleSheet.create({
     ...AppTypography.button,
     fontSize: 13,
   },
-  indicatorDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
   mealCard: {
     borderRadius: AppRadius.md,
     padding: AppSpacing.lg,
@@ -583,12 +609,17 @@ const styles = StyleSheet.create({
   dishSection: {
     marginBottom: AppSpacing.sm,
   },
+  dishSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
   dishSectionLabel: {
     ...AppTypography.caption,
     fontWeight: '700',
-    fontSize: 10,
+    fontSize: 11,
     letterSpacing: 0.5,
-    marginBottom: 4,
   },
   dishesGrid: {
     flexDirection: 'row',
@@ -650,26 +681,54 @@ const styles = StyleSheet.create({
   modalCloseButton: {
     padding: 4,
   },
-  sectionHeading: {
-    ...AppTypography.body,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
   sectionDescription: {
     ...AppTypography.caption,
     fontSize: 12,
     marginBottom: AppSpacing.sm,
     lineHeight: 16,
   },
-  priceCard: {
-    borderRadius: AppRadius.sm,
+  planCard: {
+    borderWidth: 1,
+    borderRadius: AppRadius.md,
     padding: AppSpacing.md,
-    marginVertical: AppSpacing.xs,
+    gap: AppSpacing.sm,
   },
-  priceRow: {
+  planHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 4,
+    alignItems: 'center',
+    gap: AppSpacing.sm,
+    flexWrap: 'wrap',
+  },
+  planTitle: {
+    ...AppTypography.h2,
+    fontSize: 17,
+  },
+  planBadge: {
+    borderRadius: AppRadius.full,
+    paddingHorizontal: AppSpacing.sm,
+    paddingVertical: 2,
+  },
+  planBadgeText: {
+    ...AppTypography.caption,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  planRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.sm,
+    borderTopWidth: 1,
+    paddingTop: AppSpacing.sm,
+  },
+  planApprox: {
+    ...AppTypography.caption,
+  },
+  thCell: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 4,
   },
   priceLabel: {
     ...AppTypography.bodySmall,
@@ -678,10 +737,6 @@ const styles = StyleSheet.create({
   priceVal: {
     ...AppTypography.bodySmall,
     fontWeight: '700',
-  },
-  modalDivider: {
-    height: 1,
-    marginVertical: 6,
   },
   tableHeader: {
     flexDirection: 'row',

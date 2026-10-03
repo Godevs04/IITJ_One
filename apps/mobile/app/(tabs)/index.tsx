@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState, type ComponentProps } from '
 import { router, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { DietMark } from '@/components/DietMark';
+import { DirectoryShortcuts } from '@/components/DirectoryShortcuts';
 import { HomeHeader } from '@/components/HomeHeader';
 import { MessQrCard } from '@/components/MessQrCard';
 import { QuickAccessTile, type QuickAccessVariant } from '@/components/QuickAccessTile';
@@ -568,8 +570,8 @@ export default function HomeScreen() {
               <View style={styles.unifiedColumn}>
                 <View style={styles.columnHeader}>
                   <View style={styles.splitDotContainer}>
-                    <View style={[styles.miniIndicatorDot, { backgroundColor: theme.veg }]} />
-                    <View style={[styles.miniIndicatorDot, { backgroundColor: theme.nonVeg, marginLeft: -4 }]} />
+                    <DietMark type="veg" size={12} />
+                    <DietMark type="nonVeg" size={12} />
                   </View>
                   <Text style={[styles.columnHeaderTitle, { color: theme.textMuted }]}>
                     VEG & NON-VEG
@@ -592,7 +594,7 @@ export default function HomeScreen() {
                 {/* Left Column - Veg */}
                 <View style={[styles.column, { borderRightColor: theme.border, borderRightWidth: 1, paddingRight: AppSpacing.md }]}>
                   <View style={styles.columnHeader}>
-                    <View style={[styles.indicatorDot, { backgroundColor: theme.veg }]} />
+                    <DietMark type="veg" size={12} />
                     <Text style={[styles.columnHeaderTitle, { color: theme.veg }]}>
                       VEGETARIAN
                     </Text>
@@ -612,7 +614,7 @@ export default function HomeScreen() {
                 {/* Right Column - Non-Veg */}
                 <View style={[styles.column, { paddingLeft: AppSpacing.md }]}>
                   <View style={styles.columnHeader}>
-                    <View style={[styles.indicatorDot, { backgroundColor: theme.nonVeg }]} />
+                    <DietMark type="nonVeg" size={12} />
                     <Text style={[styles.columnHeaderTitle, { color: theme.nonVeg }]}>
                       NON-VEG
                     </Text>
@@ -635,6 +637,8 @@ export default function HomeScreen() {
       ) : null}
 
       <MessQrCard />
+
+      <DirectoryShortcuts />
 
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
@@ -858,11 +862,6 @@ const styles = StyleSheet.create({
   dishList: {
     gap: AppSpacing.xs,
   },
-  indicatorDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
   unifiedColumn: {
     width: '100%',
   },
@@ -870,11 +869,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-  },
-  miniIndicatorDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
   },
   section: {
     gap: AppSpacing.md,

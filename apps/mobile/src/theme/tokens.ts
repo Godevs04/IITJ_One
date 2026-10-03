@@ -177,6 +177,8 @@ export interface ThemeColors {
   veg: string;
   vegTint: string;
   nonVeg: string;
+  /** Text/icon colour on a solid `veg` or `nonVeg` fill. */
+  onDiet: string;
   countdown: string;
   countdownUrgent: string;
 }
@@ -226,6 +228,7 @@ export function getThemeColors(scheme: ColorScheme): ThemeColors {
       veg: AppColors.sageDark,
       vegTint: '#1E2A22',
       nonVeg: '#E07A75',
+      onDiet: AppColors.indigoNight,
       countdown: AppColors.textPrimaryDark,
       countdownUrgent: AppColors.duskDark,
     };
@@ -271,6 +274,7 @@ export function getThemeColors(scheme: ColorScheme): ThemeColors {
     veg: AppColors.sageWell,
     vegTint: AppColors.sageTint,
     nonVeg: AppColors.nonVegRed,
+    onDiet: AppColors.white,
     countdown: AppColors.inkSlate,
     countdownUrgent: AppColors.tharDusk,
   };

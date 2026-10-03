@@ -2,6 +2,7 @@ import { router, type Href } from 'expo-router';
 import { type ComponentProps } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { DirectoryShortcuts } from '@/components/DirectoryShortcuts';
 import { QuickAccessTile, type QuickAccessVariant } from '@/components/QuickAccessTile';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useThemeColors } from '@/theme/ThemeProvider';
@@ -25,7 +26,6 @@ const SECTIONS: MoreSection[] = [
     title: 'Campus tools',
     links: [
       { title: 'Discover', icon: 'compass-outline', route: '/discover' as never },
-      { title: 'Campus Directory', icon: 'people-circle-outline', route: '/campus-directory' },
       { title: 'Campus Map', icon: 'map-outline', route: '/map' },
       { title: 'Academic Calendar', icon: 'calendar-outline', route: '/calendar' },
       { title: 'Campus Apps', icon: 'apps-outline', route: '/apps' },
@@ -35,7 +35,6 @@ const SECTIONS: MoreSection[] = [
       { title: 'Laundry', icon: 'shirt-outline', route: '/laundry' },
       { title: 'E-Rickshaw', icon: 'car-sport-outline', route: '/e-rickshaw' },
       { title: 'Cabs & Autos', icon: 'car-outline', route: '/cabs-autos' },
-      { title: 'Health Center', icon: 'medical-outline', route: '/health-center', variant: 'danger' },
     ],
   },
   {
@@ -66,6 +65,7 @@ export default function MoreScreen() {
 
   return (
     <ScreenShell title="More" subtitle="Campus tools and settings">
+      <DirectoryShortcuts />
       {SECTIONS.map((section) => (
         <View key={section.title} style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>

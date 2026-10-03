@@ -24,11 +24,15 @@ const SUPPORT_URL = process.env.EXPO_PUBLIC_SUPPORT_URL || 'https://iitjone.in/s
 const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@iitjone.in';
 
 const NOTIFICATION_TOPICS = [
-  { key: 'iitj_all', label: 'All campus updates' },
-  { key: 'iitj_mess', label: 'Mess menu' },
-  { key: 'iitj_transport', label: 'Transport' },
-  { key: 'iitj_institute', label: 'Institute notices' },
-  { key: 'iitj_orientation', label: 'Orientation' },
+  { key: 'iitj_all', label: 'All campus updates', description: 'General announcements for everyone on campus' },
+  { key: 'iitj_mess', label: 'Mess menu', description: 'New monthly menus and mess changes' },
+  { key: 'iitj_transport', label: 'Transport', description: 'Bus timing changes, cancellations and breakdowns' },
+  { key: 'iitj_institute', label: 'Institute notices', description: 'Official notices from the institute' },
+  {
+    key: 'iitj_orientation',
+    label: 'Freshers’ orientation',
+    description: 'Orientation schedule and announcements for new students — safe to turn off after your first weeks',
+  },
 ] as const;
 
 export default function SettingsScreen() {
@@ -82,22 +86,32 @@ export default function SettingsScreen() {
             {pushInfo.note}
           </Text>
         ) : null}
-        {NOTIFICATION_TOPICS.map((topic) => (
-          <DirectoryRow
-            key={topic.key}
-            title={topic.label}
-            subtitle={topicPrefs[topic.key] !== false ? 'Enabled' : 'Muted'}
-            onPress={() => {
-              const next = { ...topicPrefs, [topic.key]: topicPrefs[topic.key] === false };
-              setTopicPrefs(next);
-              saveTopicPrefs(next);
-              posthog.capture('notification_topic_toggled', {
-                topic: topic.key,
-                enabled: next[topic.key] !== false,
-              });
-            }}
-          />
-        ))}
+        {NOTIFICATION_TOPICS.map((topic) => {
+          const enabled = topicPrefs[topic.key] !== false;
+          const setEnabled = (value: boolean) => {
+            const next = { ...topicPrefs, [topic.key]: value };
+            setTopicPrefs(next);
+            saveTopicPrefs(next);
+            posthog.capture('notification_topic_toggled', { topic: topic.key, enabled: value });
+          };
+          return (
+            <DirectoryRow
+              key={topic.key}
+              title={topic.label}
+              subtitle={topic.description}
+              renderRight={() => (
+                <Switch
+                  value={enabled}
+                  onValueChange={setEnabled}
+                  trackColor={{ false: colors.border, true: colors.primary }}
+                  thumbColor="#ffffff"
+                  ios_backgroundColor={colors.border}
+                  accessibilityLabel={`${topic.label} notifications`}
+                />
+              )}
+            />
+          );
+        })}
       </View>
 
       <View style={{ gap: AppSpacing.sm }}>
