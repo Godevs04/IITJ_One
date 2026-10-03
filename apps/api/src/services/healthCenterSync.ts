@@ -1,3 +1,5 @@
+import tls from 'tls';
+import { Agent } from 'undici';
 import * as cheerio from 'cheerio';
 import { DEFAULT_HEALTH_CENTER_DOC } from '@iitj1/types';
 import { config } from '../config';
@@ -18,6 +20,55 @@ const CONTACT_URL = 'https://www.iitj.ac.in/health-center/en/contact';
 const DOCTORS_SCHEDULE_URL = DEFAULT_HEALTH_CENTER_DOC.doctorScheduleUrl;
 const FETCH_TIMEOUT_MS = 10_000;
 
+// The www.iitj.ac.in web server omits the Sectigo intermediate certificate
+// (Sectigo Public Server Authentication CA OV R36) in its TLS handshake.
+// Rather than disabling TLS verification (rejectUnauthorized: false), we supply
+// the official intermediate CA certificate to complete the chain up to the
+// trusted root (USERTrust RSA Certification Authority), retaining strict verification.
+const SECTIGO_INTERMEDIATE_CA_PEM = `-----BEGIN CERTIFICATE-----
+MIIGTDCCBDSgAwIBAgIQLBo8dulD3d3/GRsxiQrtcTANBgkqhkiG9w0BAQwFADBf
+MQswCQYDVQQGEwJHQjEYMBYGA1UEChMPU2VjdGlnbyBMaW1pdGVkMTYwNAYDVQQD
+Ey1TZWN0aWdvIFB1YmxpYyBTZXJ2ZXIgQXV0aGVudGljYXRpb24gUm9vdCBSNDYw
+HhcNMjEwMzIyMDAwMDAwWhcNMzYwMzIxMjM1OTU5WjBgMQswCQYDVQQGEwJHQjEY
+MBYGA1UEChMPU2VjdGlnbyBMaW1pdGVkMTcwNQYDVQQDEy5TZWN0aWdvIFB1Ymxp
+YyBTZXJ2ZXIgQXV0aGVudGljYXRpb24gQ0EgT1YgUjM2MIIBojANBgkqhkiG9w0B
+AQEFAAOCAY8AMIIBigKCAYEApkMtJ3R06jo0fceI0M52B7K+TyMeGcv2BQ5AVc3j
+lYt76TvHIu/nNe22W/RJXX9rWUD/2GE6GF5x0V4bsY7K3IeJ8E7+KzG/TGboySfD
+u+F52jqQBbY62ofhYjMeiAbLI02+FqwHeM8uIrUtcX8b2RCxF358TB0NHVccAXZc
+FYgZndZCeXxjuca7pJJ20LLUnXtgXcjAE1vY4WvbReW0W6mkeZyNGdmpTcFs5Y+s
+yy6LtE5Zocji9J9NlNnReox2RWVyEXpA1ChZ4gqN+ZpVSIQ0HBorVFbBKyhdZyEX
+gZgNSNtBRwxqwIzJePJhYd4ZUhO1vk+/uP3nwDk0p95q/j7naXNCSvESnrHPypaB
+WRK066nKfPRPi9m9kIOhMdYfS8giFRTcdgL24Ycilj7ecAK9Trh0VbjwouJ4WH+x
+bt47u68ZFCD/ac55I0DNHkCpaPruj6e9Rmr7K46wZDAYXuEAqB7tGG/jd6JAA+H2
+O44CV98NRsU213f1kScIZntNAgMBAAGjggGBMIIBfTAfBgNVHSMEGDAWgBRWc1hk
+lfmSGrASKgRieaFAFYghSTAdBgNVHQ4EFgQU42Z0u3BojSxdTg6mSo+bNyKcgpIw
+DgYDVR0PAQH/BAQDAgGGMBIGA1UdEwEB/wQIMAYBAf8CAQAwHQYDVR0lBBYwFAYI
+KwYBBQUHAwEGCCsGAQUFBwMCMBsGA1UdIAQUMBIwBgYEVR0gADAIBgZngQwBAgIw
+VAYDVR0fBE0wSzBJoEegRYZDaHR0cDovL2NybC5zZWN0aWdvLmNvbS9TZWN0aWdv
+UHVibGljU2VydmVyQXV0aGVudGljYXRpb25Sb290UjQ2LmNybDCBhAYIKwYBBQUH
+AQEEeDB2ME8GCCsGAQUFBzAChkNodHRwOi8vY3J0LnNlY3RpZ28uY29tL1NlY3Rp
+Z29QdWJsaWNTZXJ2ZXJBdXRoZW50aWNhdGlvblJvb3RSNDYucDdjMCMGCCsGAQUF
+BzABhhdodHRwOi8vb2NzcC5zZWN0aWdvLmNvbTANBgkqhkiG9w0BAQwFAAOCAgEA
+BZXWDHWC3cubb/e1I1kzi8lPFiK/ZUoH09ufmVOrc5ObYH/XKkWUexSPqRkwKFKr
+7r8OuG+p7VNB8rifX6uopqKAgsvZtZsq7iAFw04To6vNcxeBt1Eush3cQ4b8nbQR
+MQLChgEAqwhuXp9P48T4QEBSksYav7+aFjNySsLYlPzNqVM3RNwvBdvp6vgDtGwc
+xlKQZVuuNVIaoYyls8swhxDeSHKpRdxRauTLZ+pl+wGvy0pnrLEJGSz9mOEmfbod
+e/XopR2NGqaHJ6bIjyxPu6UtyQGI26En7UAEozACrHz06Nx2jTAY9E6NeB6XuobE
+wLK025ZRmvglcURG1BrV24tGHHTgxCe8M3oGlpUSMTKQ2dkgljZVYt+gKdFtWELZ
+MuRdi+X3XsrR8LFz+aLUiDRfQqhmw3RxjIyVKvvu9UPYY1nsvxYmFnUSeM+2q1z/
+iPUry+xDY9MC6+IhleKT094VKdFVp7LXH42+wvU+17lRolQ2mK2N/nBLVBwaIhib
+QXw4VYKwB86Bc6eS6iqsc94KEgD/U4VsjmgfhK+Xp4NM+VYzTTa3QeV3p8xOM0cw
+q1p8oZFA+OBcz3FYWpDIe5j0NWKlw9hXsTyPY/HeZUV59akskSOSRSmDfe8wJDPX
+58uB9/7lud0G3x0pxQAcffP0ayKavNwDTw4UfJ34cEw=
+-----END CERTIFICATE-----`;
+
+const iitjAgent = new Agent({
+  connect: {
+    ca: [...tls.rootCertificates, SECTIGO_INTERMEDIATE_CA_PEM],
+    rejectUnauthorized: true,
+  },
+});
+
 /** Contact page labels don't always match the display names we want. */
 const CONTACT_LABEL_MAP: Record<string, string> = {
   'Office of PHC': 'Health Center Office',
@@ -28,7 +79,11 @@ const STATIC_SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const SCHEDULE_SYNC_INTERVAL_MS = 30 * 60 * 1000;
 
 async function fetchPage(url: string): Promise<string> {
-  const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+  const isIitj = url.includes('iitj.ac.in');
+  const res = await fetch(url, {
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    ...(isIitj ? { dispatcher: iitjAgent } : {}),
+  } as RequestInit);
   if (!res.ok) throw new Error(`GET ${url} -> ${res.status}`);
   return res.text();
 }
@@ -589,4 +644,5 @@ export const __testing = {
   extractPublishId,
   buildCsvUrl,
   normalizeHeader,
+  SECTIGO_INTERMEDIATE_CA_PEM,
 };

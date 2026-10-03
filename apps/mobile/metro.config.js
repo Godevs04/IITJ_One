@@ -68,12 +68,21 @@ config.server.enhanceMiddleware = (middleware, metroServer) => {
   return originalEnhanceMiddleware ? originalEnhanceMiddleware(withCoepCoop, metroServer) : withCoepCoop;
 };
 
-// Next.js (Admin) rewrites apps/admin/.next on every dev-server restart or
+// Next.js (Admin & Web) rewrites .next on every dev-server restart or
 // rebuild. Since watchFolders covers the whole workspace root, Metro's
 // watcher used to race those writes on Windows — Next mid-write to
-// routes-manifest.json / webpack's cache while Metro's crawler touched the
-// same files — corrupting .next and throwing ENOENT. Block build-output
-// dirs outright so Metro never watches them; it has no reason to.
-config.resolver.blockList = /apps[\\/](admin[\\/]\.next|api[\\/]dist)[\\/].*/;
+// routes-manifest.json / chunks while Metro's crawler touched the same files —
+// corrupting .next and throwing ENOENT. Block build outputs and sibling apps
+// (admin, web, api) outright so Metro never watches them; it has no reason to.
+const defaultBlockList = Array.isArray(config.resolver.blockList)
+  ? config.resolver.blockList
+  : (config.resolver.blockList ? [config.resolver.blockList] : []);
+
+config.resolver.blockList = [
+  ...defaultBlockList,
+  /.*[\\/]\.next([\\/].*)?$/,
+  /apps[\\/](admin|web|api)[\\/].*/,
+  /apps[\\/]mobile[\\/](dist|\.expo)([\\/].*)?$/,
+];
 
 module.exports = config;
