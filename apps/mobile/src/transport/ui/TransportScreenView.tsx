@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { StyleSheet, Text, View, TextInput, Pressable } from 'react-native';
+import { Alert, StyleSheet, Text, View, TextInput, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -20,6 +20,8 @@ import { getScheduleKey, getTripsForDayType, evaluateTripStatus, isScheduleOverr
 import { parseRouteStops } from '../utils/coordinates';
 import { parseTimeToMinutes } from '@/utils/date';
 import { TripCard } from '../widgets/TripCard';
+import { busReminderId, getScheduledBusReminderIds, toggleBusReminder } from '../services/busReminders';
+import type { TripWithStatus } from '../models/BusTypes';
 import { LiveStatusBar } from '../widgets/LiveStatusBar';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
@@ -139,6 +141,33 @@ export function TransportScreenView({
   );
 
   const isFavorited = useCallback((stopName: string) => favorites.includes(stopName), [favorites]);
+
+  // Bus reminders — the OS notification schedule is the source of truth, so a
+  // reminder set yesterday or cancelled from elsewhere is reflected correctly.
+  const [reminderIds, setReminderIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    void getScheduledBusReminderIds().then(setReminderIds);
+  }, []);
+
+  const onToggleReminder = useCallback(
+    async (item: TripWithStatus) => {
+      const id = busReminderId(item.trip);
+      const result = await toggleBusReminder(item.trip, reminderIds.has(id));
+      if (result === 'scheduled' || result === 'cancelled') {
+        setReminderIds(await getScheduledBusReminderIds());
+        if (result === 'scheduled') {
+          Alert.alert('Reminder set', `We'll remind you before the ${item.trip.startTime} ${item.trip.bus} leaves.`);
+        }
+      } else if (result === 'too-late') {
+        Alert.alert('Leaving very soon', 'This bus leaves in under 5 minutes — too close to set a reminder.');
+      } else if (result === 'denied') {
+        Alert.alert('Notifications are off', 'Allow notifications for IITJ One in your phone settings to get bus reminders.');
+      } else {
+        Alert.alert('Not available', 'Bus reminders need the installed app (they do not work in Expo Go).');
+      }
+    },
+    [reminderIds],
+  );
 
   const isExceptionLive = useMemo(() => isExceptionActive(activeException), [activeException]);
   // Legacy alert-triggered override — a dated schedule exception takes
@@ -618,6 +647,9 @@ export function TransportScreenView({
                 direction={direction}
                 liveTrip={matchLiveTrip(item.trip, direction)}
                 liveDataStale={liveDataStale}
+                reminderSet={reminderIds.has(busReminderId(item.trip))}
+                // Reminders fire today, so only offer them on today's schedule.
+                onToggleReminder={dayTypeFilter === defaultDayType ? onToggleReminder : undefined}
               />
             );
           })

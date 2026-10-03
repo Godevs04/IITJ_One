@@ -6,12 +6,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
 import { goBack } from '@/navigation/goBack';
 import { EmptyState } from '@/components/EmptyState';
+import { HolidayList } from '@/components/HolidayList';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
 import { API_BASE_URL } from '@/services/api';
 import { useModalOverlayLock } from '@/services/overlayGate';
-import type { CalendarDoc, CalendarEvent } from '@/types/campus';
+import type { CalendarDoc, CalendarEvent, HolidaysDoc } from '@/types/campus';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { debugListKeys } from '@/debug/listDebug';
@@ -30,6 +31,7 @@ export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
   const { syncing, sync, error } = useCampusSync(false);
   const calendar = useCampusModule<CalendarDoc>('calendar');
+  const holidays = useCampusModule<HolidaysDoc>('holidays');
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('all');
   const [showPdf, setShowPdf] = useState(false);
   useModalOverlayLock(showPdf);
@@ -208,7 +210,9 @@ export default function CalendarScreen() {
         })}
       </View>
 
-      {events.length > 0 ? (
+      {filter === 'holiday' ? (
+        <HolidayList holidays={holidays} events={calendar?.events ?? []} />
+      ) : events.length > 0 ? (
         <View style={{ gap: AppSpacing.sm }}>
           {events.map((event, index) => (
             <EventRow key={`${event.title}-${index}`} event={event} />

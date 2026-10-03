@@ -38,6 +38,13 @@ export async function ensureNotificationChannelsAsync(): Promise<void> {
     vibrationPattern: [0, 250, 250, 250],
   });
 
+  await Notifications.setNotificationChannelAsync('bus-reminders', {
+    name: 'Bus reminders',
+    importance: Notifications.AndroidImportance.HIGH,
+    sound: 'default',
+    vibrationPattern: [0, 250, 250, 250],
+  });
+
   await Notifications.setNotificationChannelAsync('general', {
     name: 'Campus updates',
     importance: Notifications.AndroidImportance.DEFAULT,

@@ -20,6 +20,10 @@ interface TripCardProps {
   liveTrip?: TransportLiveTrip;
   /** True when live data is known stale (poll failing and socket disconnected) — hides the live badge rather than showing a frozen position. */
   liveDataStale?: boolean;
+  /** Whether a "bus leaves soon" reminder is set for this trip today. */
+  reminderSet?: boolean;
+  /** Omitted when reminders don't apply (completed trips, or a non-today schedule is being browsed). */
+  onToggleReminder?: (item: TripWithStatus) => void;
 }
 
 const CONFIDENCE_LABEL: Record<string, string> = {
@@ -68,7 +72,16 @@ const LIVE_STATUS_LABEL: Record<string, string> = {
   OFFLINE: 'Offline',
 };
 
-function TripCardComponent({ item, isFavorited, onToggleFavorite, direction, liveTrip, liveDataStale }: TripCardProps) {
+function TripCardComponent({
+  item,
+  isFavorited,
+  onToggleFavorite,
+  direction,
+  liveTrip,
+  liveDataStale,
+  reminderSet = false,
+  onToggleReminder,
+}: TripCardProps) {
   const theme = useThemeColors();
   const { trip, status, stops } = item;
   const countdown = countdownText(item);
@@ -160,10 +173,34 @@ function TripCardComponent({ item, isFavorited, onToggleFavorite, direction, liv
             {trip.from} → {trip.to}
           </Text>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusBg(), borderColor: getStatusColor() }]}>
-          <Text style={[styles.statusText, { color: getStatusColor() }]}>
-            {STATE_LABEL[status].toUpperCase()}
-          </Text>
+        <View style={styles.headerRight}>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusBg(), borderColor: getStatusColor() }]}>
+            <Text style={[styles.statusText, { color: getStatusColor() }]}>
+              {STATE_LABEL[status].toUpperCase()}
+            </Text>
+          </View>
+          {onToggleReminder && (status === 'upcoming' || status === 'boarding') ? (
+            <Pressable
+              onPress={() => onToggleReminder(item)}
+              hitSlop={10}
+              style={[
+                styles.bellButton,
+                {
+                  backgroundColor: reminderSet ? theme.secondaryTint : 'transparent',
+                  borderColor: reminderSet ? theme.secondary : theme.border,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: reminderSet }}
+              accessibilityLabel={reminderSet ? `Cancel reminder for ${trip.bus} at ${trip.startTime}` : `Remind me before ${trip.bus} at ${trip.startTime} leaves`}
+            >
+              <Ionicons
+                name={reminderSet ? 'notifications' : 'notifications-outline'}
+                size={18}
+                color={reminderSet ? theme.secondary : theme.iconMuted}
+              />
+            </Pressable>
+          ) : null}
         </View>
       </View>
 
@@ -382,6 +419,19 @@ const styles = StyleSheet.create({
   directionText: {
     ...AppTypography.bodySmall,
     marginTop: 2,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.sm,
+  },
+  bellButton: {
+    width: 34,
+    height: 34,
+    borderRadius: AppRadius.full,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   statusBadge: {
     borderRadius: AppRadius.sm,
