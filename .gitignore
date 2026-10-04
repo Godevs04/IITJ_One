@@ -17,7 +17,7 @@ dist/
 build/
 out/
 .next/
-.next-verify/
+.next-verify*/
 .turbo/
 *.tsbuildinfo
 
