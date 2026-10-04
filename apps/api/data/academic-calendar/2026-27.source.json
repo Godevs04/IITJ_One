@@ -1,0 +1,3400 @@
+{
+  "source": {
+    "file": "Academic-Calendar-AY-2026-27-639178076336417495.pdf",
+    "title": "Academic Calendar: Academic Year 2026-27",
+    "publisher": "Indian Institute of Technology Jodhpur, Office of Academic Affairs",
+    "pages": 10,
+    "pdfCreationDate": "D:20261001103445+05'30'",
+    "documentDate": "2026-10-01"
+  },
+  "holidayListNotes": [
+    {
+      "page": 9,
+      "text": "List of holidays will be added as the institute holiday approved."
+    },
+    {
+      "page": 10,
+      "text": "*May be changed, subject to any further order of Central/State Government"
+    },
+    {
+      "page": 10,
+      "text": "List of holidays for Semester-II, AY 2026-27 are yet to be declared. The tentative holidays for Semester-II, AY 2026-27 are taken into consideration, which will be updated as and when notified by the Institute."
+    }
+  ],
+  "notes": [
+    {
+      "sourceRef": "A-note-1",
+      "part": "A",
+      "page": 2,
+      "text": "If the Government of India announces any additional Holiday on a working day, the buffer days of 18 November 2026 for Semester I and 21 April 2027 for Semester II will be observed as a working day."
+    },
+    {
+      "sourceRef": "A-note-2",
+      "part": "A",
+      "page": 2,
+      "text": "Lectures on the following days will be held with the schedule of the days mentioned against them:"
+    },
+    {
+      "sourceRef": "A-note-3",
+      "part": "A",
+      "page": 3,
+      "text": "If the requisite number of lectures cannot be scheduled, the instructor(s) may, in consultation with the students in their respective courses, decide on a schedule of extra classes. A regular course has engagement of 13 lectures (one lecture of 50 minutes) per one credit."
+    },
+    {
+      "sourceRef": "A-note-4",
+      "part": "A",
+      "page": 3,
+      "text": "There will be no extra classes on Gazetted Holidays."
+    },
+    {
+      "sourceRef": "A-note-5",
+      "part": "A",
+      "page": 3,
+      "text": "Saturdays and Sundays falling within the examination period will be used for scheduling examinations. Under extraordinary circumstances, examinations of some of the courses may be scheduled on the days preceding the mid-semester/end semester examinations."
+    },
+    {
+      "sourceRef": "A-note-6",
+      "part": "A",
+      "page": 3,
+      "text": "**All faculty members need to necessarily report to the Institute before the date of physical reporting of continuing students, as specified in the academic calendar."
+    }
+  ],
+  "teachingDays": {
+    "page": 3,
+    "rows": [
+      [
+        "Mondays",
+        13,
+        14
+      ],
+      [
+        "Tuesdays",
+        13,
+        13
+      ],
+      [
+        "Wednesdays",
+        13,
+        13
+      ],
+      [
+        "Thursdays",
+        14,
+        13
+      ],
+      [
+        "Fridays",
+        13,
+        13
+      ]
+    ],
+    "total": [
+      66,
+      66
+    ]
+  },
+  "entries": [
+    {
+      "sourceRef": "A-reg-1",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Registration",
+      "page": 1,
+      "activityText": "All continuing Students (Online registration)",
+      "cells": {
+        "sem1": {
+          "text": "20-23 July 2026, Mon-Thu",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "15-17 December 2026, Tue-Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "03-10 May 2027, Mon-Mon",
+          "kind": "merged",
+          "mergedSpan": [
+            "A-reg-1",
+            "A-reg-2",
+            "A-reg-3",
+            "A-reg-4",
+            "A-reg-5",
+            "A-reg-6",
+            "A-reg-7",
+            "A-reg-8"
+          ]
+        }
+      }
+    },
+    {
+      "sourceRef": "A-reg-2",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Registration",
+      "page": 1,
+      "activityText": "Physical reporting of continuing students",
+      "cells": {
+        "sem1": {
+          "text": "29 July 2026, Wed",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "31 December 2026, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "03-10 May 2027, Mon-Mon",
+          "kind": "merged",
+          "mergedSpan": [
+            "A-reg-1",
+            "A-reg-2",
+            "A-reg-3",
+            "A-reg-4",
+            "A-reg-5",
+            "A-reg-6",
+            "A-reg-7",
+            "A-reg-8"
+          ]
+        }
+      }
+    },
+    {
+      "sourceRef": "A-reg-3",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Registration",
+      "page": 1,
+      "activityText": "Physical reporting and document verification of New PG students",
+      "cells": {
+        "sem1": {
+          "text": "21-24 July 2026, Tue-Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "31 December 2026, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "03-10 May 2027, Mon-Mon",
+          "kind": "merged",
+          "mergedSpan": [
+            "A-reg-1",
+            "A-reg-2",
+            "A-reg-3",
+            "A-reg-4",
+            "A-reg-5",
+            "A-reg-6",
+            "A-reg-7",
+            "A-reg-8"
+          ]
+        }
+      }
+    },
+    {
+      "sourceRef": "A-reg-4",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Registration",
+      "page": 1,
+      "activityText": "Orientation for New PG Students",
+      "cells": {
+        "sem1": {
+          "text": "24 July 2026, Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "4 January 2027, Mon",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "03-10 May 2027, Mon-Mon",
+          "kind": "merged",
+          "mergedSpan": [
+            "A-reg-1",
+            "A-reg-2",
+            "A-reg-3",
+            "A-reg-4",
+            "A-reg-5",
+            "A-reg-6",
+            "A-reg-7",
+            "A-reg-8"
+          ]
+        }
+      }
+    },
+    {
+      "sourceRef": "A-reg-5",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Registration",
+      "page": 1,
+      "activityText": "Course Registration of New PG Students",
+      "cells": {
+        "sem1": {
+          "text": "24-28 July 2026, Fri-Tue",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "1 January 2027, Fri",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "03-10 May 2027, Mon-Mon",
+          "kind": "merged",
+          "mergedSpan": [
+            "A-reg-1",
+            "A-reg-2",
+            "A-reg-3",
+            "A-reg-4",
+            "A-reg-5",
+            "A-reg-6",
+            "A-reg-7",
+            "A-reg-8"
+          ]
+        }
+      }
+    },
+    {
+      "sourceRef": "A-reg-6",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Registration",
+      "page": 1,
+      "activityText": "Physical reporting and document verification of New UG Students",
+      "cells": {
+        "sem1": {
+          "text": "27-29 July 2026, Mon-Wed",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "N/A",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "03-10 May 2027, Mon-Mon",
+          "kind": "merged",
+          "mergedSpan": [
+            "A-reg-1",
+            "A-reg-2",
+            "A-reg-3",
+            "A-reg-4",
+            "A-reg-5",
+            "A-reg-6",
+            "A-reg-7",
+            "A-reg-8"
+          ]
+        }
+      }
+    },
+    {
+      "sourceRef": "A-reg-7",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Registration",
+      "page": 1,
+      "activityText": "Orientation for New UG Students",
+      "cells": {
+        "sem1": {
+          "text": "29 July 2026, Wed",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "N/A",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "03-10 May 2027, Mon-Mon",
+          "kind": "merged",
+          "mergedSpan": [
+            "A-reg-1",
+            "A-reg-2",
+            "A-reg-3",
+            "A-reg-4",
+            "A-reg-5",
+            "A-reg-6",
+            "A-reg-7",
+            "A-reg-8"
+          ]
+        }
+      }
+    },
+    {
+      "sourceRef": "A-reg-8",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Registration",
+      "page": 1,
+      "activityText": "Course Registration of New UG Students",
+      "cells": {
+        "sem1": {
+          "text": "29-30 July 2026, Wed -Thu",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "N/A",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "03-10 May 2027, Mon-Mon",
+          "kind": "merged",
+          "mergedSpan": [
+            "A-reg-1",
+            "A-reg-2",
+            "A-reg-3",
+            "A-reg-4",
+            "A-reg-5",
+            "A-reg-6",
+            "A-reg-7",
+            "A-reg-8"
+          ]
+        }
+      }
+    },
+    {
+      "sourceRef": "A-cls-1",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Classes Commencement",
+      "page": 1,
+      "activityText": "Classes Commencement",
+      "cells": {
+        "sem1": {
+          "text": "30 July 2026, Thu",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "4 January 2027, Mon",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "10 May, 2027 Mon",
+          "kind": "merged",
+          "mergedSpan": [
+            "A-cls-1",
+            "A-cls-2",
+            "A-cls-3",
+            "A-cls-4"
+          ]
+        }
+      }
+    },
+    {
+      "sourceRef": "A-cls-2",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Classes Commencement",
+      "page": 1,
+      "activityText": "First-Course Handout (including evaluation scheme) to the existing students",
+      "cells": {
+        "sem1": {
+          "text": "31 July 2026, Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "5 January 2027, Tue",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "10 May, 2027 Mon",
+          "kind": "merged",
+          "mergedSpan": [
+            "A-cls-1",
+            "A-cls-2",
+            "A-cls-3",
+            "A-cls-4"
+          ]
+        }
+      }
+    },
+    {
+      "sourceRef": "A-cls-3",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Classes Commencement",
+      "page": 1,
+      "activityText": "Class commencement for first year UG students",
+      "cells": {
+        "sem1": {
+          "text": "05 August 2026, Wed",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "4 January 2027, Mon",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "10 May, 2027 Mon",
+          "kind": "merged",
+          "mergedSpan": [
+            "A-cls-1",
+            "A-cls-2",
+            "A-cls-3",
+            "A-cls-4"
+          ]
+        }
+      }
+    },
+    {
+      "sourceRef": "A-cls-4",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Classes Commencement",
+      "page": 1,
+      "activityText": "First-Course Handout (including evaluation scheme) to UG first year students",
+      "cells": {
+        "sem1": {
+          "text": "05 August 2026, Wed",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "5 January 2027, Tue",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "10 May, 2027 Mon",
+          "kind": "merged",
+          "mergedSpan": [
+            "A-cls-1",
+            "A-cls-2",
+            "A-cls-3",
+            "A-cls-4"
+          ]
+        }
+      }
+    },
+    {
+      "sourceRef": "A-cls-5",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Classes Commencement",
+      "page": 1,
+      "activityText": "Late Registration",
+      "cells": {
+        "sem1": {
+          "text": "7 August 2026, Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "7 Jan 2027, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "12 May, 2027 Wed",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "A-cls-6",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Classes Commencement",
+      "page": 1,
+      "activityText": "Last date of Add/Drop of Courses including Design Credits · Last date of RKA request · Last date for Registration to be approved by the Faculty Advisors",
+      "cells": {
+        "sem1": {
+          "text": "7 August 2026, Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "07 January 2027, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "12 May, 2027 Wed",
+          "kind": "merged",
+          "mergedSpan": [
+            "A-cls-6",
+            "A-cls-7"
+          ]
+        }
+      }
+    },
+    {
+      "sourceRef": "A-cls-7",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Classes Commencement",
+      "page": 1,
+      "activityText": "Course withdrawal from the instructors and adding courses in lieu of dropped courses",
+      "cells": {
+        "sem1": {
+          "text": "10 August 2026, Mon",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "08 January 2027, Fri",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "12 May, 2027 Wed",
+          "kind": "merged",
+          "mergedSpan": [
+            "A-cls-6",
+            "A-cls-7"
+          ]
+        }
+      }
+    },
+    {
+      "sourceRef": "A-exm-1",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Examinations and Grade Submission",
+      "page": 2,
+      "activityText": "Last date to conduct I, X and E to D grade Examination",
+      "cells": {
+        "sem1": {
+          "text": "5-7 August 2026, Wed-Fri (For 2nd Semester/ Summer Term of AY 2025-26)",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "04-06 January 2027, Mon-Wed (For 1st Semester of AY 2026-27)",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "4-6 August 2027, Wed-Fri",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "A-exm-2",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Examinations and Grade Submission",
+      "page": 2,
+      "activityText": "Online Grade submission for I, X and E to D grade Examinations",
+      "cells": {
+        "sem1": {
+          "text": "11 August 2026, Tue (For 2nd Semester / Summer Term of AY 2025-26)",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "08 January 2027, Fri (For 1st Semester of AY 2026-27)",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "09 August 2027, Mon",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "A-exm-3",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Examinations and Grade Submission",
+      "page": 2,
+      "activityText": "Minor Examination",
+      "cells": {
+        "sem1": {
+          "text": "15-20 September 2026, Tue-Sun",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "16-21 February 2027, Tue-Sun",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "04-06 June 2027, Fri-Sun",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "A-exm-4",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Examinations and Grade Submission",
+      "page": 2,
+      "activityText": "MAJOR Examination (Fractal 3 and M.Tech. working professional)",
+      "cells": {
+        "sem1": {
+          "text": "19-26 November 2026, Thu-Thu",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "22-29 April 2027, Thu-Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "10-13 July 2027, Sat-Tue",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "A-exm-5",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Examinations and Grade Submission",
+      "page": 2,
+      "activityText": "Last date of submission of online grades",
+      "cells": {
+        "sem1": {
+          "text": "30 November 2026, Mon",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "3 May 2027, Mon",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "19 July 2027, Mon",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "A-exm-6",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Examinations and Grade Submission",
+      "page": 2,
+      "activityText": "Moderation Committee Meeting",
+      "cells": {
+        "sem1": {
+          "text": "1 December 2026, Tue",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "5 May 2027, Wed",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "20 July 2027, Tue",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "A-exm-7",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Examinations and Grade Submission",
+      "page": 2,
+      "activityText": "Last Date for display of Grades for Courses, Projects and Thesis; Last date of submission of hard copies of grades",
+      "cells": {
+        "sem1": {
+          "text": "3 December 2026, Thu",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "6 May 2027, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "23 July 2027, Fri",
+          "kind": "date"
+        }
+      },
+      "footnotes": [
+        "** For First year students; grades will be displayed when all courses were approved."
+      ]
+    },
+    {
+      "sourceRef": "A-pre-1",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Pre-registration",
+      "page": 2,
+      "activityText": "Pre-registration for next semester",
+      "cells": {
+        "sem1": {
+          "text": "3-6 November 2026, Tue-Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "5-7 April 2027, Mon-Wed",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "A-vac-1",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Vacation (Only for UG students)",
+      "page": 2,
+      "activityText": "Semester Break",
+      "cells": {
+        "sem1": {
+          "text": "2-8 November 2026, Mon-Sun",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "20-28 March 2027, Sat-Sun",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "A-vac-2",
+      "part": "A",
+      "sectionTitle": "Academic Calendar: Academic Year 2026-27 — Vacation (Only for UG students)",
+      "page": 2,
+      "activityText": "Winter/ Summer Break",
+      "cells": {
+        "sem1": {
+          "text": "2 - 30 December 2026, Wed-Wed",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "03 May-29 July 2027, Mon-Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "B-sem1-1",
+      "part": "B",
+      "sectionTitle": "Time Table Adjustment Sem I",
+      "page": 2,
+      "activityText": "Wednesday’s Time Table will be followed",
+      "cells": {
+        "date": {
+          "text": "14th August 2026, Friday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "B-sem1-2",
+      "part": "B",
+      "sectionTitle": "Time Table Adjustment Sem I",
+      "page": 2,
+      "activityText": "Friday's Time Table will be followed",
+      "cells": {
+        "date": {
+          "text": "24th September 2026, Thursday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "B-sem1-3",
+      "part": "B",
+      "sectionTitle": "Time Table Adjustment Sem I",
+      "page": 2,
+      "activityText": "Friday's Time Table will be followed",
+      "cells": {
+        "date": {
+          "text": "5th October 2026, Monday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "B-sem1-4",
+      "part": "B",
+      "sectionTitle": "Time Table Adjustment Sem I",
+      "page": 3,
+      "activityText": "Friday's Time Table will be followed",
+      "cells": {
+        "date": {
+          "text": "19th October 2026, Monday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "B-sem1-5",
+      "part": "B",
+      "sectionTitle": "Time Table Adjustment Sem I",
+      "page": 3,
+      "activityText": "Thursday's Time Table will be followed",
+      "cells": {
+        "date": {
+          "text": "24th October 2026, Saturday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "B-ug1-1",
+      "part": "B",
+      "sectionTitle": "Time Table Adjustment Sem I for UG first year students only",
+      "page": 3,
+      "activityText": "Thursday's Time Table will be followed",
+      "cells": {
+        "date": {
+          "text": "08th August, 2026, Saturday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "B-ug1-2",
+      "part": "B",
+      "sectionTitle": "Time Table Adjustment Sem I for UG first year students only",
+      "page": 3,
+      "activityText": "Friday's Time Table will be followed",
+      "cells": {
+        "date": {
+          "text": "12th September, 2026, Saturday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "B-ug1-3",
+      "part": "B",
+      "sectionTitle": "Time Table Adjustment Sem I for UG first year students only",
+      "page": 3,
+      "activityText": "Monday's Time Table will be followed",
+      "cells": {
+        "date": {
+          "text": "26th September, 2026, Saturday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "B-ug1-4",
+      "part": "B",
+      "sectionTitle": "Time Table Adjustment Sem I for UG first year students only",
+      "page": 3,
+      "activityText": "Tuesday's Time Table will be followed",
+      "cells": {
+        "date": {
+          "text": "10th October, 2026, Saturday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "B-sem2-1",
+      "part": "B",
+      "sectionTitle": "Time Table Adjustment Sem II",
+      "page": 3,
+      "activityText": "Friday's Time Table will be followed",
+      "cells": {
+        "date": {
+          "text": "23th January 2027, Saturday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "B-sem2-2",
+      "part": "B",
+      "sectionTitle": "Time Table Adjustment Sem II",
+      "page": 3,
+      "activityText": "Wednesday’s Time Table will be followed",
+      "cells": {
+        "date": {
+          "text": "6th February 2027, Saturday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "B-sem2-3",
+      "part": "B",
+      "sectionTitle": "Time Table Adjustment Sem II",
+      "page": 3,
+      "activityText": "Tuesday's Time Table will be followed",
+      "cells": {
+        "date": {
+          "text": "17th April 2027, Saturday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-1",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 4,
+      "row": 1,
+      "activityText": "Last date for conversion of Hosteller to Day Scholar and vice-versa · Last date of semester withdrawal and regular to part-time conversion",
+      "cells": {
+        "sem1": {
+          "text": "1 Jul 2026, Wed",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "4 Dec 2026, Fri",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-2",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 4,
+      "row": 2,
+      "activityText": "Fee updation in ERP portal for old students (All the offices to update dues on ERP portal by this date)",
+      "cells": {
+        "sem1": {
+          "text": "3 Jul 2026, Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "7 Dec 2026, Mon",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-3",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 4,
+      "row": 3,
+      "activityText": "Fee link activation for Old Students · All the dues has to be cleared in the ERP",
+      "cells": {
+        "sem1": {
+          "text": "6-12 Jul 2026, Mon-Sun",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "9-14 Dec 2026, Wed-Mon",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "13 May 2027, Thu",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-4",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 4,
+      "row": 4,
+      "activityText": "Finalization of New PG Students Admission and Creation of Roll Numbers on ERP",
+      "cells": {
+        "sem1": {
+          "text": "10 Jul 2026, Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "11 Dec 2026, Fri",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-5",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 4,
+      "row": 5,
+      "activityText": "Last date of Fee payment by old students (All the dues have to be cleared for semester registration)",
+      "cells": {
+        "sem1": {
+          "text": "12 Jul 2026, Sun",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "14 Dec 2026, Mon",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "17 May 2027, Mon",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-6",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 4,
+      "row": 6,
+      "activityText": "Email and ERP creation for New PG Students",
+      "cells": {
+        "sem1": {
+          "text": "16-17 Jul 2026, Thu-Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "18 Dec 2026, Fri",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-7",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 4,
+      "row": 7,
+      "activityText": "Branch change and restart activity",
+      "cells": {
+        "sem1": {
+          "text": "16-22 Jul 2026, Thu-Wed",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-8",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 4,
+      "row": 8,
+      "activityText": "Online Academic registration of NEW PG Students",
+      "cells": {
+        "sem1": {
+          "text": "17-22 Jul 2026, Fri-Wed",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "24 Dec 2026, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-9",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 4,
+      "row": 9,
+      "activityText": "Course Registration of old Students",
+      "cells": {
+        "sem1": {
+          "text": "20-23 Jul 2026, Mon-Thu",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "15-17 Dec 2026, Tue-Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "03-10 May 2027, Mon-Mon",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-10",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 4,
+      "row": 10,
+      "activityText": "Physical reporting and document verification of New PG students",
+      "cells": {
+        "sem1": {
+          "text": "21-24 Jul 2026, Tue-Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "31 Dec 2026, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-11",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 4,
+      "row": 11,
+      "activityText": "Activation of Fee payment for first-year UG Students. On completion of fee payment an auto email will be sent from ERP for Online Academic registration",
+      "cells": {
+        "sem1": {
+          "text": "23-27 Jul 2026, Thu-Mon",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-12",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 4,
+      "row": 12,
+      "activityText": "Schedule for Career Guidance Day",
+      "cells": {
+        "sem1": {
+          "text": "24 Jul 2026, Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "31 Dec 2026, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-13",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 4,
+      "row": 13,
+      "activityText": "Orientation of New PG Students",
+      "cells": {
+        "sem1": {
+          "text": "24 Jul 2026, Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "04 Jan 2027, Mon",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-14",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 4,
+      "row": 14,
+      "activityText": "Course Registration of New PG Students",
+      "cells": {
+        "sem1": {
+          "text": "24-28 July 2026, Fri-Tue",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "1 Jan 2027, Fri",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-15",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 4,
+      "row": 15,
+      "activityText": "Last date for fee payment for first-year UG Students",
+      "cells": {
+        "sem1": {
+          "text": "27 Jul 2026, Mon",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-16",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 4,
+      "row": 16,
+      "activityText": "Physical reporting and document verification of New UG Students",
+      "cells": {
+        "sem1": {
+          "text": "27-29 July 2026, Mon-Wed",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      },
+      "pageEnd": 5
+    },
+    {
+      "sourceRef": "D-17",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 5,
+      "row": 17,
+      "activityText": "Schedule for Career Guidance Day for New UG Students · Welcome program · Orientation for First year UG Students",
+      "cells": {
+        "sem1": {
+          "text": "29 Jul 2026, Wed",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-18",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 5,
+      "row": 18,
+      "activityText": "Physical reporting of Old students",
+      "cells": {
+        "sem1": {
+          "text": "29 Jul 2026, Wed",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "31 Dec 2026, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "09 May 2027, Sun",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-19",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 5,
+      "row": 19,
+      "activityText": "Course Registration of New UG Students",
+      "cells": {
+        "sem1": {
+          "text": "29-30 Jul 2026 Wed-Thu",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-20",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 5,
+      "row": 20,
+      "activityText": "Commencement of Classes for all UG and All PG",
+      "cells": {
+        "sem1": {
+          "text": "30 Jul 2026, Thu (Excluding UG first year students)",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "4 Jan 2027, Mon",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "10 May 2027, Mon",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-21",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 5,
+      "row": 21,
+      "activityText": "Evaluation scheme and First course handout scheme to be displayed by instructors at the start of a semester",
+      "cells": {
+        "sem1": {
+          "text": "31 Jul 2026, Fri (Excluding UG first year students)",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "5 Jan 2027, Tue",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "10 May 2027, Mon",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-22",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 5,
+      "row": 22,
+      "activityText": "Class Holiday (Institute Foundation Day)",
+      "cells": {
+        "sem1": {
+          "text": "2 Aug 2026, Sun",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-23",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 5,
+      "row": 23,
+      "activityText": "Classes begin for first year UG students",
+      "cells": {
+        "sem1": {
+          "text": "5 Aug 2026, Wed",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "4 Jan 2027, Mon",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-24",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 5,
+      "row": 24,
+      "activityText": "Last date to conduct I, X and E to D grade Examination",
+      "cells": {
+        "sem1": {
+          "text": "5-7 Aug 2026, Wed-Fri (For 2nd Semester/ summer term of AY 2025-26)",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "04-06 January 2027, Mon-Wed (For 1st Semester of AY 2026-27)",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "4-6 Aug 2027, Wed-Fri",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-25",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 5,
+      "row": 25,
+      "activityText": "Last date to opt for specialization/ Minor and B.Tech.+M.Tech. Dual degree",
+      "cells": {
+        "sem1": {
+          "text": "6 Aug 2026, Thu",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-26",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 5,
+      "row": 26,
+      "activityText": "Late Registration · Last date of RKA request · Last date of Add/Drop of Courses including Design Credits · Last date for Registration to be approved by the Faculty Advisors",
+      "cells": {
+        "sem1": {
+          "text": "7 Aug 2026, Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "7 Jan 2027, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "12 May, 2027 Wed",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-27",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 5,
+      "row": 27,
+      "activityText": "Student Senate intro & Freshers tournament begins",
+      "cells": {
+        "sem1": {
+          "text": "8-9 Aug 2026, Sat-Sun",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-28",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 5,
+      "row": 28,
+      "activityText": "Course withdrawal from the instructors and adding courses in place of dropped courses",
+      "cells": {
+        "sem1": {
+          "text": "10 Aug 2026, Mon",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "8 Jan 2027, Fri",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "12 May, 2027 Wed",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-29",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 5,
+      "row": 29,
+      "activityText": "Online Grade submission for I, X and E to D grade Examinations",
+      "cells": {
+        "sem1": {
+          "text": "11 Aug 2026, Tue (For 2nd Semester/ summer term of AY 2025-26)",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "08 Jan 2027, Fri (For 1st Semester of AY 2026-27)",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "09 Aug 2027, Mon",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-30",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 5,
+      "row": 30,
+      "activityText": "Last date of Course audit request",
+      "cells": {
+        "sem1": {
+          "text": "12 Aug 2026, Wed",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "7 Jan 2027, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-31",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 5,
+      "row": 31,
+      "activityText": "Last date of submission of hard copies of grades for I, X and E to D;",
+      "cells": {
+        "sem1": {
+          "text": "13 Aug 2026, Thu (For semester 2nd/ summer term of AY 2025-2026",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "12 Jan 2027, Tue (For semester 1st of AY 2026-2027",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "11 Aug 2027, Wed",
+          "kind": "date"
+        }
+      },
+      "pageEnd": 6
+    },
+    {
+      "sourceRef": "D-32",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 32,
+      "activityText": "Finalization of Course Roll List for all students",
+      "cells": {
+        "sem1": {
+          "text": "13 Aug 2026, Thu",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "11 Jan 2027, Mon",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "12 May, 2027 Wed",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-33",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 33,
+      "activityText": "DASHAK",
+      "cells": {
+        "sem1": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "sem2": {
+          "text": "16-17 Jan 2027, Sat-Sun",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-34",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 34,
+      "activityText": "Kridansh Inauguration",
+      "cells": {
+        "sem1": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "sem2": {
+          "text": "22 Jan 2027, Fri",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-35",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 35,
+      "activityText": "IGNUS (No Class day)",
+      "cells": {
+        "sem1": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "sem2": {
+          "text": "29-31 Jan 2027, Fri-Sun",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-36",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 36,
+      "activityText": "Freshers Tournament closing ceremony",
+      "cells": {
+        "sem1": {
+          "text": "21 Aug 2026, Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-37",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 37,
+      "activityText": "Freshers",
+      "cells": {
+        "sem1": {
+          "text": "21-22 Aug 2026, Fri-Sat",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-38",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 38,
+      "activityText": "Student Feedback for Fractal 1 courses",
+      "cells": {
+        "sem1": {
+          "text": "28 Aug 2026, Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "2 Feb 2027, Tue",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "28 May 2027, Fri",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-39",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 39,
+      "activityText": "Sand Stone",
+      "cells": {
+        "sem1": {
+          "text": "29-30 Aug 2026, Sat-Sun",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-40",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 40,
+      "activityText": "Fractal 1 withdrawal and addition of Fractal 2",
+      "cells": {
+        "sem1": {
+          "text": "31 Aug 2026, Mon",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "3 Feb 2027, Wed",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "28 May 2027, Fri",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-41",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 41,
+      "activityText": "Fractal 2 Begins",
+      "cells": {
+        "sem1": {
+          "text": "1 Sep 2026, Tue",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "4 Feb 2027, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "31 May 2027, Mon",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-42",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 42,
+      "activityText": "Teacher's Day",
+      "cells": {
+        "sem1": {
+          "text": "5 Sep 2026, Sat",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-43",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 43,
+      "activityText": "SR Election",
+      "cells": {
+        "sem1": {
+          "text": "5-6 Sep 2026, Sat-Sun",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-44",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 44,
+      "activityText": "Minor Examination",
+      "cells": {
+        "sem1": {
+          "text": "15-20 Sep 2026, Tue-Sun",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "16-21 Feb 2027, Tue-Sun",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "04-06 June 2027, Fri-Sun",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-45",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 45,
+      "activityText": "Class Committee Meeting Week",
+      "cells": {
+        "sem1": {
+          "text": "21-25 Sep 2026, (Mon-Fri)",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "1-4 Feb 2027, Mon-Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "07-10 June 2027, Mon-Thu",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-46",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 46,
+      "activityText": "Gratitude Day",
+      "cells": {
+        "sem1": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "sem2": {
+          "text": "7 Feb 2027, Sun",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-47",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 47,
+      "activityText": "Annual Progress Monitoring Meeting",
+      "cells": {
+        "sem1": {
+          "text": "28 Sep 2026, Mon",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "24 Feb 2027, Wed",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-48",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 48,
+      "activityText": "Inter IIT Aquatics Meet",
+      "cells": {
+        "sem1": {
+          "text": "29 Sep 2026, - 4 Oct 2026, Tue-Sun",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-49",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 49,
+      "activityText": "TeDx",
+      "cells": {
+        "sem1": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "sem2": {
+          "text": "27-28 Feb 2027, Sat-Sun",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-50",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 50,
+      "activityText": "National Science Day",
+      "cells": {
+        "sem1": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "sem2": {
+          "text": "28 Feb 2027, Sun",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-51",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 51,
+      "activityText": "Mail to all students & Alumni for the nomination of the faculty on/ before 31st March for \"Teaching Excellence Award\" to be awarded on next teacher's day",
+      "cells": {
+        "sem1": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "sem2": {
+          "text": "1 March 2027, Mon",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-52",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 52,
+      "activityText": "Last date of course withdrawal request",
+      "cells": {
+        "sem1": {
+          "text": "1 Oct 2026, Thu",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "2 Mar 2027, Tue",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-53",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 53,
+      "activityText": "Prometeo (No Class Day)",
+      "cells": {
+        "sem1": {
+          "text": "2-4 Oct 2026, Fri-Sun",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-54",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 6,
+      "row": 54,
+      "activityText": "Display of minor answer sheets and scores by the instructors",
+      "cells": {
+        "sem1": {
+          "text": "7 Oct 2026, Wed",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "25 Feb 2027, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      },
+      "pageEnd": 7
+    },
+    {
+      "sourceRef": "D-55",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 55,
+      "activityText": "Fractal 2 withdrawal and addition of Fractal 3",
+      "cells": {
+        "sem1": {
+          "text": "7 Oct 2026, Wed",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "11 Mar 2027, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "18 June 2027, Fri",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-56",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 56,
+      "activityText": "Student Feedback for Fractal 2 courses",
+      "cells": {
+        "sem1": {
+          "text": "8 Oct 2026, Thu",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "9 Mar 2027, Tue",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "18 June 2027, Fri",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-57",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 57,
+      "activityText": "Fractal 3 begins",
+      "cells": {
+        "sem1": {
+          "text": "9 Oct 2026, Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "12 Mar 2027, Fri",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "21 June 2027, Mon",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-58",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 58,
+      "activityText": "GBM",
+      "cells": {
+        "sem1": {
+          "text": "09 Oct 2026, Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "5 Feb 2027, Fri",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-59",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 59,
+      "activityText": "Extravagenza",
+      "cells": {
+        "sem1": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "sem2": {
+          "text": "11 March 2027, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-60",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 60,
+      "activityText": "Finalization of the courses for upcoming semester",
+      "cells": {
+        "sem1": {
+          "text": "16 Oct 2026, Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "4 Mar 2027, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-61",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 61,
+      "activityText": "Kridansh Finale",
+      "cells": {
+        "sem1": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "sem2": {
+          "text": "5-7 March 2027, Fri-Sun",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-62",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 62,
+      "activityText": "Spandan Finale",
+      "cells": {
+        "sem1": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "sem2": {
+          "text": "12- 14 March 2027, Fri-Sun",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-63",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 63,
+      "activityText": "Time Table committee meeting for the Next Semester",
+      "cells": {
+        "sem1": {
+          "text": "27 Oct 2026, Tue",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "5 Mar 2027, Fri",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-64",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 64,
+      "activityText": "Varchas 2026 Event - No class day",
+      "cells": {
+        "sem1": {
+          "text": "30 Oct- 1 Nov 2026, Fri- Sun",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-65",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 65,
+      "activityText": "National Unity Day",
+      "cells": {
+        "sem1": {
+          "text": "31 Oct 2026, Sat",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "",
+          "kind": "blank"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-66",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 66,
+      "activityText": "Semester Break",
+      "cells": {
+        "sem1": {
+          "text": "2 - 8 Nov 2026, Mon-Sun",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "20-28 March 2027, Sat-Sun",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-67",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 67,
+      "activityText": "Pre-registration for next semester",
+      "cells": {
+        "sem1": {
+          "text": "3-6 Nov 2026, Tue-Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "5-7 April 2027, Mon-Wed",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-68",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 68,
+      "activityText": "Student Senate Election (SS, SAC, ACAC Boards)",
+      "cells": {
+        "sem1": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "sem2": {
+          "text": "3-4 Apr 2027, Sat-Sun",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-69",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 69,
+      "activityText": "MBA Project Evaluation",
+      "cells": {
+        "sem1": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "sem2": {
+          "text": "8-11 Apr 2027, Thu-Sun",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-70",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 70,
+      "activityText": "M.Sc./ M.Sc.-M.Tech./ M.Tech./ (Form A21) 2nd Semester students project/Thesis evaluation committee form reach to office of Academics",
+      "cells": {
+        "sem1": {
+          "text": "9 Nov 2026, Mon",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "13 Apr 2027, Tue",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-71",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 71,
+      "activityText": "Student Feedback for all courses",
+      "cells": {
+        "sem1": {
+          "text": "11-17 Nov 2026, Wed-Tue",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "9-16 Apr 2027, Fri-Fri",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "07-09 July 2027, Wed-Fri",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-72",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 72,
+      "activityText": "FAREWELL for Graduating Batch",
+      "cells": {
+        "sem1": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "sem2": {
+          "text": "18 April 2027, Sun",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-73",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 73,
+      "activityText": "Senate Day Award ceremony for official handing over",
+      "cells": {
+        "sem1": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "sem2": {
+          "text": "18 Apr 2027, Sun",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-74",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 7,
+      "row": 74,
+      "activityText": "BTP, Design credit M.Sc./ M.Sc.-M.Tech./ M.Tech./ Project/Thesis evaluations, M.Tech.-Ph.D. Project/ Thesis",
+      "cells": {
+        "sem1": {
+          "text": "12 Nov 2026, Thu",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "15-17 Apr 2027, Thu-Sat",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "15 July 2027, Thu",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-75",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 8,
+      "row": 75,
+      "activityText": "VANDRE",
+      "cells": {
+        "sem1": {
+          "text": "13-14 Nov 2026, Fri-Sat (Tentative)",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-76",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 8,
+      "row": 76,
+      "activityText": "Jan Jatiya Gaurav Diwas",
+      "cells": {
+        "sem1": {
+          "text": "15 Nov 2026, Sun",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-77",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 8,
+      "row": 77,
+      "activityText": "Fractal 3 Withdrawal · Last Day of classes · Online Attendance submission on ERP · Display of all Marks for pre major evaluation components",
+      "cells": {
+        "sem1": {
+          "text": "17 Nov 2026, Tue",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "20 Apr 2027, Tue",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "09 July 2027, Fri",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-78",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 8,
+      "row": 78,
+      "activityText": "World Creativity & Innovation Day",
+      "cells": {
+        "sem1": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "sem2": {
+          "text": "21 Apr 2027, Wed",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-79",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 8,
+      "row": 79,
+      "activityText": "Major Semester Examination",
+      "cells": {
+        "sem1": {
+          "text": "19-26 Nov 2026, Thu-Thu",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "22-29 April 2027, Thu-Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "10-13 July 2027, Sat-Tue",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-80",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 8,
+      "row": 80,
+      "activityText": "Constitution Day",
+      "cells": {
+        "sem1": {
+          "text": "26 Nov 2026, Thu",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-81",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 8,
+      "row": 81,
+      "activityText": "Last date of submission of online grades",
+      "cells": {
+        "sem1": {
+          "text": "30 Nov 2026, Mon",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "3 May 2027, Mon",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "19 July 2027, Mon",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-82",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 8,
+      "row": 82,
+      "activityText": "Moderation Committee Meeting",
+      "cells": {
+        "sem1": {
+          "text": "1 Dec 2026, Tue",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "5 May 2027, Wed",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "20 July 2027, Tue",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-83",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 8,
+      "row": 83,
+      "activityText": "Winter/ Summer Break",
+      "cells": {
+        "sem1": {
+          "text": "2 - 30 December 2026, Wed-Wed",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "03 May-29 July 2027, Mon-Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-84",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 8,
+      "row": 84,
+      "activityText": "Last date of submission of hard copies of grades; Last Date for display of Grades for Courses, Projects and Thesis. ** For first year, grades will be displayed when all courses were approved.",
+      "cells": {
+        "sem1": {
+          "text": "3 Dec 2026, Thu",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "6 May 2027, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "23 July 2027, Fri",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-85",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 8,
+      "row": 85,
+      "activityText": "Last date of submission of course files by the course instructor(s) for current semester on ERP",
+      "cells": {
+        "sem1": {
+          "text": "8 Dec 2026, Tue",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "10 May 2027, Mon",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "26 July 2027, Mon",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-86",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 8,
+      "row": 86,
+      "activityText": "Inter IIT Sports meet and tech meet",
+      "cells": {
+        "sem1": {
+          "text": "10th December to 22nd December (tentative), Thu-Tue",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-87",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 8,
+      "row": 87,
+      "activityText": "Report of M.Sc./M.Tech./M.Sc.-M.Tech. students Project/ Thesis Evaluation Form A-23 along with project/ Thesis report upload in ERP portal with the signature of requisite faculty members",
+      "cells": {
+        "sem1": {
+          "text": "22 Dec 2026, Tue",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "7 May 2027, Fri",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "27 July 2027, Tue",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-88",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 8,
+      "row": 88,
+      "activityText": "Technology Day",
+      "cells": {
+        "sem1": {
+          "text": "NA",
+          "kind": "NA"
+        },
+        "sem2": {
+          "text": "11 May 2027, Tue",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-89",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 8,
+      "row": 89,
+      "activityText": "Verification of grades",
+      "cells": {
+        "sem1": {
+          "text": "24 Dec 2026, Thu",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "19-21 May 2027, Wed-Fri",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "28 July 2027, Wed",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-90",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 8,
+      "row": 90,
+      "activityText": "M.Sc./M.Des/M.Tech. New students supervisor (Form A20) updation in the ERP portal, Ph.D. New students supervisor (Form A-5) and SRC (A-1A form) updation in the ERP portal",
+      "cells": {
+        "sem1": {
+          "text": "28 Dec 2026, Mon",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "13 May 2027, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      },
+      "pageEnd": 9
+    },
+    {
+      "sourceRef": "D-91",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 9,
+      "row": 91,
+      "activityText": "International Yoga Day",
+      "cells": {
+        "sem1": {
+          "text": "",
+          "kind": "blank"
+        },
+        "sem2": {
+          "text": "",
+          "kind": "blank"
+        },
+        "summer": {
+          "text": "21 June 2027, Mon",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-92",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 9,
+      "row": 92,
+      "activityText": "Generation of Grade card",
+      "cells": {
+        "sem1": {
+          "text": "29 Dec 2026, Tue",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "27 May 2027, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "28 July 2027, Wed",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "D-93",
+      "part": "D",
+      "sectionTitle": "Comprehensive Academic Calendar: Academic Year 2026-27",
+      "page": 9,
+      "row": 93,
+      "activityText": "Physical reporting and document verification of New Students; Orientation of New Students",
+      "cells": {
+        "sem1": {
+          "text": "31 Dec 2026, Thu",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "30 Jul 2027, Fri",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "E-1",
+      "part": "E",
+      "sectionTitle": "Fractals",
+      "page": 9,
+      "activityText": "Fractal 1 withdrawal and addition of Fractal 2",
+      "cells": {
+        "sem1": {
+          "text": "31 August 2026, Mon",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "3 February 2027, Wed",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "28 May 2027, Fri",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "E-2",
+      "part": "E",
+      "sectionTitle": "Fractals",
+      "page": 9,
+      "activityText": "Fractal 2 begins",
+      "cells": {
+        "sem1": {
+          "text": "1 September 2026, Tue",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "4 February 2027, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "31 May 2027, Mon",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "E-3",
+      "part": "E",
+      "sectionTitle": "Fractals",
+      "page": 9,
+      "activityText": "Last date of course withdrawal request",
+      "cells": {
+        "sem1": {
+          "text": "12 October 2026, Mon",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "15 March 2027, Mon",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "",
+          "kind": "blank"
+        }
+      }
+    },
+    {
+      "sourceRef": "E-4",
+      "part": "E",
+      "sectionTitle": "Fractals",
+      "page": 9,
+      "activityText": "Display of minor answer sheets and scores by the instructors",
+      "cells": {
+        "sem1": {
+          "text": "7 October 2026, Wed",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "25 February 2027, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "17 June 2027, Thu",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "E-5",
+      "part": "E",
+      "sectionTitle": "Fractals",
+      "page": 9,
+      "activityText": "Fractal 2 withdrawal and addition of Fractal 3",
+      "cells": {
+        "sem1": {
+          "text": "7 October 2026, Wed",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "11 March 2027, Thu",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "18 June 2027, Fri",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "E-6",
+      "part": "E",
+      "sectionTitle": "Fractals",
+      "page": 9,
+      "activityText": "Fractal 3 begins",
+      "cells": {
+        "sem1": {
+          "text": "9 October 2026, Fri",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "12 March 2027, Fri",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "21 June 2027, Mon",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "E-7",
+      "part": "E",
+      "sectionTitle": "Fractals",
+      "page": 9,
+      "activityText": "Fractal 3 Withdrawal, Last Day of classes, Online Attendance submission on ERP, Display of all Marks for pre major evaluation components;",
+      "cells": {
+        "sem1": {
+          "text": "17 November 2026, Tue",
+          "kind": "date"
+        },
+        "sem2": {
+          "text": "20 April 2027, Tue",
+          "kind": "date"
+        },
+        "summer": {
+          "text": "09 July 2027, Fri",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "F-1",
+      "part": "F",
+      "sectionTitle": "List of holidays",
+      "page": 9,
+      "row": 1,
+      "activityText": "Republic Day",
+      "cells": {
+        "date": {
+          "text": "26 Jan 2026",
+          "kind": "date"
+        },
+        "day": {
+          "text": "Monday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "F-2",
+      "part": "F",
+      "sectionTitle": "List of holidays",
+      "page": 9,
+      "row": 2,
+      "activityText": "Maha Shivratri",
+      "cells": {
+        "date": {
+          "text": "15 Feb 2026",
+          "kind": "date"
+        },
+        "day": {
+          "text": "Sunday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "F-3",
+      "part": "F",
+      "sectionTitle": "List of holidays",
+      "page": 9,
+      "row": 3,
+      "activityText": "Holi",
+      "cells": {
+        "date": {
+          "text": "04 Mar 2026",
+          "kind": "date"
+        },
+        "day": {
+          "text": "Wednesday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "F-4",
+      "part": "F",
+      "sectionTitle": "List of holidays",
+      "page": 9,
+      "row": 4,
+      "activityText": "Id-ul- Fitr*",
+      "cells": {
+        "date": {
+          "text": "21 Mar 2026",
+          "kind": "date"
+        },
+        "day": {
+          "text": "Saturday",
+          "kind": "date"
+        }
+      },
+      "marker": "*"
+    },
+    {
+      "sourceRef": "F-5",
+      "part": "F",
+      "sectionTitle": "List of holidays",
+      "page": 9,
+      "row": 5,
+      "activityText": "Mahavir Jayanti",
+      "cells": {
+        "date": {
+          "text": "31 Mar 2026",
+          "kind": "date"
+        },
+        "day": {
+          "text": "Tuesday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "F-6",
+      "part": "F",
+      "sectionTitle": "List of holidays",
+      "page": 9,
+      "row": 6,
+      "activityText": "Good Friday",
+      "cells": {
+        "date": {
+          "text": "03 Apr 2026",
+          "kind": "date"
+        },
+        "day": {
+          "text": "Friday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "F-7",
+      "part": "F",
+      "sectionTitle": "List of holidays",
+      "page": 10,
+      "row": 7,
+      "activityText": "Buddha Purnima",
+      "cells": {
+        "date": {
+          "text": "01 May 2026",
+          "kind": "date"
+        },
+        "day": {
+          "text": "Friday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "F-8",
+      "part": "F",
+      "sectionTitle": "List of holidays",
+      "page": 10,
+      "row": 8,
+      "activityText": "ID-ul-Zuha (Bakrid)*",
+      "cells": {
+        "date": {
+          "text": "27 May 2026",
+          "kind": "date"
+        },
+        "day": {
+          "text": "Wednesday",
+          "kind": "date"
+        }
+      },
+      "marker": "*"
+    },
+    {
+      "sourceRef": "F-9",
+      "part": "F",
+      "sectionTitle": "List of holidays",
+      "page": 10,
+      "row": 9,
+      "activityText": "Muharram*",
+      "cells": {
+        "date": {
+          "text": "26 Jun 2026",
+          "kind": "date"
+        },
+        "day": {
+          "text": "Friday",
+          "kind": "date"
+        }
+      },
+      "marker": "*"
+    },
+    {
+      "sourceRef": "F-10",
+      "part": "F",
+      "sectionTitle": "List of holidays",
+      "page": 10,
+      "row": 10,
+      "activityText": "Independence Day",
+      "cells": {
+        "date": {
+          "text": "15 Aug 2026",
+          "kind": "date"
+        },
+        "day": {
+          "text": "Saturday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "F-11",
+      "part": "F",
+      "sectionTitle": "List of holidays",
+      "page": 10,
+      "row": 11,
+      "activityText": "Id-e-Milad (Prophet Mohammad's Birthday)",
+      "cells": {
+        "date": {
+          "text": "26 Aug 2026",
+          "kind": "date"
+        },
+        "day": {
+          "text": "Wednesday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "F-12",
+      "part": "F",
+      "sectionTitle": "List of holidays",
+      "page": 10,
+      "row": 12,
+      "activityText": "Janmashtami",
+      "cells": {
+        "date": {
+          "text": "04 Sep 2026",
+          "kind": "date"
+        },
+        "day": {
+          "text": "Friday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "F-13",
+      "part": "F",
+      "sectionTitle": "List of holidays",
+      "page": 10,
+      "row": 13,
+      "activityText": "Mahatma Gandhi's Birthday",
+      "cells": {
+        "date": {
+          "text": "02 Oct 2026",
+          "kind": "date"
+        },
+        "day": {
+          "text": "Friday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "F-14",
+      "part": "F",
+      "sectionTitle": "List of holidays",
+      "page": 10,
+      "row": 14,
+      "activityText": "Dussehra (Vijay Dashmi)",
+      "cells": {
+        "date": {
+          "text": "20 Oct 2026",
+          "kind": "date"
+        },
+        "day": {
+          "text": "Tuesday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "F-15",
+      "part": "F",
+      "sectionTitle": "List of holidays",
+      "page": 10,
+      "row": 15,
+      "activityText": "Diwali (Deepavali)",
+      "cells": {
+        "date": {
+          "text": "08 Nov 2026",
+          "kind": "date"
+        },
+        "day": {
+          "text": "Sunday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "F-16",
+      "part": "F",
+      "sectionTitle": "List of holidays",
+      "page": 10,
+      "row": 16,
+      "activityText": "Guru Nanak's Birthday",
+      "cells": {
+        "date": {
+          "text": "24 Nov 2026",
+          "kind": "date"
+        },
+        "day": {
+          "text": "Tuesday",
+          "kind": "date"
+        }
+      }
+    },
+    {
+      "sourceRef": "F-17",
+      "part": "F",
+      "sectionTitle": "List of holidays",
+      "page": 10,
+      "row": 17,
+      "activityText": "Christmas Day",
+      "cells": {
+        "date": {
+          "text": "25 Dec 2026",
+          "kind": "date"
+        },
+        "day": {
+          "text": "Friday",
+          "kind": "date"
+        }
+      }
+    }
+  ]
+}

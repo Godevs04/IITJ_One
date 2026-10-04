@@ -416,14 +416,21 @@ export async function putCalendar(
   doc: CalendarDoc,
   adminEmail: string,
   expectedVersion?: number,
+  audit?: { action: string; summary: string },
 ): Promise<void> {
   await assertVersionMatches('calendar', doc.campusId, expectedVersion);
+  // A save that does not carry the review queue (e.g. an older admin client) must not erase unresolved
+  // conflicts or their resolution history — keep the stored queue in that case.
+  if (doc.reviewQueue === undefined) {
+    const existing = await getCalendar(doc.campusId);
+    if (existing?.reviewQueue) doc = { ...doc, reviewQueue: existing.reviewQueue };
+  }
   if (isDbConnected()) {
     await collections.calendar().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
   } else {
     getFallbackState().calendar = doc;
   }
-  await bumpVersion('calendar', doc.campusId, adminEmail, 'update', `Calendar ${doc.semester}`);
+  await bumpVersion('calendar', doc.campusId, adminEmail, audit?.action ?? 'update', audit?.summary ?? `Calendar ${doc.semester}`);
 }
 
 export async function getPortals(campusId: string): Promise<PortalsDoc | null> {
@@ -1120,6 +1127,45 @@ export async function getActiveTransportScheduleException(
     return matches.length > 0 ? withStringId(matches[0]) : null;
   }
   return fallbackGetActiveTransportScheduleException(campusId, now);
+}
+
+/**
+ * Read-only: the published exception whose effective window overlaps [dayStart, dayEnd) — i.e. the special
+ * schedule that applies on a given (future) IST date. Same selection rule as the "active" lookup above
+ * (most recent effectiveFrom wins); used by the academic calendar's holiday bus-schedule lookup.
+ */
+export async function getTransportScheduleExceptionForDay(
+  campusId: string,
+  dayStart: Date,
+  dayEnd: Date,
+): Promise<TransportScheduleExceptionDoc | null> {
+  if (isDbConnected()) {
+    const matches = await collections
+      .transportScheduleExceptions()
+      .find({
+        campusId,
+        lifecycleState: 'published',
+        $or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
+        effectiveFrom: { $lt: dayEnd },
+        effectiveUntil: { $gt: dayStart },
+      })
+      .sort({ effectiveFrom: -1 })
+      .limit(1)
+      .toArray();
+    return matches.length > 0 ? withStringId(matches[0]) : null;
+  }
+  initFallbackStore();
+  const matches = getFallbackState()
+    .transportScheduleExceptions.filter(
+      (e) =>
+        e.campusId === campusId &&
+        e.lifecycleState === 'published' &&
+        !e.deletedAt &&
+        e.effectiveFrom < dayEnd &&
+        e.effectiveUntil > dayStart,
+    )
+    .sort((a, b) => b.effectiveFrom.getTime() - a.effectiveFrom.getTime());
+  return matches[0] ?? null;
 }
 
 export async function createTransportScheduleException(

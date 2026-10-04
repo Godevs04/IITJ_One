@@ -2,6 +2,8 @@ import { Fragment, useCallback, useEffect, useMemo, useState, type ComponentProp
 import { router, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ACADEMIC_DISPLAY_TYPE_LABELS } from '@iitj1/types';
+import { toDateKey } from '@/calendar/buildTimeline';
 import { DietMark } from '@/components/DietMark';
 import { useHomeLayout, type HomeSectionKey } from '@/services/homeLayout';
 import { DirectoryShortcuts } from '@/components/DirectoryShortcuts';
@@ -460,7 +462,8 @@ export default function HomeScreen() {
   }, [notices, now]);
 
   const upcomingEvents = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    // Local calendar date (toISOString() is UTC and lagged a day before 05:30 IST).
+    const today = toDateKey(new Date());
     return [...(calendar?.events ?? [])]
       .filter((e) => e.endDate >= today)
       .sort((a, b) => a.startDate.localeCompare(b.startDate))
@@ -708,7 +711,7 @@ export default function HomeScreen() {
                 ]}
               >
                 <Text style={[styles.eventType, { color: theme.linkText }]}>
-                  {event.type}
+                  {event.displayType ? ACADEMIC_DISPLAY_TYPE_LABELS[event.displayType] : event.type}
                 </Text>
                 <Text style={[styles.eventTitle, { color: theme.text }]} numberOfLines={1}>
                   {event.title}

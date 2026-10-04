@@ -186,6 +186,11 @@ export default function HolidaysAdminPage() {
                         onChange={(e) => updateHoliday(item.id, { name: e.target.value })}
                       />
                     </Field>
+                    {item.id.startsWith('acad-') ? (
+                      <p className="mt-1 text-xs text-muted">
+                        From Academic Calendar (List of holidays, S. No. {item.id.split('-F-')[1]})
+                      </p>
+                    ) : null}
                   </div>
                   <div className="lg:col-span-2">
                     <Field label="Holiday Date">

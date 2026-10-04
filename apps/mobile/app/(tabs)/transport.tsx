@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AppState } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import type { CalendarDoc, TransportDoc, HolidaysDoc, TransportAlertsDoc, TemporaryTransportScheduleDoc } from '@/types/campus';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
@@ -23,6 +24,10 @@ export default function TransportScreen() {
     connectionState,
     refresh: refreshLive,
   } = useLiveTracking();
+
+  // Set by the academic calendar's holiday "Bus schedule for this day" link.
+  const params = useLocalSearchParams<{ dayType?: string; for?: string }>();
+  const requestedDayType = params.dayType === 'sun-holiday' || params.dayType === 'mon-sat' ? params.dayType : undefined;
 
   const [tick, setTick] = useState(0);
 
@@ -62,6 +67,8 @@ export default function TransportScreen() {
       liveError={liveError}
       lastUpdated={lastUpdated}
       connectionState={connectionState}
+      requestedDayType={requestedDayType}
+      requestedForLabel={typeof params.for === 'string' ? params.for : undefined}
     />
   );
 }

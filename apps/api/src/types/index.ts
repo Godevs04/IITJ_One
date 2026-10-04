@@ -181,18 +181,9 @@ export interface TransportScheduleExceptionRevisionDoc {
   publishedBy: string;
 }
 
-export interface CalendarEvent {
-  title: string;
-  type: string;
-  startDate: string;
-  endDate: string;
-}
-
-export interface CalendarDoc {
-  campusId: string;
-  semester: string;
-  events: CalendarEvent[];
-}
+/** Normalized academic calendar (packages/types/src/academicCalendar.ts) — legacy fields stay required. */
+export type CalendarEvent = import('@iitj1/types').AcademicEvent;
+export type CalendarDoc = import('@iitj1/types').AcademicCalendarDoc;
 
 export interface PortalLink {
   name: string;

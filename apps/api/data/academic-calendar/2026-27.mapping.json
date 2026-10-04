@@ -1,0 +1,56 @@
+{
+  "$comment": "Reviewed mapping for the AY 2026-27 import (plan §7, §10). Declares known source conflicts and the row pairs that must agree; anything not declared here that disagrees makes the import fail.",
+  "academicYear": "2026-27",
+  "semesterLabel": "Academic Year 2026-27",
+  "workingData": "docs/calender/academic-calendar-2026-27.json",
+  "sourceData": "apps/api/data/academic-calendar/2026-27.source.json",
+  "conflicts": [
+    {
+      "id": "ay2026-27:sem1:course-withdrawal-request",
+      "kind": "date_conflict",
+      "match": { "term": "sem1", "ref": "D-52" },
+      "candidates": [
+        { "ref": "D-52", "cell": "sem1" },
+        { "ref": "E-3", "cell": "sem1" }
+      ],
+      "reason": "The Comprehensive Academic Calendar (S.N. 52, p.6) and the Fractals table (p.9) print different dates for the same activity."
+    },
+    {
+      "id": "ay2026-27:sem2:course-withdrawal-request",
+      "kind": "date_conflict",
+      "match": { "term": "sem2", "ref": "D-52" },
+      "candidates": [
+        { "ref": "D-52", "cell": "sem2" },
+        { "ref": "E-3", "cell": "sem2" }
+      ],
+      "reason": "The Comprehensive Academic Calendar (S.N. 52, p.6) and the Fractals table (p.9) print different dates for the same activity."
+    },
+    {
+      "id": "ay2026-27:sem2:D-93",
+      "kind": "placement_discrepancy",
+      "match": { "term": "sem2", "ref": "D-93" },
+      "candidates": [{ "ref": "D-93", "cell": "sem2" }],
+      "reason": "Printed in the Semester II column, but 30 Jul 2027 falls after the Summer Term 2027; it may belong to the next academic year."
+    },
+    {
+      "id": "ay2026-27:sem1:D-86",
+      "kind": "needs_review",
+      "match": { "term": "sem1", "ref": "D-86" },
+      "candidates": [{ "ref": "D-86", "cell": "sem1", "yearFromColumn": 2026 }],
+      "reason": "No year is printed (\"10th December to 22nd December (tentative)\"); 2026 is only inferred from the Semester I column. Hidden until confirmed (decision R1)."
+    }
+  ],
+  "equivalentRows": [
+    ["D-40", "E-1"],
+    ["D-41", "E-2"],
+    ["D-52", "E-3"],
+    ["D-54", "E-4"],
+    ["D-55", "E-5"],
+    ["D-57", "E-6"],
+    ["D-77", "E-7"]
+  ],
+  "titleRules": {
+    "$comment": "X2: the tentative label sits in the PDF date cell, not the activity — drop the suffix the extractor appended to the title; `tentative` + dateSourceText carry it.",
+    "stripSuffixes": [" (tentative)"]
+  }
+}

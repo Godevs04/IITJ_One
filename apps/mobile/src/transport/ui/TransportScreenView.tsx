@@ -49,6 +49,12 @@ interface TransportScreenViewProps {
   liveError: string | null;
   lastUpdated: string | null;
   connectionState: SocketConnectionState;
+  /**
+   * Opened from an academic-calendar holiday ("Bus schedule for this day"): preselect that day type and
+   * say which date it is for. Only the existing timetable is shown — nothing is copied or invented.
+   */
+  requestedDayType?: 'mon-sat' | 'sun-holiday';
+  requestedForLabel?: string;
 }
 
 const CONNECTION_INDICATOR: Record<SocketConnectionState, { icon: keyof typeof Ionicons.glyphMap; color: string }> = {
@@ -85,6 +91,8 @@ export function TransportScreenView({
   liveError,
   lastUpdated,
   connectionState,
+  requestedDayType,
+  requestedForLabel,
 }: TransportScreenViewProps) {
   const { colors: theme, darkMode } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
@@ -103,6 +111,13 @@ export function TransportScreenView({
   useEffect(() => {
     setDayTypeFilter(defaultDayType);
   }, [defaultDayType]);
+
+  const [requestCaption, setRequestCaption] = useState<string | null>(null);
+  useEffect(() => {
+    if (!requestedDayType) return;
+    setDayTypeFilter(requestedDayType);
+    setRequestCaption(requestedForLabel ?? null);
+  }, [requestedDayType, requestedForLabel]);
 
   // Load favorites from AsyncStorage
   useEffect(() => {
@@ -464,6 +479,26 @@ export function TransportScreenView({
           </Pressable>
         </View>
 
+        {requestCaption && !isOverridden && !isExceptionLive ? (
+          <View style={[styles.requestCaption, { backgroundColor: theme.primaryTint }]}>
+            <Ionicons name="calendar-outline" size={16} color={theme.linkText} />
+            <Text style={[styles.requestCaptionText, { color: theme.linkText }]}>
+              {dayTypeFilter === 'sun-holiday' ? 'Sunday & Holidays' : 'Mon-Sat'} timetable · {requestCaption}
+            </Text>
+            <Pressable
+              onPress={() => {
+                setRequestCaption(null);
+                setDayTypeFilter(defaultDayType);
+              }}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="Back to today's timetable"
+            >
+              <Ionicons name="close" size={18} color={theme.linkText} />
+            </Pressable>
+          </View>
+        ) : null}
+
         {/* Row 2: Day Type Filter - Hide if overridden */}
         {!isOverridden && !isExceptionLive && (
           <View style={styles.filterRow}>
@@ -702,6 +737,19 @@ export function TransportScreenView({
 }
 
 const styles = StyleSheet.create({
+  requestCaption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.sm,
+    borderRadius: AppRadius.md,
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: AppSpacing.sm,
+  },
+  requestCaptionText: {
+    ...AppTypography.bodySmall,
+    fontWeight: '600',
+    flex: 1,
+  },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',

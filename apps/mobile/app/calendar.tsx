@@ -1,159 +1,192 @@
-import { useCallback, useMemo, useState, useRef } from 'react';
-import { Pressable, StyleSheet, Text, View, Modal, ActivityIndicator } from 'react-native';
-import { WebView } from 'react-native-webview';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  AppState,
+  Platform,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  SectionList,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+  type ViewToken,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
 import { goBack } from '@/navigation/goBack';
 import { EmptyState } from '@/components/EmptyState';
-import { HolidayList } from '@/components/HolidayList';
-import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
-import { API_BASE_URL } from '@/services/api';
-import { useModalOverlayLock } from '@/services/overlayGate';
-import type { CalendarDoc, CalendarEvent, HolidaysDoc } from '@/types/campus';
+import type { CalendarDoc } from '@/types/campus';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
-import { debugListKeys } from '@/debug/listDebug';
+import { buildTimeline, initialLocation, monthKey, toDateKey, type DayItem, type MonthOption, type TimelineItem } from '@/calendar/buildTimeline';
+import { CALENDAR_FILTERS, toTimelineEvents, type CalendarFilter, type TimelineEvent } from '@/calendar/eventRules';
+import { useCalendarProgram } from '@/calendar/programPrefs';
+import { buildItemLayout, metrics } from '@/calendar/ui/layout';
+import { CarryRow, DayRow, GapRow, MonthHeader } from '@/calendar/ui/TimelineRows';
+import { CalendarSettingsSheet, DaySheet, EventDetailSheet, MonthPickerSheet } from '@/calendar/ui/Sheets';
+import { OfficialPdfModal } from '@/calendar/ui/OfficialPdfModal';
 
-const FILTERS = ['all', 'holiday', 'exam', 'academic', 'event'] as const;
-
-function formatRange(start: string, end: string): string {
-  if (start === end) return start;
-  return `${start} → ${end}`;
-}
-
-const WebViewComponent = WebView as any;
-
+/**
+ * Academic Calendar — timeline (plan: docs/calender/ACADEMIC_CALENDAR_IMPLEMENTATION_PLAN.md §3–7).
+ * Reads the synced, normalized calendar module (works offline); unresolved source conflicts never reach
+ * this screen (the public API strips them). Only dates that have events render, plus TODAY.
+ */
 export default function CalendarScreen() {
   const theme = useThemeColors();
-  const insets = useSafeAreaInsets();
+  const { fontScale: systemFontScale } = useWindowDimensions();
   const { syncing, sync, error } = useCampusSync(false);
   const calendar = useCampusModule<CalendarDoc>('calendar');
-  const holidays = useCampusModule<HolidaysDoc>('holidays');
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]>('all');
+  const { program, setProgram, showPrompt } = useCalendarProgram();
+
+  const [today, setToday] = useState(() => toDateKey(new Date()));
+  const [filter, setFilter] = useState<CalendarFilter>('all');
+  const [detailEvent, setDetailEvent] = useState<TimelineEvent | null>(null);
+  const [dayItem, setDayItem] = useState<DayItem | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [showPdf, setShowPdf] = useState(false);
-  useModalOverlayLock(showPdf);
-  const webViewRef = useRef<any>(null);
+  const [visibleMonth, setVisibleMonth] = useState<string | null>(null);
+  const [todayVisible, setTodayVisible] = useState(true);
 
-  const events = useMemo(() => {
-    const list = [...(calendar?.events ?? [])];
-    list.sort((a, b) => a.startDate.localeCompare(b.startDate));
-    if (filter === 'all') return list;
-    return list.filter((e) => e.type.toLowerCase() === filter);
-  }, [calendar, filter]);
-
-  debugListKeys('CalendarScreen', 'filters', FILTERS, (value) => value);
-  debugListKeys('CalendarScreen', 'events', events, (event, index) => `${event.title}-${index}`);
-
-  const onRefresh = useCallback(async () => {
-    await sync();
-  }, [sync]);
-
-  // Derive static PDF URL from the same validated API base every other request uses.
-  const pdfUrl = useMemo(() => {
-    const apiBase = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
-    return `${apiBase}/uploads/Academic-Calendar-AY-2026-27.pdf`;
+  // "Today" rolls over at midnight and when the app returns to the foreground.
+  useEffect(() => {
+    const refresh = () => setToday(toDateKey(new Date()));
+    const timer = setInterval(refresh, 60_000);
+    const sub = AppState.addEventListener('change', (s) => s === 'active' && refresh());
+    return () => {
+      clearInterval(timer);
+      sub.remove();
+    };
   }, []);
 
-  const htmlSource = useMemo(() => {
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-        <style>
-          body { margin: 0; padding: 0; background-color: #f5f5f7; display: flex; flex-direction: column; align-items: center; }
-          #canvas-container { width: 100%; display: flex; flex-direction: column; align-items: center; padding: 10px 0; }
-          canvas { width: 95%; max-width: 800px; height: auto; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; background-color: white; }
-          #loading { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #666; margin-top: 50px; font-size: 16px; }
-        </style>
-      </head>
-      <body>
-        <div id="loading">Loading Academic Calendar PDF...</div>
-        <div id="canvas-container"></div>
-        <script>
-          const pdfUrl = "${pdfUrl}";
-          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-          
-          let pdfDoc = null;
-          let currentScale = 1.5;
+  const events = useMemo(() => toTimelineEvents(calendar?.events), [calendar]);
+  const timeline = useMemo(() => buildTimeline(events, today, filter, program), [events, today, filter, program]);
+  const m = useMemo(() => metrics(), [systemFontScale]); // eslint-disable-line react-hooks/exhaustive-deps
+  const layouts = useMemo(() => buildItemLayout(timeline.sections, m), [timeline, m]);
 
-          function renderAllPages() {
-            const container = document.getElementById('canvas-container');
-            container.innerHTML = '';
-            
-            let renderPage = (pageNum) => {
-              if (pageNum > pdfDoc.numPages) return;
-              
-              pdfDoc.getPage(pageNum).then(page => {
-                const viewport = page.getViewport({ scale: currentScale });
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-                container.appendChild(canvas);
-                
-                page.render({
-                  canvasContext: context,
-                  viewport: viewport
-                }).promise.then(() => {
-                  renderPage(pageNum + 1);
-                });
-              });
-            };
-            
-            renderPage(1);
-          }
+  const listRef = useRef<SectionList<TimelineItem>>(null);
+  // Flat-index position of each section's header in `layouts` (header + items + footer per section).
+  const sectionStarts = useMemo(() => {
+    const starts: number[] = [];
+    let i = 0;
+    for (const section of timeline.sections) {
+      starts.push(i);
+      i += section.data.length + 2;
+    }
+    return starts;
+  }, [timeline]);
 
-          pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
-            pdfDoc = pdf;
-            document.getElementById('loading').style.display = 'none';
-            renderAllPages();
-          }).catch(err => {
-            document.getElementById('loading').innerText = "Failed to load PDF calendar: " + err.message;
-          });
+  /**
+   * Scroll by exact pixel offset from our own computed row layout. scrollToLocation's index arithmetic
+   * proved unreliable for animated jumps (the Today button barely moved on web), whereas the offsets are
+   * exact by construction — every row has a fixed computed height.
+   */
+  const scrollToOffset = useCallback((y: number, animated: boolean) => {
+    listRef.current?.getScrollResponder()?.scrollTo({ x: 0, y: Math.max(0, y), animated });
+  }, []);
 
-          window.addEventListener('message', (event) => {
-            try {
-              const msg = JSON.parse(event.data);
-              if (msg.type === 'zoomIn') {
-                currentScale = Math.min(3.0, currentScale + 0.25);
-                renderAllPages();
-              } else if (msg.type === 'zoomOut') {
-                currentScale = Math.max(0.75, currentScale - 0.25);
-                renderAllPages();
-              }
-            } catch (e) {
-              // ignore
-            }
-          });
-        </script>
-      </body>
-      </html>
-    `;
-  }, [pdfUrl]);
+  const scrollTo = useCallback(
+    (loc: { sectionIndex: number; itemIndex: number }, animated: boolean) => {
+      const flat = sectionStarts[loc.sectionIndex] + 1 + loc.itemIndex;
+      const layout = layouts[flat];
+      if (!layout) return;
+      // Leave room for the sticky month header plus a little of the previous row for context.
+      scrollToOffset(layout.offset - m.header - 48, animated);
+    },
+    [sectionStarts, layouts, m.header, scrollToOffset],
+  );
+
+  // Open around today (or the nearest end of the data range) once data first arrives, and again when the
+  // user changes the filter/program. NOT on every sync tick: useCampusModule returns a fresh object on each
+  // sync-engine state change, and re-centring then would yank the list away from where the user scrolled.
+  const pendingInitialScroll = useRef(true);
+  const hasData = timeline.sections.length > 0;
+  useEffect(() => {
+    pendingInitialScroll.current = true;
+  }, [filter, program, hasData]);
+  const onListLayout = useCallback(() => {
+    if (!pendingInitialScroll.current) return;
+    const loc = initialLocation(timeline, today);
+    if (!loc) return;
+    pendingInitialScroll.current = false;
+    // Run on the next frame OR after a short timer, whichever comes first — frames can be paused (e.g. a
+    // backgrounded web view), and opening at today must not depend on frame timing.
+    let done = false;
+    const run = () => {
+      if (done) return;
+      done = true;
+      scrollTo(loc, false);
+    };
+    requestAnimationFrame(run);
+    setTimeout(run, 50);
+  }, [timeline, today, scrollTo]);
+  useEffect(() => {
+    if (pendingInitialScroll.current) onListLayout();
+  }, [onListLayout]);
+
+  const todayKeyRef = useRef(`day:${today}`);
+  todayKeyRef.current = `day:${today}`;
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    // Month of the first visible DAY row — a sliver of the previous month's trailing gap row at the top
+    // must not make the header say the wrong month.
+    const firstDay = viewableItems.find((v) => (v.item as TimelineItem | undefined)?.kind === 'day');
+    const first = firstDay ?? viewableItems.find((v) => v.section);
+    if (first?.section) setVisibleMonth((first.section as { key: string }).key);
+    setTodayVisible(viewableItems.some((v) => (v.item as TimelineItem | undefined)?.key === todayKeyRef.current));
+  }).current;
+  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 10 }).current;
+
+  const currentMonth = visibleMonth ?? (timeline.today ? timeline.sections[timeline.today.sectionIndex]?.key : null) ?? timeline.sections[0]?.key ?? null;
+  const monthLabel = timeline.months.find((x) => x.key === currentMonth)?.label ?? 'Academic Calendar';
+
+  const jumpToMonth = useCallback(
+    (month: MonthOption) => {
+      setPickerOpen(false);
+      if (month.sectionIndex === null) return;
+      const header = layouts[sectionStarts[month.sectionIndex]];
+      if (header) scrollToOffset(header.offset, true);
+    },
+    [layouts, sectionStarts, scrollToOffset],
+  );
+
+  const goToday = useCallback(() => {
+    const loc = initialLocation(timeline, today);
+    if (loc) scrollTo(loc, true);
+  }, [timeline, today, scrollTo]);
+
+  const sourceLine = calendar && 'source' in calendar && calendar.source
+    ? `${calendar.source.publisher}, ${calendar.source.title ?? 'Academic Calendar'} (${calendar.source.documentDate})`
+    : null;
+
+  const renderItem = useCallback(
+    ({ item }: { item: TimelineItem }) => {
+      switch (item.kind) {
+        case 'day':
+          return <DayRow item={item} m={m} onEventPress={setDetailEvent} onBusPress={setDetailEvent} onMorePress={setDayItem} />;
+        case 'gap':
+          return <GapRow item={item} m={m} />;
+        case 'carry':
+          return <CarryRow item={item} m={m} onEventPress={setDetailEvent} />;
+      }
+    },
+    [m],
+  );
+
+  const todayDirection =
+    timeline.today && currentMonth ? (monthKey(today) < currentMonth ? 'up' : 'down') : 'down';
 
   return (
-    <ScreenShell
-      title="Academic Calendar"
-      subtitle={calendar?.semester || 'Semester events'}
-      onRefresh={onRefresh}
-      refreshing={syncing}
-      error={error}
-    >
+    <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <Stack.Screen
         options={{
           headerLeft: () => (
             <Pressable
               onPress={goBack}
               hitSlop={10}
-              style={({ pressed }) => [
-                { padding: 8, marginLeft: -8, opacity: pressed ? 0.7 : 1 }
-              ]}
+              style={({ pressed }) => [{ padding: 8, marginLeft: -8, opacity: pressed ? 0.7 : 1 }]}
               accessibilityRole="button"
               accessibilityLabel="Back"
             >
@@ -162,222 +195,296 @@ export default function CalendarScreen() {
           ),
         }}
       />
-      <Pressable
-        onPress={() => setShowPdf(true)}
-        style={({ pressed }) => [
-          styles.pdfBanner,
-          { backgroundColor: theme.primaryTint, borderColor: theme.primary },
-          pressed && styles.pressed,
-        ]}
-      >
-        <Ionicons name="document-text-outline" size={24} color={theme.linkText} />
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.pdfBannerTitle, { color: theme.linkText }]}>
-            View Official PDF Calendar
-          </Text>
-          <Text style={[styles.pdfBannerSubtitle, { color: theme.textMuted }]}>
-            Open AY 2026-27 official calendar with zoom & search
-          </Text>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color={theme.linkText} />
-      </Pressable>
 
-      <View style={styles.filters}>
-        {FILTERS.map((f) => {
-          const active = filter === f;
+      <View style={styles.toolbar}>
+        <Pressable
+          onPress={() => setPickerOpen(true)}
+          style={({ pressed }) => [styles.monthButton, { borderColor: theme.border, backgroundColor: theme.surface }, pressed && { opacity: 0.8 }]}
+          accessibilityRole="button"
+          accessibilityLabel={`${monthLabel}. Jump to another month`}
+          disabled={!timeline.months.length}
+        >
+          <Text style={[styles.monthButtonText, { color: theme.text }]} numberOfLines={1}>{monthLabel}</Text>
+          <Ionicons name="chevron-down" size={16} color={theme.textMuted} />
+        </Pressable>
+        <Pressable
+          onPress={() => setSettingsOpen(true)}
+          hitSlop={10}
+          style={styles.iconButton}
+          accessibilityRole="button"
+          accessibilityLabel="Calendar settings"
+        >
+          <Ionicons name="ellipsis-horizontal" size={22} color={theme.text} />
+        </Pressable>
+      </View>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filters}>
+        {CALENDAR_FILTERS.map((f) => {
+          const active = f.key === filter;
           return (
             <Pressable
-              key={f}
-              onPress={() => setFilter(f)}
-              style={[
-                styles.chip,
-                {
-                  backgroundColor: active ? theme.primaryTint : theme.surface,
-                  borderColor: active ? theme.primary : theme.border,
-                },
-              ]}
+              key={f.key}
+              onPress={() => setFilter(f.key)}
+              style={[styles.chip, { backgroundColor: active ? theme.primary : theme.chipBackground, borderColor: active ? theme.primary : theme.border }]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
             >
-              <Text
-                style={[
-                  styles.chipText,
-                  { color: active ? theme.linkText : theme.textMuted },
-                ]}
-              >
-                {f}
-              </Text>
+              <Text style={[styles.chipText, { color: active ? theme.onPrimary : theme.textMuted }]}>{f.label}</Text>
             </Pressable>
           );
         })}
-      </View>
+        {program !== 'all' ? (
+          <Pressable
+            onPress={() => void setProgram('all')}
+            style={[styles.chip, styles.programChip, { borderColor: theme.secondary }]}
+            accessibilityRole="button"
+            accessibilityLabel={`Showing ${program.toUpperCase()} events. Tap to show all`}
+          >
+            <Text style={[styles.chipText, { color: theme.secondary }]}>Program: {program.toUpperCase()}</Text>
+            <Ionicons name="close" size={14} color={theme.secondary} />
+          </Pressable>
+        ) : null}
+      </ScrollView>
 
-      {filter === 'holiday' ? (
-        <HolidayList holidays={holidays} events={calendar?.events ?? []} />
-      ) : events.length > 0 ? (
-        <View style={{ gap: AppSpacing.sm }}>
-          {events.map((event, index) => (
-            <EventRow key={`${event.title}-${index}`} event={event} />
-          ))}
-        </View>
-      ) : (
-        <EmptyState
-          icon="calendar-outline"
-          title="No events"
-          message="Pull down to sync the academic calendar."
-        />
-      )}
-
-      <Modal
-        visible={showPdf}
-        animationType="slide"
-        onRequestClose={() => setShowPdf(false)}
-      >
-        <View style={[styles.modalContainer, { backgroundColor: theme.surface }]}>
-          <View style={[styles.modalHeader, { borderBottomColor: theme.border, paddingTop: insets.top || 16 }]}>
-            <Pressable
-              onPress={() => setShowPdf(false)}
-              style={({ pressed }) => [styles.headerBtn, pressed && styles.pressed]}
-            >
-              <Ionicons name="close-outline" size={28} color={theme.text} />
+      {showPrompt ? (
+        <View style={[styles.prompt, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <Text style={[styles.promptTitle, { color: theme.text }]}>What is your program?</Text>
+          <Text style={[styles.promptBody, { color: theme.textMuted }]}>
+            Optional. Hides only events the official calendar marks for the other program. Saved on this phone.
+          </Text>
+          <View style={styles.promptActions}>
+            {(['ug', 'pg'] as const).map((p) => (
+              <Pressable key={p} onPress={() => void setProgram(p)} style={[styles.promptButton, { backgroundColor: theme.primary }]} accessibilityRole="button">
+                <Text style={[styles.promptButtonText, { color: theme.onPrimary }]}>{p.toUpperCase()}</Text>
+              </Pressable>
+            ))}
+            <Pressable onPress={() => void setProgram('all')} style={styles.promptSkip} accessibilityRole="button">
+              <Text style={[styles.promptSkipText, { color: theme.linkText }]}>Show all</Text>
             </Pressable>
-            <Text style={[styles.modalTitle, { color: theme.text }]}>
-              AY 2026-27 Academic Calendar
-            </Text>
-            <View style={styles.zoomControls}>
-              <Pressable
-                onPress={() => webViewRef.current?.postMessage(JSON.stringify({ type: 'zoomOut' }))}
-                style={({ pressed }) => [styles.headerBtn, pressed && styles.pressed]}
-              >
-                <Ionicons name="remove-circle-outline" size={24} color={theme.text} />
-              </Pressable>
-              <Pressable
-                onPress={() => webViewRef.current?.postMessage(JSON.stringify({ type: 'zoomIn' }))}
-                style={({ pressed }) => [styles.headerBtn, pressed && styles.pressed]}
-              >
-                <Ionicons name="add-circle-outline" size={24} color={theme.text} />
-              </Pressable>
-            </View>
           </View>
-          <WebViewComponent
-            ref={webViewRef}
-            originWhitelist={['*']}
-            source={{ html: htmlSource }}
-            style={{ flex: 1 }}
-            scalesPageToFit
-            startInLoadingState
-            renderLoading={() => (
-              <ActivityIndicator
-                size="large"
-                color={theme.linkText}
-                style={StyleSheet.absoluteFill}
-              />
-            )}
-          />
         </View>
-      </Modal>
-    </ScreenShell>
-  );
-}
+      ) : null}
 
-function EventRow({ event }: { event: CalendarEvent }) {
-  const theme = useThemeColors();
-  return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: theme.surface, borderColor: theme.border },
-      ]}
-    >
-      <Text style={[styles.type, { color: theme.linkText }]}>
-        {event.type.toUpperCase()}
-      </Text>
-      <Text style={[styles.title, { color: theme.text }]}>{event.title}</Text>
-      <Text style={[styles.dates, { color: theme.textMuted }]}>
-        {formatRange(event.startDate, event.endDate)}
-      </Text>
+      {error ? (
+        <Text style={[styles.syncError, { color: theme.error }]}>Sync issue: {error} — showing saved data.</Text>
+      ) : null}
+
+      <SectionList
+        ref={listRef}
+        sections={timeline.sections}
+        keyExtractor={(item) => item.key}
+        renderItem={renderItem}
+        renderSectionHeader={({ section }) => <MonthHeader title={section.title} m={m} />}
+        stickySectionHeadersEnabled
+        getItemLayout={(_data, index) => ({ ...(layouts[index] ?? { length: 0, offset: 0 }), index })}
+        onLayout={onListLayout}
+        onScrollToIndexFailed={() => {
+          setTimeout(() => {
+            const loc = initialLocation(timeline, today);
+            if (loc) scrollTo(loc, false);
+          }, 250);
+        }}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
+        initialNumToRender={12}
+        maxToRenderPerBatch={10}
+        windowSize={7}
+        removeClippedSubviews={Platform.OS === 'android'}
+        refreshControl={<RefreshControl refreshing={syncing} onRefresh={() => void sync()} tintColor={theme.linkText} />}
+        contentContainerStyle={styles.listContent}
+        ListEmptyComponent={
+          <EmptyState
+            icon="calendar-outline"
+            title={events.length ? 'Nothing matches this filter' : 'No calendar yet'}
+            message={events.length ? 'Try another filter or program.' : 'Pull down to sync the academic calendar.'}
+          />
+        }
+        ListFooterComponent={
+          <View style={styles.footer}>
+            <Pressable onPress={() => setShowPdf(true)} style={styles.pdfLink} accessibilityRole="button">
+              <Ionicons name="document-text-outline" size={18} color={theme.linkText} />
+              <Text style={[styles.pdfLinkText, { color: theme.linkText }]}>View official PDF calendar</Text>
+            </Pressable>
+            {sourceLine ? <Text style={[styles.sourceLine, { color: theme.textMuted }]}>Source: {sourceLine}</Text> : null}
+          </View>
+        }
+      />
+
+      {timeline.today && !todayVisible ? (
+        <Pressable
+          onPress={goToday}
+          style={({ pressed }) => [styles.todayPill, { backgroundColor: theme.primary }, pressed && { opacity: 0.85 }]}
+          accessibilityRole="button"
+          accessibilityLabel="Scroll to today"
+        >
+          <Ionicons name={todayDirection === 'up' ? 'arrow-up' : 'arrow-down'} size={16} color={theme.onPrimary} />
+          <Text style={[styles.todayPillText, { color: theme.onPrimary }]}>Today</Text>
+        </Pressable>
+      ) : null}
+
+      <EventDetailSheet event={detailEvent} onClose={() => setDetailEvent(null)} today={today} sourceLine={sourceLine} />
+      <DaySheet
+        item={dayItem}
+        onClose={() => setDayItem(null)}
+        onEventPress={(e) => {
+          setDayItem(null);
+          setDetailEvent(e);
+        }}
+      />
+      <MonthPickerSheet visible={pickerOpen} months={timeline.months} currentKey={currentMonth} onSelect={jumpToMonth} onClose={() => setPickerOpen(false)} />
+      <CalendarSettingsSheet
+        visible={settingsOpen}
+        program={program}
+        onChange={(p) => {
+          void setProgram(p);
+          setSettingsOpen(false);
+        }}
+        onClose={() => setSettingsOpen(false)}
+      />
+      <OfficialPdfModal visible={showPdf} onClose={() => setShowPdf(false)} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  filters: {
+  screen: {
+    flex: 1,
+  },
+  toolbar: {
+    flexShrink: 0,
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: AppSpacing.lg,
+    paddingTop: AppSpacing.md,
+    gap: AppSpacing.md,
+  },
+  monthButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.xs,
+    borderWidth: 1,
+    borderRadius: AppRadius.full,
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: 6,
+    flexShrink: 1,
+  },
+  monthButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  iconButton: {
+    padding: 4,
+  },
+  filterScroll: {
+    // Never let the list squeeze the chip row (it collapsed to 2px on web without this).
+    flexGrow: 0,
+    flexShrink: 0,
+  },
+  filters: {
     gap: AppSpacing.sm,
-    marginBottom: AppSpacing.sm,
+    paddingHorizontal: AppSpacing.lg,
+    paddingVertical: AppSpacing.md,
   },
   chip: {
     borderWidth: 1,
     borderRadius: AppRadius.full,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 6,
   },
-  chipText: {
-    ...AppTypography.caption,
-    textTransform: 'capitalize',
-    fontWeight: '600',
-  },
-  card: {
-    borderWidth: 1,
-    borderRadius: AppRadius.lg,
-    padding: AppSpacing.md,
+  programChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 4,
   },
-  type: {
-    ...AppTypography.caption,
-    fontWeight: '700',
-    letterSpacing: 0.4,
-  },
-  title: {
-    ...AppTypography.body,
+  chipText: {
+    ...AppTypography.bodySmall,
     fontWeight: '600',
   },
-  dates: {
-    ...AppTypography.caption,
-  },
-  pdfBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  prompt: {
+    flexShrink: 0,
+    marginHorizontal: AppSpacing.lg,
+    marginBottom: AppSpacing.sm,
     borderWidth: 1,
     borderRadius: AppRadius.lg,
     padding: AppSpacing.md,
-    gap: AppSpacing.md,
-    marginBottom: AppSpacing.md,
+    gap: AppSpacing.xs,
   },
-  pdfBannerTitle: {
+  promptTitle: {
     ...AppTypography.body,
     fontWeight: '700',
   },
-  pdfBannerSubtitle: {
+  promptBody: {
     ...AppTypography.caption,
-    marginTop: 2,
   },
-  pressed: {
-    opacity: 0.7,
-  },
-  modalContainer: {
-    flex: 1,
-  },
-  modalHeader: {
+  promptActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: AppSpacing.md,
-    paddingBottom: AppSpacing.sm,
-    borderBottomWidth: 1,
+    gap: AppSpacing.sm,
+    marginTop: AppSpacing.xs,
   },
-  modalTitle: {
-    ...AppTypography.body,
+  promptButton: {
+    borderRadius: AppRadius.md,
+    paddingHorizontal: AppSpacing.lg,
+    paddingVertical: AppSpacing.sm,
+  },
+  promptButtonText: {
+    ...AppTypography.bodySmall,
     fontWeight: '700',
-    flex: 1,
-    textAlign: 'center',
-    marginHorizontal: AppSpacing.sm,
   },
-  zoomControls: {
+  promptSkip: {
+    paddingHorizontal: AppSpacing.sm,
+    paddingVertical: AppSpacing.sm,
+  },
+  promptSkipText: {
+    ...AppTypography.bodySmall,
+    fontWeight: '600',
+  },
+  syncError: {
+    ...AppTypography.caption,
+    paddingHorizontal: AppSpacing.lg,
+    paddingBottom: AppSpacing.xs,
+  },
+  listContent: {
+    paddingBottom: AppSpacing.xxl * 2,
+  },
+  footer: {
+    padding: AppSpacing.lg,
+    gap: AppSpacing.sm,
+    alignItems: 'center',
+  },
+  pdfLink: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: AppSpacing.xs,
+    paddingVertical: AppSpacing.sm,
   },
-  headerBtn: {
-    padding: AppSpacing.xs,
+  pdfLinkText: {
+    ...AppTypography.bodySmall,
+    fontWeight: '700',
+  },
+  sourceLine: {
+    ...AppTypography.caption,
+    textAlign: 'center',
+  },
+  todayPill: {
+    position: 'absolute',
+    bottom: AppSpacing.xl,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: AppRadius.full,
+    paddingHorizontal: AppSpacing.lg,
+    paddingVertical: AppSpacing.sm,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  todayPillText: {
+    ...AppTypography.bodySmall,
+    fontWeight: '700',
   },
 });

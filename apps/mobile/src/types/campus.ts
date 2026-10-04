@@ -98,18 +98,12 @@ export interface ActiveScheduleExceptionResponse {
   schedule: TransportScheduleException | null;
 }
 
-export interface CalendarEvent {
-  title: string;
-  type: string;
-  startDate: string;
-  endDate: string;
-}
-
-export interface CalendarDoc {
-  campusId: string;
-  semester: string;
-  events: CalendarEvent[];
-}
+/**
+ * Normalized academic calendar (packages/types/src/academicCalendar.ts). Legacy fields stay required, so
+ * older cached documents still type-check. The public API never sends `reviewQueue` (unresolved conflicts).
+ */
+export type CalendarEvent = import('@iitj1/types').AcademicEvent;
+export type CalendarDoc = Omit<import('@iitj1/types').AcademicCalendarDoc, 'reviewQueue'>;
 
 export interface PortalLink {
   name: string;
