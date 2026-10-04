@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Linking, Switch, Text, View } from 'react-native';
+import { Alert, Switch, Text, View } from 'react-native';
 import { DirectoryRow } from '@/components/DirectoryRow';
 import { ScreenShell } from '@/components/ScreenShell';
 import {
@@ -13,15 +13,9 @@ import { FeedbackPromptManager } from '@/services/feedbackPrompt';
 import { useTheme } from '@/theme/ThemeProvider';
 import { Analytics, AppEvents } from '@/services/firebase';
 import { AppSpacing, AppTypography } from '@/theme/tokens';
-import { isHttpUrl } from '@/utils/urlSafety';
 import { debugListKeys } from '@/debug/listDebug';
 import { usePostHog } from 'posthog-react-native';
 
-const PRIVACY_POLICY_URL =
-  process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL || 'https://iitjone.in/privacy';
-const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL || 'https://iitjone.in/terms';
-const SUPPORT_URL = process.env.EXPO_PUBLIC_SUPPORT_URL || 'https://iitjone.in/support';
-const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@iitjone.in';
 
 const NOTIFICATION_TOPICS = [
   { key: 'iitj_all', label: 'All campus updates', description: 'General announcements for everyone on campus' },
@@ -120,48 +114,12 @@ export default function SettingsScreen() {
           subtitle="Reorder or hide Home screen sections"
           onPress={() => router.push('/customize-home' as never)}
         />
-        <DirectoryRow
-          title="My Mess QR"
-          subtitle="Stored only on this device"
-          onPress={() => router.push('/mess-qr')}
-        />
-        <DirectoryRow
-          title="My Timetable"
-          subtitle="Stored only on this device"
-          onPress={() => router.push('/timetable')}
-        />
-        <DirectoryRow
-          title="Notes"
-          subtitle="Stored only on this device"
-          onPress={() => router.push('/notes')}
-        />
         <DirectoryRow title="Feedback & Suggestions" onPress={() => router.push('/suggest')} />
-        <DirectoryRow title="About IITJ One" onPress={() => router.push('/about')} />
-        {isHttpUrl(SUPPORT_URL) ? (
-          <DirectoryRow
-            title="Help & Support"
-            onPress={() => void Linking.openURL(SUPPORT_URL)}
-          />
-        ) : null}
-        {isHttpUrl(PRIVACY_POLICY_URL) ? (
-          <DirectoryRow
-            title="Privacy Policy"
-            onPress={() => void Linking.openURL(PRIVACY_POLICY_URL)}
-          />
-        ) : null}
-        {isHttpUrl(TERMS_URL) ? (
-          <DirectoryRow
-            title="Terms of Use"
-            onPress={() => void Linking.openURL(TERMS_URL)}
-          />
-        ) : null}
-        {SUPPORT_EMAIL ? (
-          <DirectoryRow
-            title="Email us"
-            subtitle={SUPPORT_EMAIL}
-            onPress={() => void Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
-          />
-        ) : null}
+        <DirectoryRow
+          title="About & support"
+          subtitle="Help, contact us, privacy policy and terms"
+          onPress={() => router.push('/about')}
+        />
       </View>
 
       {__DEV__ ? (

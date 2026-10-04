@@ -16,6 +16,21 @@ const DISCLAIMER =
 
 const SUPPORT_URL = process.env.EXPO_PUBLIC_SUPPORT_URL || 'https://iitjone.in/support';
 const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@iitjone.in';
+const PRIVACY_POLICY_URL = process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL || 'https://iitjone.in/privacy';
+const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL || 'https://iitjone.in/terms';
+
+/**
+ * Section titles that would repeat something this screen already shows: the disclaimer banner already
+ * says what IITJ One is, and "IIT Jodhpur contacts" already lists the institute's phone/email/website.
+ */
+const REDUNDANT_SECTION_TITLES = new Set([
+  'about iitj one',
+  'contact & resources',
+  'contact and resources',
+  'contact information',
+  'contact',
+  'contacts',
+]);
 
 const INSTITUTE_DETAILS = [
   {
@@ -100,7 +115,9 @@ export default function AboutScreen() {
   const { syncing, sync, error } = useCampusSync(false);
   const about = useCampusModule<AboutDoc>('about');
   const syncedSections = about?.sections ?? [];
-  const sections = syncedSections.length > 0 ? syncedSections : INSTITUTE_DETAILS;
+  const sections = (syncedSections.length > 0 ? syncedSections : INSTITUTE_DETAILS).filter(
+    (section) => !REDUNDANT_SECTION_TITLES.has(section.title.trim().toLowerCase()),
+  );
   debugListKeys('AboutScreen', 'sections', sections, (section) => section.title);
 
   const onRefresh = useCallback(async () => {
@@ -124,7 +141,7 @@ export default function AboutScreen() {
       {isHttpUrl(SUPPORT_URL) || SUPPORT_EMAIL ? (
         <View style={styles.contactSection}>
           <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
-            IITJ One Support
+            IITJ One support
           </Text>
           {isHttpUrl(SUPPORT_URL) ? (
             <ContactRow
@@ -144,6 +161,24 @@ export default function AboutScreen() {
               theme={theme}
             />
           ) : null}
+          {isHttpUrl(PRIVACY_POLICY_URL) ? (
+            <ContactRow
+              icon="shield-outline"
+              label="Privacy policy"
+              value="How your data is handled"
+              onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
+              theme={theme}
+            />
+          ) : null}
+          {isHttpUrl(TERMS_URL) ? (
+            <ContactRow
+              icon="document-text-outline"
+              label="Terms of use"
+              value="Rules for using IITJ One"
+              onPress={() => Linking.openURL(TERMS_URL)}
+              theme={theme}
+            />
+          ) : null}
         </View>
       ) : null}
 
@@ -155,7 +190,7 @@ export default function AboutScreen() {
 
       <View style={styles.contactSection}>
         <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
-          Quick Contact
+          IIT Jodhpur contacts
         </Text>
         <ContactRow
           icon="call-outline"
