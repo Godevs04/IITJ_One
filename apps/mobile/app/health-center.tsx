@@ -155,6 +155,9 @@ export default function HealthCenterScreen() {
   }, [selectedDate, dateTabs]);
 
   const selectedDay = doc.doctorSchedules.find((s) => s.date === activeDate) ?? null;
+  // Every duty doctor usually sits in the same OPD room — say it once instead of on every row.
+  const dutyRooms = new Set((selectedDay?.regularDoctors ?? []).map((d) => d.room).filter(Boolean));
+  const sharedRoom = dutyRooms.size === 1 && (selectedDay?.regularDoctors.length ?? 0) > 1 ? [...dutyRooms][0] : null;
   const visitingSpecialistsToShow =
     selectedDay && selectedDay.visitingSpecialists.length > 0 ? selectedDay.visitingSpecialists : doc.visitingSpecialists;
 
@@ -201,12 +204,18 @@ export default function HealthCenterScreen() {
         {dateTabs.length > 0 ? <DateTabs dates={dateTabs} selected={activeDate ?? ''} onSelect={setSelectedDate} /> : null}
         {selectedDay && selectedDay.regularDoctors.length > 0 ? (
           <View style={styles.doctorList}>
+            {sharedRoom ? (
+              <View style={styles.sharedRoom}>
+                <Icon name="location-outline" size={14} color={theme.textMuted} />
+                <Text style={[styles.sharedRoomText, { color: theme.textMuted }]}>{sharedRoom}</Text>
+              </View>
+            ) : null}
             {selectedDay.regularDoctors.map((entry, i) => (
               <DoctorRow
                 key={`${entry.doctorName}-${entry.shift}-${i}`}
                 name={entry.doctorName}
                 specialisation={specialisationFor(entry.doctorName)}
-                detail={[entry.room, entry.timing].filter(Boolean).join(' • ')}
+                detail={[sharedRoom ? null : entry.room, entry.timing].filter(Boolean).join(' • ')}
                 badge={entry.shift}
               />
             ))}
@@ -288,6 +297,15 @@ export default function HealthCenterScreen() {
 }
 
 const styles = StyleSheet.create({
+  sharedRoom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  sharedRoomText: {
+    ...AppTypography.bodySmall,
+    fontWeight: '600',
+  },
   section: {
     gap: AppSpacing.md,
   },

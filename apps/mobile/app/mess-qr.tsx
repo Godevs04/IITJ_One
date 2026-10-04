@@ -54,7 +54,7 @@ export default function MessQrScreen() {
         if (isTap) {
           revealControls();
         } else if (gestureState.dy > 50 || gestureState.vy > 0.25) {
-          router.back();
+          goBack();
         }
       },
     })

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { goBack } from '@/navigation/goBack';
 import { StyleSheet, TextInput } from 'react-native';
 import { PrimaryButton } from '@/components/Buttons';
 import { ScreenShell } from '@/components/ScreenShell';
@@ -43,7 +44,7 @@ export default function NoteEditScreen() {
       has_title: title.trim().length > 0,
       body_length: body.trim().length,
     });
-    router.back();
+    goBack();
   }, [id, title, body, posthog]);
 
   const fieldStyle = {

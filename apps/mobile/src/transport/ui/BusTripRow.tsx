@@ -61,8 +61,15 @@ function BusTripRowComponent({
         <View style={styles.topRow}>
           {label ? (
             <View style={[styles.labelChip, { backgroundColor: emphasized ? theme.highlight : theme.surfaceMuted }]}>
-              <MaterialIcons name="schedule" size={12} color={emphasized ? theme.onHighlight : theme.textMuted} />
-              <Text style={[styles.labelText, { color: emphasized ? theme.onHighlight : theme.textMuted }]}>{label}</Text>
+              <MaterialIcons name="schedule" size={emphasized ? 18 : 14} color={emphasized ? theme.onHighlight : theme.textMuted} />
+              <Text
+                style={[
+                  emphasized ? styles.labelTextProminent : styles.labelText,
+                  { color: emphasized ? theme.onHighlight : theme.textMuted },
+                ]}
+              >
+                {label}
+              </Text>
             </View>
           ) : (
             <View />
@@ -80,7 +87,7 @@ function BusTripRowComponent({
           <Text style={[styles.stop, { color: theme.textMuted }]} numberOfLines={1}>
             {from}
           </Text>
-          <Text style={[styles.time, { color: theme.text }]}>{trip.startTime}</Text>
+          <Text style={[styles.time, emphasized && styles.timeProminent, { color: theme.text }]}>{trip.startTime}</Text>
         </View>
 
         <View style={styles.connector} importantForAccessibility="no-hide-descendants">
@@ -120,14 +127,19 @@ const styles = StyleSheet.create({
   labelChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
     borderRadius: AppRadius.full,
-    paddingHorizontal: AppSpacing.sm,
-    paddingVertical: 2,
+    paddingHorizontal: AppSpacing.sm + 4,
+    paddingVertical: 4,
   },
   labelText: {
     ...AppTypography.bodySmall,
     fontWeight: '700',
+  },
+  /** The next bus's countdown is the one thing people look for — body-size and bold, not caption-size. */
+  labelTextProminent: {
+    ...AppTypography.bodyHeader,
+    fontWeight: '800',
   },
   badges: {
     flexDirection: 'row',
@@ -163,6 +175,11 @@ const styles = StyleSheet.create({
   time: {
     ...AppTypography.bodyHeader,
     fontSize: 15,
+  },
+  timeProminent: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '700',
   },
   right: {
     textAlign: 'right',
