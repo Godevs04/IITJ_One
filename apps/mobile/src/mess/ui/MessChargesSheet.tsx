@@ -5,19 +5,54 @@ import { useModalOverlayLock } from '@/services/overlayGate';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { debugListKeys } from '@/debug/listDebug';
+import { MESS_PRICING_MEALS, priceWithGst, type MessPricingMeal } from '@iitj1/types';
+import { useMessPricing } from '../useMessPricing';
 
-const MEAL_PRICES = [
-  { meal: 'Breakfast', veg: '₹45', nonVeg: '₹45' },
-  { meal: 'Lunch', veg: '₹75', nonVeg: '₹80' },
-  { meal: 'Snacks', veg: '₹35', nonVeg: '₹35' },
-  { meal: 'Dinner', veg: '₹75', nonVeg: '₹80' },
-];
+const MEAL_LABELS: Record<MessPricingMeal, string> = {
+  breakfast: 'Breakfast',
+  lunch: 'Lunch',
+  snacks: 'Snacks',
+  dinner: 'Dinner',
+};
 
-/** Mess charges (regular plan, pay & use) and the Mess Office contact — moved unchanged out of the Mess tab. */
+function rupees(amount: number): string {
+  return `₹${Number.isInteger(amount) ? amount : amount.toFixed(2)}`;
+}
+
+function formatDate(date: string): string {
+  const [y, m, d] = date.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+/**
+ * Mess charges (regular plan, pay & use) and the Mess Office contact. Prices come from the admin-managed
+ * `messPricing` module (useMessPricing), with the standard prices as an offline fallback.
+ */
 export function MessChargesSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const theme = useThemeColors();
   useModalOverlayLock(visible);
-  debugListKeys('MessChargesSheet', 'mealCharges', MEAL_PRICES, (item) => item.meal);
+  const { pricing, source } = useMessPricing();
+  const mealPrices = MESS_PRICING_MEALS.map((meal) => ({
+    meal: MEAL_LABELS[meal],
+    veg: rupees(pricing.payAndUse[meal].veg),
+    nonVeg: rupees(pricing.payAndUse[meal].nonVeg),
+  }));
+  const gst = pricing.regularGstPercent;
+  const regularRows = [
+    { type: 'veg' as const, label: 'Veg mess', amount: pricing.regular.veg },
+    { type: 'nonVeg' as const, label: 'Non-veg mess', amount: pricing.regular.nonVeg },
+  ].map((row) => ({
+    ...row,
+    price: gst > 0 ? `${rupees(row.amount)} + GST` : rupees(row.amount),
+    approx: gst > 0 ? `≈ ${rupees(priceWithGst(row.amount, gst))} / day` : 'per day',
+  }));
+  const sourceNote =
+    source === 'server'
+      ? `Prices effective from ${formatDate(pricing.effectiveFrom)}`
+      : source === 'loading'
+        ? 'Loading the latest prices…'
+        : "Showing standard prices — couldn't load the latest from the server.";
+  debugListKeys('MessChargesSheet', 'mealCharges', mealPrices, (item) => item.meal);
 
   return (
     <Modal
@@ -49,6 +84,12 @@ export function MessChargesSheet({ visible, onClose }: { visible: boolean; onClo
               <MaterialIcons name="close" size={24} color={theme.textMuted} />
             </Pressable>
           </View>
+          <Text
+            style={[styles.sourceNote, { color: source === 'fallback' ? theme.countdownUrgent : theme.textMuted }]}
+            accessibilityLiveRegion="polite"
+          >
+            {sourceNote}
+          </Text>
 
           <ScrollView
             style={styles.modalScroll}
@@ -70,10 +111,7 @@ export function MessChargesSheet({ visible, onClose }: { visible: boolean; onClo
               <Text style={[styles.sectionDescription, { color: theme.textMuted }]}>
                 For students, staff and faculty who eat every meal in the mess. Billed per day via ERP or register.
               </Text>
-              {[
-                { type: 'veg' as const, label: 'Veg mess', price: '₹170 + GST', approx: '≈ ₹179 / day' },
-                { type: 'nonVeg' as const, label: 'Non-veg mess', price: '₹180 + GST', approx: '≈ ₹189 / day' },
-              ].map((row) => (
+              {regularRows.map((row) => (
                 <View key={row.type} style={[styles.planRow, { borderTopColor: theme.border }]}>
                   <DietMark type={row.type} size={14} />
                   <Text style={[styles.priceLabel, { color: theme.text, flex: 1 }]}>{row.label}</Text>
@@ -110,7 +148,7 @@ export function MessChargesSheet({ visible, onClose }: { visible: boolean; onClo
                 </View>
               </View>
 
-              {MEAL_PRICES.map((item) => (
+              {mealPrices.map((item) => (
                 <View key={item.meal} style={[styles.tableRow, { borderBottomColor: theme.border }]}>
                   <Text style={[styles.td, { flex: 2, fontWeight: '600', color: theme.text }]}>{item.meal}</Text>
                   <Text style={[styles.td, { flex: 1.5, textAlign: 'right', color: theme.veg, fontWeight: '700' }]}>{item.veg}</Text>
@@ -161,6 +199,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
+  },
+  sourceNote: {
+    ...AppTypography.caption,
+    marginTop: -AppSpacing.sm,
+    marginBottom: AppSpacing.sm,
   },
   modalScroll: {
     flexShrink: 1,

@@ -104,28 +104,27 @@ export default function MenuScreen() {
         </View>
       ) : null}
 
-      {anyMenu ? (
-        <View style={styles.links}>
-          {!isToday ? (
-            <Pressable onPress={() => setSelectedDay(today)} hitSlop={8} style={styles.link} accessibilityRole="button">
-              <MaterialIcons name="today" size={16} color={theme.linkText} />
-              <Text style={[styles.linkText, { color: theme.linkText }]}>Back to today</Text>
-            </Pressable>
-          ) : (
-            <View />
-          )}
-          <Pressable
-            onPress={() => setShowCharges(true)}
-            hitSlop={8}
-            style={styles.link}
-            accessibilityRole="button"
-            accessibilityLabel="Mess prices and contact"
-          >
-            <MaterialIcons name="sell" size={16} color={theme.linkText} />
-            <Text style={[styles.linkText, { color: theme.linkText }]}>Mess prices</Text>
+      {/* Prices don't depend on the menu, so they stay reachable even when no menu has synced. */}
+      <View style={styles.links}>
+        {anyMenu && !isToday ? (
+          <Pressable onPress={() => setSelectedDay(today)} hitSlop={8} style={styles.link} accessibilityRole="button">
+            <MaterialIcons name="today" size={16} color={theme.linkText} />
+            <Text style={[styles.linkText, { color: theme.linkText }]}>Back to today</Text>
           </Pressable>
-        </View>
-      ) : null}
+        ) : (
+          <View />
+        )}
+        <Pressable
+          onPress={() => setShowCharges(true)}
+          hitSlop={8}
+          style={styles.link}
+          accessibilityRole="button"
+          accessibilityLabel="Mess prices and contact"
+        >
+          <MaterialIcons name="sell" size={16} color={theme.linkText} />
+          <Text style={[styles.linkText, { color: theme.linkText }]}>Mess prices</Text>
+        </Pressable>
+      </View>
 
       {dayMenu ? (
         MEALS.map((meal) => {
