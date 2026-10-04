@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Text, View, PanResponder, Platform } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Text, View, PanResponder } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, router, useFocusEffect } from 'expo-router';
 import { goBack } from '@/navigation/goBack';
 import * as ImagePicker from 'expo-image-picker';
-import * as Brightness from 'expo-brightness';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { preventScreenCaptureAsync, allowScreenCaptureAsync } from 'expo-screen-capture';
 import { Icon } from '@/components/Icon';
@@ -12,14 +12,19 @@ import { EmptyState } from '@/components/EmptyState';
 import { PrimaryButton, SecondaryButton } from '@/components/Buttons';
 import { ImageCropEditor } from '@/components/ImageCropEditor';
 import { messQrStore, MessQrStorageError, type MessQR } from '@/services/qrStorage';
+import { useQrAutoBrightnessPreference, useQrBrightness } from '@/services/qrBrightness';
 import { Analytics, AppEvents, FirebaseCrashlytics } from '@/services/firebase';
 import { useThemeColors } from '@/theme/ThemeProvider';
-import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { AppRadius, AppSpacing, AppTypography, RedesignColors } from '@/theme/tokens';
 import { usePostHog } from 'posthog-react-native';
 
 type Mode = 'empty' | 'cropping' | 'viewing';
 
 const FADE_DELAY_MS = 3000;
+/** The QR viewer is always light (white paper, dark ink) in both themes: that is what scanners read best. */
+const QR_PAPER = '#FFFFFF';
+const QR_INK = RedesignColors.text;
+const QR_INK_MUTED = RedesignColors.textMuted;
 
 function friendlyErrorMessage(err: unknown): string {
   if (err instanceof MessQrStorageError) {
@@ -42,6 +47,9 @@ export default function MessQrScreen() {
   const [mode, setMode] = useState<Mode>('empty');
   const [pendingImageUri, setPendingImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [imageStatus, setImageStatus] = useState<'loading' | 'ok' | 'error'>('loading');
+  const [autoBrightness, setAutoBrightness] = useQrAutoBrightnessPreference();
+  const insets = useSafeAreaInsets();
 
   const controlsOpacity = useSharedValue(1);
   const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -52,7 +60,7 @@ export default function MessQrScreen() {
       onPanResponderRelease: (_, gestureState) => {
         const isTap = Math.abs(gestureState.dx) < 10 && Math.abs(gestureState.dy) < 10;
         if (isTap) {
-          revealControls();
+          revealControlsRef.current();
         } else if (gestureState.dy > 50 || gestureState.vy > 0.25) {
           goBack();
         }
@@ -88,46 +96,43 @@ export default function MessQrScreen() {
     controlsOpacity.value = withTiming(1, { duration: 200 });
     scheduleFade();
   }, [controlsOpacity, scheduleFade]);
+  // The PanResponder is created once; read the latest callback through a ref.
+  const revealControlsRef = useRef(revealControls);
+  revealControlsRef.current = revealControls;
 
   // Handle local control animations on mode change
   useEffect(() => {
-    if (mode === 'viewing') {
+    if (mode === 'viewing' && imageStatus === 'ok') {
       revealControls();
+    } else {
+      // Keep the controls visible while the image loads or when it cannot be shown.
+      if (fadeTimer.current) clearTimeout(fadeTimer.current);
+      controlsOpacity.value = withTiming(1, { duration: 150 });
     }
     return () => {
       if (fadeTimer.current) clearTimeout(fadeTimer.current);
     };
-  }, [mode, revealControls]);
+  }, [mode, imageStatus, revealControls, controlsOpacity]);
 
-  // Focus-aware keep-awake and brightness setting
+  // A new or changed image starts loading again.
+  useEffect(() => {
+    setImageStatus('loading');
+  }, [qr?.imagePath]);
+
+  // Keep the screen awake and block screenshots while the QR is shown.
   useFocusEffect(
     useCallback(() => {
       if (mode !== 'viewing') return;
-
       void activateKeepAwakeAsync('mess-qr');
       void preventScreenCaptureAsync();
-
-      let initialVal: number | null = null;
-      void Brightness.getBrightnessAsync().then((val) => {
-        initialVal = val;
-        void Brightness.setBrightnessAsync(1);
-      }).catch(() => {
-        void Brightness.setBrightnessAsync(1);
-      });
-
       return () => {
         deactivateKeepAwake('mess-qr');
         void allowScreenCaptureAsync();
-        if (Platform.OS === 'android') {
-          void Brightness.restoreSystemBrightnessAsync();
-        } else {
-          if (initialVal !== null) {
-            void Brightness.setBrightnessAsync(initialVal);
-          }
-        }
       };
-    }, [mode])
+    }, [mode]),
   );
+  // Full brightness while the QR is visible (restored on leave and in the background), unless turned off.
+  useQrBrightness(mode === 'viewing' && autoBrightness);
 
   const overlayStyle = useAnimatedStyle(() => ({
     opacity: controlsOpacity.value,
@@ -240,38 +245,54 @@ export default function MessQrScreen() {
     return (
       <>
         <Stack.Screen options={{ headerShown }} />
+        {/* White, not black: scanners need the QR's light quiet zone, and a failed image is never just a black screen. */}
         <View style={styles.viewer} {...panResponder.panHandlers}>
-          <Animated.Image
-            source={{ uri: qr.imagePath }}
-            style={[styles.qrImage, { aspectRatio }]}
-            resizeMode="contain"
-            accessibilityLabel="Mess QR code, full screen"
-          />
+          {imageStatus === 'error' ? (
+            <View style={styles.errorBox}>
+              <Icon name="alert-circle-outline" size={40} color={QR_INK} />
+              <Text style={styles.errorTitle}>Couldn&apos;t show your QR</Text>
+              <Text style={styles.errorBody}>
+                The saved image could not be loaded. Replace it with a fresh photo or screenshot of your Mess QR.
+              </Text>
+            </View>
+          ) : (
+            <Animated.Image
+              key={qr.imagePath}
+              source={{ uri: qr.imagePath }}
+              style={[styles.qrImage, { aspectRatio }]}
+              resizeMode="contain"
+              onLoad={() => setImageStatus('ok')}
+              onError={() => setImageStatus('error')}
+              accessibilityLabel="Mess QR code, full screen"
+            />
+          )}
 
-          <Animated.View style={[styles.topRow, overlayStyle]} pointerEvents="box-none">
-            <Pressable onPress={openReCrop} hitSlop={16} accessibilityRole="button" accessibilityLabel="Edit QR">
-              <Icon name="pencil" size={22} color="#fff" />
+          <Animated.View style={[styles.topRow, { top: insets.top + AppSpacing.sm }, overlayStyle]} pointerEvents="box-none">
+            <Pressable onPress={openReCrop} hitSlop={12} style={styles.roundButton} accessibilityRole="button" accessibilityLabel="Edit QR">
+              <Icon name="pencil" size={20} color={QR_INK} />
             </Pressable>
-            <Pressable onPress={goBack} hitSlop={16} accessibilityRole="button" accessibilityLabel="Close">
-              <Icon name="close" size={26} color="#fff" />
-            </Pressable>
+            <View style={styles.topRight}>
+              <Pressable
+                onPress={() => setAutoBrightness(!autoBrightness)}
+                hitSlop={12}
+                style={[styles.roundButton, autoBrightness && styles.roundButtonActive]}
+                accessibilityRole="switch"
+                accessibilityState={{ checked: autoBrightness }}
+                accessibilityLabel="Maximum brightness while showing the QR"
+              >
+                <Icon name={autoBrightness ? 'sunny' : 'sunny-outline'} size={20} color={QR_INK} />
+              </Pressable>
+              <Pressable onPress={goBack} hitSlop={12} style={styles.roundButton} accessibilityRole="button" accessibilityLabel="Close">
+                <Icon name="close" size={22} color={QR_INK} />
+              </Pressable>
+            </View>
           </Animated.View>
 
-          <Animated.View style={[styles.bottomRow, overlayStyle]} pointerEvents="box-none">
-            <Pressable
-              style={styles.bottomButton}
-              onPress={() => void pickImage(false)}
-              accessibilityRole="button"
-              accessibilityLabel="Replace QR"
-            >
+          <Animated.View style={[styles.bottomRow, { bottom: insets.bottom + AppSpacing.lg }, overlayStyle]} pointerEvents="box-none">
+            <Pressable style={styles.bottomButton} onPress={() => void pickImage(false)} accessibilityRole="button" accessibilityLabel="Replace QR">
               <Text style={styles.bottomButtonText}>Replace QR</Text>
             </Pressable>
-            <Pressable
-              style={styles.bottomButton}
-              onPress={confirmDelete}
-              accessibilityRole="button"
-              accessibilityLabel="Delete QR"
-            >
+            <Pressable style={styles.bottomButton} onPress={confirmDelete} accessibilityRole="button" accessibilityLabel="Delete QR">
               <Text style={[styles.bottomButtonText, styles.deleteText]}>Delete QR</Text>
             </Pressable>
           </Animated.View>
@@ -315,43 +336,72 @@ const styles = StyleSheet.create({
   },
   viewer: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: QR_PAPER,
     alignItems: 'center',
     justifyContent: 'center',
   },
   qrImage: {
-    width: '82%',
+    width: '86%',
+    maxWidth: 420,
+  },
+  errorBox: {
+    alignItems: 'center',
+    gap: AppSpacing.sm,
+    paddingHorizontal: AppSpacing.xl,
+  },
+  errorTitle: {
+    ...AppTypography.h2,
+    color: QR_INK,
+    textAlign: 'center',
+  },
+  errorBody: {
+    ...AppTypography.body,
+    color: QR_INK_MUTED,
+    textAlign: 'center',
   },
   topRow: {
     position: 'absolute',
-    top: 56,
     left: AppSpacing.lg,
     right: AppSpacing.lg,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  topRight: {
+    flexDirection: 'row',
+    gap: AppSpacing.sm,
+  },
+  roundButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(1, 5, 13, 0.06)',
+  },
+  roundButtonActive: {
+    backgroundColor: RedesignColors.secondary,
+  },
   bottomRow: {
     position: 'absolute',
-    bottom: 48,
     left: AppSpacing.lg,
     right: AppSpacing.lg,
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: AppSpacing.lg,
+    gap: AppSpacing.md,
   },
   bottomButton: {
     paddingHorizontal: AppSpacing.lg,
-    paddingVertical: AppSpacing.sm,
+    minHeight: 44,
+    justifyContent: 'center',
     borderRadius: AppRadius.full,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(1, 5, 13, 0.06)',
   },
   bottomButtonText: {
     ...AppTypography.button,
-    color: '#fff',
-    fontWeight: '600',
+    color: QR_INK,
   },
   deleteText: {
-    color: '#ff8080',
+    color: '#B23A34',
   },
 });

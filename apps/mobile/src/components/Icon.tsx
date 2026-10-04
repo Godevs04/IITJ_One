@@ -170,6 +170,8 @@ const ION_TO_MATERIAL: Partial<Record<IconName, MaterialName>> = {
   'sparkles-outline': 'auto-awesome',
   'star': 'star',
   'star-outline': 'star-outline',
+  'sunny': 'brightness-high',
+  'sunny-outline': 'brightness-low',
   'stats-chart-outline': 'bar-chart',
   'sync-outline': 'sync',
   'ticket-outline': 'confirmation-number',
