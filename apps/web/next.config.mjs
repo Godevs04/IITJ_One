@@ -3,6 +3,9 @@ const apiProxyTarget =
   process.env.API_PROXY_TARGET?.replace(/\/$/, '') || 'http://127.0.0.1:6002';
 
 const nextConfig = {
+  // NEXT_DIST_DIR lets a verification/CI build write somewhere other than .next, so it never
+  // clobbers the build output a running `next dev` is serving from (default unchanged).
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   poweredByHeader: false,
   async headers() {
     return [
