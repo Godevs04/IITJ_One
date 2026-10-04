@@ -35,6 +35,7 @@ const NAV: { label: string; items: NavItem[] }[] = [
     label: 'Content',
     items: [
       { href: '/mess-menu', label: 'Mess Menu' },
+      { href: '/mess-pricing', label: 'Mess Pricing' },
       { href: '/menu', label: 'Mess Menu (Legacy CSV)' },
       { href: '/notices', label: 'Notices' },
     ],
