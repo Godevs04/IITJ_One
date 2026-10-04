@@ -13,11 +13,15 @@ export type HomeSectionKey =
   | 'events'
   | 'notices';
 
+/**
+ * Home widgets in their default order — the IITJ One dashboard leads with Mess Menu, My QR and Transport.
+ * Saved layouts keep the user's own order; widgets added later are appended (see normalise).
+ */
 export const HOME_SECTIONS: { key: HomeSectionKey; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { key: 'transport', label: 'Next bus', icon: 'bus-outline' },
+  { key: 'messMenu', label: 'Mess menu', icon: 'restaurant-outline' },
+  { key: 'messQr', label: 'My QR', icon: 'qr-code-outline' },
+  { key: 'transport', label: 'Transport', icon: 'bus-outline' },
   { key: 'nextClass', label: 'Next class', icon: 'school-outline' },
-  { key: 'messMenu', label: "Today's mess menu", icon: 'restaurant-outline' },
-  { key: 'messQr', label: 'Mess QR', icon: 'qr-code-outline' },
   { key: 'directories', label: 'Health & Campus Directory', icon: 'medkit-outline' },
   { key: 'services', label: 'Institute services', icon: 'grid-outline' },
   { key: 'discover', label: 'Discover', icon: 'compass-outline' },

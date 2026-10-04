@@ -4,11 +4,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ACADEMIC_DISPLAY_TYPE_LABELS } from '@iitj1/types';
 import { toDateKey } from '@/calendar/buildTimeline';
-import { DietMark } from '@/components/DietMark';
 import { useHomeLayout, type HomeSectionKey } from '@/services/homeLayout';
 import { DirectoryShortcuts } from '@/components/DirectoryShortcuts';
 import { HomeHeader } from '@/components/HomeHeader';
 import { MessQrCard } from '@/components/MessQrCard';
+import { MessMenuWidget } from '@/home/widgets/MessMenuWidget';
+import { TransportHomeWidget } from '@/home/widgets/TransportHomeWidget';
 import { QuickAccessTile, type QuickAccessVariant } from '@/components/QuickAccessTile';
 import { ScreenShell } from '@/components/ScreenShell';
 import { HomeCampaignSlots } from '@/components/campaignLayouts/HomeCampaignSlots';
@@ -18,17 +19,8 @@ import { useCampusModule } from '@/hooks/useCampusModule';
 import { listTimetableEntries } from '@/services/localDb';
 import { Analytics, AppEvents } from '@/services/firebase';
 import { usePostHog } from 'posthog-react-native';
-import type { CalendarDoc, MessMenuDoc, TransportDoc, HolidaysDoc, TransportAlertsDoc, TemporaryTransportScheduleDoc, CampaignDoc } from '@/types/campus';
-import {
-  expirySeconds,
-  formatExpiryLabel,
-  formatRelativeTime,
-  todayDayName,
-  getMealTimeStatus,
-  nowMinutes,
-  getMealWindows,
-} from '@/utils/date';
-import { getNextDeparture, getNextArrival, type NextDeparture } from '@/utils/transport';
+import type { CalendarDoc, TransportDoc, HolidaysDoc, TransportAlertsDoc, TemporaryTransportScheduleDoc, CampaignDoc } from '@/types/campus';
+import { expirySeconds, formatExpiryLabel, formatRelativeTime } from '@/utils/date';
 import { getNextClass, type NextClass } from '@/utils/timetable';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { debugListKeys } from '@/debug/listDebug';
@@ -127,162 +119,6 @@ function StatusCard({
   );
 }
 
-function formatCountdownText(seconds: number): string {
-  const mins = Math.ceil(seconds / 60);
-  if (mins < 60) {
-    return `Leaves in ${mins} min`;
-  }
-  const hrs = Math.floor(mins / 60);
-  const remainingMins = mins % 60;
-  if (remainingMins === 0) {
-    return `Leaves in ${hrs} hr`;
-  }
-  return `Leaves in ${hrs} hr ${remainingMins} min`;
-}
-
-/** Big enough to read at a glance; turns the urgent color inside 10 minutes. */
-function CountdownPill({
-  seconds,
-  color,
-  background,
-  theme,
-}: {
-  seconds: number;
-  color: string;
-  background: string;
-  theme: any;
-}) {
-  const urgent = seconds < 600;
-  return (
-    <View style={[styles.widgetCountdownPill, { backgroundColor: urgent ? theme.importantCardBg : background }]}>
-      <Text style={[styles.widgetCountdown, { color: urgent ? theme.countdownUrgent : color }]}>
-        {formatCountdownText(seconds)}
-      </Text>
-    </View>
-  );
-}
-
-function TransportWidget({
-  departure,
-  arrival,
-  theme,
-  onPress,
-  hasCriticalAlert = false,
-}: {
-  departure: NextDeparture | null;
-  arrival: NextDeparture | null;
-  theme: any;
-  onPress: () => void;
-  hasCriticalAlert?: boolean;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.card,
-        {
-          backgroundColor: hasCriticalAlert ? theme.errorTint : theme.surface,
-          borderColor: hasCriticalAlert ? theme.error : theme.border,
-        },
-        pressed && styles.pressed,
-      ]}
-    >
-      {/* Title Header */}
-      <View style={[styles.cardTopRow, { justifyContent: 'flex-start', alignItems: 'center', gap: AppSpacing.xs }]}>
-        <Ionicons
-          name={hasCriticalAlert ? 'warning' : 'bus-outline'}
-          size={20}
-          color={hasCriticalAlert ? theme.error : theme.secondary}
-        />
-        <Text
-          style={[
-            styles.cardLabel,
-            { color: hasCriticalAlert ? theme.error : theme.textMuted, fontWeight: hasCriticalAlert ? '700' : 'normal' },
-          ]}
-        >
-          {hasCriticalAlert ? 'Transport Service Update' : 'Transport'}
-        </Text>
-      </View>
-
-      {hasCriticalAlert ? (
-        <View style={{ marginTop: AppSpacing.sm, gap: 2 }}>
-          <Text style={{ fontSize: 15, fontWeight: '700', color: theme.text }}>
-            Bus services have changed today.
-          </Text>
-          <Text style={{ fontSize: 13, color: theme.textMuted, marginTop: 2 }}>
-            Tap to read the latest transport update.
-          </Text>
-        </View>
-      ) : (
-        <>
-          {/* From Campus Section */}
-          <View style={styles.widgetSection}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-              <Ionicons name="arrow-up-circle-outline" size={16} color={theme.secondary} />
-              <Text style={[styles.sectionHeadingLabel, { color: theme.secondary }]}>
-                From Campus
-              </Text>
-            </View>
-            {departure ? (
-              <View style={styles.widgetContent}>
-                <View style={styles.widgetMainRow}>
-                  <Text style={[styles.widgetBusText, { color: theme.text }]}>
-                    {departure.trip.bus} • {departure.trip.startTime}
-                  </Text>
-                  <CountdownPill seconds={departure.secondsUntil} color={theme.secondary} background={theme.secondaryTint} theme={theme} />
-                </View>
-                <Text style={[styles.widgetRouteText, { color: theme.text }]}>
-                  From: <Text style={{ color: theme.textMuted }}>{departure.trip.from}</Text>
-                </Text>
-                <Text style={[styles.widgetRouteText, { color: theme.text }]}>
-                  To: <Text style={{ color: theme.textMuted }}>{departure.trip.to}</Text>
-                </Text>
-              </View>
-            ) : (
-              <Text style={[styles.widgetEmptyText, { color: theme.textMuted }]}>
-                No more departures from campus today
-              </Text>
-            )}
-          </View>
-
-          {/* Divider */}
-          <View style={[styles.widgetDivider, { backgroundColor: theme.border }]} />
-
-          {/* To Campus Section */}
-          <View style={styles.widgetSection}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-              <Ionicons name="arrow-down-circle-outline" size={16} color={theme.linkText} />
-              <Text style={[styles.sectionHeadingLabel, { color: theme.linkText }]}>
-                To Campus
-              </Text>
-            </View>
-            {arrival ? (
-              <View style={styles.widgetContent}>
-                <View style={styles.widgetMainRow}>
-                  <Text style={[styles.widgetBusText, { color: theme.text }]}>
-                    {arrival.trip.bus} • {arrival.trip.startTime}
-                  </Text>
-                  <CountdownPill seconds={arrival.secondsUntil} color={theme.linkText} background={theme.primaryTint} theme={theme} />
-                </View>
-                <Text style={[styles.widgetRouteText, { color: theme.text }]}>
-                  From: <Text style={{ color: theme.textMuted }}>{arrival.trip.from}</Text>
-                </Text>
-                <Text style={[styles.widgetRouteText, { color: theme.text }]}>
-                  To: <Text style={{ color: theme.textMuted }}>{arrival.trip.to === 'IITJ' ? 'IIT Jodhpur' : arrival.trip.to}</Text>
-                </Text>
-              </View>
-            ) : (
-              <Text style={[styles.widgetEmptyText, { color: theme.textMuted }]}>
-                No more departures to campus today
-              </Text>
-            )}
-          </View>
-        </>
-      )}
-    </Pressable>
-  );
-}
-
 /** Compact notice row: category accent bar, #TAG, title, meta, chevron */
 function NoticeRow({
   notice,
@@ -348,8 +184,6 @@ export default function HomeScreen() {
 
   useEffect(() => { Analytics.trackEvent(AppEvents.HOME_OPENED); }, []);
 
-  const vegMenu = useCampusModule<MessMenuDoc>('messMenuVeg');
-  const nonVegMenu = useCampusModule<MessMenuDoc>('messMenuNonVeg');
   const transport = useCampusModule<TransportDoc>('transport');
   const calendar = useCampusModule<CalendarDoc>('calendar');
   const holidays = useCampusModule<HolidaysDoc>('holidays');
@@ -357,50 +191,6 @@ export default function HomeScreen() {
   const alerts = useCampusModule<TransportAlertsDoc>('transportAlerts');
   const tempSchedule = useCampusModule<TemporaryTransportScheduleDoc>('temporaryTransportSchedule');
   const campaigns = useCampusModule<CampaignDoc[]>('campaigns');
-
-  const { mealKey, targetDay } = (() => {
-    const now = nowMinutes();
-    const windows = getMealWindows();
-    let day = todayDayName();
-    let key: 'breakfast' | 'lunch' | 'snacks' | 'dinner' = 'breakfast';
-
-    if (now < windows.breakfast.endMin) {
-      key = 'breakfast';
-    } else if (now < windows.lunch.endMin) {
-      key = 'lunch';
-    } else if (now < windows.snacks.endMin) {
-      key = 'snacks';
-    } else if (now < windows.dinner.endMin) {
-      key = 'dinner';
-    } else {
-      // Past dinner time, show tomorrow's breakfast!
-      key = 'breakfast';
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const DAY_NAMES = [
-        'sunday',
-        'monday',
-        'tuesday',
-        'wednesday',
-        'thursday',
-        'friday',
-        'saturday',
-      ];
-      day = DAY_NAMES[tomorrow.getDay()];
-    }
-
-    return { mealKey: key, targetDay: day };
-  })();
-
-  const targetLower = targetDay.trim().toLowerCase();
-  const vegDayMenu = vegMenu?.days?.find(
-    (d) => d.day.trim().toLowerCase() === targetLower,
-  );
-  const nonVegDayMenu = nonVegMenu?.days?.find(
-    (d) => d.day.trim().toLowerCase() === targetLower,
-  );
-  const vegMeal = vegDayMenu?.meals?.[mealKey];
-  const nonVegMeal = nonVegDayMenu?.meals?.[mealKey];
 
   const hasCriticalAlert = useMemo(() => {
     if (!alerts?.alerts) return false;
@@ -412,16 +202,6 @@ export default function HomeScreen() {
       return nowTime >= start && nowTime <= end;
     });
   }, [alerts, now]);
-
-  const nextDeparture = useMemo(() => {
-    void now; // recompute when the home clock tick advances
-    return getNextDeparture(transport, calendar, holidays, alerts, tempSchedule);
-  }, [transport, calendar, holidays, alerts, tempSchedule, now]);
-
-  const nextArrival = useMemo(() => {
-    void now; // recompute when the home clock tick advances
-    return getNextArrival(transport, calendar, holidays, alerts, tempSchedule);
-  }, [transport, calendar, holidays, alerts, tempSchedule, now]);
 
   const [showClassWidget, setShowClassWidget] = useState(false);
 
@@ -480,43 +260,22 @@ export default function HomeScreen() {
 
   const classTime = nextClass ? to12Hour(nextClass.entry.startTime) : null;
 
-  // "Main dishes" only — each mess's own compulsoryItems (tea, bread, etc.) are
-  // deliberately excluded from this compact widget, same as the old isMainDish
-  // blacklist's intent, now driven by explicit data tagging instead of guessing.
-  const vegDishes = useMemo(() => vegMeal?.vegItems ?? [], [vegMeal]);
-  // The non-veg mess serves its own veg dishes too — a meal is `vegItems` +
-  // `nonVegItems`. Showing only `nonVegItems` left the column blank on most
-  // lunches and showed just "Boiled egg" at breakfast. Non-veg dishes first.
-  const nonVegDishes = useMemo(
-    () => [
-      ...(nonVegMeal?.nonVegItems ?? []).map((name) => ({ name, isVeg: false })),
-      ...(nonVegMeal?.vegItems ?? []).map((name) => ({ name, isVeg: true })),
-    ],
-    [nonVegMeal],
-  );
-
-  debugListKeys('HomeScreen', 'vegDishes', vegDishes, (_, index) => `${index}`);
-  debugListKeys('HomeScreen', 'nonVegDishes', nonVegDishes, (_, index) => `${index}`);
   debugListKeys('HomeScreen', 'quickLinks', QUICK_LINKS, (item) => item.title);
   debugListKeys('HomeScreen', 'upcomingEvents', upcomingEvents, (event, index) => `${event.title}-${index}`);
   debugListKeys('HomeScreen', 'topNotices', topNotices, (notice, index) => `${notice.title}-${index}`);
 
-  // Both messes serving identical dishes collapses into one column.
-  const isSameMenu = useMemo(() => {
-    if (vegDishes.length !== nonVegDishes.length) return false;
-    return vegDishes.every((val, index) => val === nonVegDishes[index].name);
-  }, [vegDishes, nonVegDishes]);
-
   // Each Home section, keyed so the user's saved order/visibility (Customize Home) decides what renders.
   const sections: Record<HomeSectionKey, ReactNode> = {
     transport: (
-      <TransportWidget
-          departure={nextDeparture}
-          arrival={nextArrival}
-          theme={theme}
-          onPress={() => router.push('/(tabs)/transport')}
-          hasCriticalAlert={hasCriticalAlert}
-        />
+      <TransportHomeWidget
+        now={now}
+        transport={transport}
+        calendar={calendar}
+        holidays={holidays}
+        alerts={alerts}
+        tempSchedule={tempSchedule}
+        hasCriticalAlert={hasCriticalAlert}
+      />
     ),
     nextClass: (
       showClassWidget && nextClass && classTime ? (
@@ -536,113 +295,7 @@ export default function HomeScreen() {
           />
         ) : null
     ),
-    messMenu: (
-      vegDishes.length > 0 || nonVegDishes.length > 0 ? (
-          <Pressable
-            onPress={() => router.push('/(tabs)/menu')}
-            style={({ pressed }) => [
-              styles.menuCard,
-              { backgroundColor: theme.surface, borderColor: theme.border },
-              pressed && styles.pressed,
-            ]}
-          >
-            <View
-              style={[
-                styles.menuHeader,
-                {
-                  backgroundColor: theme.surfaceMuted,
-                  borderBottomColor: theme.border,
-                },
-              ]}
-            >
-              <Text style={[styles.cardLabel, { color: theme.textMuted }]}>
-                {targetDay === todayDayName() ? "TODAY'S MENU" : "TOMORROW'S MENU"}
-              </Text>
-              <View style={styles.mealPillContainer}>
-                {(vegDayMenu || nonVegDayMenu) && (
-                  <Text style={[styles.mealCountdownText, { color: theme.accent }]}>
-                    {getMealTimeStatus(mealKey).timeLeftString}
-                  </Text>
-                )}
-                <View style={[styles.mealPill, { backgroundColor: theme.secondaryTint }]}>
-                  <Text style={[styles.mealPillText, { color: theme.secondary }]}>
-                    {mealKey.toUpperCase()}
-                  </Text>
-                </View>
-              </View>
-            </View>
-            <View style={styles.menuBody}>
-              {isSameMenu ? (
-                // Unified single column layout
-                <View style={styles.unifiedColumn}>
-                  <View style={styles.columnHeader}>
-                    <View style={styles.splitDotContainer}>
-                      <DietMark type="veg" size={12} />
-                      <DietMark type="nonVeg" size={12} />
-                    </View>
-                    <Text style={[styles.columnHeaderTitle, { color: theme.textMuted }]}>
-                      VEG & NON-VEG
-                    </Text>
-                  </View>
-                  <View style={styles.dishList}>
-                    {vegDishes.map((dish, i) => (
-                      <View key={i} style={styles.menuItem}>
-                        <View style={[styles.menuDot, { backgroundColor: theme.secondary }]} />
-                        <Text style={[styles.menuItemText, { color: theme.text }]} numberOfLines={1}>
-                          {dish}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              ) : (
-                // Split side-by-side columns layout
-                <View style={styles.splitColumns}>
-                  {/* Left Column - Veg */}
-                  <View style={[styles.column, { borderRightColor: theme.border, borderRightWidth: 1, paddingRight: AppSpacing.md }]}>
-                    <View style={styles.columnHeader}>
-                      <DietMark type="veg" size={12} />
-                      <Text style={[styles.columnHeaderTitle, { color: theme.veg }]}>
-                        VEGETARIAN
-                      </Text>
-                    </View>
-                    <View style={styles.dishList}>
-                      {vegDishes.map((dish, i) => (
-                        <View key={i} style={styles.menuItem}>
-                          <View style={[styles.menuDot, { backgroundColor: theme.veg }]} />
-                          <Text style={[styles.menuItemText, { color: theme.text }]} numberOfLines={1}>
-                            {dish}
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-
-                  {/* Right Column - Non-Veg */}
-                  <View style={[styles.column, { paddingLeft: AppSpacing.md }]}>
-                    <View style={styles.columnHeader}>
-                      <DietMark type="nonVeg" size={12} />
-                      <Text style={[styles.columnHeaderTitle, { color: theme.nonVeg }]}>
-                        NON-VEG
-                      </Text>
-                    </View>
-                    <View style={styles.dishList}>
-                      {nonVegDishes.map((dish, i) => (
-                        <View key={i} style={styles.menuItem}>
-                          <View style={[styles.menuDot, { backgroundColor: dish.isVeg ? theme.veg : theme.nonVeg }]} />
-                          <Text style={[styles.menuItemText, { color: theme.text }]} numberOfLines={1}>
-                            {dish.name}
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                </View>
-              )}
-            </View>
-          </Pressable>
-        ) : null
-    ),
+    messMenu: <MessMenuWidget now={now} />,
     messQr: (
       <MessQrCard />
     ),
@@ -834,87 +487,6 @@ const styles = StyleSheet.create({
   dataUnit: {
     ...AppTypography.caption,
   },
-  menuCard: {
-    borderRadius: AppRadius.md,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  menuHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: AppSpacing.lg,
-    borderBottomWidth: 1,
-  },
-  mealPillContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: AppSpacing.sm,
-  },
-  mealCountdownText: {
-    ...AppTypography.caption,
-    fontFamily: 'monospace',
-    fontVariant: ['tabular-nums'],
-  },
-  mealPill: {
-    borderRadius: AppRadius.full,
-    paddingHorizontal: AppSpacing.sm,
-    paddingVertical: 2,
-  },
-  mealPillText: {
-    fontSize: 10,
-    lineHeight: 14,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  menuBody: {
-    padding: AppSpacing.lg,
-    gap: AppSpacing.sm,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: AppSpacing.md,
-  },
-  menuDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  menuItemText: {
-    ...AppTypography.bodySmall,
-    flex: 1,
-  },
-  splitColumns: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  column: {
-    flex: 1,
-  },
-  columnHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: AppSpacing.xs,
-    marginBottom: AppSpacing.sm,
-  },
-  columnHeaderTitle: {
-    ...AppTypography.caption,
-    fontWeight: '700',
-    fontSize: 10,
-    letterSpacing: 0.5,
-  },
-  dishList: {
-    gap: AppSpacing.xs,
-  },
-  unifiedColumn: {
-    width: '100%',
-  },
-  splitDotContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
   section: {
     gap: AppSpacing.md,
   },
@@ -983,49 +555,5 @@ const styles = StyleSheet.create({
   },
   eventDate: {
     ...AppTypography.caption,
-  },
-  widgetSection: {
-    gap: AppSpacing.xs,
-  },
-  sectionHeadingLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  widgetContent: {
-    gap: 2,
-  },
-  widgetMainRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: AppSpacing.xs,
-  },
-  widgetBusText: {
-    ...AppTypography.body,
-    fontWeight: '600',
-  },
-  widgetCountdownPill: {
-    borderRadius: AppRadius.full,
-    paddingHorizontal: AppSpacing.md,
-    paddingVertical: AppSpacing.xs,
-  },
-  widgetCountdown: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
-  },
-  widgetRouteText: {
-    ...AppTypography.caption,
-  },
-  widgetEmptyText: {
-    ...AppTypography.bodySmall,
-    fontStyle: 'italic',
-  },
-  widgetDivider: {
-    height: 1,
-    marginVertical: AppSpacing.sm,
   },
 });
