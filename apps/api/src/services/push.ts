@@ -24,6 +24,8 @@ export type TopicPushOutcome =
       failureCount: number;
       firebaseMessageIds: string[];
       history: PushHistoryDoc;
+      /** The notices version-bump audit entry written for a successful send. */
+      auditId?: string;
     }
   | { outcome: 'not_configured'; error: string; history: PushHistoryDoc }
   | { outcome: 'failed'; error: string; history: PushHistoryDoc };
@@ -57,8 +59,9 @@ export async function dispatchTopicPush(input: TopicPushInput, sentBy: string, r
     return { outcome: 'failed', error: result.errors[0] ?? 'Push failed', history: saved };
   }
 
-  await bumpVersion('notices', 'iitj', sentBy, 'push', `Push to ${resolvedTopic}: ${title}`);
+  const auditId = await bumpVersion('notices', 'iitj', sentBy, 'push', `Push to ${resolvedTopic}: ${title}`);
   return {
+    auditId,
     outcome: 'sent',
     topic: resolvedTopic,
     recipientCount: result.recipientCount,

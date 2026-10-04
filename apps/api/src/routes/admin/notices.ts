@@ -2,8 +2,8 @@ import { Router, Response } from 'express';
 import { validateBody, validateQuery } from '../../middleware/validate';
 import { noticeCreateSchema, noticePatchSchema, adminNoticesQuerySchema } from '../../models/schemas';
 import { AuthRequest } from '../../middleware/auth';
-import { deleteNotice, restoreNotice, getAllNotices } from '../../store';
-import { editNotice, publishNotice } from '../../services/notices';
+import { restoreNotice, getAllNotices } from '../../store';
+import { editNotice, publishNotice, removeNotice } from '../../services/notices';
 import { isDbConnected } from '../../db';
 import { isStrictObjectId } from '../../utils/objectId';
 import type { NoticeDoc } from '../../types';
@@ -35,7 +35,7 @@ router.get('/', validateQuery(adminNoticesQuerySchema), asyncHandler(async (req,
 }));
 
 router.post('/', validateBody(noticeCreateSchema), asyncHandler(async (req: AuthRequest, res: Response) => {
-  const saved = await publishNotice(req.body as Omit<NoticeDoc, 'publishedAt'>, req.admin!.email);
+  const { value: saved } = await publishNotice(req.body as Omit<NoticeDoc, 'publishedAt'>, req.admin!.email);
   res.status(201).json(saved);
 }));
 
@@ -43,7 +43,7 @@ router.patch('/:id', validateBody(noticePatchSchema), asyncHandler(async (req: A
   const id = String(req.params.id);
   if (!assertNoticeId(id, res)) return;
 
-  const saved = await editNotice(id, req.body as Partial<NoticeDoc>, req.admin!.email);
+  const { value: saved } = await editNotice(id, req.body as Partial<NoticeDoc>, req.admin!.email);
   if (!saved) {
     res.status(404).json({ error: 'Notice not found' });
     return;
@@ -55,7 +55,7 @@ router.delete('/:id', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = String(req.params.id);
   if (!assertNoticeId(id, res)) return;
 
-  const ok = await deleteNotice(id, req.admin!.email);
+  const { value: ok } = await removeNotice(id, req.admin!.email);
   if (!ok) {
     res.status(404).json({ error: 'Notice not found' });
     return;

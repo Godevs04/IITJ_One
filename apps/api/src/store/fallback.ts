@@ -45,6 +45,7 @@ import type {
   RoleDoc,
   CampaignDoc,
   MessPricingConfig,
+  AiCommandRecord,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
 import { busesConflict, dateRangesOverlap } from '../services/transportScheduleExceptionStatus';
@@ -104,6 +105,7 @@ interface FallbackState {
   campaigns: CampaignDoc[];
   /** Mess pricing configurations — seeded with the prices the app used to hard-code (same as the DB migration). */
   messPricing: MessPricingConfig[];
+  aiCommands: AiCommandRecord[];
 }
 
 let state: FallbackState | null = null;
@@ -936,6 +938,7 @@ function buildDefaultState(): FallbackState {
     people: [],
     roles: [],
     campaigns: [],
+    aiCommands: [],
     messPricing: [
       {
         ...DEFAULT_MESS_PRICING,
@@ -974,8 +977,11 @@ export function fallbackBumpVersion(module: ModuleName, campusId: string): void 
   s.meta.updatedAt = new Date();
 }
 
-export function fallbackAddAudit(entry: AuditLogDoc): void {
-  getFallbackState().auditLog.unshift(entry);
+/** Returns the new entry's id (the in-memory equivalent of Mongo's insertedId). */
+export function fallbackAddAudit(entry: AuditLogDoc): string {
+  const _id = nextId();
+  getFallbackState().auditLog.unshift({ ...entry, _id });
+  return _id;
 }
 
 export function fallbackAddSuggestion(doc: SuggestionDoc): SuggestionDoc {
@@ -1693,4 +1699,35 @@ export function fallbackUpdateMessPricing(id: string, patch: Partial<MessPricing
   if (idx < 0) return null;
   s.messPricing[idx] = { ...s.messPricing[idx], ...patch };
   return s.messPricing[idx];
+}
+
+// ─── AI command records ──────────────────────────────────────────────────────
+
+export function fallbackFindAiCommand(by: { commandId?: string; idempotencyKey?: string }): AiCommandRecord | null {
+  return (
+    getFallbackState().aiCommands.find(
+      (c) => (by.commandId && c.commandId === by.commandId) || (by.idempotencyKey && c.idempotencyKey === by.idempotencyKey),
+    ) ?? null
+  );
+}
+
+/** Returns false if the commandId or idempotencyKey already exists (mirrors the unique indexes). */
+export function fallbackInsertAiCommand(doc: AiCommandRecord): boolean {
+  const s = getFallbackState();
+  if (s.aiCommands.some((c) => c.commandId === doc.commandId || c.idempotencyKey === doc.idempotencyKey)) return false;
+  s.aiCommands.push({ ...doc, _id: nextId() });
+  return true;
+}
+
+/** Compare-and-set: applies `set` only while the status is one of `from` (synchronous, so atomic). */
+export function fallbackTransitionAiCommand(
+  commandId: string,
+  from: readonly string[],
+  set: Partial<AiCommandRecord>,
+): AiCommandRecord | null {
+  const s = getFallbackState();
+  const idx = s.aiCommands.findIndex((c) => c.commandId === commandId && from.includes(c.status));
+  if (idx < 0) return null;
+  s.aiCommands[idx] = { ...s.aiCommands[idx], ...set };
+  return s.aiCommands[idx];
 }

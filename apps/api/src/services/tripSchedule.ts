@@ -6,6 +6,7 @@ import {
   getActiveTransportScheduleException,
 } from '../store';
 import { computeScheduleStatus } from './transportScheduleExceptionStatus';
+import { resolveExceptionTrips, runningTrips } from '@iitj1/types';
 import { getIstDateString, getIstDayName, getIstMinutesOfDay, parseTimeToMinutes } from '../utils/istTime';
 import type { TransportTrip, TransportDoc, HolidaysDoc, TransportAlertsDoc, TemporaryTransportScheduleDoc } from '../types';
 
@@ -101,6 +102,12 @@ export async function getResolvedTripsForToday(
 ): Promise<TransportTrip[]> {
   const activeException = await getActiveTransportScheduleException(campusId, at);
   if (activeException && computeScheduleStatus(activeException, at) === 'active') {
+    if ((activeException.mode ?? 'replace') === 'cancel') {
+      // Cancellation: the regular (holiday-aware) timetable runs, minus the cancelled trips — those must not
+      // be materialized or assigned GPS pings.
+      const regular = await getRegularTripsForDay(campusId, todayIso, weekday);
+      return runningTrips(resolveExceptionTrips(activeException, regular));
+    }
     return [...activeException.trips].sort((a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime));
   }
 
@@ -114,6 +121,11 @@ export async function getResolvedTripsForToday(
       .sort((a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime));
   }
 
+  return getRegularTripsForDay(campusId, todayIso, weekday);
+}
+
+/** The regular timetable for a day: Mon–Sat, or Sunday & Holidays when it's a Sunday or an active holiday. */
+export async function getRegularTripsForDay(campusId: string, todayIso: string, weekday: string): Promise<TransportTrip[]> {
   const transport = await getTransport(campusId);
   if (!transport) return [];
   const holidays = await getHolidays(campusId);

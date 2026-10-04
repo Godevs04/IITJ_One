@@ -83,6 +83,9 @@ import {
   fallbackGetMessPricingById,
   fallbackInsertMessPricing,
   fallbackUpdateMessPricing,
+  fallbackFindAiCommand,
+  fallbackInsertAiCommand,
+  fallbackTransitionAiCommand,
 } from './fallback';
 import type {
   MetaDoc,
@@ -129,9 +132,11 @@ import type {
   RoleCreateInput,
   CampaignDoc,
   MessPricingConfig,
+  AiCommandRecord,
   CampaignCreateInput,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
+import { recordAuditId } from './auditCapture';
 
 export async function ensureMeta(campusId: string): Promise<MetaDoc> {
   if (isDbConnected()) {
@@ -155,18 +160,22 @@ export async function logAudit(
   action: string,
   diffSummary: string,
   module = 'admin',
-): Promise<void> {
+): Promise<string> {
+  let auditId: string;
   if (isDbConnected()) {
-    await collections.auditLog().insertOne({
+    const inserted = await collections.auditLog().insertOne({
       adminEmail,
       action,
       module,
       timestamp: new Date(),
       diffSummary,
     });
+    auditId = inserted.insertedId.toString();
   } else {
-    fallbackAddAudit({ adminEmail, action, module, timestamp: new Date(), diffSummary });
+    auditId = fallbackAddAudit({ adminEmail, action, module, timestamp: new Date(), diffSummary });
   }
+  recordAuditId(auditId);
+  return auditId;
 }
 
 export async function bumpVersion(
@@ -176,14 +185,15 @@ export async function bumpVersion(
   action: string,
   diffSummary: string,
   session?: ClientSession,
-): Promise<void> {
+): Promise<string> {
+  let auditId: string;
   if (isDbConnected()) {
     await collections.meta().updateOne(
       { campusId },
       { $inc: { [`versions.${module}`]: 1 }, $set: { updatedAt: new Date() } },
       { upsert: true, session },
     );
-    await collections.auditLog().insertOne(
+    const inserted = await collections.auditLog().insertOne(
       {
         adminEmail,
         action,
@@ -193,13 +203,17 @@ export async function bumpVersion(
       },
       { session },
     );
+    auditId = inserted.insertedId.toString();
   } else {
     fallbackBumpVersion(module, campusId);
-    fallbackAddAudit({ adminEmail, action, module, timestamp: new Date(), diffSummary });
+    auditId = fallbackAddAudit({ adminEmail, action, module, timestamp: new Date(), diffSummary });
   }
   invalidateModule(module, campusId);
   invalidateModule('meta', campusId);
   invalidateModule('home', campusId);
+  // Lets withAuditCapture() (store/auditCapture.ts) report exactly which audit entry a mutation produced.
+  recordAuditId(auditId);
+  return auditId;
 }
 
 export async function getMeta(campusId: string): Promise<MetaDoc> {
@@ -1058,13 +1072,19 @@ export type UnpublishScheduleExceptionResult =
   | { ok: false; reason: 'invalid_transition' };
 
 function validatePublishFields(
-  doc: Pick<TransportScheduleExceptionDoc, 'title' | 'effectiveFrom' | 'effectiveUntil' | 'affectedBuses' | 'trips'>,
+  doc: Pick<TransportScheduleExceptionDoc, 'title' | 'effectiveFrom' | 'effectiveUntil' | 'affectedBuses' | 'trips' | 'mode' | 'cancelledTrips'>,
 ): string[] {
   const errors: string[] = [];
   if (!doc.title?.trim()) errors.push('Title is required');
   if (!(doc.effectiveFrom < doc.effectiveUntil)) errors.push('Effective From must be before Effective Until');
   if (!doc.affectedBuses || doc.affectedBuses.length === 0) errors.push('At least one affected bus is required');
-  if (!doc.trips || doc.trips.length === 0) errors.push('At least one trip is required');
+  if ((doc.mode ?? 'replace') === 'cancel') {
+    if (!doc.cancelledTrips || doc.cancelledTrips.length === 0) errors.push('At least one cancelled trip is required');
+    if (doc.trips && doc.trips.length > 0) errors.push('A cancellation cannot also list replacement trips');
+  } else {
+    if (!doc.trips || doc.trips.length === 0) errors.push('At least one trip is required');
+    if (doc.cancelledTrips && doc.cancelledTrips.length > 0) errors.push('A replacement schedule cannot also list cancelled trips');
+  }
   return errors;
 }
 
@@ -2530,4 +2550,52 @@ export async function updateMessPricingDoc(
   }
   if (saved) await bumpVersion('messPricing', saved.campusId, adminEmail, action, auditSummary);
   return saved;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// AI command records (model only). Lifecycle rules live in services/aiCommands.ts;
+// these are the persistence primitives, with unique commandId / idempotencyKey
+// and compare-and-set status transitions so a command can never run twice.
+// ─────────────────────────────────────────────────────────────────────────
+
+function withAiCommandStringId(doc: AiCommandRecord): AiCommandRecord {
+  return { ...doc, _id: doc._id?.toString() };
+}
+
+export async function findAiCommand(by: { commandId?: string; idempotencyKey?: string }): Promise<AiCommandRecord | null> {
+  if (isDbConnected()) {
+    const filter = by.commandId ? { commandId: by.commandId } : { idempotencyKey: by.idempotencyKey };
+    const doc = await collections.aiCommands().findOne(filter);
+    return doc ? withAiCommandStringId(doc) : null;
+  }
+  return fallbackFindAiCommand(by);
+}
+
+/** Inserts a new command; returns false when the commandId or idempotencyKey already exists. */
+export async function insertAiCommand(doc: AiCommandRecord): Promise<boolean> {
+  if (isDbConnected()) {
+    try {
+      await collections.aiCommands().insertOne(doc);
+      return true;
+    } catch (err) {
+      if ((err as { code?: number }).code === 11000) return false;
+      throw err;
+    }
+  }
+  return fallbackInsertAiCommand(doc);
+}
+
+/** Atomic compare-and-set on status: updates only while the command is in one of `from`. */
+export async function transitionAiCommand(
+  commandId: string,
+  from: readonly string[],
+  set: Partial<AiCommandRecord>,
+): Promise<AiCommandRecord | null> {
+  if (isDbConnected()) {
+    const result = await collections
+      .aiCommands()
+      .findOneAndUpdate({ commandId, status: { $in: [...from] } } as never, { $set: set }, { returnDocument: 'after' });
+    return result ? withAiCommandStringId(result) : null;
+  }
+  return fallbackTransitionAiCommand(commandId, from, set);
 }

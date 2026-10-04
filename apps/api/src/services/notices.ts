@@ -3,8 +3,9 @@
  * flows that post a notice). Moved unchanged out of routes/admin/notices.ts: same date coercion, same
  * empty link/image clean-up, same store calls (which version-bump and audit-log).
  */
-import { createNotice, updateNotice } from '../store';
+import { createNotice, deleteNotice, updateNotice } from '../store';
 import type { NoticeDoc } from '../types';
+import { audited, type WithAudit } from './serviceResult';
 
 /** Validated create body (noticeCreateSchema) → stored notice: real Dates, publishedAt now, '' link/image dropped. */
 export function prepareNotice(body: Omit<NoticeDoc, 'publishedAt'>, now: Date = new Date()): NoticeDoc {
@@ -26,10 +27,14 @@ export function prepareNoticePatch(body: Partial<NoticeDoc>): Partial<NoticeDoc>
   return patch;
 }
 
-export async function publishNotice(body: Omit<NoticeDoc, 'publishedAt'>, adminEmail: string): Promise<NoticeDoc> {
-  return createNotice(prepareNotice(body), adminEmail);
+export async function publishNotice(body: Omit<NoticeDoc, 'publishedAt'>, adminEmail: string): Promise<WithAudit<NoticeDoc>> {
+  return audited(() => createNotice(prepareNotice(body), adminEmail));
 }
 
-export async function editNotice(id: string, body: Partial<NoticeDoc>, adminEmail: string): Promise<NoticeDoc | null> {
-  return updateNotice(id, prepareNoticePatch(body), adminEmail);
+export async function editNotice(id: string, body: Partial<NoticeDoc>, adminEmail: string): Promise<WithAudit<NoticeDoc | null>> {
+  return audited(() => updateNotice(id, prepareNoticePatch(body), adminEmail));
+}
+
+export async function removeNotice(id: string, adminEmail: string): Promise<WithAudit<boolean>> {
+  return audited(() => deleteNotice(id, adminEmail));
 }

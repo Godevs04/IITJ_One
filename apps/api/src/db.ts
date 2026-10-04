@@ -41,6 +41,7 @@ import type {
   RoleDoc,
   CampaignDoc,
   MessPricingConfig,
+  AiCommandRecord,
 } from './types';
 
 let client: MongoClient | null = null;
@@ -207,6 +208,10 @@ async function ensureIndexes(): Promise<void> {
   // Mess pricing: one document per pricing configuration; looked up by campus + effective date.
   await db.collection('messPricing').createIndex({ campusId: 1, effectiveFrom: 1 });
   await db.collection('messPricing').createIndex({ campusId: 1, isActive: 1 });
+  // AI Admin command records (model only — no AI execution yet). Unique keys back duplicate-execution safety.
+  await db.collection('aiCommands').createIndex({ commandId: 1 }, { unique: true });
+  await db.collection('aiCommands').createIndex({ idempotencyKey: 1 }, { unique: true });
+  await db.collection('aiCommands').createIndex({ campusId: 1, createdAt: -1 });
 
   // Mess menu JSON import: up to 2 live docs per (campus, menuType) — one draft, one
   // published — so a plain {campusId:1} unique index (the singleton loop below) doesn't
@@ -296,6 +301,7 @@ export const collections = {
   roles: () => col<RoleDoc>('roles'),
   campaigns: () => col<CampaignDoc>('campaigns'),
   messPricing: () => col<MessPricingConfig>('messPricing'),
+  aiCommands: () => col<AiCommandRecord>('aiCommands'),
 };
 
 export async function disconnectDb(): Promise<void> {

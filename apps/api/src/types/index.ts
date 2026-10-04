@@ -141,6 +141,9 @@ export interface TransportDoc {
 
 export type { ScheduleExceptionPriority, ScheduleExceptionSource, ScheduleExceptionAttachment } from '@iitj1/types';
 export type { MessPricingConfig, MessPricingDoc, MessPricingInput, MessPricingUpdate } from '@iitj1/types';
+import type { CancelledTripRef, ScheduleExceptionMode } from '@iitj1/types';
+export type { CancelledTripRef, ScheduleExceptionMode } from '@iitj1/types';
+export type { AiCommandRecord, AiCommandStatus } from '@iitj1/types';
 
 export interface TransportScheduleExceptionDoc {
   _id?: string | ObjectId;
@@ -153,7 +156,12 @@ export interface TransportScheduleExceptionDoc {
   priority: 'low' | 'normal' | 'high' | 'critical';
   affectedBuses: string[];
   trips: TransportTrip[];
+  /** 'replace' (default; older documents have no mode): `trips` is the whole schedule for the window.
+   *  'cancel': the regular timetable runs minus `cancelledTrips` (exact bus + start time + direction). */
+  mode?: ScheduleExceptionMode;
+  cancelledTrips?: CancelledTripRef[];
   showBanner: boolean;
+  /** Stored but not acted on — pending product approval (see docs). */
   sendPush: boolean;
   createNotice: boolean;
   source: {
@@ -314,6 +322,7 @@ export interface AdminDoc {
 }
 
 export interface AuditLogDoc {
+  _id?: string | ObjectId;
   adminEmail: string;
   action: string;
   module: string;

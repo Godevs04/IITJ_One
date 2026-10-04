@@ -23,6 +23,7 @@ import {
   type MessPricingUpdate,
 } from '@iitj1/types';
 import { getMessPricingById, insertMessPricing, listMessPricing, updateMessPricingDoc } from '../store';
+import { audited } from './serviceResult';
 
 export type MessPricingFailure =
   | { ok: false; reason: 'not_found' }
@@ -31,7 +32,8 @@ export type MessPricingFailure =
   | { ok: false; reason: 'past_effective_date'; message: string }
   | { ok: false; reason: 'no_current_price'; message: string };
 
-export type MessPricingResult = { ok: true; doc: MessPricingConfig } | MessPricingFailure;
+/** auditId: the audit-log entry the write produced (absent when nothing changed). */
+export type MessPricingResult = { ok: true; doc: MessPricingConfig; auditId?: string } | MessPricingFailure;
 
 export interface MessPricingOverview {
   campusId: string;
@@ -127,8 +129,10 @@ export async function createMessPricing(
     createdBy: adminEmail,
     updatedBy: adminEmail,
   };
-  const saved = await insertMessPricing(doc, adminEmail, `Mess pricing created: ${describe({ ...doc } as MessPricingConfig)}`);
-  return { ok: true, doc: saved };
+  const { value: saved, auditId } = await audited(() =>
+    insertMessPricing(doc, adminEmail, `Mess pricing created: ${describe({ ...doc } as MessPricingConfig)}`),
+  );
+  return { ok: true, doc: saved, auditId };
 }
 
 export async function updateMessPricing(
@@ -161,8 +165,10 @@ export async function updateMessPricing(
   if (conflict) return { ok: false, reason: 'conflict', conflictWith: conflict };
 
   const updated: Partial<MessPricingConfig> = { ...patch, updatedAt: new Date().toISOString(), updatedBy: adminEmail };
-  const saved = await updateMessPricingDoc(id, updated, adminEmail, 'update', `Mess pricing ${id} updated: ${diffSummary(before, { ...next, ...updated })}`);
-  return saved ? { ok: true, doc: saved } : { ok: false, reason: 'not_found' };
+  const { value: saved, auditId } = await audited(() =>
+    updateMessPricingDoc(id, updated, adminEmail, 'update', `Mess pricing ${id} updated: ${diffSummary(before, { ...next, ...updated })}`),
+  );
+  return saved ? { ok: true, doc: saved, auditId } : { ok: false, reason: 'not_found' };
 }
 
 export async function setMessPricingActive(
@@ -191,12 +197,14 @@ export async function setMessPricingActive(
   }
 
   const patch: Partial<MessPricingConfig> = { isActive, updatedAt: new Date().toISOString(), updatedBy: adminEmail };
-  const saved = await updateMessPricingDoc(
-    id,
-    patch,
-    adminEmail,
-    isActive ? 'activate' : 'deactivate',
-    `Mess pricing ${id} ${isActive ? 'activated' : 'deactivated'}: ${diffSummary(before, { ...before, ...patch })} (${before.effectiveFrom})`,
+  const { value: saved, auditId } = await audited(() =>
+    updateMessPricingDoc(
+      id,
+      patch,
+      adminEmail,
+      isActive ? 'activate' : 'deactivate',
+      `Mess pricing ${id} ${isActive ? 'activated' : 'deactivated'}: ${diffSummary(before, { ...before, ...patch })} (${before.effectiveFrom})`,
+    ),
   );
-  return saved ? { ok: true, doc: saved } : { ok: false, reason: 'not_found' };
+  return saved ? { ok: true, doc: saved, auditId } : { ok: false, reason: 'not_found' };
 }
