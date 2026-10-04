@@ -1,7 +1,48 @@
+import { Platform } from 'react-native';
+
 /**
- * IITJ One design tokens — sourced from Stitch / Designplan_Final.md
+ * IITJ One design tokens.
  * Never hardcode hex in screens; use useThemeColors() or getThemeColors().
+ *
+ * IITJ One redesign palette (light):
+ *   background #F5F7FB · layer/card #FFFFFF · text #01050D · primary #3DA9D8 · secondary #F1FF0A
+ * Dark mode uses the same two accents on a matching dark base. Additional colours are limited to
+ * accessibility (readable variants of the accents), status (veg/non-veg, warnings, errors) and disabled states.
  */
+
+export const RedesignColors = {
+  background: '#F5F7FB',
+  layer: '#FFFFFF',
+  text: '#01050D',
+  primary: '#3DA9D8',
+  secondary: '#F1FF0A',
+  /** #3DA9D8 is too light for text on white (2.6:1); this darker shade of it reaches ~4.6:1. */
+  primaryText: '#1A78A3',
+  textMuted: '#566173',
+  border: '#E1E6EF',
+  primaryTint: '#E2F2FA',
+  /** Readable text/icon variant of the yellow secondary on light surfaces. */
+  secondaryText: '#6B6A00',
+  secondaryTint: '#FBFFD6',
+  darkBackground: '#0A0F18',
+  darkLayer: '#141B26',
+  darkLayerRaised: '#1C2533',
+  darkText: '#F5F7FB',
+  darkTextMuted: '#9DA7B6',
+  darkBorder: '#263142',
+  darkPrimaryText: '#6CC3EA',
+  darkPrimaryTint: '#11303F',
+  darkSecondaryTint: '#2A2D06',
+} as const;
+
+/**
+ * Helvetica Neue where the platform ships it (iOS). Android has no Helvetica Neue, so it uses the
+ * platform sans-serif (Roboto) rather than bundling another font family.
+ */
+export const AppFontFamily: string | undefined = Platform.select({
+  ios: 'Helvetica Neue',
+  default: undefined,
+});
 
 export const AppColors = {
   jodhpurIndigo: '#1D3F5E',
@@ -53,68 +94,90 @@ export const AppRadius = {
   full: 999,
 } as const;
 
+/**
+ * Type scale (redesign spec): Big heading 24 · Section heading 20 · Body header 16 · Body 16 ·
+ * Secondary body 12 · Small body 10.
+ */
 export const AppTypography = {
+  /** Big heading */
   display: {
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: '600' as const,
-    fontFamily: 'IBMPlexSans_600SemiBold',
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '700' as const,
+    fontFamily: AppFontFamily,
   },
+  /** Big heading (screen titles) */
   h1: {
-    fontSize: 22,
-    lineHeight: 28,
-    fontWeight: '600' as const,
-    fontFamily: 'IBMPlexSans_600SemiBold',
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '700' as const,
+    fontFamily: AppFontFamily,
   },
+  /** Section heading */
   h2: {
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: '500' as const,
-    fontFamily: 'IBMPlexSans_500Medium',
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: '600' as const,
+    fontFamily: AppFontFamily,
+  },
+  /** Body text header */
+  bodyHeader: {
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '600' as const,
+    fontFamily: AppFontFamily,
   },
   body: {
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 22,
     fontWeight: '400' as const,
-    fontFamily: 'IBMPlexSans_400Regular',
+    fontFamily: AppFontFamily,
   },
+  /** Secondary body text */
   bodySmall: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: '400' as const,
-    fontFamily: 'IBMPlexSans_400Regular',
+    fontFamily: AppFontFamily,
   },
   caption: {
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '400' as const,
-    fontFamily: 'IBMPlexSans_400Regular',
+    fontFamily: AppFontFamily,
+  },
+  /** Small body text */
+  small: {
+    fontSize: 10,
+    lineHeight: 14,
+    fontWeight: '400' as const,
+    fontFamily: AppFontFamily,
   },
   button: {
-    fontSize: 15,
-    fontWeight: '500' as const,
+    fontSize: 16,
+    fontWeight: '600' as const,
     letterSpacing: 0.2,
-    fontFamily: 'IBMPlexSans_500Medium',
+    fontFamily: AppFontFamily,
   },
   dataMono: {
     fontSize: 16,
     lineHeight: 22,
-    fontWeight: '500' as const,
-    fontFamily: 'IBMPlexSans_500Medium',
+    fontWeight: '600' as const,
+    fontFamily: AppFontFamily,
   },
   dataLargeMono: {
     fontSize: 24,
     lineHeight: 30,
-    fontWeight: '500' as const,
-    fontFamily: 'IBMPlexSans_500Medium',
+    fontWeight: '600' as const,
+    fontFamily: AppFontFamily,
   },
   sectionLabel: {
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '500' as const,
+    fontWeight: '600' as const,
     letterSpacing: 1.2,
     textTransform: 'uppercase' as const,
-    fontFamily: 'IBMPlexSans_500Medium',
+    fontFamily: AppFontFamily,
   },
 } as const;
 
@@ -181,101 +244,111 @@ export interface ThemeColors {
   onDiet: string;
   countdown: string;
   countdownUrgent: string;
+  /** Secondary-accent fill (#F1FF0A) that marks "now": the current meal, the next bus. */
+  highlight: string;
+  /** Text/icon colour on a `highlight` fill. */
+  onHighlight: string;
 }
 
 export function getThemeColors(scheme: ColorScheme): ThemeColors {
+  const R = RedesignColors;
   if (scheme === 'dark') {
     return {
-      background: AppColors.indigoNight,
-      surface: AppColors.surfaceNight,
-      surfaceRaised: AppColors.surfaceNightRaised,
-      surfaceMuted: AppColors.surfaceNight,
-      text: AppColors.textPrimaryDark,
-      textMuted: AppColors.textMutedDark,
-      border: AppColors.surfaceNightRaised,
-      // Bright indigo with dark text: `primary` doubles as the selected-state
-      // background for chips/day strips, and the old navy (#1D3F5E) was
-      // indistinguishable from unselected dark chips (#213851).
-      primary: AppColors.indigoGlow,
-      onPrimary: AppColors.indigoNight,
-      linkText: AppColors.indigoGlow,
-      accent: AppColors.duskDark,
-      primaryTint: AppColors.surfaceNightRaised,
-      secondary: AppColors.sandstoneDark,
-      secondaryTint: '#3D2A14',
-      tabBar: AppColors.surfaceNight,
-      tabActive: AppColors.indigoGlow,
-      tabActiveBackground: '#2A4A6E',
-      tabInactive: AppColors.textMutedDark,
-      headerBackground: AppColors.surfaceNight,
-      headerTint: AppColors.textPrimaryDark,
-      inputBackground: AppColors.surfaceNightRaised,
-      chipBackground: AppColors.surfaceNightRaised,
-      chipActiveBackground: AppColors.indigoGlow,
-      chipActiveText: AppColors.indigoNight,
-      chipText: AppColors.textMutedDark,
-      iconMuted: AppColors.textMutedDark,
-      quickAccessProminentBg: AppColors.jodhpurIndigo,
-      quickAccessProminentIcon: AppColors.desertSand,
-      quickAccessBg: AppColors.surfaceNightRaised,
-      quickAccessBorder: AppColors.surfaceNightRaised,
-      quickAccessIcon: AppColors.sandstoneDark,
+      background: R.darkBackground,
+      surface: R.darkLayer,
+      surfaceRaised: R.darkLayerRaised,
+      // Insets inside cards (meal tabs, "no more buses") need to separate from the card layer.
+      surfaceMuted: R.darkLayerRaised,
+      text: R.darkText,
+      textMuted: R.darkTextMuted,
+      border: R.darkBorder,
+      // #3DA9D8 is light enough to stay a fill in dark mode, with near-black text on it.
+      primary: R.primary,
+      onPrimary: R.text,
+      linkText: R.darkPrimaryText,
+      accent: R.darkPrimaryText,
+      primaryTint: R.darkPrimaryTint,
+      // On dark surfaces the yellow secondary is readable as text/icons directly.
+      secondary: R.secondary,
+      secondaryTint: R.darkSecondaryTint,
+      tabBar: R.darkLayer,
+      tabActive: R.darkPrimaryText,
+      tabActiveBackground: R.darkPrimaryTint,
+      tabInactive: R.darkTextMuted,
+      headerBackground: R.darkBackground,
+      headerTint: R.darkText,
+      inputBackground: R.darkLayerRaised,
+      chipBackground: R.darkLayerRaised,
+      chipActiveBackground: R.primary,
+      chipActiveText: R.text,
+      chipText: R.darkTextMuted,
+      iconMuted: R.darkTextMuted,
+      quickAccessProminentBg: R.primary,
+      quickAccessProminentIcon: R.text,
+      quickAccessBg: R.darkLayerRaised,
+      quickAccessBorder: R.darkBorder,
+      quickAccessIcon: R.darkPrimaryText,
       importantCardBg: '#2A1F18',
       importantCardBorder: AppColors.duskDark,
-      noteCardBg: AppColors.surfaceNightRaised,
+      noteCardBg: R.darkLayerRaised,
       error: AppColors.nonVegRed,
       errorTint: AppColors.errorContainerDark,
       veg: AppColors.sageDark,
       vegTint: '#1E2A22',
       nonVeg: '#E07A75',
-      onDiet: AppColors.indigoNight,
-      countdown: AppColors.textPrimaryDark,
+      onDiet: R.darkBackground,
+      countdown: R.darkText,
       countdownUrgent: AppColors.duskDark,
+      highlight: R.secondary,
+      onHighlight: R.text,
     };
   }
 
   return {
-    background: AppColors.desertSand,
-    surface: AppColors.white,
-    surfaceRaised: AppColors.white,
-    surfaceMuted: AppColors.stitchBackground,
-    text: AppColors.inkSlate,
-    textMuted: AppColors.mutedText,
-    border: AppColors.borderNeutral,
-    primary: AppColors.stitchPrimary,
-    onPrimary: AppColors.white,
-    linkText: AppColors.stitchPrimary,
-    accent: AppColors.tharDusk,
-    primaryTint: AppColors.indigoTint,
-    secondary: AppColors.stitchSecondary,
-    secondaryTint: AppColors.sandstoneTint,
-    tabBar: AppColors.white,
-    tabActive: AppColors.stitchPrimary,
-    tabActiveBackground: AppColors.indigoTint,
-    tabInactive: '#8A939E',
-    headerBackground: AppColors.stitchPrimary,
-    headerTint: AppColors.white,
-    inputBackground: AppColors.white,
-    chipBackground: AppColors.white,
-    chipActiveBackground: AppColors.indigoTint,
-    chipActiveText: AppColors.stitchPrimary,
-    chipText: AppColors.mutedText,
-    iconMuted: AppColors.mutedText,
-    quickAccessProminentBg: AppColors.stitchPrimary,
-    quickAccessProminentIcon: AppColors.white,
-    quickAccessBg: AppColors.white,
-    quickAccessBorder: AppColors.borderNeutral,
-    quickAccessIcon: AppColors.stitchPrimary,
+    background: R.background,
+    surface: R.layer,
+    surfaceRaised: R.layer,
+    surfaceMuted: R.background,
+    text: R.text,
+    textMuted: R.textMuted,
+    border: R.border,
+    primary: R.primary,
+    // Near-black on #3DA9D8 reads at ~8:1; white on it would be ~2.6:1.
+    onPrimary: R.text,
+    linkText: R.primaryText,
+    accent: R.primaryText,
+    primaryTint: R.primaryTint,
+    secondary: R.secondaryText,
+    secondaryTint: R.secondaryTint,
+    tabBar: R.layer,
+    tabActive: R.primaryText,
+    tabActiveBackground: R.primaryTint,
+    tabInactive: R.textMuted,
+    headerBackground: R.background,
+    headerTint: R.text,
+    inputBackground: R.layer,
+    chipBackground: R.layer,
+    chipActiveBackground: R.primary,
+    chipActiveText: R.text,
+    chipText: R.textMuted,
+    iconMuted: R.textMuted,
+    quickAccessProminentBg: R.primary,
+    quickAccessProminentIcon: R.text,
+    quickAccessBg: R.layer,
+    quickAccessBorder: R.border,
+    quickAccessIcon: R.primaryText,
     importantCardBg: AppColors.duskTint,
     importantCardBorder: AppColors.tharDusk,
-    noteCardBg: AppColors.desertSand,
+    noteCardBg: R.background,
     error: AppColors.nonVegRed,
     errorTint: AppColors.errorContainer,
     veg: AppColors.sageWell,
     vegTint: AppColors.sageTint,
     nonVeg: AppColors.nonVegRed,
     onDiet: AppColors.white,
-    countdown: AppColors.inkSlate,
-    countdownUrgent: AppColors.tharDusk,
+    countdown: R.text,
+    countdownUrgent: '#C2410C',
+    highlight: R.secondary,
+    onHighlight: R.text,
   };
 }
