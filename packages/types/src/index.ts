@@ -16,3 +16,4 @@ export * from './campusDirectory';
 export * from './campaigns';
 export * from './academicCalendar';
 export * from './messPricing';
+export * from './aiCommands';
