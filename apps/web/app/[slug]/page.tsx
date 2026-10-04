@@ -74,7 +74,7 @@ export default async function FeatureLandingPage({ params }: { params: Params })
         <nav aria-label="Breadcrumb" className="mb-6 text-sm text-muted">
           <ol className="flex flex-wrap items-center gap-1">
             <li>
-              <Link href="/" className="hover:text-indigo">
+              <Link href="/" className="hover:text-accent">
                 IITJ One
               </Link>
             </li>
@@ -88,7 +88,7 @@ export default async function FeatureLandingPage({ params }: { params: Params })
         </nav>
 
         <div className="flex items-start gap-4">
-          <span className="mt-1 hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-tint text-indigo sm:inline-flex">
+          <span className="mt-1 hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-tint text-accent sm:inline-flex">
             <Icon className="h-6 w-6" aria-hidden />
           </span>
           <PageHeader eyebrow="IIT Jodhpur campus guide" title={page.h1} subtitle={page.intro} />
@@ -139,7 +139,7 @@ export default async function FeatureLandingPage({ params }: { params: Params })
               <li key={p.slug}>
                 <Link
                   href={`/${p.slug}`}
-                  className="inline-flex rounded-full border border-border px-3.5 py-1.5 text-sm text-ink/80 transition hover:border-indigo/30 hover:text-indigo"
+                  className="inline-flex rounded-full border border-border px-3.5 py-1.5 text-sm text-ink/80 transition hover:border-indigo/30 hover:text-accent"
                 >
                   IIT Jodhpur {p.label}
                 </Link>
