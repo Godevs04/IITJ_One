@@ -1,5 +1,15 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  FlatList,
+  Linking,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { WEEKDAYS, monthNumberToName } from '@iitj1/types';
 import { DietMark } from '@/components/DietMark';
@@ -42,6 +52,25 @@ const MEAL_PRICES = [
   { meal: 'Snacks', veg: '₹35', nonVeg: '₹35' },
   { meal: 'Dinner', veg: '₹75', nonVeg: '₹80' },
 ];
+
+const DIAL_ITEM_WIDTH = 64;
+const DIAL_ITEM_GAP = 10;
+const DIAL_ITEM_TOTAL = DIAL_ITEM_WIDTH + DIAL_ITEM_GAP;
+const DIAL_CYCLES = 60;
+
+type DialItem = {
+  key: string;
+  day: (typeof WEEKDAYS)[number];
+  dayIndex: number;
+  itemIndex: number;
+};
+
+const DIAL_ITEMS: DialItem[] = Array.from({ length: DIAL_CYCLES * 7 }, (_, i) => ({
+  key: `dial-day-${i}`,
+  day: WEEKDAYS[i % 7],
+  dayIndex: i % 7,
+  itemIndex: i,
+}));
 
 type DishSectionProps = {
   label: string;
@@ -120,6 +149,7 @@ function DishSection({ label, labelColor, dotColor, textColor, items, columns, m
 
 export default function MenuScreen() {
   const theme = useThemeColors();
+  const { width: windowWidth } = useWindowDimensions();
   const { syncing, sync, error } = useCampusSync(false);
   const { lockSwipe, unlockSwipe } = useSwipeGesture();
   const vegMenu = useCampusModule<MessMenuDoc>('messMenuVeg');
@@ -128,6 +158,124 @@ export default function MenuScreen() {
   const [selectedWeekday, setSelectedWeekday] = useState<string>(() => todayWeekdayName());
   const [showCharges, setShowCharges] = useState(false);
   useModalOverlayLock(showCharges);
+
+  const dialSpacerWidth = Math.max(0, (windowWidth - DIAL_ITEM_WIDTH) / 2);
+  const flatListRef = useRef<FlatList<DialItem>>(null);
+  const currentScrollX = useRef<number>(0);
+  const isUserScrolling = useRef<boolean>(false);
+
+  const todayName = todayWeekdayName();
+  const todayIdx = useMemo(() => {
+    const idx = WEEKDAYS.findIndex((d) => d.toLowerCase() === todayName.toLowerCase());
+    return idx >= 0 ? idx : 0;
+  }, [todayName]);
+
+  const initialIndex = useMemo(() => {
+    const midCycle = Math.floor(DIAL_CYCLES / 2);
+    return midCycle * 7 + todayIdx;
+  }, [todayIdx]);
+
+  useEffect(() => {
+    const initialOffset = initialIndex * DIAL_ITEM_TOTAL;
+    currentScrollX.current = initialOffset;
+    const timer = setTimeout(() => {
+      flatListRef.current?.scrollToOffset({
+        offset: initialOffset,
+        animated: false,
+      });
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [initialIndex]);
+
+  const scrollToDayIndex = useCallback((targetIndex: number, animated = true) => {
+    currentScrollX.current = targetIndex * DIAL_ITEM_TOTAL;
+    flatListRef.current?.scrollToOffset({
+      offset: targetIndex * DIAL_ITEM_TOTAL,
+      animated,
+    });
+  }, []);
+
+  const handlePressDay = useCallback(
+    (itemIndex: number, day: string) => {
+      setSelectedWeekday(day);
+      scrollToDayIndex(itemIndex, true);
+    },
+    [scrollToDayIndex],
+  );
+
+  const handlePressToday = useCallback(() => {
+    const today = todayWeekdayName();
+    setSelectedWeekday(today);
+    const currentOffset = currentScrollX.current;
+    const currentIndex = Math.round(currentOffset / DIAL_ITEM_TOTAL);
+    const currentDayIdx = ((currentIndex % 7) + 7) % 7;
+    const targetDayIdx = WEEKDAYS.findIndex((d) => d.toLowerCase() === today.toLowerCase());
+    if (targetDayIdx >= 0) {
+      const diff = targetDayIdx - currentDayIdx;
+      // Shortest rotation step between -3 and 3
+      const shortestDiff = (((diff + 3) % 7) + 7) % 7 - 3;
+      const targetIndex = currentIndex + shortestDiff;
+      scrollToDayIndex(targetIndex, true);
+    }
+  }, [scrollToDayIndex]);
+
+  const renderDayItem = useCallback(
+    ({ item }: { item: DialItem }) => {
+      const active = item.day === selectedWeekday;
+      const isToday = item.day === todayName;
+
+      return (
+        <Pressable
+          onPress={() => handlePressDay(item.itemIndex, item.day)}
+          accessibilityRole="button"
+          accessibilityState={{ selected: active }}
+          accessibilityLabel={isToday ? `${item.day}, today` : item.day}
+          style={[
+            styles.dayCard,
+            active
+              ? [
+                  styles.dayCardActive,
+                  {
+                    backgroundColor: theme.primary,
+                    borderColor: theme.primary,
+                  },
+                ]
+              : [
+                  styles.dayCardInactive,
+                  {
+                    backgroundColor: theme.chipBackground,
+                    borderColor: isToday ? theme.accent : theme.border,
+                  },
+                ],
+          ]}
+        >
+          <Text
+            style={[
+              styles.dayNameText,
+              {
+                color: active ? theme.onPrimary : isToday ? theme.accent : theme.textMuted,
+                fontWeight: active || isToday ? '700' : '600',
+              },
+            ]}
+            numberOfLines={1}
+          >
+            {item.day.slice(0, 3).toUpperCase()}
+          </Text>
+          {isToday && (
+            <View
+              style={[
+                styles.todayDot,
+                {
+                  backgroundColor: active ? theme.onPrimary : theme.accent,
+                },
+              ]}
+            />
+          )}
+        </Pressable>
+      );
+    },
+    [selectedWeekday, todayName, theme, handlePressDay],
+  );
 
   // Never cross-fall back: showing the non-veg menu under the "Veg Mess" toggle
   // (or vice versa) is worse than showing nothing.
@@ -167,66 +315,86 @@ export default function MenuScreen() {
       error={error}
     >
       {anyMenu ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.dayStripScroll}
-          onScrollBeginDrag={lockSwipe}
-          onScrollEndDrag={unlockSwipe}
-          onMomentumScrollEnd={unlockSwipe}
-        >
-          {WEEKDAYS.map((day) => {
-            const active = day === selectedWeekday;
-            const isToday = day === todayWeekdayName();
+        <View style={styles.dialContainer}>
+          <FlatList
+            ref={flatListRef}
+            data={DIAL_ITEMS}
+            keyExtractor={(item) => item.key}
+            renderItem={renderDayItem}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={[
+              styles.dayStripScroll,
+              { paddingHorizontal: dialSpacerWidth },
+            ]}
+            ItemSeparatorComponent={() => <View style={{ width: DIAL_ITEM_GAP }} />}
+            getItemLayout={(_, index) => ({
+              length: DIAL_ITEM_TOTAL,
+              offset: DIAL_ITEM_TOTAL * index,
+              index,
+            })}
+            initialScrollIndex={initialIndex}
+            onScrollToIndexFailed={(info) => {
+              setTimeout(() => {
+                flatListRef.current?.scrollToOffset({
+                  offset: info.index * DIAL_ITEM_TOTAL,
+                  animated: false,
+                });
+              }, 50);
+            }}
+            snapToInterval={DIAL_ITEM_TOTAL}
+            snapToAlignment="start"
+            decelerationRate="fast"
+            onScrollBeginDrag={() => {
+              lockSwipe();
+              isUserScrolling.current = true;
+            }}
+            onScroll={(e) => {
+              currentScrollX.current = e.nativeEvent.contentOffset.x;
+            }}
+            onScrollEndDrag={(e) => {
+              unlockSwipe();
+              const velocityX = e.nativeEvent.velocity?.x ?? 0;
+              if (Math.abs(velocityX) < 0.1) {
+                isUserScrolling.current = false;
+                const offsetX = e.nativeEvent.contentOffset.x;
+                const index = Math.round(offsetX / DIAL_ITEM_TOTAL);
+                if (index >= 0 && index < DIAL_ITEMS.length) {
+                  setSelectedWeekday(DIAL_ITEMS[index].day);
+                  flatListRef.current?.scrollToOffset({
+                    offset: index * DIAL_ITEM_TOTAL,
+                    animated: true,
+                  });
+                }
+              }
+            }}
+            onMomentumScrollEnd={(e) => {
+              unlockSwipe();
+              isUserScrolling.current = false;
+              const offsetX = e.nativeEvent.contentOffset.x;
+              currentScrollX.current = offsetX;
+              const index = Math.round(offsetX / DIAL_ITEM_TOTAL);
+              if (index >= 0 && index < DIAL_ITEMS.length) {
+                const day = DIAL_ITEMS[index].day;
+                setSelectedWeekday(day);
 
-            return (
-              // One Pressable for both states so every chip keeps the exact same
-              // box. The old active variant nested the card in a bordered outer
-              // View, making it 66×66 inside a 62-wide slot — it overflowed into
-              // its neighbours and sat taller than the rest of the strip.
-              <Pressable
-                key={day}
-                onPress={() => setSelectedWeekday(day)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                accessibilityLabel={isToday ? `${day}, today` : day}
-                style={[
-                  styles.dayCard,
-                  {
-                    backgroundColor: active ? theme.primary : theme.chipBackground,
-                    borderColor: active ? theme.primary : 'transparent',
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.dayNameText,
-                    {
-                      color: active ? theme.onPrimary : isToday ? theme.accent : theme.textMuted,
-                      fontWeight: active || isToday ? '700' : '600',
-                    },
-                  ]}
-                >
-                  {day.slice(0, 3).toUpperCase()}
-                </Text>
-                {/* Always rendered so the label stays vertically centred whether
-                    or not the chip is today. */}
-                <View
-                  style={[
-                    styles.todayDot,
-                    {
-                      backgroundColor: isToday
-                        ? active
-                          ? theme.onPrimary
-                          : theme.accent
-                        : 'transparent',
-                    },
-                  ]}
-                />
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+                // Silent cycle wrap near boundaries
+                const cycle = Math.floor(index / 7);
+                if (cycle < 5 || cycle > DIAL_CYCLES - 5) {
+                  const midCycle = Math.floor(DIAL_CYCLES / 2);
+                  const newIndex = midCycle * 7 + (index % 7);
+                  const newOffset = newIndex * DIAL_ITEM_TOTAL;
+                  currentScrollX.current = newOffset;
+                  flatListRef.current?.scrollToOffset({ offset: newOffset, animated: false });
+                }
+              }
+            }}
+            initialNumToRender={14}
+            maxToRenderPerBatch={14}
+            windowSize={5}
+            removeClippedSubviews={false}
+          />
+        </View>
       ) : null}
 
       {anyMenu ? (
@@ -241,7 +409,7 @@ export default function MenuScreen() {
         >
           {!isSelectedToday && (
             <Pressable
-              onPress={() => setSelectedWeekday(todayWeekdayName())}
+              onPress={handlePressToday}
               style={[
                 styles.toggleButton,
                 {
@@ -411,12 +579,17 @@ export default function MenuScreen() {
         transparent={true}
         animationType="fade"
         onRequestClose={() => setShowCharges(false)}
+        statusBarTranslucent
       >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setShowCharges(false)}
-        >
-          <View style={[styles.modalContent, { backgroundColor: theme.surface }]} onStartShouldSetResponder={() => true}>
+        <View style={styles.modalOverlay}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setShowCharges(false)}
+            accessibilityRole="button"
+            accessibilityLabel="Close dialog"
+          />
+
+          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
             {/* Modal Header */}
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: theme.text }]}>Mess Charges</Text>
@@ -431,7 +604,14 @@ export default function MenuScreen() {
               </Pressable>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView
+              style={styles.modalScroll}
+              contentContainerStyle={styles.modalScrollContent}
+              showsVerticalScrollIndicator={true}
+              nestedScrollEnabled={true}
+              keyboardShouldPersistTaps="handled"
+              bounces={true}
+            >
               {/* Option 1 — regular (monthly) users */}
               <View style={[styles.planCard, { borderColor: theme.border, backgroundColor: theme.surfaceMuted }]}>
                 <View style={styles.planHeader}>
@@ -494,44 +674,74 @@ export default function MenuScreen() {
               </View>
 
               {/* Footer / Queries */}
-              <View style={[styles.queryContainer, { backgroundColor: theme.primaryTint }]}>
+              <Pressable
+                style={[styles.queryContainer, { backgroundColor: theme.primaryTint }]}
+                onPress={() => void Linking.openURL('mailto:mess@iitj.ac.in')}
+                accessibilityRole="link"
+                accessibilityLabel="Email Mess Office at mess@iitj.ac.in"
+              >
                 <Ionicons name="mail-outline" size={18} color={theme.linkText} />
                 <Text style={[styles.queryText, { color: theme.linkText }]}>
-                  For queries, contact Mess Office at mess@iitj.ac.in
+                  For queries, contact Mess Office at{' '}
+                  <Text style={styles.queryEmail}>mess@iitj.ac.in</Text>
                 </Text>
-              </View>
+              </Pressable>
             </ScrollView>
           </View>
-        </Pressable>
+        </View>
       </Modal>
     </ScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
+  dialContainer: {
+    marginVertical: AppSpacing.xs,
+  },
   dayStripScroll: {
     flexDirection: 'row',
-    gap: AppSpacing.sm,
+    alignItems: 'center',
     paddingVertical: AppSpacing.sm,
   },
   dayCard: {
-    width: 62,
-    height: 62,
-    borderRadius: 12,
+    width: DIAL_ITEM_WIDTH,
+    height: DIAL_ITEM_WIDTH,
+    borderRadius: 16,
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 5,
+    position: 'relative',
+  },
+  dayCardActive: {
+    transform: [{ scale: 1.06 }],
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.22,
+    shadowRadius: 3.5,
+  },
+  dayCardInactive: {
+    transform: [{ scale: 0.94 }],
+    opacity: 0.85,
   },
   dayNameText: {
-    ...AppTypography.caption,
-    fontWeight: '600',
-    fontSize: 11,
+    fontFamily: 'IBMPlexSans_700Bold',
+    fontSize: 13,
+    letterSpacing: 0.8,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+    width: '100%',
+    margin: 0,
+    padding: 0,
   },
   todayDot: {
+    position: 'absolute',
+    bottom: 6,
     width: 5,
     height: 5,
     borderRadius: 2.5,
+    alignSelf: 'center',
   },
   toggleStripScroll: {
     marginTop: AppSpacing.md,
@@ -656,17 +866,28 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: AppSpacing.lg,
   },
   modalContent: {
-    width: '90%',
-    maxHeight: '80%',
-    borderRadius: AppRadius.md,
-    padding: AppSpacing.lg,
-    elevation: 5,
+    width: '100%',
+    maxWidth: 440,
+    maxHeight: '85%',
+    borderRadius: AppRadius.lg,
+    paddingTop: AppSpacing.lg,
+    paddingHorizontal: AppSpacing.lg,
+    paddingBottom: AppSpacing.sm,
+    elevation: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
+  },
+  modalScroll: {
+    flexShrink: 1,
+  },
+  modalScrollContent: {
+    paddingBottom: AppSpacing.xl,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -764,11 +985,17 @@ const styles = StyleSheet.create({
     borderRadius: AppRadius.sm,
     padding: AppSpacing.md,
     marginTop: AppSpacing.lg,
+    marginBottom: AppSpacing.xs,
   },
   queryText: {
     ...AppTypography.caption,
     flex: 1,
-    fontWeight: '600',
+    fontWeight: '500',
     fontSize: 12,
+    lineHeight: 18,
+  },
+  queryEmail: {
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
 });
