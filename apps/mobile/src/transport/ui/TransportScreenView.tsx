@@ -313,7 +313,7 @@ export function TransportScreenView({
     if (!isTodaySchedule) return result;
     for (const dir of DIRECTIONS) {
       const timed = tripsWithStatus
-        .filter((t) => getRideDirection(t.trip) === dir)
+        .filter((t) => getRideDirection(t.trip) === dir && t.trip.serviceStatus !== 'cancelled')
         .map((t) => ({ trip: t, startMin: parseTimeToMinutes(t.trip.startTime), endMin: parseTimeToMinutes(t.trip.endTime) }));
       result[dir] = pickNextBus(timed, nowMin)?.trip ?? null;
     }
@@ -322,7 +322,9 @@ export function TransportScreenView({
   }, [tripsWithStatus, isTodaySchedule, nowMin]);
 
   const labelFor = (item: TripWithStatus): string | null =>
-    nextBusLabel(parseTimeToMinutes(item.trip.startTime), parseTimeToMinutes(item.trip.endTime), nowMin);
+    item.trip.serviceStatus === 'cancelled'
+      ? null
+      : nextBusLabel(parseTimeToMinutes(item.trip.startTime), parseTimeToMinutes(item.trip.endTime), nowMin);
 
   const reminderHandler = busRemindersSupported && dayTypeFilter === defaultDayType ? onToggleReminder : undefined;
 

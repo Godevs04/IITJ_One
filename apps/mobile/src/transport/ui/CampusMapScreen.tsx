@@ -71,7 +71,7 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
   // Determine next bus times for each stop
   const stopNextTimes: Record<string, { bus: string; time: string }> = {};
   for (const t of tripsWithStatus) {
-    if (t.status === 'upcoming' || t.status === 'boarding' || t.status === 'transit') {
+    if (t.trip.serviceStatus !== 'cancelled' && (t.status === 'upcoming' || t.status === 'boarding' || t.status === 'transit')) {
       for (const stop of t.stops) {
         const norm = getNormalizedStopName(stop);
         if (!stopNextTimes[norm]) {

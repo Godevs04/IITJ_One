@@ -14,6 +14,8 @@ export function displayStop(name: string): string {
 /**
  * One scheduled trip: [B1]  Old Mess 10:30 AM ── 1 hr ── MBM 11:30 AM.
  * The next bus is emphasised (primary border + "Starts in…" tag); finished trips are dimmed.
+ * On a day with a schedule exception, a cancelled trip is dimmed with a "Cancelled" tag (never a
+ * countdown) and a replacement-timetable trip carries a "Changed today" tag.
  */
 function BusTripRowComponent({
   trip,
@@ -38,13 +40,31 @@ function BusTripRowComponent({
   const theme = useThemeColors();
   const from = displayStop(trip.from);
   const to = displayStop(trip.to);
+  const cancelled = trip.serviceStatus === 'cancelled';
+  const modified = trip.serviceStatus === 'modified';
+  if (cancelled) {
+    label = null;
+    emphasized = false;
+    dimmed = true;
+  }
+  const statusChip = cancelled ? (
+    <View style={[styles.labelChip, { backgroundColor: theme.errorTint }]}>
+      <MaterialIcons name="block" size={14} color={theme.error} />
+      <Text style={[styles.labelText, { color: theme.error }]}>Cancelled</Text>
+    </View>
+  ) : modified && !label ? (
+    <View style={[styles.labelChip, { backgroundColor: theme.surfaceMuted }]}>
+      <MaterialIcons name="edit-calendar" size={14} color={theme.textMuted} />
+      <Text style={[styles.labelText, { color: theme.textMuted }]}>Changed today</Text>
+    </View>
+  ) : null;
 
   return (
     <Pressable
       onPress={onPress}
       disabled={!onPress}
       accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityLabel={`${trip.bus}, ${from} ${trip.startTime} to ${to} ${trip.endTime}${label ? `, ${label}` : ''}`}
+      accessibilityLabel={`${trip.bus}, ${from} ${trip.startTime} to ${to} ${trip.endTime}${cancelled ? ', cancelled today' : label ? `, ${label}` : modified ? ', changed today' : ''}`}
       accessibilityHint={onPress ? 'Shows the route and stops' : undefined}
       style={({ pressed }) => [
         styles.card,
@@ -57,9 +77,9 @@ function BusTripRowComponent({
         pressed && styles.pressed,
       ]}
     >
-      {label || badges ? (
+      {label || badges || statusChip ? (
         <View style={styles.topRow}>
-          {label ? (
+          {statusChip ?? (label ? (
             <View style={[styles.labelChip, { backgroundColor: emphasized ? theme.highlight : theme.surfaceMuted }]}>
               <MaterialIcons name="schedule" size={emphasized ? 18 : 14} color={emphasized ? theme.onHighlight : theme.textMuted} />
               <Text
@@ -73,7 +93,7 @@ function BusTripRowComponent({
             </View>
           ) : (
             <View />
-          )}
+          ))}
           {badges ? <View style={styles.badges}>{badges}</View> : null}
         </View>
       ) : null}
@@ -87,7 +107,9 @@ function BusTripRowComponent({
           <Text style={[styles.stop, { color: theme.textMuted }]} numberOfLines={1}>
             {from}
           </Text>
-          <Text style={[styles.time, emphasized && styles.timeProminent, { color: theme.text }]}>{trip.startTime}</Text>
+          <Text style={[styles.time, emphasized && styles.timeProminent, cancelled && styles.struck, { color: theme.text }]}>
+            {trip.startTime}
+          </Text>
         </View>
 
         <View style={styles.connector} importantForAccessibility="no-hide-descendants">
@@ -183,6 +205,9 @@ const styles = StyleSheet.create({
   },
   right: {
     textAlign: 'right',
+  },
+  struck: {
+    textDecorationLine: 'line-through',
   },
   connector: {
     flexDirection: 'row',

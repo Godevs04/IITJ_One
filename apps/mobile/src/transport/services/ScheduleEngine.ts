@@ -10,6 +10,7 @@ import type {
   TemporaryTransportSchedule,
   ActiveScheduleExceptionResponse,
 } from '@/types/campus';
+import { resolveExceptionTrips } from '@iitj1/types';
 import { nowMinutes, parseTimeToMinutes } from '@/utils/date';
 import type { TripStatus, TripWithStatus } from '../models/BusTypes';
 import { parseRouteStops } from '../utils/coordinates';
@@ -126,8 +127,13 @@ export function getTripsForToday(
   activeException?: ActiveScheduleExceptionResponse | null,
 ): TransportTrip[] {
   if (isExceptionActive(activeException)) {
-    const trips = activeException!.schedule!.trips;
-    return [...trips].sort((a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime));
+    // Replace mode: the exception's trips (marked 'modified'). Cancel mode: today's regular timetable with
+    // only the listed trips marked 'cancelled' — every other trip runs as normal.
+    const schedule = activeException!.schedule!;
+    const regular = schedule.mode === 'cancel' && transport ? getTripsForDayType(transport, calendar, getScheduleKey(calendar, holidays)) : [];
+    return (resolveExceptionTrips(schedule, regular) as TransportTrip[]).sort(
+      (a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime),
+    );
   }
   if (isScheduleOverridden(alerts)) {
     if (!tempSchedule?.schedules) return [];
@@ -153,6 +159,11 @@ export function evaluateTripStatus(trip: TransportTrip): {
 
   const diffStart = start - now;
   const diffEnd = end - now;
+
+  if (trip.serviceStatus === 'cancelled') {
+    // Still listed (so riders know) until its slot has passed, but never counted down to.
+    return { status: diffEnd <= 0 ? 'completed' : 'upcoming', secondsUntilStart: 0, secondsUntilEnd: 0, statusText: 'Cancelled' };
+  }
 
   const secondsUntilStart = Math.max(0, diffStart * 60);
   const secondsUntilEnd = Math.max(0, diffEnd * 60);
@@ -226,6 +237,7 @@ export function getNextAndPrevBuses(tripsWithStatus: TripWithStatus[]): {
   let prev: TripWithStatus | null = null;
 
   for (const t of tripsWithStatus) {
+    if (t.trip.serviceStatus === 'cancelled') continue;
     if (t.status === 'upcoming' || t.status === 'boarding') {
       if (!next || t.secondsUntilStart < next.secondsUntilStart) {
         next = t;

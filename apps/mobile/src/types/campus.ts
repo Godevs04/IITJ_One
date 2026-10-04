@@ -39,6 +39,9 @@ export interface TransportTrip {
    * authoritative source of truth for direction. Prefer this over guessing
    * from `to`/`from` text, which varies in how campus is labelled. */
   direction?: 'departure' | 'arrival';
+  /** Set only on days with an active schedule exception: 'modified' (replacement timetable) or
+   *  'cancelled' (this regular trip does not run today). Absent = normal service. */
+  serviceStatus?: import('@iitj1/types').TripServiceStatus;
 }
 
 export interface TransportRouteGroup {
@@ -82,6 +85,10 @@ export interface TransportScheduleException {
   effectiveUntil: string;
   priority: ScheduleExceptionPriority;
   affectedBuses: string[];
+  /** 'replace' (default; older docs have no mode): `trips` is the whole day's timetable.
+   *  'cancel': the regular timetable runs except the `cancelledTrips`. */
+  mode?: import('@iitj1/types').ScheduleExceptionMode;
+  cancelledTrips?: import('@iitj1/types').CancelledTripRef[];
   trips: TransportTrip[];
   showBanner: boolean;
   attachments: ScheduleExceptionAttachment[];

@@ -69,7 +69,10 @@ export function BusQuickView({
   const showLive = !!liveTrip && !liveDataStale;
   const isLive = liveTrip?.busState.positionSource === 'live';
   const canRemind =
-    !!onToggleReminder && !!item && (item.status === 'upcoming' || item.status === 'boarding');
+    !!onToggleReminder &&
+    !!item &&
+    item.trip.serviceStatus !== 'cancelled' &&
+    (item.status === 'upcoming' || item.status === 'boarding');
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
@@ -234,7 +237,7 @@ export function BusQuickView({
                 </View>
               ) : null}
 
-              {direction != null && item.status !== 'completed' ? <RideButton /> : null}
+              {direction != null && item.status !== 'completed' && item.trip.serviceStatus !== 'cancelled' ? <RideButton /> : null}
             </ScrollView>
           </View>
         ) : null}
