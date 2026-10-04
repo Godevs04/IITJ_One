@@ -31,12 +31,16 @@ const config: Config = {
         sage: 'rgb(var(--color-sage) / <alpha-value>)',
         'non-veg': 'rgb(var(--color-non-veg) / <alpha-value>)',
         surface: 'rgb(var(--color-surface) / <alpha-value>)',
+        primary: 'rgb(var(--color-primary) / <alpha-value>)',
+        'on-primary': 'rgb(var(--color-on-primary) / <alpha-value>)',
+        highlight: 'rgb(var(--color-highlight) / <alpha-value>)',
         cream: 'rgb(var(--color-cream) / <alpha-value>)',
         navy: 'rgb(var(--color-navy) / <alpha-value>)',
         accent: 'rgb(var(--color-accent) / <alpha-value>)',
       },
       fontFamily: {
-        sans: ['var(--font-ibm-plex-sans)', 'system-ui', 'sans-serif'],
+        // Helvetica Neue — the IITJ One typeface (the app uses it on iOS); system sans elsewhere.
+        sans: ['"Helvetica Neue"', 'Helvetica', 'Arial', 'system-ui', 'sans-serif'],
         mono: ['var(--font-ibm-plex-mono)', 'ui-monospace', 'monospace'],
       },
       fontSize: {
@@ -47,10 +51,10 @@ const config: Config = {
         '8xl': '90rem',
       },
       boxShadow: {
-        card: '0 1px 2px rgba(26, 34, 41, 0.04), 0 8px 24px rgba(29, 63, 94, 0.05)',
-        elevated: '0 18px 40px -16px rgba(29, 63, 94, 0.22)',
-        soft: '0 10px 28px -12px rgba(26, 34, 41, 0.18)',
-        glow: '0 24px 60px -20px rgba(0, 41, 71, 0.55)',
+        card: '0 1px 2px rgba(1, 5, 13, 0.04), 0 8px 24px rgba(1, 5, 13, 0.05)',
+        elevated: '0 18px 40px -16px rgba(1, 5, 13, 0.22)',
+        soft: '0 10px 28px -12px rgba(1, 5, 13, 0.18)',
+        glow: '0 24px 60px -20px rgba(61, 169, 216, 0.45)',
       },
       keyframes: {
         fadeIn: {

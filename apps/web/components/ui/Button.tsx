@@ -4,12 +4,12 @@ import { type ButtonHTMLAttributes, type ReactNode } from 'react';
 type Variant = 'primary' | 'secondary' | 'ghost' | 'marketing';
 
 const styles: Record<Variant, string> = {
-  primary: 'bg-indigo text-cream hover:bg-indigo-deep active:scale-[0.98] shadow-card',
+  primary: 'bg-primary text-on-primary hover:brightness-95 active:scale-[0.98] shadow-card',
   secondary:
     'bg-white/80 text-accent border border-border hover:bg-indigo-tint/60 active:scale-[0.98] dark:bg-white/5 dark:border-white/20 dark:text-ink dark:hover:bg-white/10',
   ghost: 'bg-transparent text-muted hover:text-ink hover:bg-white/60 dark:hover:bg-white/5',
   marketing:
-    'bg-gradient-to-br from-indigo-deep via-[#123652] to-indigo text-cream shadow-glow hover:brightness-110 active:scale-[0.98] dark:bg-none dark:bg-sandstone dark:text-navy dark:shadow-none',
+    'bg-primary text-on-primary shadow-glow hover:brightness-105 active:scale-[0.98]',
 };
 
 const base =

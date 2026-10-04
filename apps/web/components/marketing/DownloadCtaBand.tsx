@@ -5,7 +5,7 @@ import { TAGLINE } from '@/lib/constants';
 export function DownloadCtaBand() {
   return (
     <section className="relative mx-auto max-w-8xl overflow-hidden px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-      <div className="relative overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-indigo-deep via-[#123652] to-indigo px-5 py-12 text-center shadow-glow sm:px-12 sm:py-14 dark:from-[#1d3f5e] dark:via-[#24496b] dark:to-[#2f5a80] dark:ring-1 dark:ring-white/10">
+      <div className="relative overflow-hidden rounded-[1.75rem] brand-panel px-5 py-12 text-center shadow-glow sm:px-12 sm:py-14">
         <AmbientGlow />
         <h2 className="text-2xl font-semibold tracking-tight text-cream sm:text-3xl">{TAGLINE}</h2>
         <p className="mx-auto mt-3 max-w-xl text-balance text-sm text-cream/80 sm:text-base">
@@ -15,7 +15,7 @@ export function DownloadCtaBand() {
           <LinkButton
             href="/#download"
             variant="marketing"
-            className="!bg-none !bg-cream !text-navy !shadow-none hover:!brightness-95 dark:!bg-sandstone"
+            className="!shadow-none"
           >
             Download IITJ One
           </LinkButton>

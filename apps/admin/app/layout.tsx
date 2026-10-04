@@ -1,16 +1,9 @@
 import type { Metadata, Viewport } from 'next';
-import { IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google';
+import { IBM_Plex_Mono } from 'next/font/google';
 import { ToastProvider } from '@/components/Toast';
 import { RegisterServiceWorker } from '@/components/pwa/RegisterServiceWorker';
 import { InstallBanner } from '@/components/pwa/InstallBanner';
 import './globals.css';
-
-const plexSans = IBM_Plex_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-ibm-plex-sans',
-  display: 'swap',
-});
 
 const plexMono = IBM_Plex_Mono({
   subsets: ['latin'],
@@ -48,8 +41,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#002947' },
-    { media: '(prefers-color-scheme: dark)', color: '#002947' },
+    { media: '(prefers-color-scheme: light)', color: '#f5f7fb' },
+    { media: '(prefers-color-scheme: dark)', color: '#01050d' },
   ],
   width: 'device-width',
   initialScale: 1,
@@ -65,7 +58,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${plexSans.variable} ${plexMono.variable} min-h-dvh font-sans antialiased`}
+        className={`${plexMono.variable} min-h-dvh font-sans antialiased`}
         suppressHydrationWarning
       >
         <ToastProvider>

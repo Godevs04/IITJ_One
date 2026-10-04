@@ -9,43 +9,52 @@
  * Any direct CSS usage of these vars (outside Tailwind utilities) must wrap
  * them in rgb(...) — a bare var(--color-x) is no longer a valid color value.
  */
+/*
+ * IITJ One palette — shared with the mobile app (apps/mobile/src/theme/tokens.ts RedesignColors):
+ * background #F5F7FB · layer #FFFFFF · text #01050D · primary #3DA9D8 · secondary #F1FF0A.
+ * Token names are kept from the original theme; `indigo` is the readable shade of the primary
+ * (#1A78A3) for text/links/borders, `primary` is the #3DA9D8 fill, `sandstone` the secondary accent.
+ */
 :root {
-  --color-indigo: 29 63 94;
-  --color-indigo-deep: 0 41 71;
-  --color-indigo-tint: 232 237 242;
-  --color-sandstone: 198 134 66;
-  --color-sandstone-tint: 247 237 224;
-  --color-dusk: 226 112 58;
-  --color-sand: 244 236 224;
-  --color-ink: 26 34 41;
-  --color-muted: 92 101 112;
-  --color-border: 226 216 200;
+  --color-primary: 61 169 216;
+  --color-on-primary: 1 5 13;
+  --color-highlight: 241 255 10;
+  --color-indigo: 26 120 163;
+  --color-indigo-deep: 17 48 63;
+  --color-indigo-tint: 226 242 250;
+  --color-sandstone: 107 106 0;
+  --color-sandstone-tint: 251 255 214;
+  --color-dusk: 194 65 12;
+  --color-sand: 245 247 251;
+  --color-ink: 1 5 13;
+  --color-muted: 86 97 115;
+  --color-border: 225 230 239;
   --color-sage: 110 139 116;
   --color-non-veg: 178 58 52;
-  --color-surface: 255 252 247;
-  /* Theme-independent: text/fills on the always-navy gradient surfaces (buttons, stat card, CTA band). */
-  --color-cream: 244 236 224;
-  --color-navy: 0 41 71;
-  /* Indigo as a text/icon color; lightened in dark mode so it stays readable on dark surfaces. */
-  --color-accent: 29 63 94;
+  --color-surface: 255 255 255;
+  /* Theme-independent: content on the always-dark brand panels (hero card, CTA band). */
+  --color-cream: 245 247 251;
+  --color-navy: 1 5 13;
+  /* Primary as a text/icon colour; lightened in dark mode so it stays readable on dark surfaces. */
+  --color-accent: 26 120 163;
 }
 
-/* Dark palette ported from apps/mobile/src/theme/tokens.ts getThemeColors('dark') */
+/* Dark palette — same as the mobile app's dark theme */
 [data-theme='dark'] {
-  --color-indigo: 62 100 136;
-  --color-indigo-deep: 15 27 43;
-  --color-indigo-tint: 33 56 81;
-  --color-sandstone: 217 160 95;
-  --color-sandstone-tint: 61 42 20;
+  --color-indigo: 108 195 234;
+  --color-indigo-deep: 17 48 63;
+  --color-indigo-tint: 17 48 63;
+  --color-sandstone: 241 255 10;
+  --color-sandstone-tint: 42 45 6;
   --color-dusk: 240 137 90;
-  --color-sand: 24 42 61;
-  --color-ink: 242 238 228;
-  --color-muted: 155 168 181;
-  --color-border: 33 56 81;
+  --color-sand: 10 15 24;
+  --color-ink: 245 247 251;
+  --color-muted: 157 167 182;
+  --color-border: 38 49 66;
   --color-sage: 140 176 147;
   --color-non-veg: 224 122 117;
-  --color-surface: 33 56 81;
-  --color-accent: 143 182 216;
+  --color-surface: 20 27 38;
+  --color-accent: 108 195 234;
 }
 
 html {
@@ -100,14 +109,14 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(1200px 600px at 8% -10%, rgba(198, 134, 66, 0.14), transparent 55%),
-    radial-gradient(900px 500px at 100% 0%, rgba(29, 63, 94, 0.08), transparent 50%);
+    radial-gradient(1200px 600px at 8% -10%, rgba(61, 169, 216, 0.12), transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, rgba(241, 255, 10, 0.08), transparent 50%);
 }
 
 [data-theme='dark'] body::before {
   background:
-    radial-gradient(1200px 600px at 8% -10%, rgba(217, 160, 95, 0.1), transparent 55%),
-    radial-gradient(900px 500px at 100% 0%, rgba(62, 100, 136, 0.14), transparent 50%);
+    radial-gradient(1200px 600px at 8% -10%, rgba(61, 169, 216, 0.12), transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, rgba(241, 255, 10, 0.05), transparent 50%);
 }
 
 @layer utilities {
@@ -125,12 +134,21 @@ body::before {
 }
 
 @layer components {
+  /* Always-dark brand panel (hero stat card, download band): text colour as the surface, primary glow. */
+  .brand-panel {
+    background-image: linear-gradient(135deg, #01050d 0%, #0b1b2a 55%, #11303f 100%);
+  }
+  [data-theme='dark'] .brand-panel {
+    background-image: linear-gradient(135deg, #141b26 0%, #1c2533 55%, #11303f 100%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+  }
+
   .reveal {
     animation: dashReveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
   .skip-link {
-    @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-xl focus:bg-indigo focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-cream focus:shadow-elevated;
+    @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-xl focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-navy focus:shadow-elevated;
   }
 }
 

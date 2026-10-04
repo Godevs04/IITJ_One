@@ -45,7 +45,7 @@ export function BarList({ items, pageSize = 8 }: { items: BarListItem[]; pageSiz
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-indigo-tint/60">
                 <div
-                  className="h-full rounded-full bg-indigo transition-all duration-500"
+                  className="h-full rounded-full bg-primary transition-all duration-500"
                   style={{ width: `${pct}%` }}
                 />
               </div>

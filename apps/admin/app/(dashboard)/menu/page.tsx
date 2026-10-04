@@ -322,7 +322,7 @@ export default function MenuAdminPage() {
                   onClick={() => setSelectedIdx(d.i)}
                   className={`min-w-[4.5rem] rounded-xl border px-3 py-2 text-center transition ${
                     active
-                      ? 'border-indigo bg-indigo text-sand'
+                      ? 'border-primary bg-primary text-on-primary'
                       : 'border-border bg-white text-ink hover:border-indigo/40'
                   }`}
                 >
@@ -331,7 +331,7 @@ export default function MenuAdminPage() {
                   </span>
                   <span
                     className={`mt-0.5 block font-mono text-[10px] ${
-                      active ? 'text-sand/70' : 'text-muted'
+                      active ? 'text-on-primary/70' : 'text-muted'
                     }`}
                   >
                     {d.date.slice(8)}
