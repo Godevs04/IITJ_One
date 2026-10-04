@@ -10,9 +10,11 @@ import type {
   TemporaryTransportSchedule,
   ActiveScheduleExceptionResponse,
 } from '@/types/campus';
-import { nowMinutes, parseTimeToMinutes, todayDayName } from '@/utils/date';
+import { nowMinutes, parseTimeToMinutes } from '@/utils/date';
 import type { TripStatus, TripWithStatus } from '../models/BusTypes';
 import { parseRouteStops } from '../utils/coordinates';
+
+const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
 export function isAlertActive(alert: TransportAlert, now: Date = new Date()): boolean {
   if (!alert.isActive) return false;
@@ -56,29 +58,37 @@ function mapTemporaryTrip(temp: TemporaryTransportSchedule): TransportTrip {
   };
 }
 
-function isHolidayToday(holidays?: HolidaysDoc | null): boolean {
+function isHolidayOn(holidays: HolidaysDoc | null | undefined, d: Date): boolean {
   if (!holidays?.holidays) return false;
-  const d = new Date();
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
-  const today = `${year}-${month}-${day}`;
-  return holidays.holidays.some((h: Holiday) => h.isActive && h.date === today);
+  const date = `${year}-${month}-${day}`;
+  return holidays.holidays.some((h: Holiday) => h.isActive && h.date === date);
+}
+
+/** Which timetable runs on `date` (default today): Sundays and configured holidays use the Sunday & Holidays one. */
+export function getScheduleKeyForDate(
+  date: Date,
+  holidays?: HolidaysDoc | null,
+): 'mon-sat' | 'sun-holiday' {
+  if (date.getDay() === 0 || isHolidayOn(holidays, date)) return 'sun-holiday';
+  return 'mon-sat';
 }
 
 export function getScheduleKey(
   calendar: CalendarDoc | null,
   holidays?: HolidaysDoc | null
 ): 'mon-sat' | 'sun-holiday' {
-  const day = new Date().getDay();
-  if (day === 0 || isHolidayToday(holidays)) return 'sun-holiday';
-  return 'mon-sat';
+  return getScheduleKeyForDate(new Date(), holidays);
 }
 
 export function getTripsForDayType(
   transport: TransportDoc,
   calendar: CalendarDoc | null,
-  dayType: 'mon-sat' | 'sun-holiday'
+  dayType: 'mon-sat' | 'sun-holiday',
+  /** The day being looked up (default today) — decides whether the Thursday override applies. */
+  date: Date = new Date(),
 ): TransportTrip[] {
   const groups = transport.routes.filter((r) => r.weekday === dayType);
   // Stamp each trip with its group's direction — this is authoritative and
@@ -88,7 +98,7 @@ export function getTripsForDayType(
     g.trips.map((t) => ({ ...t, direction: g.direction })),
   );
 
-  const day = todayDayName();
+  const day = DAY_NAMES[date.getDay()];
   if (dayType === 'mon-sat' && day === 'thursday') {
     const override = transport.scheduleOverrides.find(
       (o) => o.dayOfWeek.toLowerCase() === 'thursday',

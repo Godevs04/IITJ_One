@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Alert, StyleSheet, Text, View, TextInput, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
@@ -18,8 +18,11 @@ import type {
 } from '@/types/campus';
 import { getScheduleKey, getTripsForDayType, evaluateTripStatus, isScheduleOverridden, isAlertActive, isExceptionActive, getTripsForToday } from '../services/ScheduleEngine';
 import { parseRouteStops } from '../utils/coordinates';
-import { parseTimeToMinutes } from '@/utils/date';
-import { TripCard } from '../widgets/TripCard';
+import { nowMinutes, parseTimeToMinutes } from '@/utils/date';
+import { BusTripRow } from './BusTripRow';
+import { BusQuickView } from './BusQuickView';
+import { nextBusLabel, pickNextBus, tripDuration } from '../nextBus';
+import { DIRECTION_TITLES, firstBusTomorrow, type BusDirection } from '../busBoard';
 import {
   busReminderId,
   busRemindersSupported,
@@ -76,6 +79,13 @@ const PRIORITY_STYLES: Record<
 
 const FAVORITES_KEY = '@iitj1/favorite_stops';
 
+const DAY_TYPES: { key: 'mon-sat' | 'sun-holiday'; label: string }[] = [
+  { key: 'mon-sat', label: 'Mon – Sat' },
+  { key: 'sun-holiday', label: 'Sun & Holidays' },
+];
+
+const DIRECTIONS: BusDirection[] = ['departure', 'arrival'];
+
 export function TransportScreenView({
   transport,
   calendar,
@@ -105,7 +115,6 @@ export function TransportScreenView({
     return getScheduleKey(calendar, holidays);
   }, [calendar, holidays, tick]);
   const [dayTypeFilter, setDayTypeFilter] = useState<'mon-sat' | 'sun-holiday'>(defaultDayType);
-  const [directionFilter, setDirectionFilter] = useState<'departure' | 'arrival'>('departure');
 
   // Sync state when default day type loads
   useEffect(() => {
@@ -136,7 +145,7 @@ export function TransportScreenView({
 
   // Toggle favorite stop
   // Phase 7.3: stabilized with useCallback (was a fresh closure every
-  // render) — TripCard is now React.memo'd below, and a prop that's
+  // render) — BusTripRow is React.memo'd, and a prop that's
   // recreated every render would defeat that regardless of trip data
   // actually changing.
   const onToggleFavorite = useCallback(
@@ -223,16 +232,11 @@ export function TransportScreenView({
     return !trip.to.toLowerCase().includes('iitj');
   };
 
-  // Filter trips based on direction, search query and selected favorite stop filter
+  // Filter trips by search query and selected favorite stop (both directions are listed, in their own sections)
   const filteredTrips = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     return tripsWithStatus.filter((t) => {
-      // 1. Direction Filter
-      const isDep = isDepartureFromCampus(t.trip);
-      if (directionFilter === 'departure' && !isDep) return false;
-      if (directionFilter === 'arrival' && isDep) return false;
-
-      // 2. Search Query Filter
+      // 1. Search Query Filter
       if (q) {
         const matchName =
           t.trip.bus.toLowerCase().includes(q) ||
@@ -244,7 +248,7 @@ export function TransportScreenView({
         if (!matchName) return false;
       }
 
-      // 3. Favorite Star Filter
+      // 2. Favorite Star Filter
       if (selectedFavoriteFilter) {
         const matchFav = t.stops.some(
           (s) => s.toLowerCase() === selectedFavoriteFilter.toLowerCase()
@@ -254,14 +258,10 @@ export function TransportScreenView({
 
       return true;
     });
-  }, [tripsWithStatus, searchQuery, selectedFavoriteFilter, directionFilter]);
+  }, [tripsWithStatus, searchQuery, selectedFavoriteFilter]);
 
   // Segment trips into Active (Upcoming, Boarding, Transit) vs Completed
-  const { activeTrips, completedTrips } = useMemo(() => {
-    const active = filteredTrips.filter((t) => t.status !== 'completed');
-    const completed = filteredTrips.filter((t) => t.status === 'completed');
-    return { activeTrips: active, completedTrips: completed };
-  }, [filteredTrips]);
+  const completedTrips = useMemo(() => filteredTrips.filter((t) => t.status === 'completed'), [filteredTrips]);
 
   const hasActiveAlert = useMemo(() => {
     void tick; // alert windows are time-bound; refresh on the transport tick
@@ -298,6 +298,38 @@ export function TransportScreenView({
   // frozen "LIVE" badge — the connection indicator communicates the
   // degraded state instead.
   const liveDataStale = !!liveError && connectionState !== 'connected';
+
+  // "Next bus" and completed trips only mean something on the schedule that is running today.
+  const isTodaySchedule = isExceptionLive || isOverridden || dayTypeFilter === defaultDayType;
+  const nowMin = useMemo(() => {
+    void tick; // advances with the transport tick
+    return nowMinutes();
+  }, [tick]);
+
+  // The emphasised "next bus" per direction — from the full schedule, so searching doesn't move it.
+  const nextByDirection = useMemo(() => {
+    const result: Record<BusDirection, TripWithStatus | null> = { departure: null, arrival: null };
+    if (!isTodaySchedule) return result;
+    for (const dir of DIRECTIONS) {
+      const timed = tripsWithStatus
+        .filter((t) => getRideDirection(t.trip) === dir)
+        .map((t) => ({ trip: t, startMin: parseTimeToMinutes(t.trip.startTime), endMin: parseTimeToMinutes(t.trip.endTime) }));
+      result[dir] = pickNextBus(timed, nowMin)?.trip ?? null;
+    }
+    return result;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tripsWithStatus, isTodaySchedule, nowMin]);
+
+  const labelFor = (item: TripWithStatus): string | null =>
+    nextBusLabel(parseTimeToMinutes(item.trip.startTime), parseTimeToMinutes(item.trip.endTime), nowMin);
+
+  const reminderHandler = busRemindersSupported && dayTypeFilter === defaultDayType ? onToggleReminder : undefined;
+
+  // Bus quick view — keyed, so the open sheet follows the trip's live status on every tick.
+  const [quickViewKey, setQuickViewKey] = useState<string | null>(null);
+  const tripKey = (t: TransportTrip) => `${getRideDirection(t)}-${t.bus}-${t.startTime}`;
+  const quickViewItem = quickViewKey ? tripsWithStatus.find((t) => tripKey(t.trip) === quickViewKey) ?? null : null;
+  const isFiltering = !!searchQuery.trim() || !!selectedFavoriteFilter;
 
   const headerRight = (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: AppSpacing.sm }}>
@@ -350,13 +382,11 @@ export function TransportScreenView({
   debugListKeys('TransportScreenView', 'exceptionAttachments', exceptionSchedule?.attachments ?? [], (att) => att.id);
   debugListKeys('TransportScreenView', 'matchingAlerts', matchingAlerts, (alert) => alert.id);
   debugListKeys('TransportScreenView', 'favorites', favorites, (stop) => stop);
-  debugListKeys('TransportScreenView', 'activeTrips', activeTrips, (item) => `${item.trip.bus}-${item.trip.startTime}`);
   debugListKeys('TransportScreenView', 'completedTrips', completedTrips, (item) => `${item.trip.bus}-${item.trip.startTime}`);
 
   return (
     <ScreenShell
-      title="Transport"
-      subtitle="Campus shuttle schedules"
+      title="Bus Schedule"
       onRefresh={onRefresh}
       refreshing={refreshing}
       headerRight={headerRight}
@@ -433,135 +463,53 @@ export function TransportScreenView({
         error={liveError}
       />
 
-      {/* Dynamic Schedule Filter Tabs & Updates Banner */}
-      <View style={styles.filterSection}>
-        {/* Row 1: Direction Filter */}
-        <View style={styles.filterRow}>
+      {/* Schedule switch — hidden while a special/temporary schedule replaces the timetable */}
+      {!isOverridden && !isExceptionLive ? (
+        <View style={[styles.segment, { borderBottomColor: theme.border }]} accessibilityRole="tablist">
+          {DAY_TYPES.map(({ key, label }) => {
+            const active = dayTypeFilter === key;
+            const isToday = key === defaultDayType;
+            return (
+              <Pressable
+                key={key}
+                onPress={() => setDayTypeFilter(key)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: active }}
+                accessibilityLabel={isToday ? `${label}, today's schedule` : label}
+                style={styles.segmentTab}
+              >
+                <View style={styles.segmentLabelRow}>
+                  <Text style={[styles.segmentText, { color: active ? theme.text : theme.textMuted, fontWeight: active ? '700' : '500' }]}>
+                    {label}
+                  </Text>
+                  {isToday ? <View style={[styles.todayDot, { backgroundColor: theme.linkText }]} /> : null}
+                </View>
+                <View style={[styles.segmentUnderline, { backgroundColor: active ? theme.primary : 'transparent' }]} />
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+
+      {requestCaption && !isOverridden && !isExceptionLive ? (
+        <View style={[styles.requestCaption, { backgroundColor: theme.primaryTint }]}>
+          <Ionicons name="calendar-outline" size={16} color={theme.linkText} />
+          <Text style={[styles.requestCaptionText, { color: theme.linkText }]}>
+            {dayTypeFilter === 'sun-holiday' ? 'Sunday & Holidays' : 'Mon-Sat'} timetable · {requestCaption}
+          </Text>
           <Pressable
-            onPress={() => setDirectionFilter('departure')}
-            style={[
-              styles.filterTab,
-              directionFilter === 'departure'
-                ? [styles.activeTab, { backgroundColor: theme.primary, borderColor: theme.primary }]
-                : [styles.inactiveTab, { backgroundColor: theme.chipBackground, borderColor: theme.border }],
-            ]}
+            onPress={() => {
+              setRequestCaption(null);
+              setDayTypeFilter(defaultDayType);
+            }}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel="Back to today's timetable"
           >
-            <Text
-              style={[
-                styles.filterTabText,
-                directionFilter === 'departure'
-                  ? { color: theme.onPrimary, fontWeight: '700' }
-                  : { color: theme.textMuted },
-              ]}
-            >
-              Departure from Campus
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setDirectionFilter('arrival')}
-            style={[
-              styles.filterTab,
-              directionFilter === 'arrival'
-                ? [styles.activeTab, { backgroundColor: theme.primary, borderColor: theme.primary }]
-                : [styles.inactiveTab, { backgroundColor: theme.chipBackground, borderColor: theme.border }],
-            ]}
-          >
-            <Text
-              style={[
-                styles.filterTabText,
-                directionFilter === 'arrival'
-                  ? { color: theme.onPrimary, fontWeight: '700' }
-                  : { color: theme.textMuted },
-              ]}
-            >
-              Arrival at Campus
-            </Text>
+            <Ionicons name="close" size={18} color={theme.linkText} />
           </Pressable>
         </View>
-
-        {requestCaption && !isOverridden && !isExceptionLive ? (
-          <View style={[styles.requestCaption, { backgroundColor: theme.primaryTint }]}>
-            <Ionicons name="calendar-outline" size={16} color={theme.linkText} />
-            <Text style={[styles.requestCaptionText, { color: theme.linkText }]}>
-              {dayTypeFilter === 'sun-holiday' ? 'Sunday & Holidays' : 'Mon-Sat'} timetable · {requestCaption}
-            </Text>
-            <Pressable
-              onPress={() => {
-                setRequestCaption(null);
-                setDayTypeFilter(defaultDayType);
-              }}
-              hitSlop={10}
-              accessibilityRole="button"
-              accessibilityLabel="Back to today's timetable"
-            >
-              <Ionicons name="close" size={18} color={theme.linkText} />
-            </Pressable>
-          </View>
-        ) : null}
-
-        {/* Row 2: Day Type Filter - Hide if overridden */}
-        {!isOverridden && !isExceptionLive && (
-          <View style={styles.filterRow}>
-            <Pressable
-              onPress={() => setDayTypeFilter('mon-sat')}
-              style={[
-                styles.filterTab,
-                dayTypeFilter === 'mon-sat'
-                  ? [styles.activeTab, { backgroundColor: theme.primary, borderColor: theme.primary }]
-                  : [styles.inactiveTab, { backgroundColor: theme.chipBackground, borderColor: theme.border }],
-              ]}
-            >
-              <Text
-                style={[
-                  styles.filterTabText,
-                  dayTypeFilter === 'mon-sat'
-                    ? { color: theme.onPrimary, fontWeight: '700' }
-                    : { color: theme.textMuted },
-                ]}
-              >
-                Mon-Sat
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setDayTypeFilter('sun-holiday')}
-              style={[
-                styles.filterTab,
-                dayTypeFilter === 'sun-holiday'
-                  ? [styles.activeTab, { backgroundColor: theme.primary, borderColor: theme.primary }]
-                  : [styles.inactiveTab, { backgroundColor: theme.chipBackground, borderColor: theme.border }],
-              ]}
-            >
-              <Text
-                style={[
-                  styles.filterTabText,
-                  dayTypeFilter === 'sun-holiday'
-                    ? { color: theme.onPrimary, fontWeight: '700' }
-                    : { color: theme.textMuted },
-                ]}
-              >
-                Sunday & Holidays
-              </Text>
-            </Pressable>
-          </View>
-        )}
-
-        {/* Web Link / Updates Banner - Hide if overridden */}
-        {!isOverridden && !isExceptionLive && (
-          <Pressable
-            onPress={() => void WebBrowser.openBrowserAsync('https://iitj.ac.in/office-of-security-transports/en/transport')}
-            style={({ pressed }) => [
-              styles.updatesBanner,
-              { backgroundColor: theme.primaryTint },
-              pressed && styles.pressed,
-            ]}
-          >
-            <Ionicons name="information-circle-outline" size={16} color={theme.linkText} />
-            <Text style={[styles.updatesText, { color: theme.linkText }]}>
-              For latest official schedule updates, click here
-            </Text>
-          </Pressable>
-        )}
-      </View>
+      ) : null}
 
       {/* Search Input */}
       <View style={[styles.searchBox, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -667,71 +615,142 @@ export function TransportScreenView({
         </View>
       )}
 
-      {/* Active Trips Section */}
-      <View style={styles.tripsSection}>
-        <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
-          {selectedFavoriteFilter || searchQuery ? 'Matching Trips' : "Today's Active Schedule"}
-        </Text>
+      {DIRECTIONS.map((dir) => {
+        const list = filteredTrips.filter(
+          (t) => getRideDirection(t.trip) === dir && (!isTodaySchedule || t.status !== 'completed'),
+        );
+        const next = nextByDirection[dir];
+        const tomorrow =
+          isTodaySchedule && !isFiltering && list.length === 0
+            ? firstBusTomorrow(transport, calendar, holidays, dir, new Date())
+            : null;
+        return (
+          <View key={dir} style={styles.tripsSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionHeading, { color: theme.text }]} accessibilityRole="header">
+                {DIRECTION_TITLES[dir]}
+              </Text>
+              {dir === 'departure' ? (
+                <Pressable
+                  onPress={() => router.push(`/bus-routes?dayType=${dayTypeFilter}` as never)}
+                  hitSlop={8}
+                  style={({ pressed }) => [styles.routesLink, pressed && styles.pressed]}
+                  accessibilityRole="link"
+                >
+                  <Text style={[styles.routesLinkText, { color: theme.linkText }]}>See the routes</Text>
+                  <MaterialIcons name="arrow-forward" size={16} color={theme.linkText} />
+                </Pressable>
+              ) : null}
+            </View>
 
-        {activeTrips.length > 0 ? (
-          activeTrips.map((item) => {
-            const direction = getRideDirection(item.trip);
-            return (
-              <TripCard
-                key={`${item.trip.bus}-${item.trip.startTime}`}
-                item={item}
-                isFavorited={isFavorited}
-                onToggleFavorite={onToggleFavorite}
-                direction={direction}
-                liveTrip={matchLiveTrip(item.trip, direction)}
-                liveDataStale={liveDataStale}
-                reminderSet={reminderIds.has(busReminderId(item.trip))}
-                // Reminders fire today, so only offer them on today's schedule.
-                onToggleReminder={busRemindersSupported && dayTypeFilter === defaultDayType ? onToggleReminder : undefined}
-              />
-            );
-          })
-        ) : (
-          <EmptyState
-            icon="bus-outline"
-            title="No upcoming buses"
-            message={
-              searchQuery || selectedFavoriteFilter
-                ? 'Try clearing your filters.'
-                : 'All buses for today have completed their journeys.'
-            }
-          />
-        )}
-      </View>
+            {list.length > 0 ? (
+              list.map((item) => {
+                const isNext = next != null && next.trip === item.trip;
+                // Only a real GPS position earns the LIVE badge; estimates are explained in the quick view.
+                const isLive = !liveDataStale && matchLiveTrip(item.trip, dir)?.busState.positionSource === 'live';
+                const reminderSet = reminderIds.has(busReminderId(item.trip));
+                const badges =
+                  reminderSet || isLive ? (
+                    <>
+                      {isLive ? (
+                        <View style={[styles.liveBadge, { backgroundColor: theme.vegTint }]}>
+                          <View style={[styles.liveDot, { backgroundColor: theme.veg }]} />
+                          <Text style={[styles.liveBadgeText, { color: theme.veg }]}>LIVE</Text>
+                        </View>
+                      ) : null}
+                      {reminderSet ? (
+                        <MaterialIcons
+                          name="notifications-active"
+                          size={16}
+                          color={theme.linkText}
+                          accessibilityLabel="Reminder set"
+                        />
+                      ) : null}
+                    </>
+                  ) : undefined;
+                return (
+                  <BusTripRow
+                    key={tripKey(item.trip)}
+                    trip={item.trip}
+                    duration={tripDuration(parseTimeToMinutes(item.trip.startTime), parseTimeToMinutes(item.trip.endTime))}
+                    label={isNext ? labelFor(item) : null}
+                    emphasized={isNext}
+                    badges={badges}
+                    onPress={() => setQuickViewKey(tripKey(item.trip))}
+                  />
+                );
+              })
+            ) : (
+              <View style={[styles.noneCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <Text style={[styles.noneTitle, { color: theme.text }]}>
+                  {isFiltering ? 'No matching buses' : isTodaySchedule ? 'No more buses today' : 'No buses available'}
+                </Text>
+                {isFiltering ? (
+                  <Text style={[styles.noneBody, { color: theme.textMuted }]}>Try clearing your filters.</Text>
+                ) : tomorrow ? (
+                  <Text style={[styles.noneBody, { color: theme.textMuted }]}>
+                    First bus tomorrow: {tomorrow.bus} · {tomorrow.startTime} from {tomorrow.from}
+                  </Text>
+                ) : null}
+              </View>
+            )}
+          </View>
+        );
+      })}
 
-      {/* Completed Trips Toggle */}
-      {completedTrips.length > 0 && (
+      {isTodaySchedule && completedTrips.length > 0 ? (
         <View style={styles.completedSection}>
           <Pressable
             onPress={() => setShowCompleted(!showCompleted)}
             style={styles.completedHeader}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showCompleted }}
           >
             <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
-              Completed Trips ({completedTrips.length})
+              Completed trips ({completedTrips.length})
             </Text>
-            <Ionicons
-              name={showCompleted ? 'chevron-up' : 'chevron-down'}
-              size={18}
-              color={theme.iconMuted}
-            />
+            <MaterialIcons name={showCompleted ? 'expand-less' : 'expand-more'} size={20} color={theme.iconMuted} />
           </Pressable>
-
           {showCompleted &&
             completedTrips.map((item) => (
-              <TripCard
-                key={`${item.trip.bus}-${item.trip.startTime}`}
-                item={item}
-                isFavorited={isFavorited}
-                onToggleFavorite={onToggleFavorite}
+              <BusTripRow
+                key={tripKey(item.trip)}
+                trip={item.trip}
+                duration={tripDuration(parseTimeToMinutes(item.trip.startTime), parseTimeToMinutes(item.trip.endTime))}
+                dimmed
+                onPress={() => setQuickViewKey(tripKey(item.trip))}
               />
             ))}
         </View>
-      )}
+      ) : null}
+
+      {!isOverridden && !isExceptionLive ? (
+        <Pressable
+          onPress={() => void WebBrowser.openBrowserAsync('https://iitj.ac.in/office-of-security-transports/en/transport')}
+          style={({ pressed }) => [styles.updatesBanner, { backgroundColor: theme.primaryTint }, pressed && styles.pressed]}
+          accessibilityRole="link"
+        >
+          <Ionicons name="information-circle-outline" size={16} color={theme.linkText} />
+          <Text style={[styles.updatesText, { color: theme.linkText }]}>
+            For the latest official schedule updates, tap here
+          </Text>
+        </Pressable>
+      ) : null}
+
+      <BusQuickView
+        item={quickViewItem}
+        onClose={() => setQuickViewKey(null)}
+        label={
+          quickViewItem && isTodaySchedule && quickViewItem.status !== 'completed' ? labelFor(quickViewItem) : null
+        }
+        direction={quickViewItem ? getRideDirection(quickViewItem.trip) : undefined}
+        liveTrip={quickViewItem ? matchLiveTrip(quickViewItem.trip, getRideDirection(quickViewItem.trip)) : undefined}
+        liveDataStale={liveDataStale}
+        reminderSet={quickViewItem ? reminderIds.has(busReminderId(quickViewItem.trip)) : false}
+        onToggleReminder={reminderHandler}
+        isFavorited={isFavorited}
+        onToggleFavorite={onToggleFavorite}
+      />
     </ScreenShell>
   );
 }
@@ -806,33 +825,84 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.8,
   },
-  filterSection: {
-    gap: AppSpacing.sm,
-    marginTop: AppSpacing.md,
-  },
-  filterRow: {
+  segment: {
     flexDirection: 'row',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  segmentTab: {
+    flex: 1,
+    alignItems: 'center',
+    minHeight: 48,
+    justifyContent: 'flex-end',
     gap: AppSpacing.sm,
   },
-  filterTab: {
-    flex: 1,
-    height: 42,
-    borderRadius: AppRadius.md,
-    borderWidth: 1,
-    justifyContent: 'center',
+  segmentLabelRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
   },
-  activeTab: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-    elevation: 1,
+  segmentText: {
+    ...AppTypography.body,
   },
-  inactiveTab: {},
-  filterTabText: {
-    ...AppTypography.button,
-    fontSize: 12,
+  todayDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  segmentUnderline: {
+    alignSelf: 'stretch',
+    height: 3,
+    borderRadius: 2,
+    marginHorizontal: AppSpacing.lg,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: AppSpacing.sm,
+  },
+  sectionHeading: {
+    ...AppTypography.h2,
+  },
+  routesLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    minHeight: 32,
+  },
+  routesLinkText: {
+    ...AppTypography.bodySmall,
+    fontWeight: '700',
+  },
+  noneCard: {
+    borderRadius: AppRadius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: AppSpacing.lg,
+    gap: 2,
+  },
+  noneTitle: {
+    ...AppTypography.body,
+    fontWeight: '600',
+  },
+  noneBody: {
+    ...AppTypography.bodySmall,
+  },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: AppRadius.full,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  liveBadgeText: {
+    ...AppTypography.small,
+    fontWeight: '800',
   },
   updatesBanner: {
     flexDirection: 'row',
@@ -840,8 +910,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: AppSpacing.xs,
     paddingVertical: AppSpacing.sm,
+    paddingHorizontal: AppSpacing.md,
     borderRadius: AppRadius.md,
-    marginTop: AppSpacing.xs,
   },
   updatesText: {
     ...AppTypography.caption,

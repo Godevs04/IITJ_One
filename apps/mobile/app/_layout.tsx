@@ -24,6 +24,7 @@ import '@/services/search/registerBuiltInProviders';
 import { CampusDataProvider } from '@/state/CampusDataProvider';
 import { LiveTrackingProvider } from '@/transport/state/LiveTrackingProvider';
 import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
+import { AppFontFamily } from '@/theme/tokens';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { setRuntimeDebugContext } from '@/debug/listDebug';
 import {
@@ -169,7 +170,7 @@ function RootNavigator() {
         screenOptions={{
           headerStyle: { backgroundColor: colors.headerBackground },
           headerTintColor: colors.headerTint,
-          headerTitleStyle: { fontWeight: '600', fontFamily: 'IBMPlexSans_600SemiBold' },
+          headerTitleStyle: { fontWeight: '600', fontFamily: AppFontFamily },
           headerBackTitle: 'Back',
           contentStyle: { backgroundColor: colors.background },
           headerRight: () => (
@@ -188,6 +189,7 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="search" options={{ headerShown: false }} />
         <Stack.Screen name="map" options={{ title: 'Campus Map' }} />
+        <Stack.Screen name="bus-routes" options={{ title: 'Bus Routes' }} />
         <Stack.Screen name="discover/index" options={{ title: 'Discover' }} />
         <Stack.Screen name="discover/[id]" options={{ title: 'Campaign' }} />
         <Stack.Screen name="campus-directory/index" options={{ title: 'Campus Directory' }} />
