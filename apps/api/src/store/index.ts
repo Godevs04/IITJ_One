@@ -79,6 +79,10 @@ import {
   fallbackSoftDeleteCampaign,
   fallbackRestoreCampaign,
   getFallbackState,
+  fallbackListMessPricing,
+  fallbackGetMessPricingById,
+  fallbackInsertMessPricing,
+  fallbackUpdateMessPricing,
 } from './fallback';
 import type {
   MetaDoc,
@@ -124,6 +128,7 @@ import type {
   RoleDoc,
   RoleCreateInput,
   CampaignDoc,
+  MessPricingConfig,
   CampaignCreateInput,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
@@ -2458,4 +2463,71 @@ export async function getBusStatesByTripIds(tripIds: string[]): Promise<BusState
     return items.map((b) => ({ ...b, _id: b._id?.toString() }));
   }
   return fallbackGetBusStatesByTripIds(tripIds);
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Mess pricing — one document per pricing configuration (multi-document per
+// campus, like departments). Persistence + audit only; the rules (which
+// configuration applies, no ambiguous effective dates, safe edits) live in
+// services/messPricing.ts so the admin routes and later AI Admin share them.
+// Every write goes through bumpVersion → audit log + mobile sync version.
+// ─────────────────────────────────────────────────────────────────────────
+
+function withMessPricingStringId(doc: MessPricingConfig): MessPricingConfig {
+  return { ...doc, _id: doc._id?.toString() };
+}
+
+/** All configurations for a campus (active and inactive), newest effective date first. */
+export async function listMessPricing(campusId: string): Promise<MessPricingConfig[]> {
+  const sortDesc = (a: MessPricingConfig, b: MessPricingConfig) =>
+    b.effectiveFrom.localeCompare(a.effectiveFrom) || b.createdAt.localeCompare(a.createdAt);
+  if (isDbConnected()) {
+    const items = await collections.messPricing().find({ campusId }).toArray();
+    return items.map(withMessPricingStringId).sort(sortDesc);
+  }
+  return [...fallbackListMessPricing(campusId)].sort(sortDesc);
+}
+
+export async function getMessPricingById(id: string): Promise<MessPricingConfig | null> {
+  if (isDbConnected()) {
+    const result = await collections.messPricing().findOne({ _id: new ObjectId(id) } as never);
+    return result ? withMessPricingStringId(result) : null;
+  }
+  return fallbackGetMessPricingById(id);
+}
+
+export async function insertMessPricing(
+  doc: Omit<MessPricingConfig, '_id'>,
+  adminEmail: string,
+  auditSummary: string,
+): Promise<MessPricingConfig> {
+  let saved: MessPricingConfig;
+  if (isDbConnected()) {
+    const result = await collections.messPricing().insertOne(doc as MessPricingConfig);
+    saved = { ...doc, _id: result.insertedId.toString() };
+  } else {
+    saved = fallbackInsertMessPricing(doc);
+  }
+  await bumpVersion('messPricing', doc.campusId, adminEmail, 'create', auditSummary);
+  return saved;
+}
+
+export async function updateMessPricingDoc(
+  id: string,
+  patch: Partial<MessPricingConfig>,
+  adminEmail: string,
+  action: string,
+  auditSummary: string,
+): Promise<MessPricingConfig | null> {
+  let saved: MessPricingConfig | null;
+  if (isDbConnected()) {
+    const result = await collections
+      .messPricing()
+      .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: patch }, { returnDocument: 'after' });
+    saved = result ? withMessPricingStringId(result) : null;
+  } else {
+    saved = fallbackUpdateMessPricing(id, patch);
+  }
+  if (saved) await bumpVersion('messPricing', saved.campusId, adminEmail, action, auditSummary);
+  return saved;
 }

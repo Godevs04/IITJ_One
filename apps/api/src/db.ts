@@ -40,6 +40,7 @@ import type {
   PersonDoc,
   RoleDoc,
   CampaignDoc,
+  MessPricingConfig,
 } from './types';
 
 let client: MongoClient | null = null;
@@ -203,6 +204,9 @@ async function ensureIndexes(): Promise<void> {
   await db.collection('campaigns').createIndex({ campusId: 1, status: 1 });
   await db.collection('campaigns').createIndex({ campusId: 1, placement: 1 });
   await db.collection('campaigns').createIndex({ campusId: 1, startDate: 1, endDate: 1 });
+  // Mess pricing: one document per pricing configuration; looked up by campus + effective date.
+  await db.collection('messPricing').createIndex({ campusId: 1, effectiveFrom: 1 });
+  await db.collection('messPricing').createIndex({ campusId: 1, isActive: 1 });
 
   // Mess menu JSON import: up to 2 live docs per (campus, menuType) — one draft, one
   // published — so a plain {campusId:1} unique index (the singleton loop below) doesn't
@@ -291,6 +295,7 @@ export const collections = {
   people: () => col<PersonDoc>('people'),
   roles: () => col<RoleDoc>('roles'),
   campaigns: () => col<CampaignDoc>('campaigns'),
+  messPricing: () => col<MessPricingConfig>('messPricing'),
 };
 
 export async function disconnectDb(): Promise<void> {

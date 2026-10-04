@@ -33,6 +33,7 @@ import campusDirectoryOrganizationsRouter from './campusDirectoryOrganizations';
 import campusDirectoryPeopleRouter from './campusDirectoryPeople';
 import campusDirectoryRolesRouter from './campusDirectoryRoles';
 import campaignsRouter from './campaigns';
+import messPricingRouter from './messPricing';
 
 const router = Router();
 
@@ -73,5 +74,6 @@ router.use('/campusDirectory/organizations', campusDirectoryOrganizationsRouter)
 router.use('/campusDirectory/people', campusDirectoryPeopleRouter);
 router.use('/campusDirectory/roles', campusDirectoryRolesRouter);
 router.use('/campaigns', campaignsRouter);
+router.use('/messPricing', messPricingRouter);
 
 export default router;

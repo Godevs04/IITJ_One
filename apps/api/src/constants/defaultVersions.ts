@@ -33,5 +33,6 @@ export function defaultVersions(): MetaVersions {
     campusDirectoryOrganizations: 1,
     campusDirectoryRoles: 1,
     campaigns: 1,
+    messPricing: 1,
   };
 }

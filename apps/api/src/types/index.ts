@@ -26,7 +26,8 @@ export type ModuleName =
   | 'campusDirectoryPeople'
   | 'campusDirectoryOrganizations'
   | 'campusDirectoryRoles'
-  | 'campaigns';
+  | 'campaigns'
+  | 'messPricing';
 
 export interface MetaVersions {
   menu: number;
@@ -55,6 +56,7 @@ export interface MetaVersions {
   campusDirectoryOrganizations: number;
   campusDirectoryRoles: number;
   campaigns: number;
+  messPricing: number;
 }
 
 export type {
@@ -138,6 +140,7 @@ export interface TransportDoc {
 }
 
 export type { ScheduleExceptionPriority, ScheduleExceptionSource, ScheduleExceptionAttachment } from '@iitj1/types';
+export type { MessPricingConfig, MessPricingDoc, MessPricingInput, MessPricingUpdate } from '@iitj1/types';
 
 export interface TransportScheduleExceptionDoc {
   _id?: string | ObjectId;
