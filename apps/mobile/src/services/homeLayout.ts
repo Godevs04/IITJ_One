@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { Ionicons } from '@expo/vector-icons';
+import type { Icon } from '@/components/Icon';
 
 export type HomeSectionKey =
   | 'transport'
@@ -17,7 +17,7 @@ export type HomeSectionKey =
  * Home widgets in their default order — the IITJ One dashboard leads with Mess Menu, My QR and Transport.
  * Saved layouts keep the user's own order; widgets added later are appended (see normalise).
  */
-export const HOME_SECTIONS: { key: HomeSectionKey; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+export const HOME_SECTIONS: { key: HomeSectionKey; label: string; icon: keyof typeof Icon.glyphMap }[] = [
   { key: 'messMenu', label: 'Mess menu', icon: 'restaurant-outline' },
   { key: 'messQr', label: 'My QR', icon: 'qr-code-outline' },
   { key: 'transport', label: 'Transport', icon: 'bus-outline' },

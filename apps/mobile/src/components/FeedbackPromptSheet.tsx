@@ -8,7 +8,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { router, usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PrimaryButton, SecondaryButton } from '@/components/Buttons';
@@ -169,7 +169,7 @@ export function FeedbackPromptSheet() {
               accessibilityHint="Dismiss this feedback prompt. It may appear again later."
               style={styles.closeButton}
             >
-              <Ionicons name="close" size={22} color={theme.iconMuted} />
+              <Icon name="close" size={22} color={theme.iconMuted} />
             </Pressable>
 
             <Text style={[styles.title, { color: theme.text }]} accessibilityRole="header">

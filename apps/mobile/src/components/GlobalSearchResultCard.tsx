@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { highlightText } from '@/campus/utils/highlightText';
 import type { SearchEntry } from '@/services/search/types';
 import { useThemeColors } from '@/theme/ThemeProvider';
@@ -22,7 +22,7 @@ export function GlobalSearchResultCard({ entry, query, matchedField }: GlobalSea
   return (
     <View style={[styles.container, { borderColor: theme.border, backgroundColor: theme.surface }]}>
       <View style={[styles.iconBox, { backgroundColor: theme.primaryTint }]}>
-        <Ionicons name={entry.icon} size={18} color={theme.linkText} />
+        <Icon name={entry.icon} size={18} color={theme.linkText} />
       </View>
 
       <View style={styles.content}>

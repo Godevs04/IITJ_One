@@ -1,5 +1,5 @@
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ACADEMIC_DISPLAY_TYPE_LABELS, ACADEMIC_TERM_LABELS } from '@iitj1/types';
@@ -35,7 +35,7 @@ function BottomSheet({
             {title}
           </Text>
           <Pressable onPress={onClose} hitSlop={10} accessibilityRole="button" accessibilityLabel="Close">
-            <Ionicons name="close" size={24} color={theme.textMuted} />
+            <Icon name="close" size={24} color={theme.textMuted} />
           </Pressable>
         </View>
         <ScrollView contentContainerStyle={styles.sheetBody} showsVerticalScrollIndicator={false}>
@@ -358,7 +358,7 @@ export function CalendarSettingsSheet({
             accessibilityRole="radio"
             accessibilityState={{ checked: active }}
           >
-            <Ionicons name={active ? 'radio-button-on' : 'radio-button-off'} size={20} color={active ? theme.linkText : theme.iconMuted} />
+            <Icon name={active ? 'radio-button-on' : 'radio-button-off'} size={20} color={active ? theme.linkText : theme.iconMuted} />
             <View style={{ flex: 1 }}>
               <Text style={[styles.value, { color: theme.text, fontWeight: '600' }]}>{o.label}</Text>
               <Text style={[styles.meta, { color: theme.textMuted }]}>{o.hint}</Text>

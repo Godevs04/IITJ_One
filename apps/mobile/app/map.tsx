@@ -3,7 +3,7 @@ import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams } from 'expo-router';
 import { Alert, Share, StyleSheet, TextInput, View, Pressable, Text, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { ScreenShell } from '@/components/ScreenShell';
 import { Analytics, AppEvents, FirebaseCrashlytics } from '@/services/firebase';
 import { useThemeColors } from '@/theme/ThemeProvider';
@@ -70,7 +70,7 @@ function LocationDetailCard({
     <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <View style={styles.cardHeader}>
         <View style={[styles.categoryIcon, { backgroundColor: theme.primaryTint }]}>
-          <Ionicons name={categoryInfo.icon} size={20} color={theme.linkText} />
+          <Icon name={categoryInfo.icon} size={20} color={theme.linkText} />
         </View>
         <View style={styles.headerContent}>
           <Text style={[styles.locationName, { color: theme.text }]}>
@@ -93,7 +93,7 @@ function LocationDetailCard({
           accessibilityRole="button"
           accessibilityLabel={isFavorite ? `Remove ${location.name} from favorites` : `Add ${location.name} to favorites`}
         >
-          <Ionicons
+          <Icon
             name={isFavorite ? 'heart' : 'heart-outline'}
             size={18}
             color={isFavorite ? theme.linkText : theme.textMuted}
@@ -105,7 +105,7 @@ function LocationDetailCard({
         <View style={styles.addressSection}>
           {location.address && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-              <Ionicons name="location-outline" size={14} color={theme.textMuted} />
+              <Icon name="location-outline" size={14} color={theme.textMuted} />
               <Text style={[styles.address, { color: theme.textMuted, flex: 1 }]}>
                 {location.address}
               </Text>
@@ -113,7 +113,7 @@ function LocationDetailCard({
           )}
           {location.plusCode && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Ionicons name="locate-outline" size={14} color={theme.textMuted} />
+              <Icon name="locate-outline" size={14} color={theme.textMuted} />
               <Text style={[styles.plusCode, { color: theme.textMuted, flex: 1 }]}>
                 {location.plusCode}
               </Text>
@@ -133,7 +133,7 @@ function LocationDetailCard({
                 pressed && { opacity: 0.8 },
               ]}
             >
-              <Ionicons name="call-outline" size={14} color={theme.linkText} />
+              <Icon name="call-outline" size={14} color={theme.linkText} />
               <Text style={[styles.contactText, { color: theme.linkText }]}>
                 Call
               </Text>
@@ -148,7 +148,7 @@ function LocationDetailCard({
                 pressed && { opacity: 0.8 },
               ]}
             >
-              <Ionicons name="mail-outline" size={14} color={theme.linkText} />
+              <Icon name="mail-outline" size={14} color={theme.linkText} />
               <Text style={[styles.contactText, { color: theme.linkText }]}>
                 Email
               </Text>
@@ -167,7 +167,7 @@ function LocationDetailCard({
               pressed && { opacity: 0.8 },
             ]}
           >
-            <Ionicons name="map-outline" size={16} color={theme.linkText} />
+            <Icon name="map-outline" size={16} color={theme.linkText} />
             <Text style={[styles.actionText, { color: theme.linkText }]}>
               Maps
             </Text>
@@ -182,7 +182,7 @@ function LocationDetailCard({
               pressed && { opacity: 0.8 },
             ]}
           >
-            <Ionicons name="copy-outline" size={16} color={theme.textMuted} />
+            <Icon name="copy-outline" size={16} color={theme.textMuted} />
             <Text style={[styles.actionText, { color: theme.textMuted }]}>
               Copy
             </Text>
@@ -196,7 +196,7 @@ function LocationDetailCard({
             pressed && { opacity: 0.8 },
           ]}
         >
-          <Ionicons name="share-social-outline" size={16} color={theme.textMuted} />
+          <Icon name="share-social-outline" size={16} color={theme.textMuted} />
           <Text style={[styles.actionText, { color: theme.textMuted }]}>
             Share
           </Text>
@@ -361,7 +361,7 @@ export default function MapScreen() {
       {/* Search Bar */}
       <View style={styles.searchBarWrapper}>
         <View style={[styles.searchBar, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Ionicons name="search-outline" size={18} color={theme.textMuted} />
+          <Icon name="search-outline" size={18} color={theme.textMuted} />
           <TextInput
             placeholder="Search by name, alias, address..."
             placeholderTextColor={theme.textMuted}
@@ -378,7 +378,7 @@ export default function MapScreen() {
               accessibilityRole="button"
               accessibilityLabel="Clear search"
             >
-              <Ionicons name="close-outline" size={18} color={theme.textMuted} />
+              <Icon name="close-outline" size={18} color={theme.textMuted} />
             </Pressable>
           ) : null}
         </View>
@@ -407,7 +407,7 @@ export default function MapScreen() {
                   pressed && { backgroundColor: theme.surfaceMuted },
                 ]}
               >
-                <Ionicons
+                <Icon
                   name={LOCATION_CATEGORIES[item.category].icon}
                   size={16}
                   color={theme.linkText}
@@ -452,7 +452,7 @@ export default function MapScreen() {
                   pressed && { opacity: 0.8 },
                 ]}
               >
-                <Ionicons name="time-outline" size={14} color={theme.textMuted} />
+                <Icon name="time-outline" size={14} color={theme.textMuted} />
                 <Text style={[styles.recentSearchText, { color: theme.text }]} numberOfLines={1}>
                   {query}
                 </Text>
@@ -462,7 +462,7 @@ export default function MapScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={`Remove "${query}" from recent searches`}
                 >
-                  <Ionicons name="close-outline" size={14} color={theme.textMuted} />
+                  <Icon name="close-outline" size={14} color={theme.textMuted} />
                 </Pressable>
               </Pressable>
             ))}
@@ -473,7 +473,7 @@ export default function MapScreen() {
       {/* Filter Info */}
       {selectedCategories.size > 0 && (
         <View style={[styles.filterInfo, { backgroundColor: theme.primaryTint, borderColor: theme.primary }]}>
-          <Ionicons name="filter-outline" size={16} color={theme.linkText} />
+          <Icon name="filter-outline" size={16} color={theme.linkText} />
           <Text style={[styles.filterInfoText, { color: theme.linkText }]}>
             {selectedCategories.size} categor{selectedCategories.size === 1 ? 'y' : 'ies'} · {filteredLocations.length} location{filteredLocations.length === 1 ? '' : 's'}
           </Text>
@@ -508,7 +508,7 @@ export default function MapScreen() {
                 ]}
               >
                 <View style={styles.chipContent}>
-                  <Ionicons
+                  <Icon
                     name={cat.icon}
                     size={14}
                     color={isSelected ? theme.surface : theme.text}
@@ -527,7 +527,7 @@ export default function MapScreen() {
                 </View>
                 {isSelected && (
                   <View style={[styles.selectedBadge, { backgroundColor: theme.surface }]}>
-                    <Ionicons name="checkmark" size={12} color={theme.linkText} />
+                    <Icon name="checkmark" size={12} color={theme.linkText} />
                   </View>
                 )}
               </Pressable>
@@ -544,7 +544,7 @@ export default function MapScreen() {
           duplicate-key warnings during rapid data changes. */}
       {filteredLocations.length === 0 ? (
         <View style={styles.emptyState}>
-          <Ionicons
+          <Icon
             name={isSearchActive ? 'search-outline' : 'grid-outline'}
             size={40}
             color={theme.textMuted}

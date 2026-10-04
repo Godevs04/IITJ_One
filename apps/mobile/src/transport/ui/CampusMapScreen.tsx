@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useThemeColors } from '@/theme/ThemeProvider';
-import { AppSpacing, AppTypography } from '@/theme/tokens';
+import { AppSpacing, AppTypography, RedesignColors } from '@/theme/tokens';
 import type { TripWithStatus } from '../models/BusTypes';
 import { BUS_STOPS, getNormalizedStopName, openStopInMaps } from '../utils/coordinates';
 import { useLiveTracking } from '../state/LiveTrackingProvider';
@@ -64,6 +64,9 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
     scheme === 'dark'
       ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
       : 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
+  // Route lines in the redesign palette, readable on both basemaps.
+  const routeB1Color = scheme === 'dark' ? RedesignColors.primary : RedesignColors.primaryText;
+  const routeB2Color = scheme === 'dark' ? RedesignColors.secondary : RedesignColors.text;
 
   // Determine next bus times for each stop
   const stopNextTimes: Record<string, { bus: string; time: string }> = {};
@@ -244,7 +247,7 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
         map.addControl(new maplibregl.NavigationControl());
 
         map.on('load', () => {
-          // 1. Add Route B1 source & layers (Indigo)
+          // 1. Add Route B1 source & layers (primary)
           map.addSource('route-b1', {
             type: 'geojson',
             data: {
@@ -259,7 +262,7 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
             type: 'line',
             source: 'route-b1',
             layout: { 'line-join': 'round', 'line-cap': 'round' },
-            paint: { 'line-color': '#1D3F5E', 'line-width': 4, 'line-opacity': 0.85 }
+            paint: { 'line-color': '${routeB1Color}', 'line-width': 4, 'line-opacity': 0.85 }
           });
 
           // Direction arrows for B1
@@ -274,10 +277,10 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
               'text-keep-upright': false,
               'symbol-spacing': 80
             },
-            paint: { 'text-color': '#1D3F5E' }
+            paint: { 'text-color': '${routeB1Color}' }
           });
 
-          // 2. Add Route B2 source & layers (Sandstone)
+          // 2. Add Route B2 source & layers (text / secondary)
           map.addSource('route-b2', {
             type: 'geojson',
             data: {
@@ -292,7 +295,7 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
             type: 'line',
             source: 'route-b2',
             layout: { 'line-join': 'round', 'line-cap': 'round' },
-            paint: { 'line-color': '#C68642', 'line-width': 4, 'line-opacity': 0.85 }
+            paint: { 'line-color': '${routeB2Color}', 'line-width': 4, 'line-opacity': 0.85 }
           });
 
           // Direction arrows for B2
@@ -307,7 +310,7 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
               'text-keep-upright': false,
               'symbol-spacing': 80
             },
-            paint: { 'text-color': '#C68642' }
+            paint: { 'text-color': '${routeB2Color}' }
           });
 
           // 3. Animate route line drawing
@@ -458,7 +461,7 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
           accessibilityRole="button"
           accessibilityLabel="Back"
         >
-          <Ionicons name="arrow-back" size={24} color={theme.text} />
+          <Icon name="arrow-back" size={24} color={theme.text} />
         </Pressable>
         <Text style={[styles.title, { color: theme.text }]}>IITJ Transport Map</Text>
         <View style={styles.placeholder} />

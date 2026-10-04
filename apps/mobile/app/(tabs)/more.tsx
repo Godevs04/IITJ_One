@@ -1,7 +1,7 @@
 import { router, type Href } from 'expo-router';
 import { type ComponentProps } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { DirectoryShortcuts } from '@/components/DirectoryShortcuts';
 import { QuickAccessTile, type QuickAccessVariant } from '@/components/QuickAccessTile';
 import { ScreenShell } from '@/components/ScreenShell';
@@ -11,7 +11,7 @@ import { debugListKeys } from '@/debug/listDebug';
 
 interface MoreLink {
   title: string;
-  icon: ComponentProps<typeof Ionicons>['name'];
+  icon: ComponentProps<typeof Icon>['name'];
   route: Href;
   variant?: QuickAccessVariant;
 }

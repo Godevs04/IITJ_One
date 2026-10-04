@@ -1,5 +1,5 @@
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
@@ -54,7 +54,7 @@ export function DirectoryRow({
               accessibilityRole="button"
               accessibilityLabel={`Copy ${title} number`}
             >
-              <Ionicons name="copy-outline" size={18} color={theme.textMuted} />
+              <Icon name="copy-outline" size={18} color={theme.textMuted} />
             </Pressable>
           ) : null}
           <Pressable
@@ -64,13 +64,13 @@ export function DirectoryRow({
             accessibilityRole="button"
             accessibilityLabel={`Call ${title}`}
           >
-            <Ionicons name="call-outline" size={20} color={theme.linkText} />
+            <Icon name="call-outline" size={20} color={theme.linkText} />
           </Pressable>
         </View>
       ) : renderRight ? (
         renderRight()
       ) : onPress ? (
-        <Ionicons name="chevron-forward" size={18} color={theme.iconMuted} />
+        <Icon name="chevron-forward" size={18} color={theme.iconMuted} />
       ) : null}
     </Pressable>
   );

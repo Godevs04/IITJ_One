@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import {
@@ -96,7 +96,7 @@ export default function CustomizeHomeScreen() {
       scrollEnabled={draggingKey === null}
     >
       <Text style={[styles.hint, { color: theme.textMuted }]}>
-        Drag <Ionicons name="reorder-three" size={14} color={theme.textMuted} /> to reorder your Home screen. Turn off
+        Drag <Icon name="reorder-three" size={14} color={theme.textMuted} /> to reorder your Home screen. Turn off
         anything you don&apos;t use.
       </Text>
 
@@ -127,9 +127,9 @@ export default function CustomizeHomeScreen() {
                 accessibilityLabel={`Reorder ${meta.label}`}
                 hitSlop={8}
               >
-                <Ionicons name="reorder-three" size={26} color={isDragging ? theme.linkText : theme.iconMuted} />
+                <Icon name="reorder-three" size={26} color={isDragging ? theme.linkText : theme.iconMuted} />
               </View>
-              <Ionicons name={meta.icon} size={20} color={theme.linkText} />
+              <Icon name={meta.icon} size={20} color={theme.linkText} />
               <Text style={[styles.label, { color: theme.text }]} numberOfLines={1}>
                 {meta.label}
               </Text>
@@ -151,7 +151,7 @@ export default function CustomizeHomeScreen() {
         style={({ pressed }) => [styles.reset, { borderColor: theme.border }, pressed && { opacity: 0.7 }]}
         accessibilityRole="button"
       >
-        <Ionicons name="refresh" size={16} color={theme.linkText} />
+        <Icon name="refresh" size={16} color={theme.linkText} />
         <Text style={[styles.resetText, { color: theme.linkText }]}>Reset to default</Text>
       </Pressable>
     </ScrollView>

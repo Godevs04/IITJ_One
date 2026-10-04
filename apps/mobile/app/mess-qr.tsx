@@ -6,7 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Brightness from 'expo-brightness';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { preventScreenCaptureAsync, allowScreenCaptureAsync } from 'expo-screen-capture';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { EmptyState } from '@/components/EmptyState';
 import { PrimaryButton, SecondaryButton } from '@/components/Buttons';
@@ -250,10 +250,10 @@ export default function MessQrScreen() {
 
           <Animated.View style={[styles.topRow, overlayStyle]} pointerEvents="box-none">
             <Pressable onPress={openReCrop} hitSlop={16} accessibilityRole="button" accessibilityLabel="Edit QR">
-              <Ionicons name="pencil" size={22} color="#fff" />
+              <Icon name="pencil" size={22} color="#fff" />
             </Pressable>
             <Pressable onPress={goBack} hitSlop={16} accessibilityRole="button" accessibilityLabel="Close">
-              <Ionicons name="close" size={26} color="#fff" />
+              <Icon name="close" size={26} color="#fff" />
             </Pressable>
           </Animated.View>
 

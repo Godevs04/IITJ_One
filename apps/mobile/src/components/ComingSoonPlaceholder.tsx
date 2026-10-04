@@ -1,15 +1,15 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 export interface ComingSoonFeature {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: keyof typeof Icon.glyphMap;
   label: string;
 }
 
 interface ComingSoonPlaceholderProps {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: keyof typeof Icon.glyphMap;
   title: string;
   body: string;
   note: string;
@@ -24,12 +24,12 @@ export function ComingSoonPlaceholder({ icon, title, body, note, features }: Com
     <>
       <View style={styles.hero}>
         <View style={[styles.heroIcon, { backgroundColor: theme.primaryTint }]}>
-          <Ionicons name={icon} size={36} color={theme.linkText} />
+          <Icon name={icon} size={36} color={theme.linkText} />
         </View>
         <Text style={[styles.heroTitle, { color: theme.text }]}>{title}</Text>
         <Text style={[styles.heroBody, { color: theme.textMuted }]}>{body}</Text>
         <View style={[styles.badge, { backgroundColor: theme.secondaryTint }]}>
-          <Ionicons name="construct-outline" size={14} color={theme.secondary} />
+          <Icon name="construct-outline" size={14} color={theme.secondary} />
           <Text style={[styles.badgeText, { color: theme.secondary }]}>Coming Soon</Text>
         </View>
       </View>
@@ -47,7 +47,7 @@ export function ComingSoonPlaceholder({ icon, title, body, note, features }: Com
                 key={feature.label}
                 style={[styles.featureCard, { backgroundColor: theme.surfaceMuted, borderColor: theme.border }]}
               >
-                <Ionicons name={feature.icon} size={22} color={theme.iconMuted} />
+                <Icon name={feature.icon} size={22} color={theme.iconMuted} />
                 <Text style={[styles.featureLabel, { color: theme.textMuted }]}>{feature.label}</Text>
               </View>
             ))}

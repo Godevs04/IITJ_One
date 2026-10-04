@@ -11,7 +11,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useThemeColors } from '@/theme/ThemeProvider';
@@ -193,7 +193,7 @@ export default function LaundryScreen() {
           <Text style={[styles.selectText, { color: prefs.hostel ? theme.text : theme.textMuted }]}>
             {hostelLabel}
           </Text>
-          <Ionicons name="chevron-down" size={18} color={theme.iconMuted} />
+          <Icon name="chevron-down" size={18} color={theme.iconMuted} />
         </Pressable>
       </Section>
 
@@ -262,7 +262,7 @@ export default function LaundryScreen() {
       <Section title="Notification Status" theme={theme}>
         <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <View style={styles.statusRow}>
-            <Ionicons
+            <Icon
               name={
                 prefs.notificationPermissionStatus === 'granted'
                   ? 'checkmark-circle'
@@ -376,7 +376,7 @@ function HostelPickerModal({
               accessibilityRole="button"
               accessibilityLabel="Close"
             >
-              <Ionicons name="close" size={22} color={theme.iconMuted} />
+              <Icon name="close" size={22} color={theme.iconMuted} />
             </Pressable>
           </View>
           <ScrollView contentContainerStyle={styles.modalContent}>
@@ -415,7 +415,7 @@ function HostelOptionRow({
       ]}
     >
       <Text style={[styles.hostelOptionText, { color: theme.text }]}>{getHostelLabel(hostel)}</Text>
-      {selected ? <Ionicons name="checkmark" size={18} color={theme.linkText} /> : null}
+      {selected ? <Icon name="checkmark" size={18} color={theme.linkText} /> : null}
     </Pressable>
   );
 }

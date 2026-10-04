@@ -12,7 +12,7 @@ import {
   type ViewToken,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { EmptyState } from '@/components/EmptyState';
 import { DiscoverCampaignCard } from '@/components/DiscoverCampaignCard';
 import { DiscoverCardSkeleton } from '@/components/Skeleton';
@@ -110,13 +110,13 @@ export default function DiscoverScreen() {
 
       {syncError ? (
         <View style={[styles.errorBanner, { backgroundColor: theme.errorTint, borderColor: theme.error }]}>
-          <Ionicons name="alert-circle-outline" size={16} color={theme.error} />
+          <Icon name="alert-circle-outline" size={16} color={theme.error} />
           <Text style={[styles.errorText, { color: theme.error }]}>Sync issue: {syncError}</Text>
         </View>
       ) : null}
 
       <View style={[styles.searchRow, { borderColor: theme.border, backgroundColor: theme.surface }]}>
-        <Ionicons name="search-outline" size={18} color={theme.textMuted} />
+        <Icon name="search-outline" size={18} color={theme.textMuted} />
         <TextInput
           value={query}
           onChangeText={setQuery}

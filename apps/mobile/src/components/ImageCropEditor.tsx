@@ -6,7 +6,7 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
@@ -219,7 +219,7 @@ export function ImageCropEditor({ imageUri, onCancel, onSave }: ImageCropEditorP
           onPress={() => void rotate()}
           disabled={busy}
         >
-          <Ionicons name="refresh-outline" size={20} color={theme.text} />
+          <Icon name="refresh-outline" size={20} color={theme.text} />
           <Text style={[styles.toolLabel, { color: theme.text }]}>Rotate</Text>
         </Pressable>
         <Pressable
@@ -227,7 +227,7 @@ export function ImageCropEditor({ imageUri, onCancel, onSave }: ImageCropEditorP
           onPress={resetPanZoom}
           disabled={busy}
         >
-          <Ionicons name="scan-outline" size={20} color={theme.text} />
+          <Icon name="scan-outline" size={20} color={theme.text} />
           <Text style={[styles.toolLabel, { color: theme.text }]}>Reset Crop</Text>
         </Pressable>
       </View>

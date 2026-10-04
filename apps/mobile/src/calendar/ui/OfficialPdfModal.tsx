@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { API_BASE_URL } from '@/services/api';
 import { useModalOverlayLock } from '@/services/overlayGate';
@@ -122,7 +122,7 @@ export function OfficialPdfModal({ visible, onClose }: { visible: boolean; onClo
             onPress={onClose}
             style={({ pressed }) => [styles.headerBtn, pressed && styles.pressed]}
           >
-            <Ionicons name="close-outline" size={28} color={theme.text} />
+            <Icon name="close-outline" size={28} color={theme.text} />
           </Pressable>
           <Text style={[styles.modalTitle, { color: theme.text }]}>
             AY 2026-27 Academic Calendar
@@ -132,13 +132,13 @@ export function OfficialPdfModal({ visible, onClose }: { visible: boolean; onClo
               onPress={() => webViewRef.current?.postMessage(JSON.stringify({ type: 'zoomOut' }))}
               style={({ pressed }) => [styles.headerBtn, pressed && styles.pressed]}
             >
-              <Ionicons name="remove-circle-outline" size={24} color={theme.text} />
+              <Icon name="remove-circle-outline" size={24} color={theme.text} />
             </Pressable>
             <Pressable
               onPress={() => webViewRef.current?.postMessage(JSON.stringify({ type: 'zoomIn' }))}
               style={({ pressed }) => [styles.headerBtn, pressed && styles.pressed]}
             >
-              <Ionicons name="add-circle-outline" size={24} color={theme.text} />
+              <Icon name="add-circle-outline" size={24} color={theme.text} />
             </Pressable>
           </View>
         </View>

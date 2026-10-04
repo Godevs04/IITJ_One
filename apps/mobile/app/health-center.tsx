@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { DEFAULT_HEALTH_CENTER_DOC } from '@iitj1/types';
 import { DirectoryRow } from '@/components/DirectoryRow';
 import { ScreenShell } from '@/components/ScreenShell';
@@ -22,7 +22,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function PrimaryButton({ label, icon, onPress }: { label: string; icon: keyof typeof Ionicons.glyphMap; onPress: () => void }) {
+function PrimaryButton({ label, icon, onPress }: { label: string; icon: keyof typeof Icon.glyphMap; onPress: () => void }) {
   const theme = useThemeColors();
   return (
     <Pressable
@@ -31,7 +31,7 @@ function PrimaryButton({ label, icon, onPress }: { label: string; icon: keyof ty
       accessibilityRole="button"
       accessibilityLabel={label}
     >
-      <Ionicons name={icon} size={18} color={theme.onPrimary} />
+      <Icon name={icon} size={18} color={theme.onPrimary} />
       <Text style={[styles.buttonLabel, { color: theme.onPrimary }]}>{label}</Text>
     </Pressable>
   );
@@ -59,7 +59,7 @@ function DoctorRow({
   return (
     <View style={[styles.doctorRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <View style={[styles.doctorIcon, { backgroundColor: theme.errorTint }]}>
-        <Ionicons name="medkit-outline" size={18} color={theme.error} />
+        <Icon name="medkit-outline" size={18} color={theme.error} />
       </View>
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={[styles.doctorName, { color: theme.text }]}>{name}</Text>
@@ -281,7 +281,7 @@ export default function HealthCenterScreen() {
 
       <Pressable onPress={openOfficialSite} hitSlop={8} style={styles.officialLink} accessibilityRole="link">
         <Text style={[styles.body, { color: theme.linkText, fontWeight: '600' }]}>Official Health Center website</Text>
-        <Ionicons name="open-outline" size={14} color={theme.linkText} />
+        <Icon name="open-outline" size={14} color={theme.linkText} />
       </Pressable>
     </ScreenShell>
   );

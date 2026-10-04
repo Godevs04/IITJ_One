@@ -181,13 +181,27 @@ export const AppTypography = {
   },
 } as const;
 
+/** Notice category accents (light). Use getCategoryColors(scheme) so they stay readable in dark mode. */
 export const CategoryColors = {
-  mess: AppColors.mehrangarhSandstone,
-  transport: AppColors.jodhpurIndigo,
-  institute: AppColors.indigoLight,
+  mess: RedesignColors.secondaryText,
+  transport: RedesignColors.primaryText,
+  institute: RedesignColors.text,
   orientation: AppColors.sageWell,
-  general: AppColors.mutedText,
+  general: RedesignColors.textMuted,
 } as const;
+
+export type NoticeCategory = keyof typeof CategoryColors;
+
+export function getCategoryColors(scheme: 'light' | 'dark'): Record<NoticeCategory, string> {
+  if (scheme === 'light') return CategoryColors;
+  return {
+    mess: RedesignColors.secondary,
+    transport: RedesignColors.darkPrimaryText,
+    institute: RedesignColors.darkText,
+    orientation: AppColors.sageDark,
+    general: RedesignColors.darkTextMuted,
+  };
+}
 
 export type ColorScheme = 'light' | 'dark';
 
@@ -288,8 +302,8 @@ export function getThemeColors(scheme: ColorScheme): ThemeColors {
       quickAccessBg: R.darkLayerRaised,
       quickAccessBorder: R.darkBorder,
       quickAccessIcon: R.darkPrimaryText,
-      importantCardBg: '#2A1F18',
-      importantCardBorder: AppColors.duskDark,
+      importantCardBg: R.darkSecondaryTint,
+      importantCardBorder: R.secondary,
       noteCardBg: R.darkLayerRaised,
       error: AppColors.nonVegRed,
       errorTint: AppColors.errorContainerDark,
@@ -337,8 +351,8 @@ export function getThemeColors(scheme: ColorScheme): ThemeColors {
     quickAccessBg: R.layer,
     quickAccessBorder: R.border,
     quickAccessIcon: R.primaryText,
-    importantCardBg: AppColors.duskTint,
-    importantCardBorder: AppColors.tharDusk,
+    importantCardBg: R.secondaryTint,
+    importantCardBorder: R.secondaryText,
     noteCardBg: R.background,
     error: AppColors.nonVegRed,
     errorTint: AppColors.errorContainer,

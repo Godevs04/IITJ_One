@@ -12,7 +12,7 @@ import {
   useWindowDimensions,
   type ViewToken,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { Stack } from 'expo-router';
 import { goBack } from '@/navigation/goBack';
 import { EmptyState } from '@/components/EmptyState';
@@ -190,7 +190,7 @@ export default function CalendarScreen() {
               accessibilityRole="button"
               accessibilityLabel="Back"
             >
-              <Ionicons name="arrow-back" size={24} color={theme.headerTint || theme.text} />
+              <Icon name="arrow-back" size={24} color={theme.headerTint || theme.text} />
             </Pressable>
           ),
         }}
@@ -205,7 +205,7 @@ export default function CalendarScreen() {
           disabled={!timeline.months.length}
         >
           <Text style={[styles.monthButtonText, { color: theme.text }]} numberOfLines={1}>{monthLabel}</Text>
-          <Ionicons name="chevron-down" size={16} color={theme.textMuted} />
+          <Icon name="chevron-down" size={16} color={theme.textMuted} />
         </Pressable>
         <Pressable
           onPress={() => setSettingsOpen(true)}
@@ -214,7 +214,7 @@ export default function CalendarScreen() {
           accessibilityRole="button"
           accessibilityLabel="Calendar settings"
         >
-          <Ionicons name="ellipsis-horizontal" size={22} color={theme.text} />
+          <Icon name="ellipsis-horizontal" size={22} color={theme.text} />
         </Pressable>
       </View>
 
@@ -241,7 +241,7 @@ export default function CalendarScreen() {
             accessibilityLabel={`Showing ${program.toUpperCase()} events. Tap to show all`}
           >
             <Text style={[styles.chipText, { color: theme.secondary }]}>Program: {program.toUpperCase()}</Text>
-            <Ionicons name="close" size={14} color={theme.secondary} />
+            <Icon name="close" size={14} color={theme.secondary} />
           </Pressable>
         ) : null}
       </ScrollView>
@@ -302,7 +302,7 @@ export default function CalendarScreen() {
         ListFooterComponent={
           <View style={styles.footer}>
             <Pressable onPress={() => setShowPdf(true)} style={styles.pdfLink} accessibilityRole="button">
-              <Ionicons name="document-text-outline" size={18} color={theme.linkText} />
+              <Icon name="document-text-outline" size={18} color={theme.linkText} />
               <Text style={[styles.pdfLinkText, { color: theme.linkText }]}>View official PDF calendar</Text>
             </Pressable>
             {sourceLine ? <Text style={[styles.sourceLine, { color: theme.textMuted }]}>Source: {sourceLine}</Text> : null}
@@ -317,7 +317,7 @@ export default function CalendarScreen() {
           accessibilityRole="button"
           accessibilityLabel="Scroll to today"
         >
-          <Ionicons name={todayDirection === 'up' ? 'arrow-up' : 'arrow-down'} size={16} color={theme.onPrimary} />
+          <Icon name={todayDirection === 'up' ? 'arrow-up' : 'arrow-down'} size={16} color={theme.onPrimary} />
           <Text style={[styles.todayPillText, { color: theme.onPrimary }]}>Today</Text>
         </Pressable>
       ) : null}

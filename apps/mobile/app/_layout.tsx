@@ -6,7 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PostHogProvider } from 'posthog-react-native';
 import { posthog } from '@/config/posthog';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import {
   IBMPlexSans_400Regular,
   IBMPlexSans_500Medium,
@@ -181,7 +181,7 @@ function RootNavigator() {
               accessibilityRole="button"
               accessibilityLabel="Search"
             >
-              <Ionicons name="search-outline" size={22} color={colors.headerTint} />
+              <Icon name="search-outline" size={22} color={colors.headerTint} />
             </Pressable>
           ),
         }}
@@ -190,6 +190,7 @@ function RootNavigator() {
         <Stack.Screen name="search" options={{ headerShown: false }} />
         <Stack.Screen name="map" options={{ title: 'Campus Map' }} />
         <Stack.Screen name="bus-routes" options={{ title: 'Bus Routes' }} />
+        <Stack.Screen name="transport-alerts" options={{ title: 'Transport Alerts' }} />
         <Stack.Screen name="discover/index" options={{ title: 'Discover' }} />
         <Stack.Screen name="discover/[id]" options={{ title: 'Campaign' }} />
         <Stack.Screen name="campus-directory/index" options={{ title: 'Campus Directory' }} />

@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState, type ComponentProps, type ReactNode } from 'react';
 import { router, type Href } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ACADEMIC_DISPLAY_TYPE_LABELS } from '@iitj1/types';
 import { toDateKey } from '@/calendar/buildTimeline';
@@ -22,18 +22,18 @@ import { usePostHog } from 'posthog-react-native';
 import type { CalendarDoc, TransportDoc, HolidaysDoc, TransportAlertsDoc, TemporaryTransportScheduleDoc, CampaignDoc } from '@/types/campus';
 import { expirySeconds, formatExpiryLabel, formatRelativeTime } from '@/utils/date';
 import { getNextClass, type NextClass } from '@/utils/timetable';
-import { useThemeColors } from '@/theme/ThemeProvider';
+import { useAppColorScheme, useThemeColors } from '@/theme/ThemeProvider';
 import { debugListKeys } from '@/debug/listDebug';
 import {
   AppRadius,
   AppSpacing,
   AppTypography,
-  CategoryColors,
+  getCategoryColors,
 } from '@/theme/tokens';
 
 const QUICK_LINKS: {
   title: string;
-  icon: ComponentProps<typeof Ionicons>['name'];
+  icon: ComponentProps<typeof Icon>['name'];
   route: Href;
   variant?: QuickAccessVariant;
 }[] = [
@@ -78,7 +78,7 @@ function StatusCard({
 }: {
   label: string;
   headline: string;
-  icon: ComponentProps<typeof Ionicons>['name'];
+  icon: ComponentProps<typeof Icon>['name'];
   iconColor: string;
   value: string;
   unit: string;
@@ -109,7 +109,7 @@ function StatusCard({
             {headline}
           </Text>
         </View>
-        <Ionicons name={icon} size={24} color={iconColor} />
+        <Icon name={icon} size={24} color={iconColor} />
       </View>
       <View style={styles.dataRow}>
         <Text style={[styles.dataLarge, { color: valueColor }]}>{value}</Text>
@@ -128,9 +128,9 @@ function NoticeRow({
   onPress: () => void;
 }) {
   const theme = useThemeColors();
+  const categoryColors = getCategoryColors(useAppColorScheme());
   const categoryColor =
-    CategoryColors[notice.category as keyof typeof CategoryColors] ??
-    CategoryColors.general;
+    categoryColors[notice.category as keyof typeof categoryColors] ?? categoryColors.general;
 
   const meta = [
     notice.publishedAt ? formatRelativeTime(notice.publishedAt) : null,
@@ -163,7 +163,7 @@ function NoticeRow({
           {meta}
         </Text>
       </View>
-      <Ionicons
+      <Icon
         name="chevron-forward"
         size={20}
         color={theme.iconMuted}
@@ -419,7 +419,7 @@ export default function HomeScreen() {
         style={({ pressed }) => [styles.customizeLink, pressed && { opacity: 0.7 }]}
         accessibilityRole="button"
       >
-        <Ionicons name="options-outline" size={16} color={theme.linkText} />
+        <Icon name="options-outline" size={16} color={theme.linkText} />
         <Text style={[styles.customizeText, { color: theme.linkText }]}>Customize home</Text>
       </Pressable>
       </ScreenShell>

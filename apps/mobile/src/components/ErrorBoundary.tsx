@@ -7,6 +7,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { recordError } from '@/services/firebase/crashlytics';
+import { AppFontFamily, RedesignColors } from '@/theme/tokens';
 
 interface Props {
   children: ReactNode;
@@ -93,17 +94,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
-    backgroundColor: '#F6F0E4',
+    // Rendered outside ThemeProvider, so it uses the fixed light palette.
+    backgroundColor: RedesignColors.background,
   },
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1D3F5E',
+    fontFamily: AppFontFamily,
+    color: RedesignColors.text,
     marginBottom: 12,
   },
   message: {
     fontSize: 14,
-    color: '#666',
+    fontFamily: AppFontFamily,
+    color: RedesignColors.textMuted,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 24,
@@ -116,14 +120,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   button: {
-    backgroundColor: '#1D3F5E',
+    backgroundColor: RedesignColors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 14,
+    color: RedesignColors.text,
+    fontFamily: AppFontFamily,
+    fontSize: 16,
     fontWeight: '600',
   },
 });

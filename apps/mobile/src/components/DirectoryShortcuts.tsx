@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
@@ -49,7 +49,7 @@ export function DirectoryShortcuts() {
           ]}
         >
           <View style={[styles.iconCircle, { backgroundColor: card.color }]}>
-            <Ionicons name={card.icon} size={20} color={theme.onPrimary} />
+            <Icon name={card.icon} size={20} color={theme.surface} />
           </View>
           <Text style={[styles.title, { color: card.color }]}>{card.title}</Text>
           <Text style={[styles.caption, { color: theme.text }]} numberOfLines={2}>

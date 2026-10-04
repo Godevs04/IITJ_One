@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
@@ -7,7 +7,7 @@ export type QuickAccessVariant = 'default' | 'prominent' | 'danger';
 
 interface QuickAccessTileProps {
   title: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: keyof typeof Icon.glyphMap;
   onPress: () => void;
   variant?: QuickAccessVariant;
 }
@@ -48,7 +48,7 @@ export function QuickAccessTile({
       style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
     >
       <View style={[styles.iconBox, iconBox]}>
-        <Ionicons name={icon} size={24} color={iconColor} />
+        <Icon name={icon} size={24} color={iconColor} />
       </View>
       <Text
         style={[

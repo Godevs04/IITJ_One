@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
@@ -18,7 +18,7 @@ export function ErrorState({
 
   return (
     <View style={styles.container}>
-      <Ionicons name="alert-circle-outline" size={40} color={theme.error} />
+      <Icon name="alert-circle-outline" size={40} color={theme.error} />
       <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
       <Text style={[styles.message, { color: theme.textMuted }]}>{message}</Text>
       {onRetry ? (

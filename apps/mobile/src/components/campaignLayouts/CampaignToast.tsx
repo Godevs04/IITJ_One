@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { openCampaignDetails } from '@/utils/campaignNav';
@@ -38,11 +38,11 @@ export function CampaignToast({ campaigns }: CampaignToastProps) {
         accessibilityHint="Opens campaign details"
         style={({ pressed }) => [styles.body, pressed && styles.pressed]}
       >
-        <Ionicons name="megaphone-outline" size={18} color={theme.linkText} />
+        <Icon name="megaphone-outline" size={18} color={theme.linkText} />
         <Text style={[styles.text, { color: theme.text }]} numberOfLines={1}>
           {campaign.title}
         </Text>
-        <Ionicons name="chevron-forward" size={16} color={theme.iconMuted} />
+        <Icon name="chevron-forward" size={16} color={theme.iconMuted} />
       </Pressable>
       <Pressable
         onPress={() => {
@@ -54,7 +54,7 @@ export function CampaignToast({ campaigns }: CampaignToastProps) {
         accessibilityLabel="Dismiss campaign alert"
         style={styles.dismiss}
       >
-        <Ionicons name="close" size={16} color={theme.iconMuted} />
+        <Icon name="close" size={16} color={theme.iconMuted} />
       </Pressable>
     </View>
   );

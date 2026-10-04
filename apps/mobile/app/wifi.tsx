@@ -1,6 +1,6 @@
 import * as Linking from 'expo-linking';
 import { useCallback, useMemo } from 'react';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ComponentProps } from 'react';
 import { ScreenShell } from '@/components/ScreenShell';
@@ -12,7 +12,7 @@ import type { WifiDoc } from '@/types/campus';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
-type IoniconName = ComponentProps<typeof Ionicons>['name'];
+type IoniconName = ComponentProps<typeof Icon>['name'];
 
 async function openPdf(url: string, title: string) {
   try {
@@ -28,7 +28,7 @@ async function openPdf(url: string, title: string) {
 }
 
 function resolveIcon(name?: string): IoniconName {
-  if (name && name in Ionicons.glyphMap) return name as IoniconName;
+  if (name && name in Icon.glyphMap) return name as IoniconName;
   return 'document-outline';
 }
 
@@ -61,7 +61,7 @@ function InfoRow({
   return (
     <View style={styles.infoRow}>
       <View style={[styles.infoIconWrap, { backgroundColor: theme.primaryTint }]}>
-        <Ionicons name={icon} size={16} color={theme.linkText} />
+        <Icon name={icon} size={16} color={theme.linkText} />
       </View>
       <View style={styles.infoTextBlock}>
         <Text style={[styles.infoLabel, { color: theme.textMuted }]}>{label}</Text>
@@ -77,7 +77,7 @@ function GuideCard({ guide }: { guide: WifiGuide }) {
     <View style={[styles.guideCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <View style={styles.guideCardHeader}>
         <View style={[styles.guideIconWrap, { backgroundColor: theme.primaryTint }]}>
-          <Ionicons name={resolveIcon(guide.icon)} size={22} color={theme.linkText} />
+          <Icon name={resolveIcon(guide.icon)} size={22} color={theme.linkText} />
         </View>
         <View style={styles.guideTitleBlock}>
           <Text style={[styles.guideTitle, { color: theme.text }]}>{guide.title}</Text>
@@ -96,7 +96,7 @@ function GuideCard({ guide }: { guide: WifiGuide }) {
           { backgroundColor: theme.primary, opacity: pressed ? 0.82 : 1 },
         ]}
       >
-        <Ionicons name="open-outline" size={15} color={theme.onPrimary} />
+        <Icon name="open-outline" size={15} color={theme.onPrimary} />
         <Text style={[styles.openButtonText, { color: theme.onPrimary }]}>Open Official PDF</Text>
       </Pressable>
     </View>
@@ -137,12 +137,12 @@ export default function WifiScreen() {
       >
         <View style={styles.infoCardHeader}>
           <View style={[styles.wifiIconWrap, { backgroundColor: theme.primaryTint }]}>
-            <Ionicons name="wifi-outline" size={26} color={theme.linkText} />
+            <Icon name="wifi-outline" size={26} color={theme.linkText} />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={[styles.infoCardTitle, { color: theme.text }]}>Internet Facility</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Ionicons name="checkmark-circle-outline" size={14} color={theme.linkText} />
+              <Icon name="checkmark-circle-outline" size={14} color={theme.linkText} />
               <Text style={[styles.speedBadge, { color: theme.linkText }]}>
                 Up to 9 Gbps Connectivity
               </Text>

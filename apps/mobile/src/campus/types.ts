@@ -1,10 +1,10 @@
 import type { ComponentProps } from 'react';
-import type { Ionicons } from '@expo/vector-icons';
+import type { Icon } from '@/components/Icon';
 import type { LocationCategory } from '@iitj1/types';
 export { LOCATION_CATEGORIES as LOCATION_CATEGORY_VALUES } from '@iitj1/types';
 export type { LocationCategory };
 
-export type IoniconName = ComponentProps<typeof Ionicons>['name'];
+export type IoniconName = ComponentProps<typeof Icon>['name'];
 
 export interface CampusLocation {
   id: string;

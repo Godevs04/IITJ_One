@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { StyleSheet, Text, View, Linking, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { ContentCard } from '@/components/ContentCard';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
@@ -63,7 +63,7 @@ function ContactRow({
   onPress,
   theme,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: keyof typeof Icon.glyphMap;
   label: string;
   value: string;
   onPress?: () => void;
@@ -80,7 +80,7 @@ function ContactRow({
       ]}
     >
       <View style={styles.contactLeft}>
-        <Ionicons name={icon} size={20} color={theme.linkText} />
+        <Icon name={icon} size={20} color={theme.linkText} />
         <View>
           <Text style={[styles.contactLabel, { color: theme.textMuted }]}>
             {label}
@@ -90,7 +90,7 @@ function ContactRow({
           </Text>
         </View>
       </View>
-      {onPress ? <Ionicons name="chevron-forward" size={18} color={theme.iconMuted} /> : null}
+      {onPress ? <Icon name="chevron-forward" size={18} color={theme.iconMuted} /> : null}
     </Pressable>
   );
 }

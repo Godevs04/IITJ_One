@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useSegments } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppSpacing, AppTypography } from '@/theme/tokens';
 
@@ -91,7 +91,7 @@ export function ScreenShell({
                   accessibilityRole="button"
                   accessibilityLabel="Search"
                 >
-                  <Ionicons name="search-outline" size={24} color={theme.text} />
+                  <Icon name="search-outline" size={24} color={theme.text} />
                 </Pressable>
               ) : null}
             </View>
@@ -108,7 +108,7 @@ export function ScreenShell({
         ) : null}
         {error ? (
           <View style={[styles.errorBanner, { backgroundColor: theme.errorTint, borderColor: theme.error }]}>
-            <Ionicons name="alert-circle-outline" size={16} color={theme.error} />
+            <Icon name="alert-circle-outline" size={16} color={theme.error} />
             <Text style={[styles.errorText, { color: theme.error }]}>
               Sync issue: {error}
             </Text>

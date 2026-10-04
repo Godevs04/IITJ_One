@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Alert, StyleSheet, Text, View, TextInput, Pressable } from 'react-native';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
@@ -60,7 +61,7 @@ interface TransportScreenViewProps {
   requestedForLabel?: string;
 }
 
-const CONNECTION_INDICATOR: Record<SocketConnectionState, { icon: keyof typeof Ionicons.glyphMap; color: string }> = {
+const CONNECTION_INDICATOR: Record<SocketConnectionState, { icon: keyof typeof Icon.glyphMap; color: string }> = {
   connected: { icon: 'radio', color: '#22C55E' },
   connecting: { icon: 'radio-outline', color: '#F59E0B' },
   reconnecting: { icon: 'radio-outline', color: '#F59E0B' },
@@ -69,7 +70,7 @@ const CONNECTION_INDICATOR: Record<SocketConnectionState, { icon: keyof typeof I
 
 const PRIORITY_STYLES: Record<
   ScheduleExceptionPriority,
-  { light: string; lightBorder: string; dark: string; darkBorder: string; accent: string; icon: keyof typeof Ionicons.glyphMap }
+  { light: string; lightBorder: string; dark: string; darkBorder: string; accent: string; icon: keyof typeof Icon.glyphMap }
 > = {
   critical: { light: '#FDF2F2', lightBorder: '#F8B4B4', dark: '#2A1818', darkBorder: '#5B2323', accent: '#EF4444', icon: 'warning' },
   high: { light: '#FFF7ED', lightBorder: '#FDBA74', dark: '#2A1F12', darkBorder: '#5B3D1F', accent: '#F97316', icon: 'alert-circle' },
@@ -337,7 +338,7 @@ export function TransportScreenView({
         style={styles.headerButton}
         accessibilityLabel={`Live tracking connection: ${connectionState}`}
       >
-        <Ionicons
+        <Icon
           name={CONNECTION_INDICATOR[connectionState].icon}
           size={20}
           color={CONNECTION_INDICATOR[connectionState].color}
@@ -350,7 +351,7 @@ export function TransportScreenView({
         accessibilityRole="button"
         accessibilityLabel="Search"
       >
-        <Ionicons name="search-outline" size={24} color={theme.text} />
+        <Icon name="search-outline" size={24} color={theme.text} />
       </Pressable>
       <Pressable
         onPress={() => router.push('/transport-alerts')}
@@ -359,7 +360,7 @@ export function TransportScreenView({
         accessibilityRole="button"
         accessibilityLabel="Notifications"
       >
-        <Ionicons name="notifications-outline" size={24} color={theme.text} />
+        <Icon name="notifications-outline" size={24} color={theme.text} />
         {hasActiveAlert && (
           <View style={[styles.redDot, { backgroundColor: '#EF4444' }]} />
         )}
@@ -402,7 +403,7 @@ export function TransportScreenView({
               ]}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: AppSpacing.xs, marginBottom: 4 }}>
-                <Ionicons name={style.icon} size={18} color={style.accent} />
+                <Icon name={style.icon} size={18} color={style.accent} />
                 <Text style={{ fontSize: 14, fontWeight: '700', color: style.accent }}>{exceptionSchedule.title}</Text>
               </View>
               <Text style={{ fontSize: 13, color: theme.text, fontWeight: '500' }}>{exceptionSchedule.reason}</Text>
@@ -429,7 +430,7 @@ export function TransportScreenView({
                       onPress={() => void WebBrowser.openBrowserAsync(att.url)}
                       style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'center', gap: 4 }, pressed && styles.pressed]}
                     >
-                      <Ionicons name="document-attach-outline" size={14} color={style.accent} />
+                      <Icon name="document-attach-outline" size={14} color={style.accent} />
                       <Text style={{ fontSize: 12, color: style.accent, textDecorationLine: 'underline' }}>
                         {att.name || 'Official attachment'}
                       </Text>
@@ -443,7 +444,7 @@ export function TransportScreenView({
       ) : isOverridden ? (
         <View style={[styles.overrideBanner, { backgroundColor: darkMode ? '#2A1818' : '#FDF2F2', borderColor: '#F8B4B4' }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: AppSpacing.xs, marginBottom: 4 }}>
-            <Ionicons name="warning" size={18} color="#EF4444" />
+            <Icon name="warning" size={18} color="#EF4444" />
             <Text style={{ fontSize: 14, fontWeight: '700', color: '#EF4444' }}>Special Transport Schedule</Text>
           </View>
           <Text style={{ fontSize: 13, color: darkMode ? '#FCA5A5' : '#9B1C1C', fontWeight: '500' }}>
@@ -493,7 +494,7 @@ export function TransportScreenView({
 
       {requestCaption && !isOverridden && !isExceptionLive ? (
         <View style={[styles.requestCaption, { backgroundColor: theme.primaryTint }]}>
-          <Ionicons name="calendar-outline" size={16} color={theme.linkText} />
+          <Icon name="calendar-outline" size={16} color={theme.linkText} />
           <Text style={[styles.requestCaptionText, { color: theme.linkText }]}>
             {dayTypeFilter === 'sun-holiday' ? 'Sunday & Holidays' : 'Mon-Sat'} timetable · {requestCaption}
           </Text>
@@ -506,14 +507,14 @@ export function TransportScreenView({
             accessibilityRole="button"
             accessibilityLabel="Back to today's timetable"
           >
-            <Ionicons name="close" size={18} color={theme.linkText} />
+            <Icon name="close" size={18} color={theme.linkText} />
           </Pressable>
         </View>
       ) : null}
 
       {/* Search Input */}
       <View style={[styles.searchBox, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-        <Ionicons name="search" size={18} color={theme.iconMuted} />
+        <Icon name="search" size={18} color={theme.iconMuted} />
         <TextInput
           placeholder="Search stops (e.g. Old Mess, MBM...)"
           placeholderTextColor={theme.textMuted}
@@ -523,7 +524,7 @@ export function TransportScreenView({
         />
         {searchQuery ? (
           <Pressable onPress={() => setSearchQuery('')}>
-            <Ionicons name="close-circle" size={18} color={theme.iconMuted} />
+            <Icon name="close-circle" size={18} color={theme.iconMuted} />
           </Pressable>
         ) : null}
       </View>
@@ -553,7 +554,7 @@ export function TransportScreenView({
                 ]}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <Ionicons
+                  <Icon
                     name={alert.priority === 'critical' ? 'warning' : 'notifications'}
                     size={16}
                     color={alert.priority === 'critical' ? '#EF4444' : theme.linkText}
@@ -590,7 +591,7 @@ export function TransportScreenView({
                     },
                   ]}
                 >
-                  <Ionicons name="star" size={12} color={theme.secondary} />
+                  <Icon name="star" size={12} color={theme.secondary} />
                   <Text
                     style={[
                       styles.favChipText,
@@ -607,7 +608,7 @@ export function TransportScreenView({
                 onPress={() => setSelectedFavoriteFilter(null)}
                 style={[styles.favChip, { borderColor: theme.error, backgroundColor: theme.errorTint }]}
               >
-                <Ionicons name="close-circle-outline" size={12} color={theme.error} />
+                <Icon name="close-circle-outline" size={12} color={theme.error} />
                 <Text style={[styles.favChipText, { color: theme.error }]}>Clear Filter</Text>
               </Pressable>
             )}
@@ -730,7 +731,7 @@ export function TransportScreenView({
           style={({ pressed }) => [styles.updatesBanner, { backgroundColor: theme.primaryTint }, pressed && styles.pressed]}
           accessibilityRole="link"
         >
-          <Ionicons name="information-circle-outline" size={16} color={theme.linkText} />
+          <Icon name="information-circle-outline" size={16} color={theme.linkText} />
           <Text style={[styles.updatesText, { color: theme.linkText }]}>
             For the latest official schedule updates, tap here
           </Text>

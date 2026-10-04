@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import * as WebBrowser from 'expo-web-browser';
 import { useTheme } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing } from '@/theme/tokens';
@@ -110,7 +110,7 @@ export default function TransportAlertsScreen() {
         {activeAlerts.length === 0 ? (
           <View style={styles.emptyContainer}>
             <View style={[styles.emptyIconCircle, { backgroundColor: theme.primaryTint }]}>
-              <Ionicons name="notifications-off-outline" size={32} color={theme.linkText} />
+              <Icon name="notifications-off-outline" size={32} color={theme.linkText} />
             </View>
             <Text style={[styles.emptyTitle, { color: theme.text }]}>All Clear</Text>
             <Text style={[styles.emptySubtitle, { color: theme.textMuted }]}>
@@ -135,7 +135,7 @@ export default function TransportAlertsScreen() {
                 >
                   <View style={styles.cardHeader}>
                     <View style={styles.headerTitleContainer}>
-                      <Ionicons
+                      <Icon
                         name={priorityStyle.icon}
                         size={20}
                         color={priorityStyle.iconColor}
@@ -175,7 +175,7 @@ export default function TransportAlertsScreen() {
                         ]}
                       >
                         <Text style={[styles.linkText, { color: theme.linkText }]}>Read More</Text>
-                        <Ionicons name="open-outline" size={14} color={theme.linkText} />
+                        <Icon name="open-outline" size={14} color={theme.linkText} />
                       </Pressable>
                     ) : null}
                   </View>
