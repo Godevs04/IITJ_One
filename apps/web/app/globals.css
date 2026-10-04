@@ -23,6 +23,11 @@
   --color-sage: 110 139 116;
   --color-non-veg: 178 58 52;
   --color-surface: 255 252 247;
+  /* Theme-independent: text/fills on the always-navy gradient surfaces (buttons, stat card, CTA band). */
+  --color-cream: 244 236 224;
+  --color-navy: 0 41 71;
+  /* Indigo as a text/icon color; lightened in dark mode so it stays readable on dark surfaces. */
+  --color-accent: 29 63 94;
 }
 
 /* Dark palette ported from apps/mobile/src/theme/tokens.ts getThemeColors('dark') */
@@ -40,6 +45,7 @@
   --color-sage: 140 176 147;
   --color-non-veg: 224 122 117;
   --color-surface: 33 56 81;
+  --color-accent: 143 182 216;
 }
 
 html {
@@ -124,7 +130,7 @@ body::before {
   }
 
   .skip-link {
-    @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-xl focus:bg-indigo focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-sand focus:shadow-elevated;
+    @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-xl focus:bg-indigo focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-cream focus:shadow-elevated;
   }
 }
 

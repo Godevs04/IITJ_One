@@ -31,6 +31,9 @@ const config: Config = {
         sage: 'rgb(var(--color-sage) / <alpha-value>)',
         'non-veg': 'rgb(var(--color-non-veg) / <alpha-value>)',
         surface: 'rgb(var(--color-surface) / <alpha-value>)',
+        cream: 'rgb(var(--color-cream) / <alpha-value>)',
+        navy: 'rgb(var(--color-navy) / <alpha-value>)',
+        accent: 'rgb(var(--color-accent) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['var(--font-ibm-plex-sans)', 'system-ui', 'sans-serif'],

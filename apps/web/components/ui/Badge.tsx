@@ -4,7 +4,7 @@ const tones: Record<Tone, string> = {
   success: 'bg-sage/15 text-sage',
   warning: 'bg-sandstone-tint text-sandstone',
   danger: 'bg-non-veg/10 text-non-veg',
-  info: 'bg-indigo-tint text-indigo',
+  info: 'bg-indigo-tint text-accent',
   neutral: 'bg-sand text-muted',
 };
 

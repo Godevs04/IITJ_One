@@ -115,11 +115,11 @@ export default function TermsPage() {
           <h2 className="text-lg font-semibold text-ink">Contact</h2>
           <p className="mt-2 text-muted">
             If you have any questions about these Terms of Use, please contact us through the{' '}
-            <a href="/support" className="text-indigo hover:underline">
+            <a href="/support" className="text-accent hover:underline">
               Support
             </a>{' '}
             page or at{' '}
-            <a href={`mailto:${SUPPORT_EMAIL}`} className="text-indigo hover:underline">
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="text-accent hover:underline">
               {SUPPORT_EMAIL}
             </a>
             .

@@ -7,10 +7,10 @@ import { TAGLINE, FEATURES } from '@/lib/constants';
 
 function HeroStatCard() {
   return (
-    <div className="relative mx-auto max-w-sm rounded-[2rem] bg-gradient-to-br from-indigo-deep via-[#123652] to-indigo p-6 shadow-glow sm:p-8">
+    <div className="relative mx-auto max-w-sm rounded-[2rem] bg-gradient-to-br from-indigo-deep via-[#123652] to-indigo p-6 shadow-glow sm:p-8 dark:from-[#1d3f5e] dark:via-[#24496b] dark:to-[#2f5a80] dark:ring-1 dark:ring-white/10">
       <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full border border-white/10" aria-hidden />
       <div className="absolute -bottom-8 -left-6 h-16 w-16 rounded-full border border-white/10" aria-hidden />
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sand/70">At a glance</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cream/70">At a glance</p>
       <div className="mt-4 grid grid-cols-2 gap-3">
         <StatTile value={FEATURES.length} label="Campus essentials" />
         <StatTile value={100} suffix="%" label="Offline-first" />

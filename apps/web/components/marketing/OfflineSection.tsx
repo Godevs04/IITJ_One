@@ -25,7 +25,7 @@ export function OfflineSection() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {available.map((item) => (
             <div key={item.label} className="flex items-center gap-3">
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-tint text-indigo">
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-tint text-accent">
                 <item.Icon className="h-4 w-4" aria-hidden />
               </span>
               <p className="text-sm font-medium text-ink">{item.label}</p>

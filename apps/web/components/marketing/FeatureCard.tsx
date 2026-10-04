@@ -4,7 +4,7 @@ import type { FeatureMeta } from '@/lib/constants';
 
 const accentClasses: Record<FeatureMeta['accent'], string> = {
   sandstone: 'bg-sandstone-tint text-sandstone',
-  indigo: 'bg-indigo-tint text-indigo',
+  indigo: 'bg-indigo-tint text-accent',
   dusk: 'bg-dusk/10 text-dusk',
   sage: 'bg-sage/15 text-sage',
   muted: 'bg-sand text-muted',
