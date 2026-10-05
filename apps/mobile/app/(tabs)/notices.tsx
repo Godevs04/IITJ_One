@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import * as WebBrowser from 'expo-web-browser';
 import { View } from 'react-native';
+import { router } from 'expo-router';
 import { EmptyState } from '@/components/EmptyState';
 import { NoticeCard } from '@/components/NoticeCard';
 import { ScreenShell } from '@/components/ScreenShell';
@@ -66,11 +67,16 @@ export default function NoticesScreen() {
               isImportant={n.isImportant}
               expiryLabel={formatExpiryLabel(expirySeconds(n.expiryDate))}
               imageUrl={n.imageUrl}
-              hasLink={isHttpUrl(n.link)}
+              hasLink={Boolean(n.link && (isHttpUrl(n.link) || (n.link as string).startsWith('/')))}
               onPress={() => {
                 Analytics.trackEvent(AppEvents.NOTICE_OPENED, { category: n.category });
                 void FirebaseCrashlytics.log(`Notice opened: ${n.category}`);
-                if (isHttpUrl(n.link)) void WebBrowser.openBrowserAsync(n.link);
+                const target = n.link;
+                if (typeof target === 'string' && target.startsWith('/')) {
+                  router.push(target as any);
+                } else if (isHttpUrl(target)) {
+                  void WebBrowser.openBrowserAsync(target);
+                }
               }}
             />
           ))}

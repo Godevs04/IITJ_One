@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useState, type ComponentProps, type ReactNode } from 'react';
-import { router, type Href } from 'expo-router';
+import { router, useFocusEffect, type Href } from 'expo-router';
 import { Icon } from '@/components/Icon';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ACADEMIC_DISPLAY_TYPE_LABELS } from '@iitj1/types';
@@ -16,6 +16,7 @@ import { HomeCampaignSlots } from '@/components/campaignLayouts/HomeCampaignSlot
 import { matchesAppVersionTargeting } from '@/utils/campaignTargeting';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
+import { useActiveScheduleException } from '@/hooks/useActiveScheduleException';
 import { listTimetableEntries } from '@/services/localDb';
 import { Analytics, AppEvents } from '@/services/firebase';
 import { usePostHog } from 'posthog-react-native';
@@ -56,6 +57,8 @@ interface CachedNotice {
   expiryDate: string;
   publishedAt?: string;
   deletedAt?: string | null;
+  link?: string;
+  metadata?: Record<string, unknown>;
 }
 
 function to12Hour(time: string): { value: string; meridiem: string } {
@@ -191,6 +194,13 @@ export default function HomeScreen() {
   const alerts = useCampusModule<TransportAlertsDoc>('transportAlerts');
   const tempSchedule = useCampusModule<TemporaryTransportScheduleDoc>('temporaryTransportSchedule');
   const campaigns = useCampusModule<CampaignDoc[]>('campaigns');
+  const { data: activeException, refetch: refetchException } = useActiveScheduleException();
+
+  useFocusEffect(
+    useCallback(() => {
+      void refetchException();
+    }, [refetchException]),
+  );
 
   const hasCriticalAlert = useMemo(() => {
     if (!alerts?.alerts) return false;
@@ -224,9 +234,8 @@ export default function HomeScreen() {
   }, []);
 
   const onRefresh = useCallback(async () => {
-    await sync();
-    await loadLocal();
-  }, [sync, loadLocal]);
+    await Promise.all([sync(), refetchException(), loadLocal()]);
+  }, [sync, refetchException, loadLocal]);
 
   const topNotices = useMemo(() => {
     const nowTime = now.getTime();
@@ -275,6 +284,7 @@ export default function HomeScreen() {
         alerts={alerts}
         tempSchedule={tempSchedule}
         hasCriticalAlert={hasCriticalAlert}
+        activeException={activeException}
       />
     ),
     nextClass: (
@@ -396,7 +406,13 @@ export default function HomeScreen() {
               <NoticeRow
                 key={`${n.title}-${i}`}
                 notice={n}
-                onPress={() => router.push('/(tabs)/notices')}
+                onPress={() => {
+                  if (n.link?.startsWith('/')) {
+                    router.push(n.link as any);
+                  } else {
+                    router.push('/(tabs)/notices');
+                  }
+                }}
               />
             ))}
           </View>

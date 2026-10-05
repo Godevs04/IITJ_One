@@ -46,6 +46,8 @@ import type {
   CampaignDoc,
   MessPricingConfig,
   AiCommandRecord,
+  AiSessionRecord,
+  TemporaryMessUpdateDoc,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
 import { busesConflict, dateRangesOverlap } from '../services/transportScheduleExceptionStatus';
@@ -106,6 +108,8 @@ interface FallbackState {
   /** Mess pricing configurations — seeded with the prices the app used to hard-code (same as the DB migration). */
   messPricing: MessPricingConfig[];
   aiCommands: AiCommandRecord[];
+  aiSessions: AiSessionRecord[];
+  temporaryMessUpdates: TemporaryMessUpdateDoc[];
 }
 
 let state: FallbackState | null = null;
@@ -916,7 +920,16 @@ function buildDefaultState(): FallbackState {
     },
     transportScheduleExceptions: [],
     transportScheduleExceptionRevisions: [],
-    admins: [],
+    admins: [
+      {
+        email: 'sukeshperiyasamy@gmail.com',
+        passwordHash: '$2b$12$BYCTbu1WpWq.whGbl7zAXuS8x4FGDZv4jSMLVfB5lgc0r9FsNj1ze',
+        name: 'Sukesh Periyasamy',
+        role: 'superadmin',
+        active: true,
+        tokenVersion: 0,
+      },
+    ],
     auditLog: [],
     suggestions: [],
     devices: [],
@@ -939,6 +952,8 @@ function buildDefaultState(): FallbackState {
     roles: [],
     campaigns: [],
     aiCommands: [],
+    aiSessions: [],
+    temporaryMessUpdates: [],
     messPricing: [
       {
         ...DEFAULT_MESS_PRICING,
@@ -1724,10 +1739,113 @@ export function fallbackTransitionAiCommand(
   commandId: string,
   from: readonly string[],
   set: Partial<AiCommandRecord>,
+  match: { revision?: number; previewToken?: string } = {},
 ): AiCommandRecord | null {
   const s = getFallbackState();
-  const idx = s.aiCommands.findIndex((c) => c.commandId === commandId && from.includes(c.status));
+  const idx = s.aiCommands.findIndex(
+    (c) =>
+      c.commandId === commandId &&
+      from.includes(c.status) &&
+      (match.revision === undefined || c.revision === match.revision) &&
+      (match.previewToken === undefined || c.previewToken === match.previewToken),
+  );
   if (idx < 0) return null;
   s.aiCommands[idx] = { ...s.aiCommands[idx], ...set };
   return s.aiCommands[idx];
 }
+
+export function fallbackListAiCommands(campusId: string, limit: number): AiCommandRecord[] {
+  return getFallbackState()
+    .aiCommands.filter((c) => c.campusId === campusId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, limit);
+}
+
+export function fallbackInsertAiSession(doc: AiSessionRecord): void {
+  getFallbackState().aiSessions.push({ ...doc, _id: nextId() });
+}
+
+export function fallbackGetAiSession(sessionId: string): AiSessionRecord | null {
+  return getFallbackState().aiSessions.find((x) => x.sessionId === sessionId) ?? null;
+}
+
+export function fallbackLatestAiSession(adminId: string, campusId: string): AiSessionRecord | null {
+  return (
+    getFallbackState()
+      .aiSessions.filter((x) => x.adminId === adminId && x.campusId === campusId)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0] ?? null
+  );
+}
+
+export function fallbackUpdateAiSession(sessionId: string, set: Partial<AiSessionRecord>): AiSessionRecord | null {
+  const s = getFallbackState();
+  const idx = s.aiSessions.findIndex((x) => x.sessionId === sessionId);
+  if (idx < 0) return null;
+  s.aiSessions[idx] = { ...s.aiSessions[idx], ...set };
+  return s.aiSessions[idx];
+}
+
+export function fallbackCreateTemporaryMessUpdate(doc: TemporaryMessUpdateDoc): TemporaryMessUpdateDoc {
+  const s = getFallbackState();
+  const created: TemporaryMessUpdateDoc = {
+    ...doc,
+    _id: doc._id || nextId(),
+  };
+  s.temporaryMessUpdates.push(created);
+  return created;
+}
+
+export function fallbackGetTemporaryMessUpdateById(id: string): TemporaryMessUpdateDoc | null {
+  return getFallbackState().temporaryMessUpdates.find((u) => u._id === id) ?? null;
+}
+
+export function fallbackGetTemporaryMessUpdatesForDate(
+  campusId: string,
+  date: string,
+  activeOnly = true,
+): TemporaryMessUpdateDoc[] {
+  const s = getFallbackState();
+  return s.temporaryMessUpdates.filter((u) => {
+    if (u.campusId !== campusId || u.date !== date) return false;
+    if (activeOnly && u.status !== 'active') return false;
+    return true;
+  });
+}
+
+export function fallbackGetActiveTemporaryMessUpdates(
+  campusId: string,
+  now: Date = new Date(),
+): TemporaryMessUpdateDoc[] {
+  const s = getFallbackState();
+  return s.temporaryMessUpdates.filter(
+    (u) => u.campusId === campusId && u.status === 'active' && new Date(u.expiresAt).getTime() > now.getTime(),
+  );
+}
+
+export function fallbackUpdateTemporaryMessUpdate(
+  id: string,
+  patch: Partial<TemporaryMessUpdateDoc>,
+): TemporaryMessUpdateDoc | null {
+  const s = getFallbackState();
+  const idx = s.temporaryMessUpdates.findIndex((u) => u._id === id);
+  if (idx < 0) return null;
+  s.temporaryMessUpdates[idx] = { ...s.temporaryMessUpdates[idx], ...patch, updatedAt: new Date().toISOString() };
+  return s.temporaryMessUpdates[idx];
+}
+
+export function fallbackArchiveTemporaryMessUpdate(id: string): boolean {
+  const s = getFallbackState();
+  const idx = s.temporaryMessUpdates.findIndex((u) => u._id === id);
+  if (idx < 0) return false;
+  s.temporaryMessUpdates[idx].status = 'archived';
+  s.temporaryMessUpdates[idx].updatedAt = new Date().toISOString();
+  return true;
+}
+
+export function fallbackDeleteTemporaryMessUpdate(id: string): boolean {
+  const s = getFallbackState();
+  const initial = s.temporaryMessUpdates.length;
+  s.temporaryMessUpdates = s.temporaryMessUpdates.filter((u) => u._id !== id);
+  return s.temporaryMessUpdates.length < initial;
+}
+

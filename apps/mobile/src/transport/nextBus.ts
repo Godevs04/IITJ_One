@@ -19,12 +19,28 @@ export function busPhase(startMin: number, endMin: number, nowMin: number): BusP
   return 'done';
 }
 
+function isCancelledTrip(trip: unknown): boolean {
+  if (!trip || typeof trip !== 'object') return false;
+  const anyTrip = trip as Record<string, unknown>;
+  if (anyTrip.serviceStatus === 'cancelled') return true;
+  if (
+    anyTrip.trip &&
+    typeof anyTrip.trip === 'object' &&
+    (anyTrip.trip as Record<string, unknown>).serviceStatus === 'cancelled'
+  ) {
+    return true;
+  }
+  return false;
+}
+
 /**
  * The bus to emphasise for one direction: the next one to depart; if none departs later today, the one
  * currently on the road; otherwise null (no more buses today).
+ * Cancelled trips are never picked as the next or running bus.
  */
 export function pickNextBus<T>(trips: TimedTrip<T>[], nowMin: number): TimedTrip<T> | null {
-  const sorted = [...trips].sort((a, b) => a.startMin - b.startMin);
+  const activeTrips = trips.filter((t) => !isCancelledTrip(t.trip));
+  const sorted = [...activeTrips].sort((a, b) => a.startMin - b.startMin);
   const upcoming = sorted.find((t) => t.startMin > nowMin);
   if (upcoming) return upcoming;
   return sorted.find((t) => busPhase(t.startMin, t.endMin, nowMin) === 'running') ?? null;

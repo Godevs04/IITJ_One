@@ -38,6 +38,17 @@ export const config = {
   bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS ?? '12', 10),
   enableEtag: process.env.ENABLE_ETAG !== 'false',
   logLevel: process.env.LOG_LEVEL ?? 'info',
+  /**
+   * AI Admin interpreter. 'rules' (default) is the built-in deterministic parser — no network, no key.
+   * 'anthropic' | 'openai' | 'gemini' call that provider server-side with AI_API_KEY (never sent to clients).
+   */
+  ai: {
+    provider: (process.env.AI_PROVIDER ?? 'rules').trim().toLowerCase(),
+    apiKey: process.env.AI_API_KEY ?? '',
+    model: process.env.AI_MODEL ?? '',
+    timeoutMs: parseInt(process.env.AI_TIMEOUT_MS ?? '30000', 10),
+    messagesPerMinute: parseInt(process.env.AI_MESSAGES_PER_MIN ?? '30', 10),
+  },
   /** 'json' for structured single-line JSON logs (production/log aggregators); 'pretty' for the existing human-readable console format (local dev default). */
   logFormat: (process.env.LOG_FORMAT ?? (process.env.NODE_ENV === 'production' ? 'json' : 'pretty')) as 'json' | 'pretty',
   /**

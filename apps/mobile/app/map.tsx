@@ -345,16 +345,6 @@ export default function MapScreen() {
   debugListKeys('MapScreen', 'categories', categories, (cat) => cat.id);
   debugListKeys('MapScreen', 'filteredLocations', filteredLocations, (item) => item.id);
 
-  if (__DEV__) {
-    filteredLocations.forEach((item, index) => {
-      console.log('📍 [MapScreen Debug] filteredLocations item:', {
-        index,
-        id: item.id,
-        keys: Object.keys(item),
-        item,
-      });
-    });
-  }
 
   return (
     <ScreenShell hideTitle subtitle="Campus Directory">

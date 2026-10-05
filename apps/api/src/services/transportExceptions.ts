@@ -20,10 +20,12 @@ import {
   archiveTransportScheduleException,
   createTransportScheduleException,
   deleteTransportScheduleException,
+  getNoticeByScheduleExceptionId,
   getTransportScheduleExceptionById,
   getTransportScheduleExceptionForDay,
   publishTransportScheduleException,
   unpublishTransportScheduleException,
+  updateNotice,
   updateTransportScheduleException,
   type PublishScheduleExceptionResult,
   type UnpublishScheduleExceptionResult,
@@ -32,9 +34,25 @@ import { audited, type WithAudit } from './serviceResult';
 import { getIstDateString, getIstDayName } from '../utils/istTime';
 import { getRegularTripsForDay } from './tripSchedule';
 import { computeScheduleStatus } from './transportScheduleExceptionStatus';
-import type { TransportScheduleExceptionDoc } from '../types';
+import { getSocketIoInstance } from './rideSocket';
+import { publishNotice, removeNotice } from './notices';
+import { dispatchTopicPush } from './push';
+import {
+  buildTransportCancellationAnnouncement,
+  cleanCancellationReason,
+  type CancellationTripDetails,
+} from './transportAnnouncement';
+import type { NoticeMetadata, TransportScheduleExceptionDoc } from '../types';
 
 export type { WithAudit } from './serviceResult';
+
+function notifyTransportUpdate(campusId: string) {
+  try {
+    getSocketIoInstance()?.to(`campus:${campusId}`).emit('transport:update', { campusId, timestamp: new Date().toISOString() });
+  } catch {
+    // Non-blocking if socket server is unavailable
+  }
+}
 
 /** Buses named by the cancellations — a cancellation's affected buses are exactly the ones it cancels. */
 function busesOf(cancelled: readonly CancelledTripRef[]): string[] {
@@ -48,6 +66,212 @@ function withDerivedBuses<T extends { mode?: string; cancelledTrips?: CancelledT
   return doc;
 }
 
+/** Synchronizes transport cancellation with a campus announcement notice and push notification. */
+async function syncCancellationNoticeAndPush(
+  doc: TransportScheduleExceptionDoc,
+  adminEmail: string,
+): Promise<{ noticeId?: string; pushSent: boolean }> {
+  if ((doc.mode ?? 'replace') !== 'cancel' || !doc.cancelledTrips?.length) {
+    return { pushSent: false };
+  }
+
+  const exceptionId = typeof doc._id === 'string' ? doc._id : doc._id?.toString();
+  if (!exceptionId) return { pushSent: false };
+
+  const dateStr = getIstDateString(doc.effectiveFrom);
+  const dayName = getIstDayName(doc.effectiveFrom);
+  const regularTrips = await getRegularTripsForDay(doc.campusId, dateStr, dayName);
+
+  const trips: CancellationTripDetails[] = doc.cancelledTrips.map((c) => {
+    const match = regularTrips.find(
+      (t) => t.bus.trim() === c.bus.trim() && t.startTime === c.startTime && t.direction === c.direction,
+    );
+    return {
+      bus: c.bus,
+      route: c.bus,
+      startTime: c.startTime,
+      direction: c.direction,
+      origin: match?.from,
+      destination: match?.to,
+    };
+  });
+
+  const announcement = buildTransportCancellationAnnouncement({
+    trips,
+    date: dateStr,
+    reason: doc.reason || doc.description,
+    otherTripsRunning: true,
+  });
+
+  const primaryTrip = trips[0];
+  const metadata: NoticeMetadata = {
+    type: 'transport_cancellation',
+    route: primaryTrip?.route || doc.cancelledTrips[0]?.bus,
+    startTime: primaryTrip?.startTime || doc.cancelledTrips[0]?.startTime,
+    direction: primaryTrip?.direction || doc.cancelledTrips[0]?.direction,
+    date: dateStr,
+    origin: primaryTrip?.origin,
+    destination: primaryTrip?.destination,
+    reason: cleanCancellationReason(doc.reason || doc.description),
+    scheduleExceptionId: exceptionId,
+  };
+
+  const existingNotice = await getNoticeByScheduleExceptionId(exceptionId);
+  let activeNoticeId: string | undefined = existingNotice?._id
+    ? (typeof existingNotice._id === 'string' ? existingNotice._id : existingNotice._id.toString())
+    : undefined;
+
+  const noticePayload = {
+    campusId: doc.campusId,
+    title: announcement.title,
+    body: announcement.noticeBody,
+    category: 'transport' as const,
+    isImportant: true,
+    link: '/(tabs)/transport',
+    startDate: new Date(),
+    expiryDate: doc.effectiveUntil,
+    metadata,
+  };
+
+  if (existingNotice && activeNoticeId) {
+    await updateNotice(
+      activeNoticeId,
+      {
+        ...noticePayload,
+        deletedAt: null,
+      },
+      adminEmail,
+    );
+  } else {
+    const created = await publishNotice(noticePayload, adminEmail);
+    if (created.value?._id) {
+      activeNoticeId = typeof created.value._id === 'string' ? created.value._id : created.value._id.toString();
+    }
+  }
+
+  let pushSent = Boolean(doc.pushSent);
+  if (!doc.pushSent) {
+    try {
+      await dispatchTopicPush(
+        {
+          topic: 'iitj_transport',
+          title: announcement.pushTitle,
+          body: announcement.pushBody,
+          data: {
+            screen: 'transport',
+            type: 'transport_cancellation',
+            scheduleExceptionId: exceptionId,
+            route: metadata.route ?? '',
+            startTime: metadata.startTime ?? '',
+            date: dateStr,
+          },
+        },
+        adminEmail,
+      );
+      pushSent = true;
+    } catch (err) {
+      console.warn('[transportExceptions] Push dispatch failed:', err);
+    }
+  }
+
+  await updateTransportScheduleException(
+    exceptionId,
+    {
+      noticeId: activeNoticeId,
+      pushSent,
+      pushSentAt: doc.pushSent ? doc.pushSentAt : new Date(),
+    },
+    adminEmail,
+  );
+
+  return { noticeId: activeNoticeId, pushSent };
+}
+
+/** Updates an existing published cancellation's associated notice in-place. */
+async function syncCancellationNoticeOnly(
+  doc: TransportScheduleExceptionDoc,
+  adminEmail: string,
+): Promise<void> {
+  if ((doc.mode ?? 'replace') !== 'cancel' || !doc.cancelledTrips?.length) {
+    return;
+  }
+  const exceptionId = typeof doc._id === 'string' ? doc._id : doc._id?.toString();
+  if (!exceptionId) return;
+
+  const existingNotice = await getNoticeByScheduleExceptionId(exceptionId);
+  if (!existingNotice || existingNotice.deletedAt) return;
+
+  const dateStr = getIstDateString(doc.effectiveFrom);
+  const dayName = getIstDayName(doc.effectiveFrom);
+  const regularTrips = await getRegularTripsForDay(doc.campusId, dateStr, dayName);
+
+  const trips: CancellationTripDetails[] = doc.cancelledTrips.map((c) => {
+    const match = regularTrips.find(
+      (t) => t.bus.trim() === c.bus.trim() && t.startTime === c.startTime && t.direction === c.direction,
+    );
+    return {
+      bus: c.bus,
+      route: c.bus,
+      startTime: c.startTime,
+      direction: c.direction,
+      origin: match?.from,
+      destination: match?.to,
+    };
+  });
+
+  const announcement = buildTransportCancellationAnnouncement({
+    trips,
+    date: dateStr,
+    reason: doc.reason || doc.description,
+    otherTripsRunning: true,
+  });
+
+  const primaryTrip = trips[0];
+  const metadata: NoticeMetadata = {
+    type: 'transport_cancellation',
+    route: primaryTrip?.route || doc.cancelledTrips[0]?.bus,
+    startTime: primaryTrip?.startTime || doc.cancelledTrips[0]?.startTime,
+    direction: primaryTrip?.direction || doc.cancelledTrips[0]?.direction,
+    date: dateStr,
+    origin: primaryTrip?.origin,
+    destination: primaryTrip?.destination,
+    reason: cleanCancellationReason(doc.reason || doc.description),
+    scheduleExceptionId: exceptionId,
+  };
+
+  const noticeId = existingNotice._id
+    ? (typeof existingNotice._id === 'string' ? existingNotice._id : existingNotice._id.toString())
+    : undefined;
+  if (!noticeId) return;
+  await updateNotice(
+    noticeId,
+    {
+      title: announcement.title,
+      body: announcement.noticeBody,
+      expiryDate: doc.effectiveUntil,
+      metadata,
+    },
+    adminEmail,
+  );
+}
+
+/** Withdraws/soft-deletes any associated campus announcement notice. */
+async function withdrawLinkedCancellationNotice(
+  doc: TransportScheduleExceptionDoc,
+  adminEmail: string,
+): Promise<void> {
+  const exceptionId = typeof doc._id === 'string' ? doc._id : doc._id?.toString();
+  if (!exceptionId) return;
+
+  const linkedNotice = await getNoticeByScheduleExceptionId(exceptionId);
+  if (linkedNotice && !linkedNotice.deletedAt && linkedNotice._id) {
+    const noticeId = typeof linkedNotice._id === 'string' ? linkedNotice._id : linkedNotice._id.toString();
+    if (noticeId) {
+      await removeNotice(noticeId, adminEmail);
+    }
+  }
+}
+
 export async function createScheduleException(
   body: TransportScheduleExceptionCreateInput,
   adminEmail: string,
@@ -57,7 +281,11 @@ export async function createScheduleException(
     effectiveFrom: new Date(body.effectiveFrom),
     effectiveUntil: new Date(body.effectiveUntil),
   });
-  return audited(() => createTransportScheduleException(input, adminEmail));
+  const result = await audited(() => createTransportScheduleException(input, adminEmail));
+  if (result.value) {
+    notifyTransportUpdate(result.value.campusId);
+  }
+  return result;
 }
 
 /** May throw ScheduleExceptionArchivedError (unchanged store behaviour). */
@@ -69,7 +297,16 @@ export async function updateScheduleException(
   const patch = { ...body };
   if (patch.effectiveFrom) patch.effectiveFrom = new Date(patch.effectiveFrom as unknown as string);
   if (patch.effectiveUntil) patch.effectiveUntil = new Date(patch.effectiveUntil as unknown as string);
-  return audited(() => updateTransportScheduleException(id, withDerivedBuses(patch), adminEmail));
+  const result = await audited(() => updateTransportScheduleException(id, withDerivedBuses(patch), adminEmail));
+  if (result.value) {
+    notifyTransportUpdate(result.value.campusId);
+    if (result.value.lifecycleState === 'published') {
+      await syncCancellationNoticeOnly(result.value, adminEmail);
+    } else {
+      await withdrawLinkedCancellationNotice(result.value, adminEmail);
+    }
+  }
+  return result;
 }
 
 /** IST calendar days the window [from, until) touches. */
@@ -114,19 +351,40 @@ export async function publishScheduleException(id: string, adminEmail: string): 
       };
     }
   }
-  return audited(() => publishTransportScheduleException(id, adminEmail));
+  const result = await audited(() => publishTransportScheduleException(id, adminEmail));
+  if (result.value.ok && result.value.doc) {
+    notifyTransportUpdate(result.value.doc.campusId);
+    await syncCancellationNoticeAndPush(result.value.doc, adminEmail);
+  }
+  return result;
 }
 
 export async function unpublishScheduleException(id: string, adminEmail: string): Promise<WithAudit<UnpublishScheduleExceptionResult>> {
-  return audited(() => unpublishTransportScheduleException(id, adminEmail));
+  const result = await audited(() => unpublishTransportScheduleException(id, adminEmail));
+  if (result.value.ok && result.value.doc) {
+    notifyTransportUpdate(result.value.doc.campusId);
+    await withdrawLinkedCancellationNotice(result.value.doc, adminEmail);
+  }
+  return result;
 }
 
 export async function archiveScheduleException(id: string, adminEmail: string): Promise<WithAudit<TransportScheduleExceptionDoc | null>> {
-  return audited(() => archiveTransportScheduleException(id, adminEmail));
+  const result = await audited(() => archiveTransportScheduleException(id, adminEmail));
+  if (result.value) {
+    notifyTransportUpdate(result.value.campusId);
+    await withdrawLinkedCancellationNotice(result.value, adminEmail);
+  }
+  return result;
 }
 
 export async function deleteScheduleException(id: string, adminEmail: string): Promise<WithAudit<boolean>> {
-  return audited(() => deleteTransportScheduleException(id, adminEmail));
+  const existing = await getTransportScheduleExceptionById(id);
+  const result = await audited(() => deleteTransportScheduleException(id, adminEmail));
+  if (result.value && existing) {
+    notifyTransportUpdate(existing.campusId);
+    await withdrawLinkedCancellationNotice(existing, adminEmail);
+  }
+  return result;
 }
 
 /**

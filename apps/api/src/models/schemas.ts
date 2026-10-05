@@ -166,10 +166,11 @@ export const noticeCreateSchema = z.object({
   body: z.string().min(1).max(5000),
   category: z.string().min(1),
   isImportant: z.boolean().default(false),
-  link: z.string().url().optional().or(z.literal('')),
+  link: z.string().url().or(z.string().regex(/^\/[a-zA-Z0-9_()/-]*$/)).optional().or(z.literal('')),
   imageUrl: z.string().url().optional().or(z.literal('')),
   startDate: z.string().datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}/)),
   expiryDate: z.string().datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}/)),
+  metadata: z.record(z.unknown()).optional(),
 });
 
 export const noticePatchSchema = noticeCreateSchema.partial();
@@ -449,3 +450,16 @@ export const campaignTrackBodySchema = z.object({
   action: z.enum(['view', 'click']),
   deviceId: z.string().trim().max(100).optional(),
 });
+
+// --- Temporary Mess Updates ---
+
+export const publicMessUpdatesQuerySchema = campusQuerySchema.extend({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD').optional(),
+});
+
+export const adminMessUpdatesQuerySchema = campusQuerySchema.extend({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD').optional(),
+  status: z.enum(['active', 'archived']).optional(),
+  meal: z.enum(['breakfast', 'lunch', 'snacks', 'dinner']).optional(),
+});
+

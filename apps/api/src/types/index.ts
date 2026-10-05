@@ -92,6 +92,27 @@ export interface MenuDoc {
 
 import type { ObjectId } from 'mongodb';
 
+export interface NoticeMetadata {
+  type?: string;
+  route?: string;
+  startTime?: string;
+  direction?: 'departure' | 'arrival';
+  date?: string;
+  origin?: string;
+  destination?: string;
+  reason?: string | null;
+  scheduleExceptionId?: string;
+  messUpdateId?: string;
+  meal?: string;
+  diet?: string;
+  updateType?: string;
+  originalItem?: string;
+  replacementItem?: string;
+  specialItems?: string[];
+  newTiming?: string;
+  [key: string]: unknown;
+}
+
 export interface NoticeDoc {
   _id?: string | ObjectId;
   campusId: string;
@@ -106,6 +127,7 @@ export interface NoticeDoc {
   publishedAt: Date;
   /** Soft-delete marker — omitted/null means active. */
   deletedAt?: Date | null;
+  metadata?: NoticeMetadata;
 }
 
 export interface TransportTrip {
@@ -143,7 +165,7 @@ export type { ScheduleExceptionPriority, ScheduleExceptionSource, ScheduleExcept
 export type { MessPricingConfig, MessPricingDoc, MessPricingInput, MessPricingUpdate } from '@iitj1/types';
 import type { CancelledTripRef, ScheduleExceptionMode } from '@iitj1/types';
 export type { CancelledTripRef, ScheduleExceptionMode } from '@iitj1/types';
-export type { AiCommandRecord, AiCommandStatus } from '@iitj1/types';
+export type { AiCommandRecord, AiCommandStatus, AiSessionRecord } from '@iitj1/types';
 
 export interface TransportScheduleExceptionDoc {
   _id?: string | ObjectId;
@@ -164,6 +186,9 @@ export interface TransportScheduleExceptionDoc {
   /** Stored but not acted on — pending product approval (see docs). */
   sendPush: boolean;
   createNotice: boolean;
+  noticeId?: string;
+  pushSent?: boolean;
+  pushSentAt?: Date;
   source: {
     type: 'manual' | 'email' | 'ai_import' | 'csv' | 'api';
     reference?: string;
@@ -525,3 +550,6 @@ export interface BusStateDoc {
   status: TripOperationalState;
   lastUpdated: Date;
 }
+
+export type { TemporaryMessUpdateDoc } from '@iitj1/types';
+

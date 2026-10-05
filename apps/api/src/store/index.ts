@@ -86,6 +86,18 @@ import {
   fallbackFindAiCommand,
   fallbackInsertAiCommand,
   fallbackTransitionAiCommand,
+  fallbackListAiCommands,
+  fallbackInsertAiSession,
+  fallbackGetAiSession,
+  fallbackLatestAiSession,
+  fallbackUpdateAiSession,
+  fallbackCreateTemporaryMessUpdate,
+  fallbackGetTemporaryMessUpdateById,
+  fallbackGetTemporaryMessUpdatesForDate,
+  fallbackGetActiveTemporaryMessUpdates,
+  fallbackUpdateTemporaryMessUpdate,
+  fallbackArchiveTemporaryMessUpdate,
+  fallbackDeleteTemporaryMessUpdate,
 } from './fallback';
 import type {
   MetaDoc,
@@ -133,7 +145,9 @@ import type {
   CampaignDoc,
   MessPricingConfig,
   AiCommandRecord,
+  AiSessionRecord,
   CampaignCreateInput,
+  TemporaryMessUpdateDoc,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
 import { recordAuditId } from './auditCapture';
@@ -423,6 +437,32 @@ export async function restoreNotice(id: string, adminEmail: string): Promise<Not
     await bumpVersion('notices', saved.campusId, adminEmail, 'restore', `Notice ${id} restored`);
   }
   return saved;
+}
+
+export async function getNoticeByScheduleExceptionId(scheduleExceptionId: string): Promise<NoticeDoc | null> {
+  if (isDbConnected()) {
+    const doc = await collections.notices().findOne({
+      'metadata.scheduleExceptionId': scheduleExceptionId,
+    });
+    return doc ? { ...doc, _id: doc._id?.toString() } : null;
+  }
+  const notice = getFallbackState().notices.find(
+    (n) => n.metadata?.scheduleExceptionId === scheduleExceptionId,
+  );
+  return notice ?? null;
+}
+
+export async function getNoticeByMessUpdateId(messUpdateId: string): Promise<NoticeDoc | null> {
+  if (isDbConnected()) {
+    const doc = await collections.notices().findOne({
+      'metadata.messUpdateId': messUpdateId,
+    });
+    return doc ? { ...doc, _id: doc._id?.toString() } : null;
+  }
+  const notice = getFallbackState().notices.find(
+    (n) => n.metadata?.messUpdateId === messUpdateId,
+  );
+  return notice ?? null;
 }
 
 export async function getCalendar(campusId: string): Promise<CalendarDoc | null> {
@@ -758,6 +798,97 @@ export async function listMessMenuHistory(
     .messMenuHistory.filter((h) => h.campusId === campusId && h.menuType === menuType)
     .sort((a, b) => b.version - a.version)
     .slice(0, limit);
+}
+
+// ─── Temporary Mess Updates ─────────────────────────────────────────────────────
+
+function withMessUpdateStringId(doc: TemporaryMessUpdateDoc): TemporaryMessUpdateDoc {
+  return { ...doc, _id: doc._id?.toString() };
+}
+
+export async function createTemporaryMessUpdate(doc: TemporaryMessUpdateDoc): Promise<TemporaryMessUpdateDoc> {
+  if (isDbConnected()) {
+    const res = await collections.temporaryMessUpdates().insertOne(doc as never);
+    return { ...doc, _id: res.insertedId.toString() };
+  }
+  return fallbackCreateTemporaryMessUpdate(doc);
+}
+
+export async function getTemporaryMessUpdateById(id: string): Promise<TemporaryMessUpdateDoc | null> {
+  if (isDbConnected()) {
+    const query = isStrictObjectId(id) ? { _id: new ObjectId(id) } : { _id: id };
+    const doc = await collections.temporaryMessUpdates().findOne(query as never);
+    return doc ? withMessUpdateStringId(doc) : null;
+  }
+  return fallbackGetTemporaryMessUpdateById(id);
+}
+
+export async function getTemporaryMessUpdatesForDate(
+  campusId: string,
+  date: string,
+  activeOnly = true,
+): Promise<TemporaryMessUpdateDoc[]> {
+  if (isDbConnected()) {
+    const filter: Record<string, unknown> = { campusId, date };
+    if (activeOnly) filter.status = 'active';
+    const docs = await collections.temporaryMessUpdates().find(filter).sort({ createdAt: -1 }).toArray();
+    return docs.map(withMessUpdateStringId);
+  }
+  return fallbackGetTemporaryMessUpdatesForDate(campusId, date, activeOnly);
+}
+
+export async function getActiveTemporaryMessUpdates(
+  campusId: string,
+  now: Date = new Date(),
+): Promise<TemporaryMessUpdateDoc[]> {
+  if (isDbConnected()) {
+    const docs = await collections
+      .temporaryMessUpdates()
+      .find({
+        campusId,
+        status: 'active',
+        expiresAt: { $gt: now.toISOString() },
+      })
+      .sort({ date: 1, createdAt: -1 })
+      .toArray();
+    return docs.map(withMessUpdateStringId);
+  }
+  return fallbackGetActiveTemporaryMessUpdates(campusId, now);
+}
+
+export async function updateTemporaryMessUpdate(
+  id: string,
+  patch: Partial<TemporaryMessUpdateDoc>,
+  adminEmail: string,
+): Promise<TemporaryMessUpdateDoc | null> {
+  const set = { ...patch, updatedBy: adminEmail, updatedAt: new Date().toISOString() };
+  if (isDbConnected()) {
+    const query = isStrictObjectId(id) ? { _id: new ObjectId(id) } : { _id: id };
+    const doc = await collections
+      .temporaryMessUpdates()
+      .findOneAndUpdate(query as never, { $set: set }, { returnDocument: 'after' });
+    return doc ? withMessUpdateStringId(doc) : null;
+  }
+  return fallbackUpdateTemporaryMessUpdate(id, set);
+}
+
+export async function archiveTemporaryMessUpdate(id: string, adminEmail: string): Promise<boolean> {
+  const set = { status: 'archived' as const, updatedBy: adminEmail, updatedAt: new Date().toISOString() };
+  if (isDbConnected()) {
+    const query = isStrictObjectId(id) ? { _id: new ObjectId(id) } : { _id: id };
+    const res = await collections.temporaryMessUpdates().updateOne(query as never, { $set: set });
+    return res.matchedCount > 0;
+  }
+  return fallbackArchiveTemporaryMessUpdate(id);
+}
+
+export async function deleteTemporaryMessUpdate(id: string): Promise<boolean> {
+  if (isDbConnected()) {
+    const query = isStrictObjectId(id) ? { _id: new ObjectId(id) } : { _id: id };
+    const res = await collections.temporaryMessUpdates().deleteOne(query as never);
+    return res.deletedCount > 0;
+  }
+  return fallbackDeleteTemporaryMessUpdate(id);
 }
 
 export async function getAbout(campusId: string): Promise<AboutDoc | null> {
@@ -2585,17 +2716,68 @@ export async function insertAiCommand(doc: AiCommandRecord): Promise<boolean> {
   return fallbackInsertAiCommand(doc);
 }
 
-/** Atomic compare-and-set on status: updates only while the command is in one of `from`. */
+/**
+ * Atomic compare-and-set: updates only while the command is in one of `from` (and, when given, still at
+ * `revision` / showing `previewToken`). Returns null when another request changed it first.
+ */
 export async function transitionAiCommand(
   commandId: string,
   from: readonly string[],
   set: Partial<AiCommandRecord>,
+  match: { revision?: number; previewToken?: string } = {},
 ): Promise<AiCommandRecord | null> {
   if (isDbConnected()) {
-    const result = await collections
-      .aiCommands()
-      .findOneAndUpdate({ commandId, status: { $in: [...from] } } as never, { $set: set }, { returnDocument: 'after' });
+    const filter: Record<string, unknown> = { commandId, status: { $in: [...from] } };
+    if (match.revision !== undefined) filter.revision = match.revision;
+    if (match.previewToken !== undefined) filter.previewToken = match.previewToken;
+    const result = await collections.aiCommands().findOneAndUpdate(filter as never, { $set: set }, { returnDocument: 'after' });
     return result ? withAiCommandStringId(result) : null;
   }
-  return fallbackTransitionAiCommand(commandId, from, set);
+  return fallbackTransitionAiCommand(commandId, from, set, match);
+}
+
+export async function listAiCommands(campusId: string, limit = 20): Promise<AiCommandRecord[]> {
+  if (isDbConnected()) {
+    const docs = await collections.aiCommands().find({ campusId }).sort({ createdAt: -1 }).limit(limit).toArray();
+    return docs.map(withAiCommandStringId);
+  }
+  return fallbackListAiCommands(campusId, limit);
+}
+
+// AI Admin conversations. The service caps messages; a session only points at its current command.
+
+function withAiSessionStringId(doc: AiSessionRecord): AiSessionRecord {
+  return { ...doc, _id: doc._id?.toString() };
+}
+
+export async function insertAiSession(doc: AiSessionRecord): Promise<void> {
+  if (isDbConnected()) {
+    await collections.aiSessions().insertOne(doc);
+    return;
+  }
+  fallbackInsertAiSession(doc);
+}
+
+export async function getAiSession(sessionId: string): Promise<AiSessionRecord | null> {
+  if (isDbConnected()) {
+    const doc = await collections.aiSessions().findOne({ sessionId });
+    return doc ? withAiSessionStringId(doc) : null;
+  }
+  return fallbackGetAiSession(sessionId);
+}
+
+export async function getLatestAiSession(adminId: string, campusId: string): Promise<AiSessionRecord | null> {
+  if (isDbConnected()) {
+    const doc = await collections.aiSessions().find({ adminId, campusId }).sort({ updatedAt: -1 }).limit(1).next();
+    return doc ? withAiSessionStringId(doc) : null;
+  }
+  return fallbackLatestAiSession(adminId, campusId);
+}
+
+export async function updateAiSession(sessionId: string, set: Partial<AiSessionRecord>): Promise<AiSessionRecord | null> {
+  if (isDbConnected()) {
+    const doc = await collections.aiSessions().findOneAndUpdate({ sessionId }, { $set: set }, { returnDocument: 'after' });
+    return doc ? withAiSessionStringId(doc) : null;
+  }
+  return fallbackUpdateAiSession(sessionId, set);
 }

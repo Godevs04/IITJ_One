@@ -26,6 +26,7 @@ export interface NoticeDoc {
   expiryDate: string;
   publishedAt?: string;
   deletedAt?: string | null;
+  metadata?: Record<string, unknown>;
 }
 
 export interface TransportTrip {

@@ -1,6 +1,6 @@
 /**
  * Shared admin services (pre-AI-Admin foundation): schedule exceptions & bus cancellations, holidays,
- * transport alerts, audit ids and the AI command model / lifecycle.
+ * transport alerts and audit ids. (The AI Admin conversation is covered by aiAdmin.test.ts.)
  * Isolated: real routes in-process on the in-memory store — never MongoDB, never FCM (isolatedEnv blanks
  * the credentials), never localhost:6002.
  */
@@ -8,12 +8,6 @@ import './helpers/isolatedEnv';
 import { test, before, after } from 'node:test';
 import * as assert from 'node:assert';
 import {
-  AI_ACTION_POLICIES,
-  AI_ALLOWED_ACTIONS,
-  AI_COMMAND_STATUSES,
-  aiActionSchema,
-  aiCommandCreateSchema,
-  canTransition,
   resolveExceptionTrips,
   transportScheduleExceptionCreateSchema,
   type CancelledTripRef,
@@ -32,16 +26,6 @@ import {
 } from '../services/transportAlerts';
 import { previewHolidayTransport, setHolidayActive, upsertHoliday, validateHolidays } from '../services/holidays';
 import { publishNotice } from '../services/notices';
-import {
-  attachPreview,
-  beginExecution,
-  cancelCommand,
-  completeExecution,
-  confirmCommand,
-  failExecution,
-  getAiCommand,
-  recordInterpretedCommand,
-} from '../services/aiCommands';
 
 const ADMIN = 'services-test@iitj.local';
 let api: InProcessApi;
@@ -312,128 +296,4 @@ test('audit: a mutation returns the id of the audit entry it wrote, and /admin/a
   assert.strictEqual(entry.adminEmail, ADMIN);
   const ids = (res.json.logs as { _id: string }[]).map((l) => String(l._id));
   assert.strictEqual(new Set(ids).size, ids.length, 'audit ids are unique');
-});
-
-// ─── AI command model ────────────────────────────────────────────────────────
-
-const actor = { email: ADMIN, role: 'superadmin' };
-const other = { email: 'someone-else@iitj.local', role: 'superadmin' };
-const noticeAction = {
-  type: 'create_notice',
-  payload: { title: 'Mess timing', body: 'Dinner at 8', category: 'mess', startDate: '2027-01-01T00:00:00Z', expiryDate: '2027-01-02T00:00:00Z' },
-};
-let keySeq = 0;
-const key = () => `test-key-${Date.now()}-${++keySeq}`;
-
-test('ai actions: closed allowlist with a policy per action; strict payloads', () => {
-  assert.ok(aiActionSchema.safeParse(noticeAction).success);
-  assert.deepStrictEqual([...AI_ALLOWED_ACTIONS].sort(), Object.keys(AI_ACTION_POLICIES).sort());
-  for (const bad of [
-    { type: 'run_query', payload: { query: 'db.dropDatabase()' } },
-    { type: 'create_notice', payload: { ...noticeAction.payload, extra: 'x' } },
-    { type: 'create_notice', payload: noticeAction.payload, operation: '$set' },
-    { type: 'send_push_notification', payload: { topic: 'everyone_everywhere', title: 'x', body: 'y' } },
-    { type: 'create_bus_cancellation', payload: { title: 't', reason: 'r', description: 'd', effectiveFrom: 'x', effectiveUntil: 'y', cancelledTrips: [] } },
-  ]) {
-    assert.ok(!aiActionSchema.safeParse(bad).success, JSON.stringify(bad));
-  }
-  assert.ok(!aiCommandCreateSchema.safeParse({ campusId: 'iitj', originalPrompt: 'x', idempotencyKey: 'short', action: {} }).success);
-  assert.ok(!aiCommandCreateSchema.safeParse({ campusId: 'iitj', originalPrompt: 'x', idempotencyKey: 'long-enough-key', action: {}, raw: 1 }).success);
-  assert.strictEqual(AI_ACTION_POLICIES.create_bus_cancellation.confirmation, 'typed');
-  assert.strictEqual(AI_ACTION_POLICIES.send_push_notification.confirmation, 'typed');
-});
-
-test('ai lifecycle: transition table — terminal states are final, execution requires confirmation', () => {
-  assert.ok(canTransition('interpreted', 'previewed'));
-  assert.ok(canTransition('confirmed', 'executing'));
-  assert.ok(!canTransition('interpreted', 'executing'), 'cannot skip preview/confirm');
-  assert.ok(!canTransition('previewed', 'executing'));
-  assert.ok(!canTransition('executing', 'confirmed'));
-  for (const terminal of ['executed', 'failed', 'rejected', 'cancelled', 'expired'] as const) {
-    for (const to of AI_COMMAND_STATUSES) assert.ok(!canTransition(terminal, to), `${terminal} → ${to}`);
-  }
-});
-
-test('ai commands: an invalid action is stored as rejected and can never proceed', async () => {
-  const r = await recordInterpretedCommand({ campusId: 'iitj', originalPrompt: 'drop everything', idempotencyKey: key(), action: { type: 'run_query', payload: {} }, actor });
-  assert.ok(r.ok);
-  assert.strictEqual(r.command.status, 'rejected');
-  assert.strictEqual(r.command.action, null);
-  assert.strictEqual(r.command.error?.code, 'invalid_action');
-  const preview = await attachPreview(r.command.commandId, { summary: 'x', sideEffects: [] });
-  assert.ok(!preview.ok && preview.reason === 'invalid_transition');
-  const exec = await beginExecution(r.command.commandId);
-  assert.ok(!exec.ok);
-});
-
-test('ai commands: full lifecycle with audit id association; same idempotency key returns the same command', async () => {
-  const idempotencyKey = key();
-  const first = await recordInterpretedCommand({ campusId: 'iitj', originalPrompt: 'Post dinner timing', idempotencyKey, action: noticeAction, actor });
-  assert.ok(first.ok);
-  const { commandId } = first.command;
-  assert.strictEqual(first.command.status, 'interpreted');
-  assert.strictEqual(first.command.interpretedAction, 'create_notice');
-  assert.strictEqual(first.command.confirmation.level, 'standard');
-
-  const again = await recordInterpretedCommand({ campusId: 'iitj', originalPrompt: 'Post dinner timing', idempotencyKey, action: noticeAction, actor });
-  assert.ok(again.ok && again.duplicate);
-  assert.strictEqual(again.command.commandId, commandId, 'no second command for the same key');
-
-  assert.ok(!(await beginExecution(commandId)).ok, 'cannot execute before preview + confirmation');
-  assert.ok((await attachPreview(commandId, { summary: 'Post a notice', sideEffects: [] })).ok);
-  const wrongAdmin = await confirmCommand(commandId, other);
-  assert.ok(!wrongAdmin.ok && wrongAdmin.reason === 'forbidden');
-  const confirmed = await confirmCommand(commandId, actor);
-  assert.ok(confirmed.ok);
-  assert.strictEqual(confirmed.command.confirmation.confirmedBy, ADMIN);
-
-  // Execute through the shared service (as a future executor would) and associate its audit entry.
-  assert.ok((await beginExecution(commandId)).ok);
-  const { auditId } = await publishNotice(
-    { campusId: 'iitj', title: 'Mess timing', body: 'Dinner at 8', category: 'mess', isImportant: false, startDate: new Date(), expiryDate: new Date(Date.now() + 86_400_000) } as never,
-    ADMIN,
-  );
-  const done = await completeExecution(commandId, { auditIds: [auditId!], result: { kind: 'notice' } });
-  assert.ok(done.ok);
-  assert.strictEqual(done.command.status, 'executed');
-  assert.strictEqual(done.command.auditId, auditId);
-  assert.strictEqual(String((await latestAudit())._id), auditId, 'the stored audit id is the real audit entry');
-
-  assert.ok(!(await beginExecution(commandId)).ok, 'an executed command can never run again');
-  assert.ok(!(await cancelCommand(commandId)).ok);
-  assert.strictEqual((await getAiCommand(commandId))?.status, 'executed');
-});
-
-test('ai commands: concurrent execution attempts — exactly one wins', async () => {
-  const r = await recordInterpretedCommand({ campusId: 'iitj', originalPrompt: 'x', idempotencyKey: key(), action: noticeAction, actor });
-  assert.ok(r.ok);
-  const id = r.command.commandId;
-  await attachPreview(id, { summary: 'x', sideEffects: [] });
-  await confirmCommand(id, actor);
-  const results = await Promise.all(Array.from({ length: 5 }, () => beginExecution(id)));
-  assert.strictEqual(results.filter((x) => x.ok).length, 1);
-  assert.ok(results.filter((x) => !x.ok).every((x) => !x.ok && x.reason === 'already_claimed'));
-  const failed = await failExecution(id, { code: 'service_error', message: 'boom' });
-  assert.ok(failed.ok && failed.command.status === 'failed' && failed.command.error?.message === 'boom');
-  assert.ok(!(await beginExecution(id)).ok, 'a failed command is not retried automatically');
-});
-
-test('ai commands: typed confirmation for critical actions', async () => {
-  const r = await recordInterpretedCommand({
-    campusId: 'iitj', originalPrompt: 'cancel the bus', idempotencyKey: key(), actor,
-    action: {
-      type: 'create_bus_cancellation',
-      payload: { title: 'B cancelled', reason: 'Breakdown', description: 'x', effectiveFrom: '2027-03-01T00:00:00Z', effectiveUntil: '2027-03-02T00:00:00Z', cancelledTrips: [refOf(mondayTrips[0])] },
-    },
-  });
-  assert.ok(r.ok && r.command.status === 'interpreted');
-  assert.strictEqual(r.command.confirmation.level, 'typed');
-  assert.strictEqual(r.command.confirmation.requiredPhrase, 'CANCEL BUSES');
-  await attachPreview(r.command.commandId, { summary: 'Cancel 1 trip', sideEffects: ['Riders see the trip as cancelled'] });
-  const noPhrase = await confirmCommand(r.command.commandId, actor);
-  assert.ok(!noPhrase.ok && noPhrase.reason === 'confirmation_mismatch');
-  assert.ok(!(await confirmCommand(r.command.commandId, actor, 'yes')).ok);
-  assert.ok((await confirmCommand(r.command.commandId, actor, 'CANCEL BUSES')).ok);
-  assert.ok((await cancelCommand(r.command.commandId)).ok, 'a confirmed command can still be abandoned before execution');
-  assert.ok(!(await beginExecution(r.command.commandId)).ok);
 });

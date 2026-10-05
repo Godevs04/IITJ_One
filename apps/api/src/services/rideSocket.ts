@@ -92,6 +92,10 @@ export function getSocketIoInstance(): Server | null {
   return ioInstance;
 }
 
+export function setSocketIoInstanceForTests(io: any): void {
+  ioInstance = io;
+}
+
 /** Validates {sessionId, tripId} against the existing ride-session store — no JWT, reuses the REST-created session as the sole source of truth. Exported for unit testing. */
 export async function validateSession(
   sessionId: unknown,

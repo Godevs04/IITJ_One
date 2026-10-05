@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import type {
+  ActiveScheduleExceptionResponse,
   CalendarDoc,
   HolidaysDoc,
   TemporaryTransportScheduleDoc,
@@ -28,6 +29,7 @@ export function TransportHomeWidget({
   holidays,
   alerts,
   tempSchedule,
+  activeException,
   hasCriticalAlert,
 }: {
   now: Date;
@@ -36,6 +38,7 @@ export function TransportHomeWidget({
   holidays: HolidaysDoc | null;
   alerts: TransportAlertsDoc | null;
   tempSchedule: TemporaryTransportScheduleDoc | null;
+  activeException?: ActiveScheduleExceptionResponse | null;
   hasCriticalAlert: boolean;
 }) {
   const theme = useThemeColors();
@@ -43,11 +46,17 @@ export function TransportHomeWidget({
 
   const byDirection = useMemo(() => {
     void now; // recompute on the Home clock tick
-    const trips = toTimed(getTripsForToday(transport, calendar, holidays, alerts, tempSchedule));
+    const trips = toTimed(getTripsForToday(transport, calendar, holidays, alerts, tempSchedule, activeException));
     return Object.fromEntries(
-      DIRECTIONS.map((dir) => [dir, pickNextBus(trips.filter((t) => directionOf(t.trip) === dir), nowMin)]),
+      DIRECTIONS.map((dir) => [
+        dir,
+        pickNextBus(
+          trips.filter((t) => directionOf(t.trip) === dir && t.trip.serviceStatus !== 'cancelled'),
+          nowMin,
+        ),
+      ]),
     ) as Record<BusDirection, TimedTrip<TransportTrip> | null>;
-  }, [transport, calendar, holidays, alerts, tempSchedule, now, nowMin]);
+  }, [transport, calendar, holidays, alerts, tempSchedule, activeException, now, nowMin]);
 
   const openTransport = () => router.push('/(tabs)/transport');
 

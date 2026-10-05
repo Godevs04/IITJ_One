@@ -8,16 +8,29 @@ import { AsyncLocalStorage } from 'node:async_hooks';
  * mutation produced — e.g. so a future AI Admin command record can reference them — without changing the
  * return type of every store function. Same audit log, same entries; this only reads their ids.
  */
-const captureStore = new AsyncLocalStorage<string[]>();
+// A stack of sinks: nested captures (an AI command wrapping a service that captures its own id) all see it.
+const captureStore = new AsyncLocalStorage<string[][]>();
+
+function runWith<T>(sink: string[], fn: () => Promise<T>): Promise<T> {
+  return captureStore.run([...(captureStore.getStore() ?? []), sink], fn);
+}
 
 export function recordAuditId(id: string): void {
-  captureStore.getStore()?.push(id);
+  for (const sink of captureStore.getStore() ?? []) sink.push(id);
 }
 
 export async function withAuditCapture<T>(fn: () => Promise<T>): Promise<{ result: T; auditIds: string[] }> {
   const auditIds: string[] = [];
-  const result = await captureStore.run(auditIds, fn);
+  const result = await runWith(auditIds, fn);
   return { result, auditIds };
+}
+
+/**
+ * Like withAuditCapture, but the ids reach `sink` as they are written — so a caller still knows which audit
+ * entries a failed multi-step operation produced before it threw.
+ */
+export async function captureAuditIdsInto<T>(sink: string[], fn: () => Promise<T>): Promise<T> {
+  return runWith(sink, fn);
 }
 
 /** The audit entry a single-write operation produced (the last one if it wrote several). */

@@ -43,6 +43,8 @@ export function firstBusTomorrow(
   const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
   const dayType = getScheduleKeyForDate(tomorrow, holidays);
-  const trips = getTripsForDayType(transport, calendar, dayType, tomorrow).filter((t) => directionOf(t) === direction);
+  const trips = getTripsForDayType(transport, calendar, dayType, tomorrow).filter(
+    (t) => directionOf(t) === direction && t.serviceStatus !== 'cancelled',
+  );
   return trips[0] ?? null;
 }

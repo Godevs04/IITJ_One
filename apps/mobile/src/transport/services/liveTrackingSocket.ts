@@ -69,6 +69,7 @@ export interface LocationUpdatePayload {
 class LiveTrackingSocketClient {
   private socket: Socket | null = null;
   private listeners = new Set<Listener>();
+  private transportUpdateListeners = new Set<() => void>();
   private state: LiveTrackingSocketState = {
     connectionState: 'disconnected',
     busStatesByTripId: {},
@@ -85,6 +86,11 @@ class LiveTrackingSocketClient {
   subscribe(listener: Listener): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
+  }
+
+  onTransportUpdate(callback: () => void): () => void {
+    this.transportUpdateListeners.add(callback);
+    return () => this.transportUpdateListeners.delete(callback);
   }
 
   private setState(patch: Partial<LiveTrackingSocketState>): void {
@@ -130,6 +136,16 @@ class LiveTrackingSocketClient {
 
     socket.on('trip:update', (trip: TripUpdateEvent) => {
       this.setState({ lastTripUpdate: trip });
+    });
+
+    socket.on('transport:update', () => {
+      for (const listener of this.transportUpdateListeners) {
+        try {
+          listener();
+        } catch {
+          // ignore
+        }
+      }
     });
   }
 

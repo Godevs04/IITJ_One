@@ -31,7 +31,6 @@ import {
   toggleBusReminder,
 } from '../services/busReminders';
 import type { TripWithStatus } from '../models/BusTypes';
-import { LiveStatusBar } from '../widgets/LiveStatusBar';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { debugListKeys } from '@/debug/listDebug';
@@ -60,13 +59,6 @@ interface TransportScreenViewProps {
   requestedDayType?: 'mon-sat' | 'sun-holiday';
   requestedForLabel?: string;
 }
-
-const CONNECTION_INDICATOR: Record<SocketConnectionState, { icon: keyof typeof Icon.glyphMap; color: string }> = {
-  connected: { icon: 'radio', color: '#22C55E' },
-  connecting: { icon: 'radio-outline', color: '#F59E0B' },
-  reconnecting: { icon: 'radio-outline', color: '#F59E0B' },
-  disconnected: { icon: 'cloud-offline-outline', color: '#9CA3AF' },
-};
 
 const PRIORITY_STYLES: Record<
   ScheduleExceptionPriority,
@@ -336,16 +328,6 @@ export function TransportScreenView({
 
   const headerRight = (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: AppSpacing.sm }}>
-      <View
-        style={styles.headerButton}
-        accessibilityLabel={`Live tracking connection: ${connectionState}`}
-      >
-        <Icon
-          name={CONNECTION_INDICATOR[connectionState].icon}
-          size={20}
-          color={CONNECTION_INDICATOR[connectionState].color}
-        />
-      </View>
       <Pressable
         onPress={() => router.push('/search')}
         hitSlop={10}
@@ -457,14 +439,6 @@ export function TransportScreenView({
           </Text>
         </View>
       ) : null}
-
-      <LiveStatusBar
-        trips={liveTrips}
-        connectionState={connectionState}
-        lastUpdated={lastUpdated}
-        loading={liveLoading}
-        error={liveError}
-      />
 
       {/* Schedule switch — hidden while a special/temporary schedule replaces the timetable */}
       {!isOverridden && !isExceptionLive ? (

@@ -1,250 +1,279 @@
 import { z } from 'zod';
-import { cancelledTripRefSchema } from './transport';
-import { messPricingInputSchema } from './messPricing';
 
 /**
- * AI Admin — command model and validation boundary (no LLM here).
+ * AI Admin — conversational command model (shared by the API and the admin UI).
  *
- * The future AI may only produce one of the ALLOWED actions below: a closed, typed set whose payloads are
- * strict (unknown keys are rejected). There is deliberately no "query", "update any field" or "raw
- * operation" action — every action maps to an existing shared service function that validates and audits
- * it again before anything is written. The backend never trusts the model's output.
+ * The language model only interprets: it returns an `AiInterpretation` (intent + action name + flat
+ * parameters). That output is untrusted — it is validated against `aiInterpretationSchema`, every action is
+ * one of the closed `AI_ACTIONS`, and the backend (not the model) decides which fields are required,
+ * resolves entities, validates, previews, asks for confirmation, executes through the shared services and
+ * records the audit id. There is no "query", "raw update" or code-carrying action.
  */
 
-const isoDateTime = z.string().refine((s) => !Number.isNaN(new Date(s).getTime()), 'Must be a valid date/time');
-const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
-const entityId = z.string().trim().min(1).max(100);
+// ─── Actions (mutations) and read-only questions ────────────────────────────────
 
-/** Existing push topics only — no new audiences (route-specific targeting is not supported yet). */
-export const AI_PUSH_TOPICS = [
-  'iitj_all',
-  'iitj_mess',
-  'iitj_transport',
-  'iitj_institute',
-  'iitj_orientation',
-  'iitj_emergency',
-  'iitj_calendar',
-  'iitj_laundry',
+export const AI_ACTIONS = [
+  'create_notice',
+  'update_notice',
+  'delete_notice',
+  'create_mess_pricing',
+  'update_mess_pricing',
+  'deactivate_mess_pricing',
+  'create_transport_alert',
+  'update_transport_alert',
+  'cancel_bus_trip',
+  'create_holiday',
+  'update_holiday',
+  'remove_holiday',
+  'temporary_mess_update',
 ] as const;
+export type AiActionName = (typeof AI_ACTIONS)[number];
 
-const noticeFields = z
-  .object({
-    title: z.string().trim().min(1).max(200),
-    body: z.string().trim().min(1).max(5000),
-    category: z.enum(['general', 'mess', 'transport', 'institute', 'orientation']),
-    isImportant: z.boolean().default(false),
-    startDate: isoDateTime,
-    expiryDate: isoDateTime,
-    link: z.string().url().optional(),
-  })
-  .strict();
+/** Read-only questions — answered from current data, never create a command. */
+export const AI_QUERIES = ['mess_pricing', 'buses', 'notices', 'holidays', 'transport_alerts'] as const;
+export type AiQueryName = (typeof AI_QUERIES)[number];
 
-export const aiActionSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('create_notice'), payload: noticeFields }).strict(),
-  z
-    .object({
-      type: z.literal('update_notice'),
-      payload: z.object({ noticeId: entityId, changes: noticeFields.partial().strict() }).strict(),
-    })
-    .strict(),
-  z.object({ type: z.literal('delete_notice'), payload: z.object({ noticeId: entityId }).strict() }).strict(),
-  z
-    .object({
-      type: z.literal('create_transport_alert'),
-      payload: z
-        .object({
-          title: z.string().trim().min(1).max(200),
-          message: z.string().trim().min(1).max(2000),
-          priority: z.enum(['normal', 'info', 'warning', 'critical']),
-          category: z.enum(['service_update', 'breakdown', 'maintenance', 'holiday', 'emergency', 'info', 'other']),
-          startDate: isoDateTime,
-          endDate: isoDateTime,
-          pinToHome: z.boolean().default(false),
-        })
-        .strict(),
-    })
-    .strict(),
-  z
-    .object({
-      type: z.literal('set_transport_alert_active'),
-      payload: z.object({ alertId: entityId, isActive: z.boolean() }).strict(),
-    })
-    .strict(),
-  z
-    .object({
-      type: z.literal('create_bus_cancellation'),
-      payload: z
-        .object({
-          title: z.string().trim().min(1).max(200),
-          reason: z.string().trim().min(1).max(200),
-          description: z.string().trim().min(1).max(5000),
-          effectiveFrom: isoDateTime,
-          effectiveUntil: isoDateTime,
-          priority: z.enum(['low', 'normal', 'high', 'critical']).default('high'),
-          cancelledTrips: z.array(cancelledTripRefSchema).min(1).max(20),
-        })
-        .strict(),
-    })
-    .strict(),
-  z
-    .object({
-      type: z.literal('create_holiday'),
-      payload: z.object({ name: z.string().trim().min(1).max(200), date: dateOnly, description: z.string().max(500).optional() }).strict(),
-    })
-    .strict(),
-  z
-    .object({
-      type: z.literal('set_holiday_active'),
-      payload: z.object({ holidayId: entityId, isActive: z.boolean() }).strict(),
-    })
-    .strict(),
-  z
-    .object({
-      type: z.literal('create_mess_pricing'),
-      payload: messPricingInputSchema.omit({ campusId: true }).strict(),
-    })
-    .strict(),
-  z
-    .object({
-      type: z.literal('set_mess_pricing_active'),
-      payload: z.object({ pricingId: entityId, isActive: z.boolean() }).strict(),
-    })
-    .strict(),
-  z
-    .object({
-      type: z.literal('send_push_notification'),
-      payload: z
-        .object({
-          topic: z.enum(AI_PUSH_TOPICS),
-          title: z.string().trim().min(1).max(100),
-          body: z.string().trim().min(1).max(500),
-        })
-        .strict(),
-    })
-    .strict(),
-]);
-
-export type AiAction = z.infer<typeof aiActionSchema>;
-export type AiActionType = AiAction['type'];
-
-export type AiConfirmationLevel = 'standard' | 'explicit' | 'typed';
+export type AiRiskLevel = 'low' | 'medium' | 'high';
 
 export interface AiActionPolicy {
-  /** What the admin sees in the action list. */
-  description: string;
-  risk: 'low' | 'medium' | 'high' | 'critical';
-  /** standard: Run button. explicit: a second "Confirm" step. typed: the admin types the confirmation phrase. */
-  confirmation: AiConfirmationLevel;
-  sendsNotification: boolean;
-  affectsTransport: boolean;
+  label: string;
+  risk: AiRiskLevel;
+  /** Label of the confirm button on the preview card. */
+  confirmLabel: string;
 }
 
-/** Policy per allowed action — the backend applies these, never the model. */
-export const AI_ACTION_POLICIES: Record<AiActionType, AiActionPolicy> = {
-  create_notice: { description: 'Post a notice', risk: 'low', confirmation: 'standard', sendsNotification: false, affectsTransport: false },
-  update_notice: { description: 'Edit a notice', risk: 'low', confirmation: 'standard', sendsNotification: false, affectsTransport: false },
-  delete_notice: { description: 'Delete a notice', risk: 'medium', confirmation: 'explicit', sendsNotification: false, affectsTransport: false },
-  create_transport_alert: { description: 'Post a transport alert', risk: 'medium', confirmation: 'explicit', sendsNotification: false, affectsTransport: false },
-  set_transport_alert_active: { description: 'Turn a transport alert on/off', risk: 'medium', confirmation: 'explicit', sendsNotification: false, affectsTransport: false },
-  create_bus_cancellation: { description: 'Cancel specific bus trips', risk: 'critical', confirmation: 'typed', sendsNotification: false, affectsTransport: true },
-  create_holiday: { description: 'Add a holiday (Sunday & Holidays buses that day)', risk: 'high', confirmation: 'explicit', sendsNotification: false, affectsTransport: true },
-  set_holiday_active: { description: 'Turn a holiday on/off', risk: 'high', confirmation: 'explicit', sendsNotification: false, affectsTransport: true },
-  create_mess_pricing: { description: 'Schedule new mess prices', risk: 'high', confirmation: 'explicit', sendsNotification: false, affectsTransport: false },
-  set_mess_pricing_active: { description: 'Activate/deactivate mess prices', risk: 'high', confirmation: 'explicit', sendsNotification: false, affectsTransport: false },
-  send_push_notification: { description: 'Send a push notification', risk: 'critical', confirmation: 'typed', sendsNotification: true, affectsTransport: false },
+/**
+ * Backend risk policy. Every action here changes data, so every one needs a preview and a confirmation.
+ * HIGH: only the explicit Confirm button on the current preview counts — a typed "yes" never does.
+ */
+export const AI_ACTION_POLICIES: Record<AiActionName, AiActionPolicy> = {
+  create_notice: { label: 'Post notice', risk: 'medium', confirmLabel: 'Post notice' },
+  update_notice: { label: 'Edit notice', risk: 'medium', confirmLabel: 'Save changes' },
+  delete_notice: { label: 'Delete notice', risk: 'high', confirmLabel: 'Delete notice' },
+  create_mess_pricing: { label: 'Schedule mess price', risk: 'medium', confirmLabel: 'Schedule price' },
+  update_mess_pricing: { label: 'Change mess price', risk: 'medium', confirmLabel: 'Change price' },
+  deactivate_mess_pricing: { label: 'Deactivate mess prices', risk: 'high', confirmLabel: 'Deactivate' },
+  create_transport_alert: { label: 'Post transport alert', risk: 'medium', confirmLabel: 'Post alert' },
+  update_transport_alert: { label: 'Edit transport alert', risk: 'medium', confirmLabel: 'Save changes' },
+  cancel_bus_trip: { label: 'Cancel bus trip', risk: 'high', confirmLabel: 'Confirm cancellation' },
+  create_holiday: { label: 'Add holiday', risk: 'medium', confirmLabel: 'Add holiday' },
+  update_holiday: { label: 'Edit holiday', risk: 'medium', confirmLabel: 'Save changes' },
+  remove_holiday: { label: 'Remove holiday', risk: 'high', confirmLabel: 'Remove holiday' },
+  temporary_mess_update: { label: 'Temporary mess update', risk: 'high', confirmLabel: 'Confirm mess update' },
 };
 
-export const AI_ALLOWED_ACTIONS = Object.keys(AI_ACTION_POLICIES) as AiActionType[];
-
-/** The phrase a typed confirmation requires (deterministic, shown in the preview). */
-export function typedConfirmationPhrase(action: AiAction): string {
-  return action.type === 'create_bus_cancellation' ? 'CANCEL BUSES' : action.type === 'send_push_notification' ? 'SEND' : 'CONFIRM';
-}
-
-// ─── Command record & lifecycle ───────────────────────────────────────────────
+// ─── Lifecycle ────────────────────────────────────────────────────────────────
 
 export const AI_COMMAND_STATUSES = [
-  'interpreted', // structured action produced and validated
-  'previewed', // preview (before/after, side effects) computed and shown
-  'confirmed', // admin confirmed (incl. typed confirmation when required)
-  'executing', // claimed for execution — exactly one caller can win this transition
-  'executed', // done; auditId recorded
-  'failed', // execution attempted and failed (error recorded)
-  'rejected', // invalid / not allowed — never executable
-  'cancelled', // admin abandoned it
-  'expired', // preview/confirmation went stale
+  'collecting_information', // required fields missing, ambiguous or invalid — the assistant is asking
+  'ready_for_preview', // complete and validated
+  'awaiting_confirmation', // preview shown; needs the admin's confirmation of exactly this preview
+  'executing', // claimed for execution — only one request can ever win this transition
+  'executed',
+  'cancelled',
+  'rejected',
+  'failed',
 ] as const;
 export type AiCommandStatus = (typeof AI_COMMAND_STATUSES)[number];
 
+export const AI_PENDING_STATUSES: readonly AiCommandStatus[] = ['collecting_information', 'ready_for_preview', 'awaiting_confirmation'];
+
+/** Enforced by the backend. There is no path to `executed` except confirmed → executing → executed. */
 export const AI_COMMAND_TRANSITIONS: Record<AiCommandStatus, readonly AiCommandStatus[]> = {
-  interpreted: ['previewed', 'rejected', 'cancelled', 'expired'],
-  previewed: ['confirmed', 'rejected', 'cancelled', 'expired'],
-  confirmed: ['executing', 'cancelled', 'expired'],
+  collecting_information: ['collecting_information', 'ready_for_preview', 'cancelled', 'rejected'],
+  ready_for_preview: ['awaiting_confirmation', 'collecting_information', 'cancelled', 'rejected'],
+  awaiting_confirmation: ['executing', 'collecting_information', 'cancelled', 'rejected'],
   executing: ['executed', 'failed'],
   executed: [],
-  failed: [],
-  rejected: [],
   cancelled: [],
-  expired: [],
+  rejected: [],
+  failed: [],
 };
 
 export function canTransition(from: AiCommandStatus, to: AiCommandStatus): boolean {
   return AI_COMMAND_TRANSITIONS[from].includes(to);
 }
 
-export interface AiCommandPreview {
-  summary: string;
-  entity?: { kind: string; id?: string; label?: string };
-  before?: unknown;
-  after?: unknown;
-  audience?: string;
-  notification?: string;
-  sideEffects: string[];
-  generatedAt: string;
+// ─── Untrusted interpreter output ─────────────────────────────────────────────
+
+const paramValue = z.union([z.string().max(2000), z.number().finite(), z.boolean()]);
+
+/**
+ * The ONLY shape accepted from the language model. Flat primitive parameters (no objects, arrays, code or
+ * queries); action/query names from closed enums; unknown keys rejected.
+ */
+export const aiInterpretationSchema = z
+  .object({
+    intent: z.enum(['command', 'update_pending', 'cancel_pending', 'confirm', 'query', 'unsupported', 'help']),
+    action: z.enum(AI_ACTIONS).optional(),
+    query: z.enum(AI_QUERIES).optional(),
+    parameters: z
+      .record(z.string().regex(/^[a-zA-Z][a-zA-Z0-9_]{0,40}$/), paramValue)
+      .refine((p) => Object.keys(p).length <= 20, 'Too many parameters')
+      .optional(),
+  })
+  .strict()
+  .refine((v) => v.intent !== 'command' || !!v.action, { message: 'A command needs an action', path: ['action'] })
+  .refine((v) => v.intent !== 'query' || !!v.query, { message: 'A query needs a query name', path: ['query'] });
+export type AiInterpretation = z.infer<typeof aiInterpretationSchema>;
+export type AiParamValue = z.infer<typeof paramValue>;
+
+// ─── Conversation & command records ───────────────────────────────────────────
+
+export interface AiOption {
+  label: string;
+  /** Sent back as a structured selection for `field` — no re-interpretation needed. */
+  value: string;
+}
+
+export interface AiQuestion {
+  field: string;
+  text: string;
+  options?: AiOption[];
+}
+
+export interface AiResolvedEntity {
+  field: string;
+  kind: 'notice' | 'bus' | 'trip' | 'mess_pricing' | 'transport_alert' | 'holiday' | 'calendar_event';
+  id: string;
+  label: string;
+  /** Where the value came from, e.g. "Timetable", "Academic calendar". */
+  source?: string;
+}
+
+export interface AiPreview {
+  title: string;
+  /** One line under the title, e.g. "5:00 PM · Tuesday, 6 October 2026". */
+  subtitle?: string;
+  rows: { label: string; value: string; before?: string }[];
+  warnings: string[];
+  notification: string;
+  risk: AiRiskLevel;
+  confirmLabel: string;
 }
 
 export interface AiCommandRecord {
   _id?: string;
   commandId: string;
+  sessionId: string;
   campusId: string;
-  /** The admin who issued the command (email is the admin identity in this system). */
   adminId: string;
   adminRole: string;
-  /** Exactly what the admin typed. */
+  /** The admin message that started this command. */
   originalPrompt: string;
-  /** The interpreted action type (or null when nothing valid could be interpreted). */
-  interpretedAction: AiActionType | null;
-  /** The validated, structured action — never a query or code. Null when rejected. */
-  action: AiAction | null;
+  action: AiActionName;
+  /** Normalized parameters collected so far (backend-validated values only). */
+  parameters: Record<string, AiParamValue>;
+  missingFields: string[];
+  question: AiQuestion | null;
+  resolvedEntities: AiResolvedEntity[];
+  validationResult: { ok: boolean; errors: string[] } | null;
+  preview: AiPreview | null;
+  /** Changes every time the preview changes — a confirmation must quote the current one. */
+  previewToken: string | null;
+  previewedAt: string | null;
+  riskLevel: AiRiskLevel;
+  confirmationRequired: boolean;
+  confirmationStatus: 'not_requested' | 'pending' | 'confirmed';
+  confirmedAt: string | null;
+  confirmedBy: string | null;
   status: AiCommandStatus;
-  preview: AiCommandPreview | null;
-  confirmation: {
-    level: AiConfirmationLevel;
-    requiredPhrase: string | null;
-    confirmedAt: string | null;
-    confirmedBy: string | null;
-  };
-  execution: {
-    startedAt: string | null;
-    finishedAt: string | null;
-    result: unknown;
-  } | null;
-  /** The audit-log entry the executed operation wrote (and all of them, if it wrote several). */
+  execution: { startedAt: string | null; finishedAt: string | null; summary: string | null } | null;
+  /** The audit-log entry written by the shared service (the last one, if it wrote several). */
   auditId: string | null;
   auditIds: string[];
-  error: { code: string; message: string; details?: unknown; at: string } | null;
-  /** Client-supplied key: the same key can never create (and so never execute) a second command. */
+  error: { code: string; message: string; at: string } | null;
+  /** Unique (one command per key). Equal to commandId for conversational commands. */
   idempotencyKey: string;
+  /** Bumped on every change — guards concurrent edits of a pending command. */
+  revision: number;
   createdAt: string;
   updatedAt: string;
 }
 
-export const aiCommandCreateSchema = z
+export interface AiMessage {
+  id: string;
+  role: 'admin' | 'assistant';
+  text: string;
+  at: string;
+  kind?: 'question' | 'preview' | 'result' | 'error' | 'answer' | 'info';
+  commandId?: string;
+  options?: AiOption[];
+  /** Field the options answer. */
+  optionField?: string;
+  preview?: AiPreview;
+  previewToken?: string;
+  auditId?: string;
+}
+
+export interface AiSessionRecord {
+  _id?: string;
+  sessionId: string;
+  campusId: string;
+  adminId: string;
+  messages: AiMessage[];
+  /** The command this conversation is currently working on (pending), if any. */
+  activeCommandId: string | null;
+  /** Recently processed client message ids — a retried request is not processed twice. */
+  processedClientIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── API views (what the admin browser receives) ─────────────────────────────
+
+export interface AiCommandView {
+  commandId: string;
+  action: AiActionName;
+  actionLabel: string;
+  status: AiCommandStatus;
+  parameters: Record<string, AiParamValue>;
+  missingFields: string[];
+  question: AiQuestion | null;
+  resolvedEntities: AiResolvedEntity[];
+  validationResult: { ok: boolean; errors: string[] } | null;
+  preview: AiPreview | null;
+  previewToken: string | null;
+  riskLevel: AiRiskLevel;
+  confirmationRequired: boolean;
+  confirmationStatus: AiCommandRecord['confirmationStatus'];
+  executionStatus: AiCommandStatus;
+  auditId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AiSessionView {
+  sessionId: string;
+  adminId: string;
+  messages: AiMessage[];
+  activeCommand: AiCommandView | null;
+  provider: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AiHistoryItem {
+  commandId: string;
+  summary: string;
+  action: AiActionName;
+  actionLabel: string;
+  status: AiCommandStatus;
+  adminId: string;
+  auditId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const aiMessageInputSchema = z
   .object({
-    campusId: z.string().min(1),
-    originalPrompt: z.string().trim().min(1).max(2000),
-    idempotencyKey: z.string().trim().min(8).max(100),
-    /** Untrusted model output — validated against aiActionSchema by the backend. */
-    action: z.unknown(),
+    text: z.string().trim().max(1000).optional(),
+    /** A click on one of the assistant's options. */
+    select: z.object({ field: z.string().min(1).max(40), value: z.string().min(1).max(200) }).strict().optional(),
+    clientMessageId: z.string().min(8).max(100).optional(),
   })
-  .strict();
+  .strict()
+  .refine((v) => !!v.text || !!v.select, 'Send a message or pick an option');
+export type AiMessageInput = z.infer<typeof aiMessageInputSchema>;
+
+export const aiConfirmInputSchema = z.object({ previewToken: z.string().min(8).max(100) }).strict();

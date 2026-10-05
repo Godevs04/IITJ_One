@@ -12,5 +12,9 @@ process.env.FCM_CLIENT_EMAIL = '';
 process.env.FCM_PRIVATE_KEY = '';
 process.env.FCM_SERVICE_ACCOUNT_PATH = '';
 process.env.GOOGLE_APPLICATION_CREDENTIALS = '';
+// No LLM calls from tests: the built-in rule-based interpreter only.
+process.env.AI_PROVIDER = 'rules';
+process.env.AI_API_KEY = '';
+process.env.AI_MESSAGES_PER_MIN = '1000';
 
 export {};
