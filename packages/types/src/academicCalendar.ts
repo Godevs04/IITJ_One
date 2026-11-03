@@ -356,7 +356,17 @@ export function mergeCalendarImport(
 // Date-specific transport lookup (plan §9.1, §9.3) — read-only, never fabricates trips
 // ---------------------------------------------------------------------------
 
+/**
+ * Regular timetable groups. The key names are historical and stay as-is on the wire (installed app versions
+ * read them): 'mon-sat' is the weekday (Mon–Fri) timetable and 'sun-holiday' the Sat, Sun & Holidays one,
+ * since the November 2026 schedule moved Saturday onto the weekend timetable.
+ */
 export type TransportDayKey = 'mon-sat' | 'sun-holiday';
+
+/** True on Saturdays and Sundays (getDay()/getUTCDay() numbering) — those days run the weekend timetable. */
+export function isWeekendDay(dayOfWeek: number): boolean {
+  return dayOfWeek === 0 || dayOfWeek === 6;
+}
 
 export interface TransportForDateInput {
   /** YYYY-MM-DD, IST calendar date. */
@@ -371,7 +381,7 @@ export interface TransportForDateInput {
 }
 
 export interface TransportForDateResult {
-  layer: 'exception' | 'alert_override' | 'configured_holiday' | 'sunday' | 'weekday';
+  layer: 'exception' | 'alert_override' | 'configured_holiday' | 'weekend' | 'weekday';
   /** Timetable group to show for the base layers; null when an exception/override supplies its own trips. */
   dayKey: TransportDayKey | null;
   /** False when nothing date-specific is configured (no exception, override or holiday entry). */
@@ -397,7 +407,7 @@ export function istWeekday(date: string): number {
 
 /**
  * Same precedence as the live resolvers (apps/mobile ScheduleEngine, apps/api tripSchedule):
- * 1 date-specific exception → 2 alert override → 3 configured holiday → 4 Sunday → 5 Mon–Sat.
+ * 1 date-specific exception → 2 alert override → 3 configured holiday → 4 Saturday/Sunday → 5 Mon–Fri.
  * Academic-calendar data is NOT an input — the calendar can only influence buses through the holidays
  * module, exactly like any other holiday entry.
  */
@@ -438,8 +448,9 @@ export function resolveTransportForDate(input: TransportForDateInput): Transport
     };
   }
 
-  if (istWeekday(input.date) === 0) {
-    return { layer: 'sunday', dayKey: 'sun-holiday', configured: false, basis: 'Sunday', exceptionUnknown };
+  const dow = istWeekday(input.date);
+  if (isWeekendDay(dow)) {
+    return { layer: 'weekend', dayKey: 'sun-holiday', configured: false, basis: dow === 6 ? 'Saturday' : 'Sunday', exceptionUnknown };
   }
-  return { layer: 'weekday', dayKey: 'mon-sat', configured: false, basis: 'Regular Mon–Sat timetable', exceptionUnknown };
+  return { layer: 'weekday', dayKey: 'mon-sat', configured: false, basis: 'Regular Mon–Fri timetable', exceptionUnknown };
 }

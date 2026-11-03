@@ -211,7 +211,8 @@ test('transport lookup follows the existing precedence and never fabricates', ()
     resolveTransportForDate({ date, holidays, alerts: none, exception: { hasTemporarySchedule: false }, ...extra });
 
   assert.deepStrictEqual([r('2026-10-21').layer, r('2026-10-21').dayKey], ['weekday', 'mon-sat'], 'normal day');
-  assert.deepStrictEqual([r('2026-10-25').layer, r('2026-10-25').dayKey], ['sunday', 'sun-holiday']);
+  assert.deepStrictEqual([r('2026-10-25').layer, r('2026-10-25').dayKey], ['weekend', 'sun-holiday']);
+  assert.deepStrictEqual([r('2026-10-24').layer, r('2026-10-24').dayKey, r('2026-10-24').basis], ['weekend', 'sun-holiday', 'Saturday'], 'Saturday runs the weekend timetable');
   assert.deepStrictEqual([r('2026-10-20').layer, r('2026-10-20').dayKey, r('2026-10-20').configured], ['configured_holiday', 'sun-holiday', true]);
   assert.strictEqual(r('2026-10-30').layer, 'weekday', 'Varchas (no-class day, Friday) → normal schedule');
   const unconfigured = resolveTransportForDate({ date: '2026-11-24', holidays: { holidays: [] }, alerts: none, exception: { hasTemporarySchedule: false } });

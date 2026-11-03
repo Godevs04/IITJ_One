@@ -73,8 +73,8 @@ const PRIORITY_STYLES: Record<
 const FAVORITES_KEY = '@iitj1/favorite_stops';
 
 const DAY_TYPES: { key: 'mon-sat' | 'sun-holiday'; label: string }[] = [
-  { key: 'mon-sat', label: 'Mon – Sat' },
-  { key: 'sun-holiday', label: 'Sun & Holidays' },
+  { key: 'mon-sat', label: 'Mon – Fri' },
+  { key: 'sun-holiday', label: 'Sat, Sun & Holidays' },
 ];
 
 const DIRECTIONS: BusDirection[] = ['departure', 'arrival'];
@@ -472,7 +472,7 @@ export function TransportScreenView({
         <View style={[styles.requestCaption, { backgroundColor: theme.primaryTint }]}>
           <Icon name="calendar-outline" size={16} color={theme.linkText} />
           <Text style={[styles.requestCaptionText, { color: theme.linkText }]}>
-            {dayTypeFilter === 'sun-holiday' ? 'Sunday & Holidays' : 'Mon-Sat'} timetable · {requestCaption}
+            {dayTypeFilter === 'sun-holiday' ? 'Sat, Sun & Holidays' : 'Mon – Fri'} timetable · {requestCaption}
           </Text>
           <Pressable
             onPress={() => {

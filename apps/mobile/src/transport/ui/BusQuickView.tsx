@@ -6,7 +6,7 @@ import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { debugListKeys } from '@/debug/listDebug';
 import type { TripWithStatus } from '../models/BusTypes';
-import { getStopCoords, openStopInMaps } from '../utils/coordinates';
+import { getStopCoords, hasStopCoords, openStopInMaps, searchStopInMaps } from '../utils/coordinates';
 import type { RideDirection, TransportLiveTrip } from '../services/liveTrackingApi';
 import { RideButton } from '../widgets/RideButton';
 import { displayStop } from './BusTripRow';
@@ -111,6 +111,13 @@ export function BusQuickView({
               </Text>
             </View>
 
+            {item.trip.note ? (
+              <View style={styles.noteRow}>
+                <MaterialIcons name="info-outline" size={16} color={theme.textMuted} />
+                <Text style={[styles.noteText, { color: theme.textMuted }]}>{item.trip.note}</Text>
+              </View>
+            ) : null}
+
             {label || canRemind ? (
               <View style={styles.statusRow}>
                 {label ? (
@@ -155,7 +162,7 @@ export function BusQuickView({
                 const isLast = index === stops.length - 1;
                 const time = isFirst ? item.trip.startTime : isLast ? item.trip.endTime : '';
                 const favorited = isFavorited(stop);
-                const coords = getStopCoords(stop);
+                const coords = hasStopCoords(stop) ? getStopCoords(stop) : null;
                 return (
                   <View key={`${stop}-${index}`} style={styles.stopRow}>
                     <Text style={[styles.stopTime, { color: theme.text }]}>{time}</Text>
@@ -182,7 +189,9 @@ export function BusQuickView({
                       />
                     </View>
                     <Pressable
-                      onPress={() => openStopInMaps(stop, coords.latitude, coords.longitude)}
+                      onPress={() =>
+                        coords ? openStopInMaps(stop, coords.latitude, coords.longitude) : searchStopInMaps(stop)
+                      }
                       style={({ pressed }) => [styles.stopName, pressed && { opacity: 0.6 }]}
                       accessibilityRole="link"
                       accessibilityLabel={`${stop}${time ? ` at ${time}` : ''}. Open in maps`}
@@ -289,6 +298,15 @@ const styles = StyleSheet.create({
   },
   routeEndRight: {
     textAlign: 'right',
+  },
+  noteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.xs,
+  },
+  noteText: {
+    ...AppTypography.bodySmall,
+    flex: 1,
   },
   statusRow: {
     flexDirection: 'row',

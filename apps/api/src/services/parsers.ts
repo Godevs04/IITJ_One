@@ -26,8 +26,9 @@ function rowsToTrips(rows: string[][], direction: 'departure' | 'arrival'): Tran
     from: cells[2] ?? '',
     endTime: cells[3] ?? '',
     to: cells[4] ?? '',
-    route: cells[5] ?? cells[6] ?? '',
+    route: cells[5] ?? '',
     direction,
+    ...(cells[6] ? { note: cells[6] } : {}),
   }));
 }
 
@@ -44,11 +45,13 @@ export function parseTransportMarkdown(filePath: string): {
   // `---` — table separator rows (`|---|---|...|`) also contain "---" and
   // would otherwise truncate the match right after the table header, before
   // any data rows are captured.
+  // The weekday section is "Monday to Friday" since Nov 2026 (Saturday moved to the weekend timetable) and is
+  // still stored under the historical 'mon-sat' key; older docs said "Monday to Saturday".
   const monSatDep = content.match(
-    /## Monday to Saturday[\s\S]*?### Departure from Campus([\s\S]*?)### Arrival at Campus/,
+    /## Monday to (?:Friday|Saturday)[\s\S]*?### Departure from Campus([\s\S]*?)### Arrival at Campus/,
   );
   const monSatArr = content.match(
-    /## Monday to Saturday[\s\S]*?### Arrival at Campus([\s\S]*?)\n---\n/,
+    /## Monday to (?:Friday|Saturday)[\s\S]*?### Arrival at Campus([\s\S]*?)\n---\n/,
   );
 
   if (monSatDep) {
@@ -67,10 +70,10 @@ export function parseTransportMarkdown(filePath: string): {
   }
 
   const sunDep = content.match(
-    /## Sunday & Institute Holidays[\s\S]*?### Departure from Campus([\s\S]*?)### Arrival at Campus/,
+    /## (?:Saturday, )?Sunday & Institute Holidays[\s\S]*?### Departure from Campus([\s\S]*?)### Arrival at Campus/,
   );
   const sunArr = content.match(
-    /## Sunday & Institute Holidays[\s\S]*?### Arrival at Campus([\s\S]*?)\n---\n/,
+    /## (?:Saturday, )?Sunday & Institute Holidays[\s\S]*?### Arrival at Campus([\s\S]*?)\n---\n/,
   );
 
   if (sunDep) {

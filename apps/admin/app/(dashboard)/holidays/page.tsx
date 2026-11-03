@@ -147,7 +147,7 @@ export default function HolidaysAdminPage() {
     <div className="space-y-6">
       <PageHeader
         title="Institute Holidays"
-        subtitle="Manage holidays to automatically switch to Sunday & Holiday bus schedules on the app."
+        subtitle="Manage holidays to automatically switch to the Sat, Sun & Holidays bus schedule on the app."
         actions={
           <div className="admin-actions">
             <Button variant="secondary" onClick={handleAddHoliday}>

@@ -138,6 +138,7 @@ export interface TransportTrip {
   to: string;
   route: string;
   direction?: 'departure' | 'arrival';
+  note?: string;
 }
 
 export interface TransportRouteGroup {

@@ -102,20 +102,20 @@ export function BusScheduleSection({
       break;
     case 'configured_holiday':
       heading = 'Holiday bus schedule';
-      body = `Transport runs the Sunday & Holidays timetable on this date (${result.basis}).`;
+      body = `Transport runs the Sat, Sun & Holidays timetable on this date (${result.basis}).`;
       action = { label: past ? 'View the timings that applied →' : 'View holiday bus timings →', dayKey: 'sun-holiday' };
       break;
-    case 'sunday':
-      heading = 'Sunday & Holidays bus schedule';
-      body = 'This holiday falls on a Sunday, so the Sunday & Holidays timetable applies.';
+    case 'weekend':
+      heading = 'Weekend & Holidays bus schedule';
+      body = `This holiday falls on a ${result.basis}, so the Sat, Sun & Holidays timetable applies.`;
       action = { label: 'View holiday bus timings →', dayKey: 'sun-holiday' };
       break;
     default:
       heading = 'Holiday bus schedule not configured';
       body =
         'Transport has not configured a holiday or special schedule for this date. ' +
-        (past ? 'The regular Mon–Sat timetable applied.' : 'The regular Mon–Sat timetable currently applies.');
-      action = { label: 'View Mon–Sat timings →', dayKey: 'mon-sat' };
+        (past ? 'The regular Mon–Fri timetable applied.' : 'The regular Mon–Fri timetable currently applies.');
+      action = { label: 'View Mon–Fri timings →', dayKey: 'mon-sat' };
   }
 
   const trips = result.layer === 'exception'

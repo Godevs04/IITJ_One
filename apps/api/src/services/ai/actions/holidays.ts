@@ -4,7 +4,7 @@ import { deleteHoliday, previewHolidayTransport, setHolidayActive, upsertHoliday
 import { formatLongDate, formatShortDate, keywords, normalizeDate } from '../normalize';
 import { ActionError, emptyResolution, str, type ActionContext, type ActionDefinition, type Params, type Resolution } from './types';
 
-const TIMETABLE = { 'mon-sat': 'Mon–Sat', 'sun-holiday': 'Sunday & Holidays' } as const;
+const TIMETABLE = { 'mon-sat': 'Mon–Fri', 'sun-holiday': 'Sat, Sun & Holidays' } as const;
 
 function busesRow(t: HolidayTransportPreview): { label: string; value: string } {
   return {

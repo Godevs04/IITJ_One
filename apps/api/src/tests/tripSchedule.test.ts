@@ -8,6 +8,11 @@ test('getScheduleKey: Sunday is always sun-holiday, regardless of the holidays l
   assert.strictEqual(key, 'sun-holiday');
 });
 
+test('getScheduleKey: Saturday runs the weekend (sun-holiday) timetable', () => {
+  const key = getScheduleKey({ campusId: 'iitj', holidays: [] }, '2026-11-07', 'saturday');
+  assert.strictEqual(key, 'sun-holiday');
+});
+
 test('getScheduleKey: a normal weekday with no matching holiday is mon-sat', () => {
   const holidays: HolidaysDoc = { campusId: 'iitj', holidays: [] };
   const key = getScheduleKey(holidays, '2026-07-28', 'tuesday');

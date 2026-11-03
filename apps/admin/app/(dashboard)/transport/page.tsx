@@ -15,6 +15,8 @@ type RouteGroup = TransportDoc['routes'][number];
 type Override = TransportDoc['scheduleOverrides'][number];
 
 const WEEKDAYS: RouteGroup['weekday'][] = ['mon-sat', 'sun-holiday'];
+// The keys are historical: since Nov 2026 Saturday runs the weekend timetable, so 'mon-sat' is Mon–Fri.
+const WEEKDAY_LABELS: Record<RouteGroup['weekday'], string> = { 'mon-sat': 'Mon – Fri', 'sun-holiday': 'Sat, Sun & Holidays' };
 const DIRECTIONS: RouteGroup['direction'][] = ['departure', 'arrival'];
 
 const emptyTrip = (direction: RouteGroup['direction']): TransportTrip => ({
@@ -209,7 +211,7 @@ export default function TransportAdminPage() {
       for (let i = 0; i < group.trips.length; i++) {
         const trip = group.trips[i];
         if (!trip.bus.trim() || !trip.startTime.trim() || !trip.endTime.trim()) {
-          push('error', 'Incomplete trip', `${group.weekday} / ${group.direction} row ${i + 1} needs bus and times.`);
+          push('error', 'Incomplete trip', `${WEEKDAY_LABELS[group.weekday]} / ${group.direction} row ${i + 1} needs bus and times.`);
           return;
         }
       }
@@ -323,7 +325,7 @@ export default function TransportAdminPage() {
                 active ? 'border-indigo bg-indigo-tint text-indigo' : 'border-border bg-white text-muted hover:text-ink'
               }`}
             >
-              <div className="font-medium capitalize">{g.weekday}</div>
+              <div className="font-medium">{WEEKDAY_LABELS[g.weekday]}</div>
               <div className="text-xs capitalize">{g.direction}</div>
               <StatusPill label={`${g.trips.length} trips`} tone={g.trips.length ? 'info' : 'neutral'} />
             </button>
@@ -336,7 +338,7 @@ export default function TransportAdminPage() {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h2 className="text-lg font-semibold capitalize text-ink">
-                {activeGroup.weekday} · {activeGroup.direction}
+                {WEEKDAY_LABELS[activeGroup.weekday]} · {activeGroup.direction}
               </h2>
               <p className="text-sm text-muted">Times as HH:MM (24h).</p>
             </div>

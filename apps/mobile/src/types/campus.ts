@@ -40,6 +40,8 @@ export interface TransportTrip {
    * authoritative source of truth for direction. Prefer this over guessing
    * from `to`/`from` text, which varies in how campus is labelled. */
   direction?: 'departure' | 'arrival';
+  /** Rider-facing remark from the timetable, e.g. "MedTech Course (Timing may change)". */
+  note?: string;
   /** Set only on days with an active schedule exception: 'modified' (replacement timetable) or
    *  'cancelled' (this regular trip does not run today). Absent = normal service. */
   serviceStatus?: import('@iitj1/types').TripServiceStatus;

@@ -64,7 +64,7 @@ function BusTripRowComponent({
       onPress={onPress}
       disabled={!onPress}
       accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityLabel={`${trip.bus}, ${from} ${trip.startTime} to ${to} ${trip.endTime}${cancelled ? ', cancelled today' : label ? `, ${label}` : modified ? ', changed today' : ''}`}
+      accessibilityLabel={`${trip.bus}, ${from} ${trip.startTime} to ${to} ${trip.endTime}${cancelled ? ', cancelled today' : label ? `, ${label}` : modified ? ', changed today' : ''}${trip.note ? `. ${trip.note}` : ''}`}
       accessibilityHint={onPress ? 'Shows the route and stops' : undefined}
       style={({ pressed }) => [
         styles.card,
@@ -125,6 +125,15 @@ function BusTripRowComponent({
           <Text style={[styles.time, styles.right, { color: theme.text }]}>{trip.endTime}</Text>
         </View>
       </View>
+
+      {trip.note ? (
+        <View style={styles.noteRow}>
+          <MaterialIcons name="info-outline" size={14} color={theme.textMuted} />
+          <Text style={[styles.note, { color: theme.textMuted }]} numberOfLines={2}>
+            {trip.note}
+          </Text>
+        </View>
+      ) : null}
     </Pressable>
   );
 }
@@ -222,5 +231,14 @@ const styles = StyleSheet.create({
   duration: {
     ...AppTypography.small,
     fontWeight: '600',
+  },
+  noteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  note: {
+    ...AppTypography.small,
+    flex: 1,
   },
 });

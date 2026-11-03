@@ -1,7 +1,7 @@
 /**
  * Institute holidays — shared business layer for the admin routes and, later, AI Admin.
  *
- * Transport rule (unchanged): an ACTIVE holiday on a date switches that day's buses to the Sunday & Holidays
+ * Transport rule (unchanged): an ACTIVE holiday on a date switches that day's buses to the Sat, Sun & Holidays
  * timetable (services/tripSchedule.ts getScheduleKey; the app's ScheduleEngine applies the same rule). A
  * published schedule exception for that day takes precedence over both.
  *

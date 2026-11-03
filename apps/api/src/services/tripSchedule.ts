@@ -66,7 +66,8 @@ export function getScheduleKey(
   todayIso: string,
   weekday: string,
 ): 'mon-sat' | 'sun-holiday' {
-  if (weekday === 'sunday' || isHolidayToday(holidays, todayIso)) return 'sun-holiday';
+  // 'mon-sat' is the historical key for the weekday (Mon–Fri) timetable; Saturdays run the weekend one.
+  if (weekday === 'saturday' || weekday === 'sunday' || isHolidayToday(holidays, todayIso)) return 'sun-holiday';
   return 'mon-sat';
 }
 
@@ -124,7 +125,7 @@ export async function getResolvedTripsForToday(
   return getRegularTripsForDay(campusId, todayIso, weekday);
 }
 
-/** The regular timetable for a day: Mon–Sat, or Sunday & Holidays when it's a Sunday or an active holiday. */
+/** The regular timetable for a day: Mon–Fri, or Sat, Sun & Holidays on a weekend day or an active holiday. */
 export async function getRegularTripsForDay(campusId: string, todayIso: string, weekday: string): Promise<TransportTrip[]> {
   const transport = await getTransport(campusId);
   if (!transport) return [];

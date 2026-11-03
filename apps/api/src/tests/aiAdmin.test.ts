@@ -65,12 +65,12 @@ before(async () => {
   api = await startInProcessApi();
   superToken = await api.adminToken('superadmin');
   editorToken = await api.adminToken('editor');
-  // Test-only "Route 3" (bus B3) with two trips every day, in the in-memory store only.
+  // Test-only "Route 9" (bus B9 — not a real bus; B1–B3 are in the timetable) with two trips every day, in the in-memory store only.
   const transport = getFallbackState().transport;
   for (const group of transport.routes.filter((g) => g.direction === 'departure')) {
     group.trips.push(
-      { bus: 'B3', startTime: '5:00 PM', from: 'Old Mess', endTime: '6:00 PM', to: 'MBM', route: 'Paota → MBM' },
-      { bus: 'B3', startTime: '6:30 PM', from: 'Old Mess', endTime: '7:30 PM', to: 'MBM', route: 'Paota → MBM' },
+      { bus: 'B9', startTime: '5:00 PM', from: 'Old Mess', endTime: '6:00 PM', to: 'MBM', route: 'Paota → MBM' },
+      { bus: 'B9', startTime: '6:30 PM', from: 'Old Mess', endTime: '7:30 PM', to: 'MBM', route: 'Paota → MBM' },
     );
   }
 });
@@ -152,7 +152,7 @@ test('security: prompt injection is refused and changes nothing', async () => {
 
 // ─── Information collection (bus cancellation) ─────────────────────────────────
 
-test('collecting: "Cancel the bus." asks which bus; "Route 3." asks the date; "Tomorrow." lists the trips', async () => {
+test('collecting: "Cancel the bus." asks which bus; "Route 9." asks the date; "Tomorrow." lists the trips', async () => {
   const s = await newSession();
   let v = await say(s, 'Cancel the bus.');
   assert.strictEqual(v.activeCommand?.action, 'cancel_bus_trip');
@@ -161,49 +161,49 @@ test('collecting: "Cancel the bus." asks which bus; "Route 3." asks the date; "T
   assert.match(lastReply(v).text, /Which bus would you like to cancel/);
   const commandId = v.activeCommand!.commandId;
 
-  v = await say(s, 'Route 3.');
+  v = await say(s, 'Route 9.');
   assert.strictEqual(v.activeCommand?.commandId, commandId, 'same command');
-  assert.strictEqual(v.activeCommand?.parameters.route, 'B3', 'Route 3 resolved to the timetable bus B3');
+  assert.strictEqual(v.activeCommand?.parameters.route, 'B9', 'Route 9 resolved to the timetable bus B9');
   assert.strictEqual(v.activeCommand?.question?.field, 'date');
-  assert.match(lastReply(v).text, /Which date should I cancel B3/);
+  assert.match(lastReply(v).text, /Which date should I cancel B9/);
 
   v = await say(s, 'Tomorrow.');
   assert.strictEqual(v.activeCommand?.question?.field, 'time');
-  assert.match(lastReply(v).text, /B3 has trips at 5:00 PM and 6:30 PM .* Which one should I cancel/);
+  assert.match(lastReply(v).text, /B9 has trips at 5:00 PM and 6:30 PM .* Which one should I cancel/);
   assert.deepStrictEqual(v.activeCommand?.question?.options?.map((o) => o.value), ['5:00 PM', '6:30 PM']);
   assert.ok(!v.activeCommand?.preview, 'no preview while information is missing');
 
   v = await say(s, '5 PM');
   assert.strictEqual(v.activeCommand?.status, 'awaiting_confirmation');
   assert.strictEqual(v.activeCommand?.riskLevel, 'high');
-  assert.strictEqual(v.activeCommand?.preview?.title, 'Cancel B3');
+  assert.strictEqual(v.activeCommand?.preview?.title, 'Cancel B9');
   assert.match(v.activeCommand?.preview?.subtitle ?? '', /^5:00 PM · /);
   assert.ok(v.activeCommand?.preview?.warnings.some((w) => /cancel a scheduled bus trip/.test(w)));
 });
 
-test('collecting: "Cancel Route 3 tomorrow." resolves route and date and asks only for the trip', async () => {
+test('collecting: "Cancel Route 9 tomorrow." resolves route and date and asks only for the trip', async () => {
   const s = await newSession();
-  const v = await say(s, 'Cancel Route 3 tomorrow.');
+  const v = await say(s, 'Cancel Route 9 tomorrow.');
   assert.strictEqual(v.activeCommand?.question?.field, 'time');
   assert.strictEqual(v.activeCommand?.parameters.date, tomorrow);
-  assert.ok(v.activeCommand?.resolvedEntities.some((e) => e.kind === 'bus' && e.id === 'B3'));
+  assert.ok(v.activeCommand?.resolvedEntities.some((e) => e.kind === 'bus' && e.id === 'B9'));
 });
 
 test('collecting: unknown bus and past dates are not guessed', async () => {
   const s = await newSession();
-  let v = await say(s, 'Cancel route 9 tomorrow');
+  let v = await say(s, 'Cancel route 7 tomorrow');
   assert.strictEqual(v.activeCommand?.question?.field, 'route');
-  assert.match(lastReply(v).text, /There's no Route 9 in the bus timetable — the buses are B1, B2, B3/);
+  assert.match(lastReply(v).text, /There's no Route 7 in the bus timetable — the buses are B1, B2, B3, B9/);
   v = await say(s, 'Cancel that');
   assert.strictEqual(v.activeCommand, null);
-  v = await say(s, 'Cancel B3 yesterday');
+  v = await say(s, 'Cancel B9 yesterday');
   assert.strictEqual(v.activeCommand?.question?.field, 'date');
   assert.match(lastReply(v).text, /already passed/);
 });
 
 test('cancellation flow: high risk needs the button; a correction refreshes the preview; confirm executes once and links audits', async () => {
   const s = await newSession();
-  let v = await say(s, 'Cancel Route 3 tomorrow at 5 PM');
+  let v = await say(s, 'Cancel Route 9 tomorrow at 5 PM');
   const cmd = v.activeCommand!;
   assert.strictEqual(cmd.status, 'awaiting_confirmation');
   const firstToken = cmd.previewToken!;
@@ -238,11 +238,11 @@ test('cancellation flow: high risk needs the button; a correction refreshes the 
   assert.strictEqual(executed.status, 'executed');
   assert.ok(executed.auditId);
 
-  // The exception exists for tomorrow and cancels exactly the 6:30 PM B3 trip.
+  // The exception exists for tomorrow and cancels exactly the 6:30 PM B9 trip.
   const { start, end } = istDayBounds(tomorrow);
   const exception = await getTransportScheduleExceptionForDay('iitj', start, end);
   assert.strictEqual(exception?.mode, 'cancel');
-  assert.deepStrictEqual(exception?.cancelledTrips, [{ bus: 'B3', startTime: '6:30 PM', direction: 'departure' }]);
+  assert.deepStrictEqual(exception?.cancelledTrips, [{ bus: 'B9', startTime: '6:30 PM', direction: 'departure' }]);
 
   // Audit linkage: the command's audit ids are the real entries (create + publish), latest = auditId.
   const record = getFallbackState().aiCommands.find((c) => c.commandId === cmd.commandId)!;
@@ -268,13 +268,13 @@ test('cancellation flow: high risk needs the button; a correction refreshes the 
 
 test('correction: a new time can pick a trip in the other direction (derived direction is not locked in)', async () => {
   const s = await newSession();
-  // 1 Mar 2027 is a Monday: B1 leaves campus at 5:45 PM and returns at 9:00 PM.
+  // 1 Mar 2027 is a Monday: B1 leaves campus at 5:45 PM and returns at 9:15 PM.
   let v = await say(s, 'Cancel B1 on 1 Mar 2027 at 5:45 PM');
   assert.strictEqual(v.activeCommand?.status, 'awaiting_confirmation');
   assert.strictEqual(v.activeCommand?.preview?.rows.find((r) => r.label === 'Direction')?.value, 'Leaving campus');
-  v = await say(s, 'Actually make that 9 PM');
+  v = await say(s, 'Actually make that 9:15 PM');
   assert.strictEqual(v.activeCommand?.status, 'awaiting_confirmation', lastReply(v).text);
-  assert.match(v.activeCommand?.preview?.subtitle ?? '', /^9:00 PM/);
+  assert.match(v.activeCommand?.preview?.subtitle ?? '', /^9:15 PM/);
   assert.strictEqual(v.activeCommand?.preview?.rows.find((r) => r.label === 'Direction')?.value, 'Coming to campus');
   v = await say(s, 'Cancel that');
   assert.strictEqual(v.activeCommand, null);
@@ -282,7 +282,7 @@ test('correction: a new time can pick a trip in the other direction (derived dir
 
 test('roles: an editor cannot run HIGH-risk actions — the command is rejected', async () => {
   const s = await newSession(editorToken);
-  const v = await say(s, 'Cancel Route 3 tomorrow', editorToken);
+  const v = await say(s, 'Cancel Route 9 tomorrow', editorToken);
   assert.strictEqual(v.activeCommand, null);
   assert.match(lastReply(v).text, /Only a superadmin/);
   const history = (await call('GET', '/admin/ai/commands', undefined, editorToken)).json.commands as Json[];
@@ -399,7 +399,7 @@ test('holiday: "Add Dussehra as a holiday." takes the date from the academic cal
   assert.strictEqual(cmd.status, 'awaiting_confirmation');
   assert.strictEqual(cmd.parameters.date, '2026-10-20');
   assert.ok(cmd.resolvedEntities.some((e) => e.source === 'Academic calendar'));
-  assert.ok(cmd.preview!.rows.some((r) => r.label === 'Buses that day' && /Sunday & Holidays timetable/.test(r.value)));
+  assert.ok(cmd.preview!.rows.some((r) => r.label === 'Buses that day' && /Sat, Sun & Holidays timetable/.test(r.value)));
 });
 
 // ─── Read-only questions ───────────────────────────────────────────────────────
@@ -410,7 +410,7 @@ test('informational questions are answered without creating commands', async () 
   assert.strictEqual(lastReply(v).kind, 'answer');
   assert.match(lastReply(v).text, /Pay & Use \(non-veg\): Breakfast ₹45, Lunch ₹80/);
   v = await say(s, 'What buses are running tomorrow?');
-  assert.match(lastReply(v).text, /B3 5:00 PM Old Mess → MBM/);
+  assert.match(lastReply(v).text, /B9 5:00 PM Old Mess → MBM/);
   v = await say(s, 'What notices are currently active?');
   assert.match(lastReply(v).text, /Active notices/);
   assert.strictEqual(v.activeCommand, null);
@@ -448,10 +448,10 @@ test('conversations are private; retried messages are processed once', async () 
 
 test('rules interpreter and normalizers', () => {
   const r = (message: string, pending: Parameters<typeof interpretWithRules>[0]['pending'] = null) => interpretWithRules({ message, pending, recentMessages: [], today });
-  assert.deepStrictEqual(r('Tell students Route 3 will be delayed tomorrow.'), {
+  assert.deepStrictEqual(r('Tell students Route 9 will be delayed tomorrow.'), {
     intent: 'command',
     action: 'create_transport_alert',
-    parameters: { title: 'Route 3 Will Be Delayed Tomorrow', message: 'Route 3 will be delayed tomorrow.', date: 'tomorrow' },
+    parameters: { title: 'Route 9 Will Be Delayed Tomorrow', message: 'Route 9 will be delayed tomorrow.', date: 'tomorrow' },
   });
   assert.strictEqual(r('Add Dussehra as a holiday.').action, 'create_holiday');
   assert.deepStrictEqual(r('Add Dussehra as a holiday.').parameters, { name: 'Dussehra' });

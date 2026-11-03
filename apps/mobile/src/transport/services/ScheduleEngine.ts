@@ -10,7 +10,7 @@ import type {
   TemporaryTransportSchedule,
   ActiveScheduleExceptionResponse,
 } from '@/types/campus';
-import { resolveExceptionTrips } from '@iitj1/types';
+import { isWeekendDay, resolveExceptionTrips } from '@iitj1/types';
 import { nowMinutes, parseTimeToMinutes } from '@/utils/date';
 import type { TripStatus, TripWithStatus } from '../models/BusTypes';
 import { parseRouteStops } from '../utils/coordinates';
@@ -68,12 +68,15 @@ function isHolidayOn(holidays: HolidaysDoc | null | undefined, d: Date): boolean
   return holidays.holidays.some((h: Holiday) => h.isActive && h.date === date);
 }
 
-/** Which timetable runs on `date` (default today): Sundays and configured holidays use the Sunday & Holidays one. */
+/**
+ * Which timetable runs on `date` (default today): Saturdays, Sundays and configured holidays use the
+ * Sat, Sun & Holidays one ('sun-holiday'); 'mon-sat' is the historical key for the Mon–Fri timetable.
+ */
 export function getScheduleKeyForDate(
   date: Date,
   holidays?: HolidaysDoc | null,
 ): 'mon-sat' | 'sun-holiday' {
-  if (date.getDay() === 0 || isHolidayOn(holidays, date)) return 'sun-holiday';
+  if (isWeekendDay(date.getDay()) || isHolidayOn(holidays, date)) return 'sun-holiday';
   return 'mon-sat';
 }
 

@@ -8,6 +8,8 @@ export const transportTripSchema = z.object({
   to: z.string(),
   route: z.string(),
   direction: z.enum(['departure', 'arrival']).optional(),
+  /** Rider-facing remark from the timetable, e.g. "MedTech Course (Timing may change)". */
+  note: z.string().optional(),
 });
 
 export type TransportTrip = z.infer<typeof transportTripSchema>;

@@ -84,11 +84,13 @@ export const BUS_STOPS: Record<string, BusStop> = {
 
 export function getNormalizedStopName(name: string): string {
   const n = name.trim().toLowerCase();
+  // Named stops that merely mention a mapped landmark — they are separate stops, not aliases of it.
+  if (n.includes('krishi mandi') || n.includes('bhagat ki kothi')) return name.trim();
   if (n.includes('mbm')) return 'MBM';
   if (n.includes('aiims')) return 'AIIMS Jodhpur';
-  if (n.includes('gate parking')) return 'Main Gate Parking';
+  if (n.includes('gate parking') || n === 'main gate') return 'Main Gate Parking';
   if (n.includes('old mess')) return 'Old Mess';
-  if (n.includes('shamiyana')) return 'Shamiyana';
+  if (n.includes('shamiyana') || n.includes('samiyana')) return 'Shamiyana';
   if (n.includes('paota')) return 'Paota';
   if (n.includes('railway')) return 'Railway Station';
   if (n.includes('gpra')) return 'GPRA';
@@ -97,6 +99,11 @@ export function getNormalizedStopName(name: string): string {
   if (n.includes('jaljog')) return 'Jaljog Circle';
   if (n.includes('iitj')) return 'IITJ';
   return name.trim();
+}
+
+/** True when the stop has known coordinates (unmapped stops fall back to campus in getStopCoords). */
+export function hasStopCoords(name: string): boolean {
+  return getNormalizedStopName(name) in BUS_STOPS;
 }
 
 export function getStopCoords(name: string): GeoPoint {
@@ -117,15 +124,15 @@ export function parseRouteStops(routeStr: string, fromStop: string, toStop: stri
     .map((s) => s.trim())
     .filter((s) => s && s !== '—');
 
+  // Only back-to-back repeats are dropped (e.g. `from` "Old Mess" followed by "IITJ", or a route that already
+  // ends at `to`): routes that loop back through a stop ("… → GPRA → Jhalamand → … → MBM") keep both visits.
   const stops = [fromStop, ...intermediate, toStop];
-  const seen = new Set<string>();
   const result: string[] = [];
+  let prev: string | null = null;
   for (const s of stops) {
     const norm = getNormalizedStopName(s);
-    if (!seen.has(norm)) {
-      seen.add(norm);
-      result.push(s);
-    }
+    if (norm !== prev) result.push(s);
+    prev = norm;
   }
   return result;
 }
@@ -134,9 +141,12 @@ export interface RouteWaypoint extends GeoPoint {
   name: string;
 }
 
-/** Resolves a trip's `route` string into an ordered list of real stop coordinates. */
+/**
+ * Resolves a trip's `route` string into an ordered list of real stop coordinates. Stops without known
+ * coordinates are skipped rather than placed on campus, which would zigzag the route back to IITJ.
+ */
 export function getRouteWaypoints(routeStr: string, fromStop: string, toStop: string): RouteWaypoint[] {
-  return parseRouteStops(routeStr, fromStop, toStop).map((name) => ({
+  return parseRouteStops(routeStr, fromStop, toStop).filter(hasStopCoords).map((name) => ({
     name: getNormalizedStopName(name),
     ...getStopCoords(name),
   }));

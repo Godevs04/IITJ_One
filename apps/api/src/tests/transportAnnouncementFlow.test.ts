@@ -131,16 +131,16 @@ test('A, B, C, D: Cancel bus creates exception, notice, and push notification wi
   const { value: created } = await createScheduleException(
     {
       campusId: 'iitj',
-      title: 'B2 9:15 AM Cancelled',
+      title: 'B2 10:30 AM Cancelled',
       reason: 'Trip cancelled',
-      description: 'The B2 9:15 AM bus is cancelled.',
+      description: 'The B2 10:30 AM bus is cancelled.',
       effectiveFrom: start.toISOString(),
       effectiveUntil: end.toISOString(),
       priority: 'high',
       affectedBuses: ['B2'],
       trips: [],
       mode: 'cancel',
-      cancelledTrips: [{ bus: 'B2', startTime: '9:15 AM', direction: 'departure' }],
+      cancelledTrips: [{ bus: 'B2', startTime: '10:30 AM', direction: 'departure' }],
       showBanner: true,
       sendPush: true,
       createNotice: true,
@@ -162,7 +162,7 @@ test('A, B, C, D: Cancel bus creates exception, notice, and push notification wi
   assert.ok(exc, 'Exception must exist');
   assert.strictEqual(exc.lifecycleState, 'published');
   assert.strictEqual(exc.mode, 'cancel');
-  assert.deepStrictEqual(exc.cancelledTrips, [{ bus: 'B2', startTime: '9:15 AM', direction: 'departure' }]);
+  assert.deepStrictEqual(exc.cancelledTrips, [{ bus: 'B2', startTime: '10:30 AM', direction: 'departure' }]);
 
   // Test B: Campus notice created automatically
   const activeNotices = await getNotices('iitj');
@@ -181,16 +181,16 @@ test('A, B, C, D: Cancel bus creates exception, notice, and push notification wi
   assert.strictEqual(pushRecord.data?.screen, 'transport');
 
   // Test D: Notice content completeness
-  assert.match(cancellationNotice.title, /B2.*9:15.*Cancelled/i);
+  assert.match(cancellationNotice.title, /B2.*10:30.*Cancelled/i);
   assert.match(cancellationNotice.body, /B2.*bus/i);
-  assert.match(cancellationNotice.body, /scheduled for 9:15 AM/i);
+  assert.match(cancellationNotice.body, /scheduled for 10:30 AM/i);
   assert.match(cancellationNotice.body, /All other scheduled trips will operate normally/i);
   assert.strictEqual(cancellationNotice.link, '/(tabs)/transport');
 
   // Structured metadata
   assert.strictEqual(cancellationNotice.metadata?.type, 'transport_cancellation');
   assert.strictEqual(cancellationNotice.metadata?.route, 'B2');
-  assert.strictEqual(cancellationNotice.metadata?.startTime, '9:15 AM');
+  assert.strictEqual(cancellationNotice.metadata?.startTime, '10:30 AM');
   assert.strictEqual(cancellationNotice.metadata?.date, tomorrow);
   assert.strictEqual(cancellationNotice.metadata?.scheduleExceptionId, exceptionId);
 });
@@ -202,16 +202,16 @@ test('E: Duplicate cancellation does NOT create duplicate notices or send duplic
   const { value: created } = await createScheduleException(
     {
       campusId: 'iitj',
-      title: 'B2 9:15 AM Cancelled',
+      title: 'B2 10:30 AM Cancelled',
       reason: 'Trip cancelled',
-      description: 'The B2 9:15 AM bus is cancelled.',
+      description: 'The B2 10:30 AM bus is cancelled.',
       effectiveFrom: start.toISOString(),
       effectiveUntil: end.toISOString(),
       priority: 'high',
       affectedBuses: ['B2'],
       trips: [],
       mode: 'cancel',
-      cancelledTrips: [{ bus: 'B2', startTime: '9:15 AM', direction: 'departure' }],
+      cancelledTrips: [{ bus: 'B2', startTime: '10:30 AM', direction: 'departure' }],
       showBanner: true,
       sendPush: true,
       createNotice: true,
@@ -247,7 +247,7 @@ test('F: Update cancellation updates the associated notice in-place', async () =
   const { value: created } = await createScheduleException(
     {
       campusId: 'iitj',
-      title: 'B2 9:15 AM Cancelled',
+      title: 'B2 10:30 AM Cancelled',
       reason: 'Initial reason',
       description: 'Initial description',
       effectiveFrom: start.toISOString(),
@@ -256,7 +256,7 @@ test('F: Update cancellation updates the associated notice in-place', async () =
       affectedBuses: ['B2'],
       trips: [],
       mode: 'cancel',
-      cancelledTrips: [{ bus: 'B2', startTime: '9:15 AM', direction: 'departure' }],
+      cancelledTrips: [{ bus: 'B2', startTime: '10:30 AM', direction: 'departure' }],
       showBanner: true,
       sendPush: true,
       createNotice: true,
@@ -287,7 +287,7 @@ test('G: Unpublishing cancellation withdraws the associated notice', async () =>
   const { value: created } = await createScheduleException(
     {
       campusId: 'iitj',
-      title: 'B2 9:15 AM Cancelled',
+      title: 'B2 10:30 AM Cancelled',
       reason: 'Trip cancelled',
       description: 'Trip cancelled',
       effectiveFrom: start.toISOString(),
@@ -296,7 +296,7 @@ test('G: Unpublishing cancellation withdraws the associated notice', async () =>
       affectedBuses: ['B2'],
       trips: [],
       mode: 'cancel',
-      cancelledTrips: [{ bus: 'B2', startTime: '9:15 AM', direction: 'departure' }],
+      cancelledTrips: [{ bus: 'B2', startTime: '10:30 AM', direction: 'departure' }],
       showBanner: true,
       sendPush: true,
       createNotice: true,
@@ -327,7 +327,7 @@ test('H: Deleting cancellation removes the notice so it no longer claims bus is 
   const { value: created } = await createScheduleException(
     {
       campusId: 'iitj',
-      title: 'B2 9:15 AM Cancelled',
+      title: 'B2 10:30 AM Cancelled',
       reason: 'Trip cancelled',
       description: 'Trip cancelled',
       effectiveFrom: start.toISOString(),
@@ -336,7 +336,7 @@ test('H: Deleting cancellation removes the notice so it no longer claims bus is 
       affectedBuses: ['B2'],
       trips: [],
       mode: 'cancel',
-      cancelledTrips: [{ bus: 'B2', startTime: '9:15 AM', direction: 'departure' }],
+      cancelledTrips: [{ bus: 'B2', startTime: '10:30 AM', direction: 'departure' }],
       showBanner: true,
       sendPush: true,
       createNotice: true,
@@ -412,7 +412,7 @@ test('K: Socket.IO broadcasts transport:update on cancellation mutation', async 
   const { value: created } = await createScheduleException(
     {
       campusId: 'iitj',
-      title: 'B2 9:15 AM Cancelled',
+      title: 'B2 10:30 AM Cancelled',
       reason: 'Trip cancelled',
       description: 'Trip cancelled',
       effectiveFrom: start.toISOString(),
@@ -421,7 +421,7 @@ test('K: Socket.IO broadcasts transport:update on cancellation mutation', async 
       affectedBuses: ['B2'],
       trips: [],
       mode: 'cancel',
-      cancelledTrips: [{ bus: 'B2', startTime: '9:15 AM', direction: 'departure' }],
+      cancelledTrips: [{ bus: 'B2', startTime: '10:30 AM', direction: 'departure' }],
       showBanner: true,
       sendPush: true,
       createNotice: true,

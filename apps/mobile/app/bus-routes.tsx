@@ -52,7 +52,7 @@ export default function BusRoutesScreen() {
   return (
     <ScreenShell
       hideTitle
-      subtitle={`${dayType === 'sun-holiday' ? 'Sunday & Holidays' : 'Mon – Sat'} timetable · stops in order`}
+      subtitle={`${dayType === 'sun-holiday' ? 'Sat, Sun & Holidays' : 'Mon – Fri'} timetable · stops in order`}
     >
       {routes.length === 0 ? (
         <EmptyState icon="bus-outline" title="No buses available" message="The bus schedule hasn't synced yet — pull down on the Bus tab to refresh." />
