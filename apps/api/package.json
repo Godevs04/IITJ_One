@@ -14,6 +14,7 @@
     "seed": "tsx src/scripts/seed.ts",
     "seed:mess:august": "tsx scripts/seed-august-veg.ts && tsx scripts/seed-august-nonveg.ts",
     "seed:mess:september": "tsx scripts/seed-september-veg.ts && tsx scripts/seed-september-nonveg.ts",
+    "seed:mess:november": "tsx scripts/seed-november-veg.ts && tsx scripts/seed-november-nonveg.ts",
     "seed:transport": "tsx scripts/seed-transport.ts",
     "calendar:import": "tsx scripts/import-academic-calendar.ts",
     "mess-pricing:seed": "tsx scripts/seed-mess-pricing.ts",
