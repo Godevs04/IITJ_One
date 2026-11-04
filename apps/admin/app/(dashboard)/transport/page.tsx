@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { ApiError, campusId, fetchCampusModule, fetchModuleVersion, putAdminModule } from '@/lib/api';
 import { asRecord, stripMeta } from '@/lib/sanitize';
@@ -9,7 +9,7 @@ import { Field, Input, Textarea, Select } from '@/components/Field';
 import { Card, EmptyState, LoadingBlock, PageHeader, StatusPill } from '@/components/ui';
 import { useToast } from '@/components/Toast';
 import type { TransportDoc, TransportTrip } from '@/lib/types';
-import type { TemporaryTransportSchedule, TemporaryTransportScheduleDoc } from '@iitj1/types';
+import { transportTripSchema, temporaryTransportScheduleSchema, type TemporaryTransportSchedule, type TemporaryTransportScheduleDoc } from '@iitj1/types';
 
 type RouteGroup = TransportDoc['routes'][number];
 type Override = TransportDoc['scheduleOverrides'][number];
@@ -33,8 +33,10 @@ function ensureRouteGroups(routes: RouteGroup[]): RouteGroup[] {
   const out: RouteGroup[] = [];
   for (const weekday of WEEKDAYS) {
     for (const direction of DIRECTIONS) {
-      const existing = routes.find((r) => r.weekday === weekday && r.direction === direction);
-      out.push(existing ?? { weekday, direction, trips: [] });
+      const trips = routes
+        .filter((r) => r.weekday === weekday && r.direction === direction)
+        .flatMap((r) => r.trips.map((trip) => ({ ...trip, direction })));
+      out.push({ weekday, direction, trips });
     }
   }
   return out;
@@ -65,11 +67,14 @@ function Collapsible({
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const panelId = useId();
   return (
     <div className={`rounded-xl border ${muted ? 'border-border/50 bg-sand/25' : 'border-border'}`}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-controls={panelId}
         className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
       >
         <span className="flex items-center gap-2">
@@ -81,7 +86,7 @@ function Collapsible({
         <span className={`text-xs text-muted transition-transform ${open ? 'rotate-90' : ''}`}>▶</span>
       </button>
       {open ? (
-        <div className={`space-y-4 border-t p-4 ${muted ? 'border-border/50' : 'border-border'}`}>{children}</div>
+        <div id={panelId} className={`space-y-4 border-t p-4 ${muted ? 'border-border/50' : 'border-border'}`}>{children}</div>
       ) : null}
     </div>
   );
@@ -129,7 +134,9 @@ export default function TransportAdminPage() {
 
   const [loadingSchedules, setLoadingSchedules] = useState(true);
   const [savingSchedules, setSavingSchedules] = useState(false);
+  const [schedulesError, setSchedulesError] = useState<string | null>(null);
   const [liveTrackingUrl, setLiveTrackingUrl] = useState('');
+  const [shuttle, setShuttle] = useState<TransportDoc['shuttle']>([]);
   const [routes, setRoutes] = useState<RouteGroup[]>(() => ensureRouteGroups([]));
   const [overrides, setOverrides] = useState<Override[]>([]);
   const [activeKey, setActiveKey] = useState(groupKey({ weekday: 'mon-sat', direction: 'departure', trips: [] }));
@@ -139,11 +146,13 @@ export default function TransportAdminPage() {
   // compatibility, but no longer the recommended workflow (see Temporary Schedules).
   const [loadingTemp, setLoadingTemp] = useState(true);
   const [savingTemp, setSavingTemp] = useState(false);
+  const [tempError, setTempError] = useState<string | null>(null);
   const [tempTrips, setTempTrips] = useState<TemporaryTransportSchedule[]>([]);
   const [tempVersion, setTempVersion] = useState<number | undefined>();
 
   const loadSchedules = useCallback(async () => {
     setLoadingSchedules(true);
+    setSchedulesError(null);
     try {
       const [data, moduleVersion] = await Promise.all([
         fetchCampusModule<TransportDoc>('/transport'),
@@ -153,15 +162,21 @@ export default function TransportAdminPage() {
         ? (stripMeta(data as unknown as Record<string, unknown>) as unknown as TransportDoc)
         : null;
       setLiveTrackingUrl(cleaned?.liveTrackingUrl ?? '');
+      setShuttle(cleaned?.shuttle ?? []);
       setRoutes(ensureRouteGroups(cleaned?.routes ?? []));
       setOverrides(cleaned?.scheduleOverrides ?? []);
       setSchedulesVersion(moduleVersion);
     } catch (err) {
       if (!(err instanceof ApiError && err.status === 404)) {
-        push('error', 'Could not load transport', err instanceof Error ? err.message : 'Unknown error');
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        setSchedulesError(message);
+        push('error', 'Could not load transport', message);
+      } else {
+        setRoutes(ensureRouteGroups([]));
+        setOverrides([]);
+        setShuttle([]);
+        setLiveTrackingUrl('');
       }
-      setRoutes(ensureRouteGroups([]));
-      setOverrides([]);
     } finally {
       setLoadingSchedules(false);
     }
@@ -169,6 +184,7 @@ export default function TransportAdminPage() {
 
   const loadTemp = useCallback(async () => {
     setLoadingTemp(true);
+    setTempError(null);
     try {
       const [data, moduleVersion] = await Promise.all([
         fetchCampusModule<TemporaryTransportScheduleDoc>('/temporaryTransportSchedule'),
@@ -178,9 +194,12 @@ export default function TransportAdminPage() {
       setTempVersion(moduleVersion);
     } catch (err) {
       if (!(err instanceof ApiError && err.status === 404)) {
-        push('error', 'Could not load temporary schedule', err instanceof Error ? err.message : 'Unknown error');
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        setTempError(message);
+        push('error', 'Could not load temporary schedule', message);
+      } else {
+        setTempTrips([]);
       }
-      setTempTrips([]);
     } finally {
       setLoadingTemp(false);
     }
@@ -207,11 +226,13 @@ export default function TransportAdminPage() {
   }
 
   async function saveSchedules() {
+    if (schedulesError || loadingSchedules || savingSchedules) return;
     for (const group of routes) {
       for (let i = 0; i < group.trips.length; i++) {
         const trip = group.trips[i];
-        if (!trip.bus.trim() || !trip.startTime.trim() || !trip.endTime.trim()) {
-          push('error', 'Incomplete trip', `${WEEKDAY_LABELS[group.weekday]} / ${group.direction} row ${i + 1} needs bus and times.`);
+        const parsed = transportTripSchema.safeParse(trip);
+        if (!parsed.success) {
+          push('error', 'Check trip details', `${WEEKDAY_LABELS[group.weekday]} / ${group.direction} row ${i + 1}: ${parsed.error.issues[0].path.join('.')} — ${parsed.error.issues[0].message}`);
           return;
         }
       }
@@ -221,12 +242,12 @@ export default function TransportAdminPage() {
       const body: TransportDoc = {
         campusId,
         routes: routes.filter((r) => r.trips.length > 0),
-        shuttle: [],
+        shuttle,
         liveTrackingUrl: liveTrackingUrl.trim() || null,
         scheduleOverrides: overrides,
       };
       await putAdminModule('/admin/transport', body, schedulesVersion);
-      push('success', 'Weekday schedule published', 'Mobile sync will refresh schedules.');
+      push('success', 'Bus schedule published', 'Mobile sync will refresh schedules.');
       await loadSchedules();
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
@@ -263,11 +284,13 @@ export default function TransportAdminPage() {
   };
 
   async function saveTempTrips() {
+    if (tempError || loadingTemp || savingTemp) return;
     setSavingTemp(true);
     try {
       for (const t of tempTrips) {
-        if (!t.busNumber.trim() || !t.departureTime.trim() || !t.from.trim() || !t.to.trim()) {
-          push('error', 'Validation error', 'All temporary trips need bus number, departure time, source, and destination.');
+        const parsed = temporaryTransportScheduleSchema.safeParse(t);
+        if (!parsed.success) {
+          push('error', 'Check temporary trip', `${parsed.error.issues[0].path.join('.')} — ${parsed.error.issues[0].message}`);
           setSavingTemp(false);
           return;
         }
@@ -292,8 +315,8 @@ export default function TransportAdminPage() {
     return (
       <div>
         <PageHeader
-          title="Weekday Schedule"
-          subtitle="Manage the permanent weekday timetable used during normal campus operations. For maintenance, festivals, examinations, emergency transport changes, revised bus schedules, or any temporary operational changes, use Temporary Schedules."
+          title="Bus Schedule"
+          subtitle="Manage the regular weekday and weekend timetables. Use Temporary Schedules for dated changes and cancellations."
         />
         <LoadingBlock />
       </div>
@@ -303,16 +326,23 @@ export default function TransportAdminPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Weekday Schedule"
-        subtitle="Manage the permanent weekday timetable used during normal campus operations. For maintenance, festivals, examinations, emergency transport changes, revised bus schedules, or any temporary operational changes, use Temporary Schedules."
+        title="Bus Schedule"
+        subtitle="Manage the regular weekday and weekend timetables. Use Temporary Schedules for dated changes and cancellations."
         actions={
-          <Button loading={savingSchedules} onClick={() => void saveSchedules()}>
+          <Button loading={savingSchedules} disabled={!!schedulesError} onClick={() => void saveSchedules()}>
             Publish Schedule
           </Button>
         }
       />
 
-      <div className="flex flex-wrap gap-2">
+      {schedulesError ? (
+        <Card className="space-y-3">
+          <p className="text-sm text-non-veg" role="alert">Could not load the saved timetable. Retry before publishing changes.</p>
+          <Button variant="secondary" onClick={() => void loadSchedules()}>Retry timetable</Button>
+        </Card>
+      ) : null}
+
+      <div className="grid grid-cols-2 gap-2 xl:grid-cols-4" aria-label="Timetable groups">
         {routes.map((g) => {
           const key = groupKey(g);
           const active = key === activeKey;
@@ -321,6 +351,7 @@ export default function TransportAdminPage() {
               key={key}
               type="button"
               onClick={() => setActiveKey(key)}
+              aria-pressed={active}
               className={`rounded-xl border px-3 py-2 text-left text-sm transition ${
                 active ? 'border-indigo bg-indigo-tint text-indigo' : 'border-border bg-white text-muted hover:text-ink'
               }`}
@@ -340,7 +371,7 @@ export default function TransportAdminPage() {
               <h2 className="text-lg font-semibold capitalize text-ink">
                 {WEEKDAY_LABELS[activeGroup.weekday]} · {activeGroup.direction}
               </h2>
-              <p className="text-sm text-muted">Times as HH:MM (24h).</p>
+              <p className="text-sm text-muted">Use 24-hour times (08:00, 17:30) or AM/PM (8:00 AM, 5:30 PM).</p>
             </div>
             <Button variant="secondary" onClick={() => updateActiveTrips([...activeGroup.trips, emptyTrip(activeGroup.direction)])}>
               Add trip
@@ -352,7 +383,7 @@ export default function TransportAdminPage() {
           ) : (
             <div className="space-y-3">
               {activeGroup.trips.map((trip, index) => (
-                <div key={index} className="grid gap-2 rounded-xl border border-border bg-white/70 p-3 sm:grid-cols-2 lg:grid-cols-7">
+                <div key={index} className="grid gap-2 rounded-xl border border-border bg-white/70 p-3 sm:grid-cols-2 xl:grid-cols-4">
                   <Field label="Bus">
                     <Input value={trip.bus} onChange={(e) => updateTrip(index, { bus: e.target.value })} />
                   </Field>
@@ -411,6 +442,12 @@ export default function TransportAdminPage() {
           </div>
 
           {/* Existing data */}
+          {tempError ? (
+            <div className="space-y-2" role="alert">
+              <p className="text-sm text-non-veg">Could not load the saved temporary timetable.</p>
+              <Button variant="secondary" onClick={() => void loadTemp()}>Retry temporary timetable</Button>
+            </div>
+          ) : null}
           {tempTrips.length === 0 ? (
             <div className="space-y-3">
               <EmptyState
@@ -468,7 +505,7 @@ export default function TransportAdminPage() {
             <Button variant="secondary" onClick={handleAddTempTrip}>
               Add Temp Trip
             </Button>
-            <Button variant="secondary" loading={savingTemp} onClick={() => void saveTempTrips()}>
+            <Button variant="secondary" loading={savingTemp} disabled={!!tempError} onClick={() => void saveTempTrips()}>
               Update Legacy Schedule
             </Button>
           </div>
@@ -560,7 +597,7 @@ export default function TransportAdminPage() {
             >
               Add override
             </Button>
-            <Button variant="secondary" loading={savingSchedules} onClick={() => void saveSchedules()}>
+            <Button variant="secondary" loading={savingSchedules} disabled={!!schedulesError} onClick={() => void saveSchedules()}>
               Update Legacy Overrides
             </Button>
           </div>

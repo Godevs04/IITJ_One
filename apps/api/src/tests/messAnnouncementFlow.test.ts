@@ -45,6 +45,7 @@ import {
   createTemporaryMessUpdateService,
   archiveTemporaryMessUpdateService,
   deleteTemporaryMessUpdateService,
+  updateTemporaryMessUpdateService,
 } from '../services/messUpdates';
 import { setInterpreterForTests } from '../services/ai/providers';
 import { addDays } from '../services/ai/normalize';
@@ -162,6 +163,63 @@ beforeEach(() => {
 });
 
 // ─── Test 1: Complete substitution ───────────────────────────────────────────
+test('mess update API rejects invalid dates, incomplete changes and server-owned patch fields before writing', async () => {
+  const input = { campusId: 'iitj', date: tomorrow, meal: 'lunch', diet: 'both', updateType: 'item_substitution', originalItem: 'Rice', replacementItem: 'Pulao', sendPush: false, createNotice: false };
+  for (const invalid of [
+    { ...input, date: '2027-02-30' },
+    { ...input, replacementItem: '' },
+    { ...input, updateType: 'special_menu', specialItems: [] },
+    { ...input, updateType: 'timing_change', newTiming: {} },
+    { ...input, expiresAt: 'not-a-date' },
+  ]) {
+    assert.strictEqual((await call('POST', '/admin/messUpdates', invalid)).status, 400);
+  }
+  assert.strictEqual(getFallbackState().temporaryMessUpdates.length, 0);
+  const created = await call('POST', '/admin/messUpdates', input);
+  assert.strictEqual(created.status, 201);
+  for (const patch of [{ campusId: 'other' }, { _id: 'other' }, { status: 'active' }, { pushSent: true }, { createdBy: 'other' }, { updateType: 'timing_change' }]) {
+    assert.strictEqual((await call('PUT', `/admin/messUpdates/${created.json._id}`, patch)).status, 400);
+  }
+  const unchanged = await getTemporaryMessUpdateById(created.json._id);
+  assert.strictEqual(unchanged?.updateType, 'item_substitution');
+  assert.strictEqual(unchanged?.campusId, 'iitj');
+});
+
+test('mess communication preferences survive edits; notice metadata and meal expiry follow the edited data', async () => {
+  const { value: created } = await createTemporaryMessUpdateService({
+    campusId: 'iitj', date: tomorrow, meal: 'lunch', diet: 'both', updateType: 'item_substitution',
+    originalItem: 'Rice', replacementItem: 'Pulao', sendPush: false, createNotice: true,
+  }, adminEmail);
+  assert.strictEqual(getFallbackState().pushHistory.length, 0, 'sendPush=false must not dispatch');
+  const result = await updateTemporaryMessUpdateService(created._id, { meal: 'dinner', replacementItem: 'Jeera Rice' }, adminEmail);
+  assert.ok(result.ok);
+  assert.strictEqual(result.value?.expiresAt, computeMessUpdateExpiry(tomorrow, 'dinner'));
+  assert.strictEqual(getFallbackState().pushHistory.length, 0, 'editing must preserve sendPush=false');
+  let notices = await getNotices('iitj');
+  assert.strictEqual(notices[0].metadata?.meal, 'dinner');
+  assert.strictEqual(notices[0].metadata?.replacementItem, 'Jeera Rice');
+  await updateTemporaryMessUpdateService(created._id, { createNotice: false }, adminEmail);
+  assert.strictEqual((await getNotices('iitj')).length, 0);
+  await updateTemporaryMessUpdateService(created._id, { reason: 'Updated reason' }, adminEmail);
+  assert.strictEqual((await getNotices('iitj')).length, 0, 'editing must not recreate a disabled announcement');
+  await updateTemporaryMessUpdateService(created._id, { createNotice: true }, adminEmail);
+  notices = await getNotices('iitj');
+  assert.strictEqual(notices.length, 1, 'explicit re-enable restores the linked announcement');
+});
+
+test('failed push remains unsent and AI reports actual delivery outcome', async () => {
+  const session = await newSession();
+  const preview = await say(session, 'Replace paneer with aloo tomorrow for breakfast.');
+  const cmd = preview.activeCommand!;
+  assert.strictEqual(cmd.status, 'awaiting_confirmation');
+  const result = await confirm(cmd.commandId, cmd.previewToken!);
+  assert.strictEqual(result.status, 200);
+  assert.match(result.json.message, /push notification was not sent/);
+  const update = getFallbackState().temporaryMessUpdates[0];
+  assert.strictEqual(update.pushSent, false, 'unconfigured FCM is not successful delivery');
+  assert.strictEqual(update.pushSentAt, undefined);
+});
+
 test('1: Complete substitution shows instant preview, requires confirmation, creates update and notices without touching master menu', async () => {
   const s = await newSession();
   const initialVegMenuSnapshot = JSON.stringify(getFallbackState().messMenuVeg);

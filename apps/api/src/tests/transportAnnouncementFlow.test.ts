@@ -35,6 +35,7 @@ import {
   getNoticeByScheduleExceptionId,
   getTransportScheduleExceptionById,
   getTransportScheduleExceptionForDay,
+  updateTransportScheduleException,
 } from '../store';
 import {
   createScheduleException,
@@ -171,9 +172,10 @@ test('A, B, C, D: Cancel bus creates exception, notice, and push notification wi
   assert.strictEqual(cancellationNotice.category, 'transport');
   assert.strictEqual(cancellationNotice.isImportant, true);
 
-  // Test C: Push notification dispatched and recorded
-  assert.strictEqual(exc.pushSent, true, 'Exception must mark pushSent as true');
-  assert.ok(exc.pushSentAt instanceof Date, 'Exception must record pushSentAt timestamp');
+  // Isolated tests disable FCM: the attempt is recorded, but must never be reported as sent.
+  assert.strictEqual(exc.pushSent, false, 'Unconfigured FCM must not mark the push as sent');
+  assert.strictEqual(exc.pushSentAt, undefined, 'A failed push has no sent timestamp');
+  assert.ok(pubResult.ok && pubResult.doc.pushSent === false, 'Publish response reports the actual push outcome');
   const s = getFallbackState();
   const pushRecord = s.pushHistory.find((p) => p.data?.scheduleExceptionId === exceptionId);
   assert.ok(pushRecord, 'Push history must record the dispatched notification');
@@ -231,6 +233,8 @@ test('E: Duplicate cancellation does NOT create duplicate notices or send duplic
   assert.strictEqual(noticesAfterFirst, 1, 'Exactly one notice after first publish');
   assert.strictEqual(pushCountAfterFirst, 1, 'Exactly one push dispatched after first publish');
 
+  // Model a previously delivered notification; a repeat publish must not send it again.
+  await updateTransportScheduleException(exceptionId, { pushSent: true, pushSentAt: new Date() }, adminEmail);
   // Second publish attempt
   await publishScheduleException(exceptionId, adminEmail);
   const pushCountAfterSecond = s.pushHistory.length;

@@ -192,12 +192,15 @@ export function TransportScreenView({
   const isExceptionLive = useMemo(() => isExceptionActive(activeException), [activeException]);
   // Legacy alert-triggered override — a dated schedule exception takes
   // priority over this when both are present (see ScheduleEngine).
-  const isOverridden = useMemo(() => !isExceptionLive && isScheduleOverridden(alerts), [alerts, isExceptionLive]);
+  const isOverridden = useMemo(() => {
+    void tick;
+    return !isExceptionLive && isScheduleOverridden(alerts);
+  }, [alerts, isExceptionLive, tick]);
   const exceptionSchedule = isExceptionLive ? activeException!.schedule! : null;
 
   // Dynamic trips list evaluation based on dayTypeFilter
   const tripsWithStatus = useMemo(() => {
-    if (!transport && !isExceptionLive) return [];
+    if (!transport && !isExceptionLive && !isOverridden) return [];
 
     const trips =
       isExceptionLive || isOverridden

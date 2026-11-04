@@ -340,8 +340,8 @@ export const temporaryMessUpdateAction: ActionDefinition = {
       label: 'Replacement dish',
       describe: 'Replacement dish to serve',
       kind: 'text',
-      required: (p) => p.updateType === 'item_substitution',
-      question: (p) => (p.originalItem ? `What should be served instead of ${p.originalItem}?` : 'What should be served instead?'),
+      required: (p) => p.updateType === 'item_substitution' || p.updateType === 'general_update',
+      question: (p) => p.updateType === 'general_update' ? 'What should the meal update say?' : (p.originalItem ? `What should be served instead of ${p.originalItem}?` : 'What should be served instead?'),
     },
     {
       name: 'specialItems',
@@ -584,7 +584,7 @@ export const temporaryMessUpdateAction: ActionDefinition = {
     const newTiming = p.newTiming ? { label: String(p.newTiming) } : undefined;
     const reason = p.reason ? String(p.reason) : undefined;
 
-    await createTemporaryMessUpdateService(
+    const { value: saved } = await createTemporaryMessUpdateService(
       {
         campusId: ctx.campusId,
         date,
@@ -604,8 +604,8 @@ export const temporaryMessUpdateAction: ActionDefinition = {
 
     const what = `${capitalize(meal)} update on ${formatShortDate(date)}`;
     return {
-      summary: `Created temporary mess update for ${what}, published campus announcement, and sent push notification`,
-      message: `Done — temporary update for ${what} is active. A campus announcement has been published and push notification dispatched.`,
+      summary: `Created temporary mess update for ${what}, published campus announcement; push ${saved.pushSent ? 'sent' : 'not sent'}`,
+      message: `Done — temporary update for ${what} is active. A campus announcement has been published. ${saved.pushSent ? 'The push notification was sent.' : 'The push notification was not sent; check notification configuration or delivery history.'}`,
     };
   },
 };

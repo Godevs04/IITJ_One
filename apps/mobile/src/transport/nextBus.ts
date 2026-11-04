@@ -13,9 +13,14 @@ export interface TimedTrip<T> {
 
 export type BusPhase = 'upcoming' | 'running' | 'done';
 
+/** Arrival measured from the departure's service day; a midnight crossing ends the following day. */
+export function tripEndMinutes(startMin: number, endMin: number): number {
+  return endMin < startMin ? endMin + 24 * 60 : endMin;
+}
+
 export function busPhase(startMin: number, endMin: number, nowMin: number): BusPhase {
   if (nowMin < startMin) return 'upcoming';
-  if (nowMin < endMin) return 'running';
+  if (nowMin < tripEndMinutes(startMin, endMin)) return 'running';
   return 'done';
 }
 
@@ -56,7 +61,7 @@ export function formatMinutesShort(totalMinutes: number): string {
 
 /** Ride length for the "— 1 hr —" connector; null if the timetable has no usable arrival time. */
 export function tripDuration(startMin: number, endMin: number): string | null {
-  const d = endMin - startMin;
+  const d = tripEndMinutes(startMin, endMin) - startMin;
   if (!Number.isFinite(d) || d <= 0) return null;
   return formatMinutesShort(d);
 }

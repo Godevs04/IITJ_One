@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getStoredAdmin } from '@/lib/auth';
 import { logout } from '@/lib/api';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 
 interface NavLeaf {
   href: string;
@@ -64,7 +64,7 @@ const NAV: { label: string; items: NavItem[] }[] = [
       {
         label: 'Transport',
         children: [
-          { href: '/transport', label: 'Weekday Schedule' },
+          { href: '/transport', label: 'Bus Schedule' },
           { href: '/transport/schedule-exceptions', label: 'Temporary Schedules' },
           { href: '/transport/alerts', label: 'Transport Alerts' },
           { href: '/transport/operations', label: 'Live Operations' },
@@ -72,6 +72,7 @@ const NAV: { label: string; items: NavItem[] }[] = [
           { href: '/transport/pilot', label: 'Campus Pilot' },
           { href: '/transport/reliability', label: 'Reliability' },
           { href: '/transport/live-tracking', label: 'Live Tracking (legacy)' },
+          { href: '/erickshaw', label: 'E-Rickshaw' },
         ],
       },
       { href: '/calendar', label: 'Calendar' },
@@ -80,9 +81,9 @@ const NAV: { label: string; items: NavItem[] }[] = [
       { href: '/apps', label: 'Apps' },
       { href: '/map', label: 'Map' },
       { href: '/services', label: 'Services' },
+      { href: '/health-center', label: 'Health Center' },
       { href: '/laundry', label: 'Laundry' },
       { href: '/wifi', label: 'Wi-Fi' },
-      { href: '/erickshaw', label: 'E-Rickshaw' },
       { href: '/meal-windows', label: 'Meal windows' },
       { href: '/about', label: 'About' },
     ],
@@ -118,10 +119,11 @@ function NavLink({
     <Link
       href={item.href}
       onClick={onNavigate}
-      className={`group relative flex items-center rounded-xl py-2 text-sm transition duration-200 ${indent ? 'pl-6 pr-3' : 'px-3'} ${
+      aria-current={active ? 'page' : undefined}
+      className={`group relative flex min-h-10 items-center rounded-xl py-2 text-sm transition duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-highlight ${indent ? 'pl-6 pr-3' : 'px-3'} ${
         active
-          ? 'bg-white/12 font-medium text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]'
-          : 'text-white/65 hover:bg-white/6 hover:text-white'
+          ? 'bg-white/[0.12] font-medium text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]'
+          : 'text-white/70 hover:bg-white/[0.06] hover:text-white'
       }`}
     >
       {active ? (
@@ -146,6 +148,7 @@ function NavBranchItem({
 }) {
   const hasActiveChild = branch.children.some((c) => navActive(pathname, c.href));
   const [expanded, setExpanded] = useState(hasActiveChild);
+  const childrenId = useId();
 
   useEffect(() => {
     if (hasActiveChild) setExpanded(true);
@@ -156,10 +159,11 @@ function NavBranchItem({
       <button
         type="button"
         onClick={() => setExpanded((e) => !e)}
-        className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm transition duration-200 ${
-          hasActiveChild ? 'font-medium text-white' : 'text-white/65 hover:bg-white/6 hover:text-white'
+        className={`flex min-h-10 w-full items-center justify-between rounded-xl px-3 py-2 text-sm transition duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-highlight ${
+          hasActiveChild ? 'font-medium text-white' : 'text-white/70 hover:bg-white/[0.06] hover:text-white'
         }`}
         aria-expanded={expanded}
+        aria-controls={childrenId}
       >
         <span className="truncate">{branch.label}</span>
         <span
@@ -170,10 +174,10 @@ function NavBranchItem({
         </span>
       </button>
       {expanded ? (
-        <ul className="mt-0.5 space-y-0.5">
+        <ul id={childrenId} className="mt-0.5 space-y-0.5">
           {branch.children.map((child) => (
             <li key={child.href}>
-              <NavLink item={child} active={navActive(pathname, child.href)} onNavigate={onNavigate} indent />
+              <NavLink item={child} active={pathname === child.href} onNavigate={onNavigate} indent />
             </li>
           ))}
         </ul>
@@ -220,10 +224,10 @@ export function Sidebar({
         <div className="mt-3 h-px w-12 bg-gradient-to-r from-highlight to-transparent" />
       </div>
 
-      <nav className="scroll-thin relative flex-1 overflow-y-auto px-3 py-4">
+      <nav aria-label="Admin navigation" className="scroll-thin relative min-h-0 flex-1 overflow-y-auto px-3 py-4">
         {NAV.map((group) => (
           <div key={group.label} className="mb-5">
-            <p className="mb-2 px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">
+            <p className="mb-2 px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/60">
               {group.label}
             </p>
             <ul className="space-y-0.5">

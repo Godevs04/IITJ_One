@@ -13,10 +13,10 @@ export function FeatureGrid() {
           Every campus essential, built in
         </h2>
         <p className="mt-3 text-base text-muted">
-          Everything an IIT Jodhpur student needs for campus life, in one consistently designed app.
+          Plan a meal, find a ride, or look up a campus contact. Choose a guide to see what’s available in the app.
         </p>
       </div>
-      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {FEATURES.map((feature, index) => (
           <Reveal key={feature.key} delay={(index % 3) * 0.06}>
             <FeatureCard

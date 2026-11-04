@@ -53,8 +53,7 @@ export function BottomTabBar({ state, descriptors, navigation }: MaterialTopTabB
         const { options } = descriptors[route.key];
         const label =
           typeof options.title === 'string' ? options.title : route.name;
-        const isFocused =
-          route.name === activeRouteName || state.routes[state.index]?.key === route.key;
+        const isFocused = route.name === activeRouteName;
         const icons = TAB_ICONS[route.name] ?? {
           inactive: 'circle' as IconName,
           active: 'circle' as IconName,

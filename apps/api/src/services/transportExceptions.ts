@@ -11,6 +11,7 @@
  */
 import {
   resolveExceptionTrips,
+  tripMatchesRef,
   unmatchedCancellations,
   type CancelledTripRef,
   type ServiceTrip,
@@ -83,9 +84,7 @@ async function syncCancellationNoticeAndPush(
   const regularTrips = await getRegularTripsForDay(doc.campusId, dateStr, dayName);
 
   const trips: CancellationTripDetails[] = doc.cancelledTrips.map((c) => {
-    const match = regularTrips.find(
-      (t) => t.bus.trim() === c.bus.trim() && t.startTime === c.startTime && t.direction === c.direction,
-    );
+    const match = regularTrips.find((t) => tripMatchesRef(t, c));
     return {
       bus: c.bus,
       route: c.bus,
@@ -152,7 +151,7 @@ async function syncCancellationNoticeAndPush(
   let pushSent = Boolean(doc.pushSent);
   if (!doc.pushSent) {
     try {
-      await dispatchTopicPush(
+      const outcome = await dispatchTopicPush(
         {
           topic: 'iitj_transport',
           title: announcement.pushTitle,
@@ -168,7 +167,7 @@ async function syncCancellationNoticeAndPush(
         },
         adminEmail,
       );
-      pushSent = true;
+      pushSent = outcome.outcome === 'sent';
     } catch (err) {
       console.warn('[transportExceptions] Push dispatch failed:', err);
     }
@@ -179,7 +178,7 @@ async function syncCancellationNoticeAndPush(
     {
       noticeId: activeNoticeId,
       pushSent,
-      pushSentAt: doc.pushSent ? doc.pushSentAt : new Date(),
+      ...(pushSent ? { pushSentAt: doc.pushSentAt ?? new Date() } : {}),
     },
     adminEmail,
   );
@@ -206,9 +205,7 @@ async function syncCancellationNoticeOnly(
   const regularTrips = await getRegularTripsForDay(doc.campusId, dateStr, dayName);
 
   const trips: CancellationTripDetails[] = doc.cancelledTrips.map((c) => {
-    const match = regularTrips.find(
-      (t) => t.bus.trim() === c.bus.trim() && t.startTime === c.startTime && t.direction === c.direction,
-    );
+    const match = regularTrips.find((t) => tripMatchesRef(t, c));
     return {
       bus: c.bus,
       route: c.bus,
@@ -355,6 +352,8 @@ export async function publishScheduleException(id: string, adminEmail: string): 
   if (result.value.ok && result.value.doc) {
     notifyTransportUpdate(result.value.doc.campusId);
     await syncCancellationNoticeAndPush(result.value.doc, adminEmail);
+    // Include the actual notification outcome in the response and in AI confirmations.
+    result.value.doc = (await getTransportScheduleExceptionById(id)) ?? result.value.doc;
   }
   return result;
 }

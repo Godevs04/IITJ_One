@@ -388,24 +388,27 @@ export {
 };
 
 const campusDirectorySortSchema = z.enum(['asc', 'desc']).default('asc');
+// URL query values are strings: Boolean('false') is true, so z.coerce.boolean()
+// silently reverses inactive/disabled filters. Only accept explicit booleans.
+const queryBooleanSchema = z.union([z.boolean(), z.enum(['true', 'false']).transform((value) => value === 'true')]).optional();
 
 export const adminDepartmentsQuerySchema = campusQuerySchema.merge(paginationQuerySchema).extend({
   search: z.string().optional(),
-  active: z.coerce.boolean().optional(),
+  active: queryBooleanSchema,
   sort: campusDirectorySortSchema,
 });
 
 export const adminOrganizationsQuerySchema = campusQuerySchema.merge(paginationQuerySchema).extend({
   search: z.string().optional(),
   type: z.enum(ORGANIZATION_TYPES).optional(),
-  active: z.coerce.boolean().optional(),
+  active: queryBooleanSchema,
   sort: campusDirectorySortSchema,
 });
 
 export const adminPeopleQuerySchema = campusQuerySchema.merge(paginationQuerySchema).extend({
   search: z.string().optional(),
   departmentId: z.string().optional(),
-  active: z.coerce.boolean().optional(),
+  active: queryBooleanSchema,
   sort: campusDirectorySortSchema,
 });
 
@@ -414,7 +417,7 @@ export const adminRolesQuerySchema = campusQuerySchema.merge(paginationQuerySche
   personId: z.string().optional(),
   organizationId: z.string().optional(),
   category: z.string().optional(),
-  active: z.coerce.boolean().optional(),
+  active: queryBooleanSchema,
   sort: campusDirectorySortSchema,
 });
 
@@ -436,8 +439,8 @@ export const adminCampaignsQuerySchema = campusQuerySchema.merge(paginationQuery
    * for transport schedule exceptions.
    */
   effectiveStatus: z.enum(['draft', 'published', 'expired', 'paused', 'archived']).optional(),
-  featured: z.coerce.boolean().optional(),
-  isEnabled: z.coerce.boolean().optional(),
+  featured: queryBooleanSchema,
+  isEnabled: queryBooleanSchema,
   sort: campusDirectorySortSchema,
 });
 

@@ -81,3 +81,14 @@ test('trip duration from timetable times; missing/invalid arrival gives none', (
   assert.strictEqual(tripDuration(t(10), t(10)), null);
   assert.strictEqual(tripDuration(t(10), Number.NaN), null);
 });
+
+test('overnight trips stay upcoming before departure and running until next-day arrival', () => {
+  const overnight = [{ trip: 'B1 night', startMin: t(23, 30), endMin: t(0, 20) }];
+  assert.strictEqual(busPhase(t(23, 30), t(0, 20), t(18)), 'upcoming');
+  assert.strictEqual(busPhase(t(23, 30), t(0, 20), t(23, 45)), 'running');
+  // Minutes after midnight of the departure's service day may exceed 1440.
+  assert.strictEqual(busPhase(t(23, 30), t(0, 20), t(24, 10)), 'running');
+  assert.strictEqual(busPhase(t(23, 30), t(0, 20), t(24, 20)), 'done');
+  assert.strictEqual(pickNextBus(overnight, t(23, 45))?.trip, 'B1 night');
+  assert.strictEqual(tripDuration(t(23, 30), t(0, 20)), '50 min');
+});

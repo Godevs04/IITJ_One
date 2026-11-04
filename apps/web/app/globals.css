@@ -63,6 +63,7 @@ html {
   scroll-behavior: smooth;
   background-color: rgb(var(--color-sand));
   transition: background-color 0.25s ease;
+  scroll-padding-top: 6rem;
 }
 
 html,

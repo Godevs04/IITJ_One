@@ -1,11 +1,19 @@
 import { z } from 'zod';
 
+const TIME_PATTERN = /^\s*(\d{1,2}):(\d{2})\s*([AaPp][Mm])?\s*$/;
+
+/** Accept either 24-hour time or a 12-hour time with AM/PM, within real clock bounds. */
+export const transportTimeSchema = z.string().trim().refine(
+  (time) => Number.isFinite(tripTimeToMinutes(time)),
+  'Use a valid time like "10:30 AM" or "22:30"',
+);
+
 export const transportTripSchema = z.object({
-  bus: z.string(),
-  startTime: z.string(),
-  from: z.string(),
-  endTime: z.string(),
-  to: z.string(),
+  bus: z.string().trim().min(1),
+  startTime: transportTimeSchema,
+  from: z.string().trim().min(1),
+  endTime: transportTimeSchema,
+  to: z.string().trim().min(1),
   route: z.string(),
   direction: z.enum(['departure', 'arrival']).optional(),
   /** Rider-facing remark from the timetable, e.g. "MedTech Course (Timing may change)". */
@@ -27,12 +35,10 @@ export type TripServiceStatus = 'normal' | 'modified' | 'cancelled';
 export const scheduleExceptionModeSchema = z.enum(['replace', 'cancel']);
 export type ScheduleExceptionMode = z.infer<typeof scheduleExceptionModeSchema>;
 
-const TIME_PATTERN = /^\s*(\d{1,2}):(\d{2})\s*([AaPp][Mm])?\s*$/;
-
 export const cancelledTripRefSchema = z
   .object({
     bus: z.string().trim().min(1),
-    startTime: z.string().regex(TIME_PATTERN, 'Use a time like "10:30 AM" or "22:30"'),
+    startTime: transportTimeSchema,
     direction: z.enum(['departure', 'arrival']),
   })
   .strict();
@@ -48,6 +54,7 @@ export function tripTimeToMinutes(time: string): number {
   let h = Number(m[1]);
   const min = Number(m[2]);
   const ampm = m[3]?.toUpperCase();
+  if (min > 59 || (ampm ? h < 1 || h > 12 : h > 23)) return Number.NaN;
   if (ampm === 'PM' && h !== 12) h += 12;
   if (ampm === 'AM' && h === 12) h = 0;
   return h * 60 + min;

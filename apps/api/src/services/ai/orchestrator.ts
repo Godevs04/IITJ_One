@@ -59,8 +59,8 @@ const RECENT_FOR_INTERPRETER = 6;
 const PREVIEW_TTL_MS = 30 * 60_000;
 
 export const HELP_TEXT =
-  'I can post, edit or delete notices; change or schedule mess prices; post or edit transport alerts; cancel a bus trip; and add, change or remove holidays. ' +
-  'You can also ask things like “What buses run tomorrow?” or “What is the current Pay & Use price?”';
+  'I can post, edit or delete notices; change or schedule mess prices; create temporary meal updates for substitutions, unavailable dishes, special menus and timings; post or edit transport alerts; cancel a bus trip; and add, change or remove holidays. ' +
+  'You can also ask things like “What buses run tomorrow?” or “What is the current Pay & Use price?” For laundry, Wi-Fi, health-center or directory changes, use the corresponding admin page.';
 
 // ─── Views ──────────────────────────────────────────────────────────────────────
 

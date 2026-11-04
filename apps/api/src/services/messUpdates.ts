@@ -6,8 +6,9 @@
 import type {
   TemporaryMessUpdateDoc,
   TemporaryMessUpdateInput,
+  TemporaryMessUpdatePatch,
 } from '@iitj1/types';
-import { computeMessUpdateExpiry } from '@iitj1/types';
+import { computeMessUpdateExpiry, temporaryMessUpdateCreateSchema } from '@iitj1/types';
 import {
   createTemporaryMessUpdate,
   getTemporaryMessUpdateById,
@@ -40,6 +41,8 @@ export async function createTemporaryMessUpdateService(
     specialItems: input.specialItems,
     newTiming: input.newTiming,
     reason: input.reason,
+    sendPush: input.sendPush !== false,
+    createNotice: input.createNotice !== false,
     expiresAt,
     status: 'active',
     createdAt: now,
@@ -50,7 +53,7 @@ export async function createTemporaryMessUpdateService(
 
   const saved = await createTemporaryMessUpdate(docToCreate);
 
-  if (input.createNotice !== false) {
+  if (input.createNotice !== false || input.sendPush !== false) {
     const { noticeId, pushSent } = await syncMessUpdateNoticeAndPush(saved, adminEmail);
     saved.noticeId = noticeId;
     saved.pushSent = pushSent;
@@ -67,17 +70,29 @@ export async function createTemporaryMessUpdateService(
 
 export async function updateTemporaryMessUpdateService(
   id: string,
-  patch: Partial<TemporaryMessUpdateDoc>,
+  patch: TemporaryMessUpdatePatch,
   adminEmail: string,
-): Promise<{ ok: boolean; value?: TemporaryMessUpdateDoc }> {
+): Promise<{ ok: boolean; value?: TemporaryMessUpdateDoc; errors?: string[] }> {
   const existing = await getTemporaryMessUpdateById(id);
   if (!existing) return { ok: false };
 
-  const updated = await updateTemporaryMessUpdate(id, patch, adminEmail);
+  const parsed = temporaryMessUpdateCreateSchema.safeParse({
+    ...existing,
+    ...patch,
+    expiresAt: patch.expiresAt ?? (patch.date !== undefined || patch.meal !== undefined
+      ? computeMessUpdateExpiry(patch.date ?? existing.date, patch.meal ?? existing.meal)
+      : existing.expiresAt),
+  });
+  if (!parsed.success) return { ok: false, errors: parsed.error.issues.map((issue) => issue.message) };
+  const { campusId: _campusId, ...validatedPatch } = parsed.data;
+  const updated = await updateTemporaryMessUpdate(id, validatedPatch, adminEmail);
   if (!updated) return { ok: false };
 
   if (updated.status === 'active') {
-    await syncMessUpdateNoticeAndPush(updated, adminEmail);
+    if (updated.createNotice === false) await withdrawLinkedMessNotice(id, adminEmail);
+    const communication = await syncMessUpdateNoticeAndPush(updated, adminEmail);
+    updated.noticeId = communication.noticeId;
+    updated.pushSent = communication.pushSent;
   } else {
     await withdrawLinkedMessNotice(id, adminEmail);
   }

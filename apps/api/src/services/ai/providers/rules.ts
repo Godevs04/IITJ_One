@@ -73,7 +73,7 @@ function detectQuery(t: string, slots: Params): AiInterpretation | null {
   const asks = /^(?:what|which|show|list|how much|how many|are there|is there|tell me|give me|when)\b/.test(t) || /\?\s*$/.test(t);
   if (!asks || /^(?:can you |could you |please )?(?:post|cancel|delete|remove|add|change|update|create)\b/.test(t)) return null;
   const pick = (keys: string[]) => Object.fromEntries(keys.filter((k) => slots[k] !== undefined).map((k) => [k, slots[k]]));
-  if (MESS_WORDS.test(t) && !/\bbus/.test(t)) return { intent: 'query', query: 'mess_pricing', parameters: pick(['plan', 'meal', 'diet']) };
+  if (MESS_WORDS.test(t) && /\b(?:price|prices|pricing|cost|rate|rates|pay|charge|charges|plan)\b|how much|₹/.test(t) && !/\bbus/.test(t)) return { intent: 'query', query: 'mess_pricing', parameters: pick(['plan', 'meal', 'diet']) };
   if (/\b(?:alert|alerts)\b/.test(t)) return { intent: 'query', query: 'transport_alerts', parameters: {} };
   if (/\b(?:bus|buses|trips?|transport|shuttle|route)\b/.test(t)) return { intent: 'query', query: 'buses', parameters: pick(['date', 'route']) };
   if (/\bnotices?\b/.test(t)) return { intent: 'query', query: 'notices', parameters: {} };
@@ -241,6 +241,9 @@ function detectCommand(raw: string, t: string, slots: Params): AiInterpretation 
   }
 
   // Temporary Mess Update
+  // A generic “replace”/“unavailable” request about another facility must not
+  // become a meal mutation just because there is no action for that facility.
+  if (/\b(?:laundry|wi-?fi|health[ -]?cent(?:er|re)|doctor|hospital|directory|department|portal|rickshaw)\b/.test(t)) return null;
   const isMessUpdateCommand =
     /\b(?:menu|mess\s+update|replace|substitute|serve.*instead|unavailable|not available|out of stock|special|timing|timings)\b/.test(t) ||
     (/\b(?:change|update|modify)\b/.test(t) && /\b(?:menu|breakfast|lunch|dinner|snacks?|food)\b/.test(t));
@@ -335,6 +338,7 @@ export function interpretWithRules(req: InterpretRequest): AiInterpretation {
   const slots = extractSlots(t);
   const query = detectQuery(t, slots);
   if (query) return query;
+  if (/^(?:what|which|show|list|when)\b/.test(t) && /\b(?:menu|breakfast|lunch|snacks?|dinner)\b/.test(t)) return { intent: 'unsupported' };
 
   const command = detectCommand(raw, t, slots);
   if (command) {

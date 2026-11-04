@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import { validateBody, validateQuery } from '../../middleware/validate';
 import { adminMessUpdatesQuerySchema } from '../../models/schemas';
-import { temporaryMessUpdateCreateSchema, type TemporaryMessUpdateInput, type TemporaryMessUpdateDoc } from '@iitj1/types';
+import { temporaryMessUpdateCreateSchema, temporaryMessUpdateUpdateSchema, type TemporaryMessUpdateInput, type TemporaryMessUpdatePatch } from '@iitj1/types';
 import { AuthRequest } from '../../middleware/auth';
 import { isDbConnected } from '../../db';
 import { isStrictObjectId } from '../../utils/objectId';
@@ -73,12 +73,17 @@ router.get(
 
 router.put(
   '/:id',
+  validateBody(temporaryMessUpdateUpdateSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = String(req.params.id);
     if (!assertMessUpdateId(id, res)) return;
 
-    const patch = req.body as Partial<TemporaryMessUpdateDoc>;
-    const { ok, value } = await updateTemporaryMessUpdateService(id, patch, req.admin!.email);
+    const patch = req.body as TemporaryMessUpdatePatch;
+    const { ok, value, errors } = await updateTemporaryMessUpdateService(id, patch, req.admin!.email);
+    if (errors) {
+      res.status(400).json({ error: 'Invalid mess update', errors });
+      return;
+    }
     if (!ok) {
       res.status(404).json({ error: 'Mess update not found' });
       return;

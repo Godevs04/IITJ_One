@@ -6,8 +6,8 @@
  * This site explains what the app offers — it does not demo live data or
  * explain how it works internally. See memory: project_not_open_source.md.
  *
- * Single-page site: everything below lives on "/" as anchored sections.
- * Only /privacy, /terms, and /support are separate routes.
+ * Homepage sections link to dedicated campus guides. Keep the facility
+ * catalog aligned with the screens that ship in the mobile app.
  */
 
 /**
@@ -48,7 +48,7 @@ export const APP_STORE_URL =
 /** True once at least one store listing is live — gates all pre-launch copy. */
 export const IS_PUBLISHED = Boolean(PLAY_STORE_URL || APP_STORE_URL);
 
-export type FeatureKey = 'mess' | 'transport' | 'calendar' | 'laundry' | 'wifi' | 'health-center' | 'campus-apps';
+export type FeatureKey = 'mess' | 'transport' | 'calendar' | 'laundry' | 'wifi' | 'health-center' | 'campus-apps' | 'campus-directory' | 'e-rickshaw' | 'notices' | 'timetable' | 'notes';
 
 export interface FeatureMeta {
   key: FeatureKey;
@@ -109,6 +109,41 @@ export const FEATURES: FeatureMeta[] = [
     description: 'A directory of official IITJ portals and campus services — academics, ERP, library, and more.',
     accent: 'dusk',
   },
+  {
+    key: 'campus-directory',
+    title: 'Campus Directory & Map',
+    oneLiner: 'Find campus places, people, departments, and clubs.',
+    description: 'Search campus locations and browse departments, faculty, clubs, and institute offices.',
+    accent: 'indigo',
+  },
+  {
+    key: 'e-rickshaw',
+    title: 'E-rickshaw',
+    oneLiner: 'Driver contacts and fares for getting around campus.',
+    description: 'Find campus e-rickshaw driver contacts, service information, and published fares in one place.',
+    accent: 'sage',
+  },
+  {
+    key: 'notices',
+    title: 'Campus Notices',
+    oneLiner: 'Campus announcements and academic updates in one feed.',
+    description: 'Read institute notices and updates, with categories to help you find what matters.',
+    accent: 'dusk',
+  },
+  {
+    key: 'timetable',
+    title: 'Class Timetable',
+    oneLiner: 'Your weekly class schedule, saved on your phone.',
+    description: 'Build your personal timetable and keep class times handy without creating an account.',
+    accent: 'indigo',
+  },
+  {
+    key: 'notes',
+    title: 'Personal Notes',
+    oneLiner: 'A place for the things you need to remember.',
+    description: 'Keep personal notes on your device, alongside the campus information you use every day.',
+    accent: 'sandstone',
+  },
 ];
 
 export interface NavLink {
@@ -117,9 +152,10 @@ export interface NavLink {
 }
 
 export const PRIMARY_NAV: NavLink[] = [
-  { label: 'Features', href: '/#features' },
+  { label: 'All facilities', href: '/#features' },
+  { label: 'Transport', href: '/iit-jodhpur-bus-timings' },
   { label: 'About', href: '/#about' },
-  { label: 'FAQ', href: '/#faq' },
+  { label: 'Support', href: '/support' },
 ];
 
 export const FOOTER_LINKS: { heading: string; links: NavLink[] }[] = [
@@ -129,15 +165,21 @@ export const FOOTER_LINKS: { heading: string; links: NavLink[] }[] = [
       { label: 'IITJ Mess Menu', href: '/iit-jodhpur-mess-menu' },
       { label: 'IITJ Bus Timings', href: '/iit-jodhpur-bus-timings' },
       { label: 'Academic Calendar', href: '/iit-jodhpur-academic-calendar' },
+      { label: 'Laundry', href: '/iit-jodhpur-laundry-schedule' },
       { label: 'IITJ Wi-Fi', href: '/iit-jodhpur-wifi' },
       { label: 'Health Center', href: '/iit-jodhpur-health-center' },
       { label: 'Campus Map', href: '/iit-jodhpur-campus-directory' },
+      { label: 'Apps & Portals', href: '/iit-jodhpur-portals' },
+      { label: 'E-rickshaw', href: '/iit-jodhpur-e-rickshaw' },
     ],
   },
   {
     heading: 'Product',
     links: [
       { label: 'Features', href: '/#features' },
+      { label: 'Campus Notices', href: '/iit-jodhpur-notices' },
+      { label: 'Class Timetable', href: '/iit-jodhpur-timetable' },
+      { label: 'Personal Notes', href: '/iit-jodhpur-notes' },
       { label: 'Download', href: '/#download' },
     ],
   },

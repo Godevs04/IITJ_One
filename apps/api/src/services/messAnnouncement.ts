@@ -17,6 +17,7 @@ import { dispatchTopicPush } from './push';
 import {
   getNoticeByMessUpdateId,
   updateTemporaryMessUpdate,
+  restoreNotice,
 } from '../store';
 
 
@@ -186,7 +187,8 @@ export async function syncMessUpdateNoticeAndPush(
   const existingNotice = await getNoticeByMessUpdateId(update._id);
   let noticeId: string | undefined = existingNotice?._id ? String(existingNotice._id) : undefined;
 
-  if (existingNotice && existingNotice._id) {
+  if (update.createNotice !== false && existingNotice && existingNotice._id) {
+    if (existingNotice.deletedAt) await restoreNotice(String(existingNotice._id), adminEmail);
     // Update existing notice in-place
     await editNotice(
       String(existingNotice._id),
@@ -198,10 +200,11 @@ export async function syncMessUpdateNoticeAndPush(
         isImportant: ann.isImportant,
         startDate: now,
         expiryDate: expiryDate,
+        metadata,
       },
       adminEmail,
     );
-  } else {
+  } else if (update.createNotice !== false) {
     // Create new campus notice
     const { value: created } = await publishNotice(
       {
@@ -222,8 +225,8 @@ export async function syncMessUpdateNoticeAndPush(
 
   // Push notification with duplicate protection
   let pushSent = Boolean(update.pushSent);
-  if (!update.pushSent) {
-    await dispatchTopicPush(
+  if (!update.pushSent && update.sendPush !== false) {
+    const delivery = await dispatchTopicPush(
       {
         topic: 'iitj_mess',
         title: ann.pushTitle,
@@ -238,7 +241,7 @@ export async function syncMessUpdateNoticeAndPush(
       },
       adminEmail,
     );
-    pushSent = true;
+    pushSent = delivery.outcome === 'sent';
   }
 
 

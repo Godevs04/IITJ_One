@@ -349,9 +349,10 @@ export const cancelBusTripAction: ActionDefinition = {
       throw new ActionError(why);
     }
     const what = `${p.route} ${trip.startTime} on ${formatShortDate(date)}`;
+    const pushSent = published.doc.pushSent === true;
     return {
-      summary: `Cancelled ${what}, published campus announcement, and sent push notification`,
-      message: `Done — ${what} is cancelled. A campus announcement has been published and push notification dispatched.`,
+      summary: `Cancelled ${what} and published campus announcement${pushSent ? ', with push notification dispatched' : '; push notification was not sent'}`,
+      message: `Done — ${what} is cancelled. A campus announcement has been published. ${pushSent ? 'The push notification was dispatched.' : 'The push notification could not be sent. Check Push history for the failure and retry after resolving it.'}`,
     };
   },
 };

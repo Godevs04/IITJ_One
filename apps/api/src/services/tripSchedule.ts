@@ -75,6 +75,7 @@ export function getTripsForDayType(
   transport: TransportDoc,
   dayType: 'mon-sat' | 'sun-holiday',
   weekday: string,
+  serviceDate: string = getIstDateString(),
 ): TransportTrip[] {
   const groups = transport.routes.filter((r) => r.weekday === dayType);
   // Stamp each trip with its group's direction — authoritative, must not be
@@ -82,10 +83,12 @@ export function getTripsForDayType(
   let trips: TransportTrip[] = groups.flatMap((g) => g.trips.map((t) => ({ ...t, direction: g.direction })));
 
   if (dayType === 'mon-sat' && weekday === 'thursday') {
-    const override = transport.scheduleOverrides.find((o) => o.dayOfWeek.toLowerCase() === 'thursday');
+    const override = transport.scheduleOverrides
+      .filter((o) => o.dayOfWeek.trim().toLowerCase() === 'thursday' && o.effectiveFrom.slice(0, 10) <= serviceDate)
+      .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0];
     if (override?.trips.length) {
       trips = trips.filter(
-        (t) => !(t.bus === 'B2' && t.startTime === '9:15 AM') && !(t.bus === 'B2' && t.startTime === '1:30 PM'),
+        (t) => !(t.bus.trim().toUpperCase() === 'B2' && [9 * 60 + 15, 13 * 60 + 30].includes(parseTimeToMinutes(t.startTime))),
       );
       trips = [...trips, ...override.trips];
     }
@@ -131,7 +134,7 @@ export async function getRegularTripsForDay(campusId: string, todayIso: string, 
   if (!transport) return [];
   const holidays = await getHolidays(campusId);
   const key = getScheduleKey(holidays, todayIso, weekday);
-  return getTripsForDayType(transport, key, weekday);
+  return getTripsForDayType(transport, key, weekday, todayIso);
 }
 
 /** Convenience wrapper that resolves the IST calendar day/weekday for `at` and calls getResolvedTripsForToday. */

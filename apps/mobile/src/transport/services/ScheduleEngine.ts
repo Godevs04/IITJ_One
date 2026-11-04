@@ -14,6 +14,7 @@ import { isWeekendDay, resolveExceptionTrips } from '@iitj1/types';
 import { nowMinutes, parseTimeToMinutes } from '@/utils/date';
 import type { TripStatus, TripWithStatus } from '../models/BusTypes';
 import { parseRouteStops } from '../utils/coordinates';
+import { tripEndMinutes } from '../nextBus';
 
 const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
@@ -104,14 +105,14 @@ export function getTripsForDayType(
 
   const day = DAY_NAMES[date.getDay()];
   if (dayType === 'mon-sat' && day === 'thursday') {
-    const override = transport.scheduleOverrides.find(
-      (o) => o.dayOfWeek.toLowerCase() === 'thursday',
-    );
+    const serviceDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const override = transport.scheduleOverrides
+      .filter((o) => o.dayOfWeek.trim().toLowerCase() === 'thursday' && o.effectiveFrom.slice(0, 10) <= serviceDate)
+      .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0];
     if (override?.trips.length) {
       trips = trips.filter(
         (t) =>
-          !(t.bus === 'B2' && t.startTime === '9:15 AM') &&
-          !(t.bus === 'B2' && t.startTime === '1:30 PM')
+          !(t.bus.trim().toUpperCase() === 'B2' && [9 * 60 + 15, 13 * 60 + 30].includes(parseTimeToMinutes(t.startTime)))
       );
       trips = [...trips, ...override.trips];
     }
@@ -158,7 +159,7 @@ export function evaluateTripStatus(trip: TransportTrip): {
 } {
   const now = nowMinutes();
   const start = parseTimeToMinutes(trip.startTime);
-  const end = parseTimeToMinutes(trip.endTime);
+  const end = tripEndMinutes(start, parseTimeToMinutes(trip.endTime));
 
   const diffStart = start - now;
   const diffEnd = end - now;
@@ -218,7 +219,7 @@ export function getTripsWithStatus(
   tempSchedule?: TemporaryTransportScheduleDoc | null,
   activeException?: ActiveScheduleExceptionResponse | null,
 ): TripWithStatus[] {
-  if (!transport && !isExceptionActive(activeException)) return [];
+  if (!transport && !isExceptionActive(activeException) && !isScheduleOverridden(alerts)) return [];
 
   const trips = getTripsForToday(transport, calendar, holidays, alerts, tempSchedule, activeException);
   return trips.map((trip) => {
