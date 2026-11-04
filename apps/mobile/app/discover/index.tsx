@@ -9,8 +9,9 @@ import {
   TextInput,
   View,
   type ListRenderItemInfo,
-  type ViewToken,
 } from 'react-native';
+
+type ViewToken = { item: any; key?: string; index?: number | null; isViewable?: boolean };
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
 import { EmptyState } from '@/components/EmptyState';
@@ -200,7 +201,7 @@ export default function DiscoverScreen() {
         ListHeaderComponent={header}
         ItemSeparatorComponent={() => <View style={styles.itemGap} />}
         ListEmptyComponent={
-          loading ? null : campaigns === null ? (
+          loading ? undefined : campaigns === null ? (
             <EmptyState
               icon="cloud-offline-outline"
               title="Couldn't load Discover"
@@ -221,7 +222,7 @@ export default function DiscoverScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl refreshing={syncing} onRefresh={sync} tintColor={theme.linkText} />}
+        refreshControl={<RefreshControl refreshing={syncing} onRefresh={() => { void sync(); }} tintColor={theme.linkText} />}
         viewabilityConfig={VIEWABILITY_CONFIG}
         onViewableItemsChanged={onViewableItemsChanged}
         removeClippedSubviews

@@ -216,8 +216,17 @@ function splitCsvLine(line: string): string[] {
 }
 
 export function loadMenuFromFiles(docsRoot: string, month = '2026-08') {
-  const vegPath = path.join(docsRoot, 'August Veg Menu.xlsx - Veg menu June.csv');
-  const nonVegPath = path.join(docsRoot, 'August_Non-Veg Menu.xlsx - Nov Menu.csv');
+  let vegPath = path.join(docsRoot, 'August Veg Menu.xlsx - Veg menu June.csv');
+  let nonVegPath = path.join(docsRoot, 'August_Non-Veg Menu.xlsx - Nov Menu.csv');
+  if (!fs.existsSync(vegPath)) {
+    const inputsRoot = path.resolve(docsRoot, '../inputs');
+    const inputVeg = path.join(inputsRoot, 'August Veg Menu.xlsx - Veg menu June.csv');
+    const inputNonVeg = path.join(inputsRoot, 'August_Non-Veg Menu.xlsx - Nov Menu.csv');
+    if (fs.existsSync(inputVeg) && fs.existsSync(inputNonVeg)) {
+      vegPath = inputVeg;
+      nonVegPath = inputNonVeg;
+    }
+  }
   const vegCsv = fs.readFileSync(vegPath, 'utf-8');
   const nonVegCsv = fs.readFileSync(nonVegPath, 'utf-8');
   return parseMenuCsv(vegCsv, nonVegCsv, month);

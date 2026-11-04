@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View, type ViewInstance } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { DietMark } from '@/components/DietMark';
 import { useModalOverlayLock } from '@/services/overlayGate';
@@ -21,7 +21,7 @@ export function DietPreferenceSelect({
   onChange: (pref: DietPreference) => void;
 }) {
   const theme = useThemeColors();
-  const pillRef = useRef<View>(null);
+  const pillRef = useRef<ViewInstance>(null);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
   const [windowWidth, setWindowWidth] = useState(0);
   useModalOverlayLock(anchor != null);

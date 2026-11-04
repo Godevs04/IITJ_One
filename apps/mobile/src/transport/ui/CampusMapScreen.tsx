@@ -29,7 +29,7 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
   const theme = useThemeColors();
   const { scheme } = useTheme();
   const insets = useSafeAreaInsets();
-  const webViewRef = useRef<WebView>(null);
+  const webViewRef = useRef<{ injectJavaScript: (script: string) => void } | null>(null);
   const [mapReady, setMapReady] = useState(false);
   // Read live tracking directly from the shared provider (app/_layout.tsx
   // wraps the whole app) — avoids a second data path duplicating what
@@ -470,7 +470,7 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
       {/* Map WebView */}
       <View style={styles.mapContainer}>
         <WebView
-          ref={webViewRef}
+          ref={webViewRef as any}
           key={scheme}
           originWhitelist={['*']}
           source={{ html: htmlContent }}

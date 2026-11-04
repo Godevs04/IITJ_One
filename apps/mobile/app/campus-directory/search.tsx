@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
-import { FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TextInput, type TextInputInstance, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
 import { goBack } from '@/navigation/goBack';
@@ -30,7 +30,7 @@ function matches(query: string, ...fields: (string | undefined)[]): boolean {
 export default function CampusDirectorySearchScreen() {
   const theme = useThemeColors();
   const [query, setQuery] = useState('');
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
 
   const departments = useCampusModule<DepartmentDoc[]>('campusDirectoryDepartments') ?? [];
   const people = useCampusModule<PersonDoc[]>('campusDirectoryPeople') ?? [];

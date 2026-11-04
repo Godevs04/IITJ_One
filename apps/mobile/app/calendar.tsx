@@ -10,8 +10,9 @@ import {
   Text,
   View,
   useWindowDimensions,
-  type ViewToken,
 } from 'react-native';
+
+type ViewToken = { item: any; key?: string; index?: number | null; isViewable?: boolean; section?: any };
 import { Icon } from '@/components/Icon';
 import { Stack } from 'expo-router';
 import { goBack } from '@/navigation/goBack';

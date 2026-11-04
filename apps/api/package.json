@@ -20,11 +20,12 @@
     "mess-pricing:seed": "tsx scripts/seed-mess-pricing.ts",
     "dev:isolated": "tsx scripts/dev-isolated-api.ts",
     "test": "node --import tsx --test --test-concurrency=1 src/tests/*.test.ts",
+    "test:unit": "node --import tsx --test --test-concurrency=1 src/tests/parsers.test.ts src/tests/academicCalendar.test.ts src/tests/academicCalendarTimeline.test.ts src/tests/mobileNowLogic.test.ts src/tests/gpsValidation.test.ts src/tests/tripSchedule.test.ts src/tests/adminServices.test.ts src/tests/aiAdmin.test.ts src/tests/aiConversationalScenarios.test.ts src/tests/messAnnouncementFlow.test.ts src/tests/messPricing.test.ts src/tests/transportAnnouncementFlow.test.ts src/tests/transportCancellationFlow.test.ts",
     "test:rc": "tsx scripts/rc/runCi.ts",
     "typecheck": "tsc --noEmit"
   },
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
   "packageManager": "npm@10.9.2",
   "dependencies": {
@@ -34,7 +35,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.7",
-    "@types/node": "^22.10.5",
+    "@types/node": "^24.0.0",
     "bcrypt": "^5.1.1",
     "cheerio": "^1.2.0",
     "cors": "^2.8.5",

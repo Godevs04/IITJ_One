@@ -25,7 +25,8 @@ function activeRouteFromSegments(segments: string[]): string | null {
   return (segments[1] as string | undefined) ?? 'index';
 }
 
-export function BottomTabBar({ state, descriptors, navigation }: MaterialTopTabBarProps) {
+export function BottomTabBar(props: MaterialTopTabBarProps & { navigation?: any }) {
+  const { state, descriptors, navigation, emitter, navigateToTab } = props as any;
   const theme = useThemeColors();
   const insets = useSafeAreaInsets();
   const segments = useSegments();
@@ -62,13 +63,17 @@ export function BottomTabBar({ state, descriptors, navigation }: MaterialTopTabB
         const color = isFocused ? theme.tabActive : theme.tabInactive;
 
         const onPress = () => {
-          const event = navigation.emit({
+          const event = (emitter ?? navigation)?.emit({
             type: 'tabPress',
             target: route.key,
             canPreventDefault: true,
           });
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
+          if (!isFocused && !event?.defaultPrevented) {
+            if (navigateToTab) {
+              navigateToTab(route.key);
+            } else {
+              navigation?.navigate(route.name);
+            }
           }
         };
 
