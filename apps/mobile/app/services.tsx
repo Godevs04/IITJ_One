@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import * as Linking from 'expo-linking';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { Alert, StyleSheet, TextInput, View } from 'react-native';
 import { DirectoryRow } from '@/components/DirectoryRow';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
@@ -11,11 +12,35 @@ import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing } from '@/theme/tokens';
 import { debugListKeys } from '@/debug/listDebug';
 
+const SECURITY_SERVICES = [
+  {
+    name: 'ID Card & No Dues Clearance',
+    category: 'ID Card Cell · Office of Security',
+    description: 'Contact Mr. Raghuveer Singh Bhati for new, lost, renewed, or replacement Institute ID cards and No Dues clearance. Email the ID Card Cell directly. Do not send or CC these requests to security@iitj.ac.in.',
+    email: 'idcard@iitj.ac.in',
+    phone: '0291-2801594',
+  },
+  {
+    name: 'Lost & Found and CCTV Requests',
+    category: 'Office of Security',
+    description: 'Use this email for lost or found items, related enquiries, and requests to view CCTV footage (viewing only). Include your name, Institute ID or roll number, contact number, date, approximate time, location, and a brief description as applicable. Do not send or CC these requests to security@iitj.ac.in.',
+    email: 'lost_found@iitj.ac.in',
+  },
+];
+
 export default function ServicesScreen() {
   const theme = useThemeColors();
   const { syncing, sync, error } = useCampusSync(false);
   const services = useCampusModule<ServicesDoc>('services');
-  const [query, setQuery] = useState('');
+  const { query: initialQuery } = useLocalSearchParams<{ query?: string }>();
+  const [editedQuery, setQuery] = useState<string>();
+  const query = editedQuery ?? initialQuery ?? '';
+  const searchTerm = query.trim().toLowerCase();
+  const securityEntries = SECURITY_SERVICES.filter((entry) =>
+    [entry.name, entry.category, entry.description, entry.email].some((field) =>
+      field.toLowerCase().includes(searchTerm),
+    ),
+  );
 
   const entries = useMemo(() => {
     const list = services?.entries ?? [];
@@ -58,8 +83,21 @@ export default function ServicesScreen() {
         ]}
       />
 
-      {entries.length > 0 ? (
+      {securityEntries.length > 0 || entries.length > 0 ? (
         <View style={{ gap: AppSpacing.sm }}>
+          {securityEntries.map((entry) => (
+            <DirectoryRow
+              key={entry.email}
+              title={entry.name}
+              subtitle={`${entry.category}\n${entry.email}\n${entry.description}`}
+              phone={entry.phone}
+              onPress={() => {
+                void Linking.openURL(`mailto:${entry.email}`).catch(() => {
+                  Alert.alert('Could not open email', `You can email ${entry.email} directly.`);
+                });
+              }}
+            />
+          ))}
           {entries.map((entry) => (
             <DirectoryRow
               key={`${entry.name}-${entry.category}`}

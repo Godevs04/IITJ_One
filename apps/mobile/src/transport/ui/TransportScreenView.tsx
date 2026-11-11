@@ -692,15 +692,26 @@ export function TransportScreenView({
             <MaterialIcons name={showCompleted ? 'expand-less' : 'expand-more'} size={20} color={theme.iconMuted} />
           </Pressable>
           {showCompleted &&
-            completedTrips.map((item) => (
-              <BusTripRow
-                key={tripKey(item.trip)}
-                trip={item.trip}
-                duration={tripDuration(parseTimeToMinutes(item.trip.startTime), parseTimeToMinutes(item.trip.endTime))}
-                dimmed
-                onPress={() => setQuickViewKey(tripKey(item.trip))}
-              />
-            ))}
+            DIRECTIONS.map((dir) => {
+              const trips = completedTrips.filter((item) => getRideDirection(item.trip) === dir);
+              if (trips.length === 0) return null;
+              return (
+                <View key={dir} style={styles.completedSection}>
+                  <Text style={[styles.sectionTitle, { color: theme.text }]} accessibilityRole="header">
+                    {dir === 'departure' ? 'To City' : 'From City'} ({trips.length})
+                  </Text>
+                  {trips.map((item) => (
+                    <BusTripRow
+                      key={tripKey(item.trip)}
+                      trip={item.trip}
+                      duration={tripDuration(parseTimeToMinutes(item.trip.startTime), parseTimeToMinutes(item.trip.endTime))}
+                      dimmed
+                      onPress={() => setQuickViewKey(tripKey(item.trip))}
+                    />
+                  ))}
+                </View>
+              );
+            })}
         </View>
       ) : null}
 

@@ -309,11 +309,12 @@ export default function MessQrScreen() {
         <EmptyState
           icon="qr-code-outline"
           title="No QR added"
-          message="Add your institute-issued Mess QR code."
+          message="Save an individual mess QR if your mess still uses one."
         />
       </View>
       <PrimaryButton label="Upload from Gallery" onPress={() => void pickImage(false)} />
       <SecondaryButton label="Take Photo" onPress={() => void pickImage(true)} />
+      <SecondaryButton label="Veg Mess entry via FretBox" onPress={() => router.push('/veg-mess-entry')} />
       <SecondaryButton label="Cancel" onPress={goBack} />
       </View>
     </>

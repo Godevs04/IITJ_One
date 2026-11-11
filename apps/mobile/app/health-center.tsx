@@ -149,7 +149,8 @@ export default function HealthCenterScreen() {
   // Default to today's tab if the sheet has one, otherwise the first available worksheet.
   const activeDate = useMemo(() => {
     if (selectedDate && dateTabs.some((t) => t.date === selectedDate)) return selectedDate;
-    const today = new Date().toISOString().slice(0, 10);
+    // Roster dates are campus dates. UTC still reads yesterday until 5:30 AM IST.
+    const today = new Date(Date.now() + (5 * 60 + 30) * 60_000).toISOString().slice(0, 10);
     if (dateTabs.some((t) => t.date === today)) return today;
     return dateTabs[0]?.date ?? null;
   }, [selectedDate, dateTabs]);

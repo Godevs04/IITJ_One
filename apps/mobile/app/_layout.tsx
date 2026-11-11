@@ -46,7 +46,7 @@ void SplashScreen.preventAutoHideAsync();
 // Keep the tabs underneath any screen opened directly (push notification,
 // deep link, cold start) so the header back button always has somewhere to go.
 export const unstable_settings = {
-  initialRouteName: '(tabs)',
+  anchor: '(tabs)',
 };
 
 export default function RootLayout() {
@@ -215,6 +215,7 @@ function RootNavigator() {
         <Stack.Screen name="settings" options={{ title: 'Settings' }} />
         <Stack.Screen name="customize-home" options={{ title: 'Customize Home' }} />
         <Stack.Screen name="mess-qr" options={{ title: 'My Mess QR' }} />
+        <Stack.Screen name="veg-mess-entry" options={{ title: 'Veg Mess entry' }} />
         <Stack.Screen name="timetable" options={{ headerShown: false }} />
         <Stack.Screen name="notes" options={{ title: 'Notes' }} />
         <Stack.Screen name="notes/edit" options={{ title: 'Edit Note' }} />
