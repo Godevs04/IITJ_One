@@ -11,6 +11,20 @@ export const metadata: Metadata = {
   title: 'Support',
   alternates: { canonical: '/support' },
   description: 'Get help with IITJ One — contact us, browse the FAQ, report a bug, or suggest a feature.',
+  openGraph: {
+    title: 'Support | IITJ One',
+    description: 'Get help with IITJ One, report a bug, or suggest a campus app feature.',
+    url: '/support',
+    type: 'website',
+    siteName: 'IITJ One',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'IITJ One' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Support | IITJ One',
+    description: 'Get help with IITJ One, report a bug, or suggest a campus app feature.',
+    images: ['/twitter-image'],
+  },
 };
 
 interface FaqCategory {

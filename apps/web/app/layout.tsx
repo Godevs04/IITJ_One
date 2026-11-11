@@ -18,9 +18,9 @@ const plexMono = IBM_Plex_Mono({
   display: 'swap',
 });
 
-const DEFAULT_TITLE = 'IITJ One — IIT Jodhpur Campus App: Mess Menu, Bus Timings & More';
+const DEFAULT_TITLE = 'IITJ One | IIT Jodhpur Mess Menu, Bus Timings & Campus Guide';
 const DEFAULT_DESCRIPTION =
-  'IITJ One is the free campus app for IIT Jodhpur (IITJ) students — today’s mess menu, IITJ bus timings, academic calendar, laundry, Wi-Fi setup, and Health Center contacts. Offline-first, no login.';
+  'Explore IIT Jodhpur (IITJ) mess menus, bus timings, departments, campus contacts and student services. Get IITJ One, the free campus companion app.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   creator: 'IITJ One',
   publisher: 'IITJ One',
   formatDetection: { telephone: false },
-  alternates: { canonical: '/' },
+  alternates: { canonical: `${SITE_URL}/` },
   robots: {
     index: true,
     follow: true,
@@ -57,6 +57,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_IN',
     siteName: 'IITJ One',
+    url: `${SITE_URL}/`,
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
   },
@@ -95,6 +96,8 @@ export const metadata: Metadata = {
     'IITJ wifi',
     'IIT Jodhpur health center',
     'IIT Jodhpur campus map',
+    'IIT Jodhpur departments',
+    'IITJ campus guide',
   ],
 };
 

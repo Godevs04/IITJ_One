@@ -5,7 +5,7 @@ import { FEATURES } from '@/lib/constants';
 
 const stats = [
   { value: FEATURES.length, suffix: '', label: 'Campus essentials' },
-  { value: 100, suffix: '%', label: 'Offline-first' },
+  { value: 1, suffix: '', label: 'App for campus essentials' },
   { value: 0, suffix: '', label: 'Accounts required' },
 ];
 

@@ -20,7 +20,7 @@
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ||
   (process.env.NODE_ENV === 'production' ? 'https://www.iitjone.in' : 'http://localhost:3002')
-).replace(/\/$/, '');
+).replace(/\/$/, '').replace(/^https?:\/\/(?:www\.)?iitjone\.in$/i, 'https://www.iitjone.in');
 
 export const BRAND_NAME = 'IITJ One';
 export const TAGLINE = 'The Smartest Way to Navigate IIT Jodhpur.';
@@ -154,7 +154,7 @@ export interface NavLink {
 export const PRIMARY_NAV: NavLink[] = [
   { label: 'All facilities', href: '/#features' },
   { label: 'Transport', href: '/iit-jodhpur-bus-timings' },
-  { label: 'About', href: '/#about' },
+  { label: 'Campus guide', href: '/iit-jodhpur' },
   { label: 'Support', href: '/support' },
 ];
 
@@ -163,6 +163,8 @@ export const FOOTER_LINKS: { heading: string; links: NavLink[] }[] = [
     heading: 'Campus guides',
     links: [
       { label: 'IITJ Mess Menu', href: '/iit-jodhpur-mess-menu' },
+      { label: 'About IIT Jodhpur', href: '/iit-jodhpur' },
+      { label: 'Departments', href: '/iit-jodhpur-departments' },
       { label: 'IITJ Bus Timings', href: '/iit-jodhpur-bus-timings' },
       { label: 'Academic Calendar', href: '/iit-jodhpur-academic-calendar' },
       { label: 'Laundry', href: '/iit-jodhpur-laundry-schedule' },

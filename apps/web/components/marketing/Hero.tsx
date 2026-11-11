@@ -42,16 +42,16 @@ export function Hero() {
     <section className="relative overflow-hidden border-b border-border/70">
       <AmbientGlow variant="hero" />
       <div className="relative mx-auto grid max-w-8xl gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-16 lg:py-20 lg:px-8">
-        <div className="reveal">
+        <div>
           <p className="inline-flex rounded-full border border-indigo/20 bg-indigo-tint/60 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
             Built for life at IIT Jodhpur
           </p>
           <h1 className="mt-5 max-w-2xl text-4xl font-semibold leading-[1.08] tracking-tight text-ink sm:text-5xl lg:text-6xl">
-            Your campus.<br /><span className="text-accent">Your day.</span> One app.
+            IIT Jodhpur campus life.<br /><span className="text-accent">One app.</span>
           </h1>
           <p className="mt-5 max-w-xl text-balance text-base text-muted sm:text-lg">
-            From your next meal to your next bus, find the everyday details that make campus life easier.
-            Mess menus, transport, notices, and more — together in IITJ One.
+            Find your IITJ mess menu, bus timings, campus departments, and everyday services with IITJ One.
+            A free campus companion for students at the Indian Institute of Technology Jodhpur.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <LinkButton href="/#download" variant="marketing">

@@ -6,7 +6,7 @@ import { PageHeader, Card } from '@/components/ui/Card';
 import { LinkButton } from '@/components/ui/Button';
 import { FaqAccordion } from '@/components/marketing/FaqAccordion';
 import { DownloadCtaBand } from '@/components/marketing/DownloadCtaBand';
-import { BreadcrumbJsonLd, FaqJsonLd, SoftwareApplicationJsonLd } from '@/components/seo/JsonLd';
+import { BreadcrumbJsonLd, FaqJsonLd, SoftwareApplicationJsonLd, WebPageJsonLd } from '@/components/seo/JsonLd';
 import { FEATURE_PAGES, getFeaturePage } from '@/lib/featurePages';
 import { FEATURE_ICONS } from '@/lib/featureIcons';
 import { DISCLAIMER, PLAY_STORE_URL, APP_STORE_URL } from '@/lib/constants';
@@ -67,7 +67,8 @@ export default async function FeatureLandingPage({ params }: { params: Params })
           { name: page.label, path: `/${page.slug}` },
         ]}
       />
-      <FaqJsonLd items={page.faqs} />
+      <WebPageJsonLd path={`/${page.slug}`} title={page.h1} description={page.description} dateModified={page.updatedAt} />
+      <FaqJsonLd items={page.faqs} path={`/${page.slug}`} />
       <SoftwareApplicationJsonLd />
 
       <article className="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
@@ -93,6 +94,57 @@ export default async function FeatureLandingPage({ params }: { params: Params })
           </span>
           <PageHeader eyebrow="IIT Jodhpur campus guide" title={page.h1} subtitle={page.intro} />
         </div>
+
+        {page.updatedAt ? (
+          <p className="mt-4 text-xs text-muted">
+            Updated <time dateTime={page.updatedAt}>{new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(page.updatedAt))}</time>
+            {' · '}IITJ One student guide
+          </p>
+        ) : null}
+
+        {page.sections?.length ? (
+          <nav aria-label="On this page" className="mt-6 rounded-2xl border border-border bg-surface p-4">
+            <p className="text-sm font-semibold text-ink">On this page</p>
+            <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
+              {page.sections.map((section, index) => (
+                <li key={section.heading}><a href={`#guide-section-${index}`} className="text-sm text-accent underline-offset-4 hover:underline">{section.heading}</a></li>
+              ))}
+            </ul>
+          </nav>
+        ) : null}
+
+        {page.sections?.map((section, index) => (
+          <section key={section.heading} id={`guide-section-${index}`} aria-labelledby={`guide-heading-${index}`} className="mt-10">
+            <h2 id={`guide-heading-${index}`} className="text-2xl font-semibold tracking-tight text-ink">{section.heading}</h2>
+            <p className="mt-3 leading-relaxed text-muted">{section.body}</p>
+            {section.items ? (
+              <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-relaxed text-ink">
+                {section.items.map((item) => <li key={item}>{item}</li>)}
+              </ul>
+            ) : null}
+            {section.table ? (
+              <div className="mt-5 overflow-x-auto rounded-xl border border-border" role="region" aria-label={section.table.caption} tabIndex={0}>
+                <table className="w-full min-w-[32rem] border-collapse text-left text-sm">
+                  <caption className="bg-surface px-4 py-3 text-left font-medium text-ink">{section.table.caption}</caption>
+                  <thead className="bg-indigo-tint/60 text-ink"><tr>{section.table.columns.map((column) => <th key={column} scope="col" className="border-t border-border px-4 py-3">{column}</th>)}</tr></thead>
+                  <tbody>{section.table.rows.map(([label, ...values]) => (
+                    <tr key={label} className="bg-surface">
+                      <th scope="row" className="border-t border-border px-4 py-3 font-medium text-ink">{label}</th>
+                      {values.map((value, cell) => <td key={cell} className="border-t border-border px-4 py-3 text-muted">{value}</td>)}
+                    </tr>
+                  ))}</tbody>
+                </table>
+              </div>
+            ) : null}
+            {section.links ? (
+              <ul className="mt-4 space-y-2">
+                {section.links.map((link) => (
+                  <li key={link.href}><Link href={link.href} className="inline-block py-1 text-sm font-medium text-accent underline underline-offset-4">{link.label}</Link></li>
+                ))}
+              </ul>
+            ) : null}
+          </section>
+        ))}
 
         <div className="mt-8 flex flex-wrap gap-3">
           {PLAY_STORE_URL ? (

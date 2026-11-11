@@ -6,6 +6,20 @@ export const metadata: Metadata = {
   title: 'Privacy Policy',
   alternates: { canonical: '/privacy' },
   description: 'What IITJ One collects, what it never collects, and why — anonymous analytics, no personal accounts.',
+  openGraph: {
+    title: 'Privacy Policy | IITJ One',
+    description: 'How IITJ One handles device data, anonymous analytics, and locally stored personal information.',
+    url: '/privacy',
+    type: 'website',
+    siteName: 'IITJ One',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'IITJ One' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Privacy Policy | IITJ One',
+    description: 'How IITJ One handles device data, anonymous analytics, and locally stored personal information.',
+    images: ['/twitter-image'],
+  },
 };
 
 export default function PrivacyPage() {
