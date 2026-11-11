@@ -604,9 +604,14 @@ test('15: Unauthorized access is rejected with 401/403', async () => {
 
 // ─── Test 16: Expiry after meal ───────────────────────────────────────────────
 test('16: Temporary mess update expires after meal window and is excluded from active endpoint', async () => {
-  const expiry = computeMessUpdateExpiry(today, 'breakfast');
-  const expectedExpiryMs = new Date(`${today}T10:30:00.000+05:30`).getTime();
-  assert.strictEqual(new Date(expiry).getTime(), expectedExpiryMs);
+  for (const [date, breakfastEnd, lunchEnd] of [
+    ['2026-11-06', '10:00', '14:45'],
+    ['2026-11-07', '10:30', '15:00'],
+    ['2026-11-08', '10:30', '15:00'],
+  ]) {
+    assert.equal(computeMessUpdateExpiry(date, 'breakfast'), new Date(`${date}T${breakfastEnd}:00+05:30`).toISOString());
+    assert.equal(computeMessUpdateExpiry(date, 'lunch'), new Date(`${date}T${lunchEnd}:00+05:30`).toISOString());
+  }
 
   const doc: TemporaryMessUpdateDoc = {
     _id: 'test-expiry-doc',

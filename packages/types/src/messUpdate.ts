@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MEAL_KEYS, type MealKey } from './mealWindows';
+import { DEFAULT_MEAL_WINDOWS, DEFAULT_WEEKEND_MEAL_WINDOWS, MEAL_KEYS, type MealKey } from './mealWindows';
 
 export const MESS_UPDATE_TYPES = [
   'item_substitution',
@@ -95,13 +95,12 @@ export interface TemporaryMessUpdateDoc {
  * Once the meal has passed, the update automatically expires.
  */
 export function computeMessUpdateExpiry(date: string, meal: MealKey): string {
-  const mealEndHour: Record<MealKey, string> = {
-    breakfast: '10:30:00.000',
-    lunch: '15:00:00.000',
-    snacks: '18:30:00.000',
-    dinner: '22:30:00.000',
-  };
-  const time = mealEndHour[meal] ?? '23:59:59.999';
+  const day = new Date(`${date}T00:00:00Z`).getUTCDay();
+  const windows = day === 0 || day === 6 ? DEFAULT_WEEKEND_MEAL_WINDOWS : DEFAULT_MEAL_WINDOWS;
+  const [clock, period] = windows[meal].end.split(' ');
+  const [hour, minute] = clock.split(':').map(Number);
+  const hour24 = (hour % 12) + (period === 'PM' ? 12 : 0);
+  const time = `${String(hour24).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00.000`;
   return new Date(`${date}T${time}+05:30`).toISOString();
 }
 
