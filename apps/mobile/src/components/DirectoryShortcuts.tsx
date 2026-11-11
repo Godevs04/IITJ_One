@@ -18,7 +18,7 @@ export function DirectoryShortcuts() {
       title: 'Health Center',
       caption: 'Doctors on duty, contacts & hospitals',
       icon: 'medkit' as const,
-      route: '/health-center' as const,
+      route: '/(tabs)/phc' as const,
       tint: theme.errorTint,
       // `nonVeg` is the readable red in both themes (`error` is too dark on dark surfaces).
       color: theme.nonVeg,

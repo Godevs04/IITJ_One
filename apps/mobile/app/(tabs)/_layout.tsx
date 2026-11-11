@@ -25,10 +25,10 @@ function SwipeableTabs() {
       tabBar={(props: MaterialTopTabBarProps) => <BottomTabBar {...props} />}
     >
       <TopTabs.Screen name="index" options={{ title: 'Home' }} />
-      <TopTabs.Screen name="menu" options={{ title: 'Mess' }} />
-      <TopTabs.Screen name="notices" options={{ title: 'Notices' }} />
-      <TopTabs.Screen name="transport" options={{ title: 'Bus' }} />
-      <TopTabs.Screen name="more" options={{ title: 'More' }} />
+      <TopTabs.Screen name="map" options={{ title: 'Campus Map' }} />
+      <TopTabs.Screen name="search" options={{ title: 'Search' }} />
+      <TopTabs.Screen name="phc" options={{ title: 'Primary Health Centre' }} />
+      <TopTabs.Screen name="transport" options={{ title: 'Transportation' }} />
     </TopTabs>
   );
 }

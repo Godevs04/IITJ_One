@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useSegments } from 'expo-router';
 import { Alert, Share, StyleSheet, TextInput, View, Pressable, Text, ScrollView } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { ScreenShell } from '@/components/ScreenShell';
@@ -208,6 +208,7 @@ function LocationDetailCard({
 
 export default function MapScreen() {
   const theme = useThemeColors();
+  const inTabs = useSegments()[0] === '(tabs)';
   const { revision } = useCampusData();
   const { focus } = useLocalSearchParams<{ focus?: string }>();
   const [searchQuery, setSearchQuery] = useState('');
@@ -347,7 +348,7 @@ export default function MapScreen() {
 
 
   return (
-    <ScreenShell hideTitle subtitle="Campus Directory">
+    <ScreenShell title="Campus Map" hideTitle={!inTabs} subtitle="Campus Directory">
       {/* Search Bar */}
       <View style={styles.searchBarWrapper}>
         <View style={[styles.searchBar, { backgroundColor: theme.surface, borderColor: theme.border }]}>

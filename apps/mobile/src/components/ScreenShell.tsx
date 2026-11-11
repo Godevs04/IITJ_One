@@ -1,6 +1,5 @@
 import { ReactNode } from 'react';
 import {
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -8,7 +7,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useSegments } from 'expo-router';
+import { useSegments } from 'expo-router';
+import { useFloatingTabBarInset } from '@/components/BottomTabBar';
 import { Icon } from '@/components/Icon';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppSpacing, AppTypography } from '@/theme/tokens';
@@ -43,13 +43,10 @@ export function ScreenShell({
   const theme = useThemeColors();
   const segments = useSegments();
 
-  // Determine if this is one of the tab screens with hidden navigation headers
-  const isHeaderHiddenTab =
-    segments[0] === '(tabs)' &&
-    (segments[1] === 'menu' ||
-      segments[1] === 'notices' ||
-      segments[1] === 'transport' ||
-      segments[1] === 'more');
+  const tabBarInset = useFloatingTabBarInset();
+
+  // Tab screens other than Home have no navigation header (Home draws its own).
+  const isHeaderHiddenTab = segments[0] === '(tabs)' && segments[1] !== undefined;
 
   // Include top edge if header is hidden, or if explicitly requested via prop
   const applyTopInset = safeAreaTop ?? isHeaderHiddenTab;
@@ -64,7 +61,8 @@ export function ScreenShell({
       edges={edges}
     >
       <ScrollView
-        contentContainerStyle={styles.content}
+        // Primary screens scroll under the floating navigation bar, so their content ends above it.
+        contentContainerStyle={[styles.content, tabBarInset > 0 && { paddingBottom: tabBarInset }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         refreshControl={
@@ -81,19 +79,7 @@ export function ScreenShell({
           <View style={styles.header}>
             <View style={styles.titleRow}>
               <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
-              {headerRight !== undefined ? (
-                headerRight
-              ) : isHeaderHiddenTab ? (
-                <Pressable
-                  onPress={() => router.push('/search')}
-                  hitSlop={10}
-                  style={styles.searchButton}
-                  accessibilityRole="button"
-                  accessibilityLabel="Search"
-                >
-                  <Icon name="search-outline" size={24} color={theme.text} />
-                </Pressable>
-              ) : null}
+              {headerRight ?? null}
             </View>
             {subtitle ? (
               <Text style={[styles.subtitle, { color: theme.textMuted }]}>
@@ -136,9 +122,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  searchButton: {
-    padding: 4,
   },
   title: {
     ...AppTypography.display,

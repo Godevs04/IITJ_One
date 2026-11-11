@@ -8,8 +8,8 @@ import { AppSpacing, AppTypography } from '@/theme/tokens';
 type IconName = keyof typeof MaterialIcons.glyphMap;
 
 const ACTIONS: { icon: IconName; label: string; onPress: () => void }[] = [
-  { icon: 'search', label: 'Search', onPress: () => router.push('/search') },
-  { icon: 'notifications-none', label: 'Notices', onPress: () => router.push('/(tabs)/notices') },
+  { icon: 'apps', label: 'More', onPress: () => router.push('/more') },
+  { icon: 'notifications-none', label: 'Notices', onPress: () => router.push('/notices') },
   { icon: 'settings', label: 'Settings', onPress: () => router.push('/settings') },
 ];
 

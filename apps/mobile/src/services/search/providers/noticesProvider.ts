@@ -20,7 +20,7 @@ function getEntries(): SearchEntry[] {
       module: 'Notices',
       icon: 'megaphone-outline',
       category: n.category,
-      route: '/(tabs)/notices' as const,
+      route: '/notices' as const,
     }));
 }
 

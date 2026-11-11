@@ -15,7 +15,7 @@ import { messQrStore, MessQrStorageError, type MessQR } from '@/services/qrStora
 import { useQrAutoBrightnessPreference, useQrBrightness } from '@/services/qrBrightness';
 import { Analytics, AppEvents, FirebaseCrashlytics } from '@/services/firebase';
 import { useThemeColors } from '@/theme/ThemeProvider';
-import { AppRadius, AppSpacing, AppTypography, RedesignColors } from '@/theme/tokens';
+import { AppRadius, AppSpacing, AppTypography, BlueMatcha, RedesignColors } from '@/theme/tokens';
 import { usePostHog } from 'posthog-react-native';
 
 type Mode = 'empty' | 'cropping' | 'viewing';
@@ -23,7 +23,8 @@ type Mode = 'empty' | 'cropping' | 'viewing';
 const FADE_DELAY_MS = 3000;
 /** The QR viewer is always light (white paper, dark ink) in both themes: that is what scanners read best. */
 const QR_PAPER = '#FFFFFF';
-const QR_INK = RedesignColors.text;
+// Pure black keeps the QR as scannable as possible on the white sheet.
+const QR_INK = BlueMatcha.black;
 const QR_INK_MUTED = RedesignColors.textMuted;
 
 function friendlyErrorMessage(err: unknown): string {
@@ -378,10 +379,10 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(1, 5, 13, 0.06)',
+    backgroundColor: 'rgba(49, 70, 90, 0.08)',
   },
   roundButtonActive: {
-    backgroundColor: RedesignColors.secondary,
+    backgroundColor: BlueMatcha.matchaGreen,
   },
   bottomRow: {
     position: 'absolute',
@@ -396,7 +397,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
     justifyContent: 'center',
     borderRadius: AppRadius.full,
-    backgroundColor: 'rgba(1, 5, 13, 0.06)',
+    backgroundColor: 'rgba(49, 70, 90, 0.08)',
   },
   bottomButtonText: {
     ...AppTypography.button,

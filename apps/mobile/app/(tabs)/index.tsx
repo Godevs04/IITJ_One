@@ -40,7 +40,7 @@ const QUICK_LINKS: {
 }[] = [
   { title: 'Timetable', icon: 'calendar-outline', route: '/timetable' },
   { title: 'Notes', icon: 'document-text-outline', route: '/notes' },
-  { title: 'Map', icon: 'map-outline', route: '/map' },
+  { title: 'Map', icon: 'map-outline', route: '/(tabs)/map' },
   { title: 'Portals', icon: 'link-outline', route: '/portals' },
   { title: 'Services', icon: 'construct-outline', route: '/services' },
   { title: 'Laundry', icon: 'shirt-outline', route: '/laundry' },
@@ -396,7 +396,7 @@ export default function HomeScreen() {
               <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
                 Important notices
               </Text>
-              <Pressable onPress={() => router.push('/(tabs)/notices')} hitSlop={8}>
+              <Pressable onPress={() => router.push('/notices')} hitSlop={8}>
                 <Text style={[styles.viewAll, { color: theme.linkText }]}>
                   View All
                 </Text>
@@ -410,7 +410,7 @@ export default function HomeScreen() {
                   if (n.link?.startsWith('/')) {
                     router.push(n.link as any);
                   } else {
-                    router.push('/(tabs)/notices');
+                    router.push('/notices');
                   }
                 }}
               />

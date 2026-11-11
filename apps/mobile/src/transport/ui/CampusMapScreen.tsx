@@ -4,7 +4,7 @@ import { WebView } from 'react-native-webview';
 import { Icon } from '@/components/Icon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useThemeColors } from '@/theme/ThemeProvider';
-import { AppSpacing, AppTypography, RedesignColors } from '@/theme/tokens';
+import { AppSpacing, AppTypography, BlueMatcha } from '@/theme/tokens';
 import type { TripWithStatus } from '../models/BusTypes';
 import { BUS_STOPS, getNormalizedStopName, openStopInMaps } from '../utils/coordinates';
 import { useLiveTracking } from '../state/LiveTrackingProvider';
@@ -65,8 +65,8 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
       ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
       : 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
   // Route lines in the redesign palette, readable on both basemaps.
-  const routeB1Color = scheme === 'dark' ? RedesignColors.primary : RedesignColors.primaryText;
-  const routeB2Color = scheme === 'dark' ? RedesignColors.secondary : RedesignColors.text;
+  const routeB1Color = scheme === 'dark' ? BlueMatcha.airyBlue : BlueMatcha.deepOcean;
+  const routeB2Color = scheme === 'dark' ? BlueMatcha.matchaGreen : BlueMatcha.airyBlue;
 
   // Determine next bus times for each stop
   const stopNextTimes: Record<string, { bus: string; time: string }> = {};

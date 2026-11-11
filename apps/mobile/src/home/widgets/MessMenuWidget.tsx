@@ -57,7 +57,7 @@ export function MessMenuWidget({ now }: { now: Date }) {
   return (
     <WidgetCard
       title="Mess Menu"
-      onPress={() => router.push('/(tabs)/menu')}
+      onPress={() => router.push('/menu')}
       accessibilityLabel="Open the full mess menu"
       right={<DietPreferenceSelect value={pref} onChange={setPref} />}
     >
@@ -106,7 +106,7 @@ export function MessMenuWidget({ now }: { now: Date }) {
           </View>
 
           <Pressable
-            onPress={() => router.push('/(tabs)/menu')}
+            onPress={() => router.push('/menu')}
             accessibilityRole="link"
             accessibilityLabel={`${MEAL_LABELS[selected]} menu. Open the full mess menu`}
             style={({ pressed }) => [
