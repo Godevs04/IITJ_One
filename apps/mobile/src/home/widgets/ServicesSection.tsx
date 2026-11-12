@@ -3,6 +3,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Icon } from '@/components/Icon';
+import { openService } from '@/services/openService';
 import {
   pinnedServices,
   saveHomeServices,
@@ -27,7 +28,7 @@ export function ServicesSection({ onOpen }: { onOpen?: (service: HomeService) =>
 
   const open = (service: HomeService) => {
     onOpen?.(service);
-    router.push(service.route);
+    void openService(service);
   };
 
   const removeFromHome = (key: string) => {
@@ -47,7 +48,7 @@ export function ServicesSection({ onOpen }: { onOpen?: (service: HomeService) =>
           Services
         </Text>
         <Pressable
-          onPress={() => router.push('/more')}
+          onPress={() => router.push('/quick-links')}
           hitSlop={8}
           accessibilityRole="link"
           accessibilityLabel="More services"

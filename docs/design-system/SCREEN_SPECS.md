@@ -10,13 +10,13 @@ build each screen. The design tokens are in [BLUE_MATCHA_DESIGN_SYSTEM.md](BLUE_
 |---|---|---|
 | — | Colour, typography, spacing tokens | Done |
 | — | Floating bottom navigation (Home · Map · Search · PHC · Transport) | Done |
-| 01 | Home Dashboard | Done, except: My QR Add/Redeem chooser (with Screens 05–06) and "More →" target (Screen 07) |
+| 01 | Home Dashboard | Done |
 | 02 | Reminder List | Done |
 | 03 | New Reminder | Done (no reminder notifications yet) |
-| 04 | Full Mess Menu | Not started (existing screen moved to `/menu`) |
-| 05 | Add QR popup | Not started |
-| 06 | QR uploaded / caption | Not started |
-| 07 | Quick Links & Services Directory | Not started |
+| 04 | Full Mess Menu | Done (existing screen, header now "← Mess Menu" + Veg/Non-Veg selector) |
+| 05 | Add QR popup | Done |
+| 06 | QR uploaded / caption | Done (status reads "Image selected" — saved on device, not uploaded) |
+| 07 | Quick Links & Services Directory | Done |
 
 ## Decided: per-user data stays on the device for now
 

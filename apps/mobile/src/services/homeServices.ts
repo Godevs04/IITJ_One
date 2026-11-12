@@ -4,38 +4,65 @@ import type { Href } from 'expo-router';
 import type { Icon } from '@/components/Icon';
 
 /**
- * Registry of services that can be pinned to Home's Services grid, plus the user's own selection.
- * Home renders from this list, so adding a service here makes it available to pin — no screen edits.
+ * Registry of campus services: the Quick Links directory (Screen 07) shows the ones in QUICK_LINK_KEYS, and
+ * any of them can be pinned to Home's Services grid — the user's own selection is stored alongside.
+ * Everything renders from this list, so adding a service here is the only edit needed.
+ *
+ * External addresses are the institute's own sites, as already published in the app's Essential Portals data.
+ * A service with neither a route nor an address is not listed; never guess a URL.
  *
  * The selection is stored on this device (IITJ One has no student accounts yet); everything goes through
  * saveHomeServices / useHomeServices so it can move to server storage later.
  */
+export type ServiceDestination = { type: 'internal'; route: Href } | { type: 'external'; url: string };
+
 export interface HomeService {
   key: string;
   label: string;
   icon: keyof typeof Icon.glyphMap;
-  route: Href;
+  destination: ServiceDestination;
   /** Pinned to Home until the user changes their selection. */
   defaultOnHome?: boolean;
 }
 
+const internal = (route: Href): ServiceDestination => ({ type: 'internal', route });
+const external = (url: string): ServiceDestination => ({ type: 'external', url });
+
 export const HOME_SERVICES = [
-  // Quick Links opens Essential Portals until the Quick Links & Services Directory (Screen 07) is built.
-  { key: 'quickLinks', label: 'Quick Links', icon: 'link-outline', route: '/portals', defaultOnHome: true },
-  { key: 'eventsClubs', label: 'Events & Clubs', icon: 'megaphone-outline', route: '/discover', defaultOnHome: true },
-  { key: 'cabAuto', label: 'Cab / Auto', icon: 'car-outline', route: '/cabs-autos', defaultOnHome: true },
-  { key: 'timetable', label: 'Timetable', icon: 'calendar-outline', route: '/timetable', defaultOnHome: true },
-  { key: 'notes', label: 'Notes', icon: 'document-text-outline', route: '/notes' },
-  { key: 'laundry', label: 'Laundry', icon: 'shirt-outline', route: '/laundry' },
-  { key: 'wifi', label: 'Internet & Wi-Fi', icon: 'wifi-outline', route: '/wifi' },
-  { key: 'eRickshaw', label: 'E-Rickshaw', icon: 'car-sport-outline', route: '/e-rickshaw' },
-  { key: 'campusServices', label: 'Campus Services', icon: 'construct-outline', route: '/services' },
-  { key: 'calendar', label: 'Academic Calendar', icon: 'calendar-outline', route: '/calendar' },
-  { key: 'directory', label: 'Campus Directory', icon: 'people-outline', route: '/campus-directory' },
-  { key: 'apps', label: 'Campus Apps', icon: 'apps-outline', route: '/apps' },
+  { key: 'quickLinks', label: 'Quick Links', icon: 'link-outline', destination: internal('/quick-links'), defaultOnHome: true },
+  { key: 'eventsClubs', label: 'Events & Clubs', icon: 'megaphone-outline', destination: internal('/discover'), defaultOnHome: true },
+  { key: 'cabAuto', label: 'Cab / Auto', icon: 'car-outline', destination: internal('/cabs-autos'), defaultOnHome: true },
+  { key: 'timetable', label: 'Timetable', icon: 'calendar-outline', destination: internal('/timetable'), defaultOnHome: true },
+
+  // The ten Quick Links, in wireframe order (see QUICK_LINK_KEYS).
+  { key: 'linkOfficial', label: 'Official IITJ', icon: 'globe-outline', destination: external('https://iitj.ac.in') },
+  { key: 'linkErp', label: 'Academic ERP', icon: 'school-outline', destination: external('https://erp.iitj.ac.in') },
+  { key: 'linkMess', label: 'Mess', icon: 'restaurant-outline', destination: internal('/menu') },
+  { key: 'linkLibrary', label: 'Library', icon: 'book-outline', destination: external('https://library.iitj.ac.in') },
+  // Security and ID Card contacts live in Campus Services (ID Card Cell; Lost & Found / CCTV).
+  { key: 'linkSecurity', label: 'Security', icon: 'shield-checkmark-outline', destination: internal({ pathname: '/services', params: { query: 'Lost & Found' } }) },
+  { key: 'linkWifi', label: 'Wi-Fi', icon: 'wifi-outline', destination: internal('/wifi') },
+  { key: 'linkIdCard', label: 'ID Card & No Dues', icon: 'card-outline', destination: internal({ pathname: '/services', params: { query: 'ID Card' } }) },
+  { key: 'linkTransport', label: 'Transport', icon: 'bus-outline', destination: internal('/(tabs)/transport') },
+  { key: 'linkPhc', label: 'PHC', icon: 'medkit-outline', destination: internal('/(tabs)/phc') },
+  { key: 'linkMoodle', label: 'Moodle', icon: 'laptop-outline', destination: external('https://moodle.iitj.ac.in') },
+
+  { key: 'notes', label: 'Notes', icon: 'document-text-outline', destination: internal('/notes') },
+  { key: 'laundry', label: 'Laundry', icon: 'shirt-outline', destination: internal('/laundry') },
+  { key: 'eRickshaw', label: 'E-Rickshaw', icon: 'car-sport-outline', destination: internal('/e-rickshaw') },
+  { key: 'campusServices', label: 'Campus Services', icon: 'construct-outline', destination: internal('/services') },
+  { key: 'calendar', label: 'Academic Calendar', icon: 'calendar-outline', destination: internal('/calendar') },
+  { key: 'directory', label: 'Campus Directory', icon: 'people-outline', destination: internal('/campus-directory') },
+  { key: 'apps', label: 'Campus Apps', icon: 'apps-outline', destination: internal('/apps') },
 ] as const satisfies readonly HomeService[];
 
 export type HomeServiceKey = (typeof HOME_SERVICES)[number]['key'];
+
+/** The Quick Links directory (Screen 07), in the order drawn in the wireframe. */
+export const QUICK_LINK_KEYS: HomeServiceKey[] = [
+  'linkOfficial', 'linkErp', 'linkMess', 'linkLibrary', 'linkSecurity',
+  'linkWifi', 'linkIdCard', 'linkTransport', 'linkPhc', 'linkMoodle',
+];
 
 export interface HomeServicesLayout {
   /** Every known service, in the user's order. */
