@@ -25,6 +25,23 @@ interface BusMarkerPayload {
   status: string;
 }
 
+/**
+ * Colours for the map's own overlays (markers, labels, popups), from the Blue Matcha palette. The base map tiles
+ * keep their provider styling; only these overlays are themed.
+ */
+const M = {
+  deepOcean: BlueMatcha.deepOcean,
+  white: BlueMatcha.white,
+  border: '#DEE1E5',
+  textMuted: '#5E6F7E',
+  // A bus with a reported position is Matcha Green; one placed from the timetable is Airy Blue.
+  live: BlueMatcha.matchaGreen,
+  estimated: BlueMatcha.airyBlue,
+  livePulse: 'rgba(199,223,163,0.7)',
+  livePulseFade: 'rgba(199,223,163,0)',
+  font: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+};
+
 export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProps) {
   const theme = useThemeColors();
   const { scheme } = useTheme();
@@ -151,20 +168,20 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
           width: 12px;
           height: 12px;
           border-radius: 6px;
-          background-color: #1D3F5E;
-          border: 2px solid #FFFFFF;
+          background-color: ${M.deepOcean};
+          border: 2px solid ${M.white};
           box-shadow: 0 0 4px rgba(0,0,0,0.5);
           cursor: pointer;
         }
         .stop-label {
           background: rgba(255, 255, 255, 0.95);
-          border: 1px solid #DCD4C4;
+          border: 1px solid ${M.border};
           border-radius: 8px;
           padding: 2px 6px;
-          font-family: sans-serif;
+          font-family: ${M.font};
           font-size: 9px;
           font-weight: 600;
-          color: #1D3F5E;
+          color: ${M.deepOcean};
           pointer-events: none;
           white-space: nowrap;
           box-shadow: 0 1px 2px rgba(0,0,0,0.1);
@@ -172,32 +189,32 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
         .mapboxgl-popup-content, .maplibregl-popup-content {
           border-radius: 12px;
           padding: 12px;
-          font-family: sans-serif;
+          font-family: ${M.font};
           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-          border: 1px solid #DCD4C4;
+          border: 1px solid ${M.border};
         }
         .popup-title {
           font-size: 13px;
           font-weight: 700;
-          color: #1D3F5E;
+          color: ${M.deepOcean};
           margin-bottom: 4px;
         }
         .popup-desc {
           font-size: 11px;
-          color: #5C6570;
+          color: ${M.textMuted};
           margin-bottom: 6px;
         }
         .popup-bus {
           font-size: 10px;
           font-weight: bold;
-          color: #E2703A;
+          color: ${M.deepOcean};
           margin-bottom: 8px;
         }
         .popup-btn {
           display: block;
           text-align: center;
-          background-color: #1D3F5E;
-          color: #FFFFFF;
+          background-color: ${M.deepOcean};
+          color: ${M.white};
           padding: 6px;
           border-radius: 6px;
           font-size: 11px;
@@ -213,20 +230,20 @@ export function CampusMapScreen({ tripsWithStatus, onBack }: CampusMapScreenProp
           align-items: center;
           justify-content: center;
           font-size: 14px;
-          border: 2px solid #FFFFFF;
+          border: 2px solid ${M.white};
           box-shadow: 0 0 6px rgba(0,0,0,0.45);
         }
         .bus-live {
-          background-color: #22C55E;
+          background-color: ${M.live};
           animation: bus-pulse 1.6s infinite;
         }
         .bus-estimated {
-          background-color: #9CA3AF;
+          background-color: ${M.estimated};
         }
         @keyframes bus-pulse {
-          0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.55); }
-          70% { box-shadow: 0 0 0 10px rgba(34,197,94,0); }
-          100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+          0% { box-shadow: 0 0 0 0 ${M.livePulse}; }
+          70% { box-shadow: 0 0 0 10px ${M.livePulseFade}; }
+          100% { box-shadow: 0 0 0 0 ${M.livePulseFade}; }
         }
       </style>
     </head>

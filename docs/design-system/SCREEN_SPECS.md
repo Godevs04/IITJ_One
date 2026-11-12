@@ -22,7 +22,7 @@ build each screen. The design tokens are in [BLUE_MATCHA_DESIGN_SYSTEM.md](BLUE_
 | 11–13 | Events, Clubs, Saved Events | Not started. Needs club + event data and follow/save storage |
 | 14 | Timetable (time-grid) | Done. Classes are the app's weekly recurring ones (stored on the device), shown on a 6 AM–8 PM grid; "Add New" opens the existing class form, so one-off dated entries are not supported yet |
 | 15 | PHC (Day / Night, Special Visit, Contacts) | Done. Roster, visits and contacts come from the synced Health Center data; the old Health Center screen stays behind "More about the Health Center" |
-| — | Campus Map restyle | Tokens already restyle it; icon / control pass not done |
+| — | Campus Map restyle | Done (visual only): directions icon on the "Maps" action, theme shadow colour, and the bus-route map's marker / label / popup colours and font moved to the palette. Map tiles untouched. The spec was cut off at its icon table ("Layers…") |
 
 ## Decided: per-user data stays on the device for now
 

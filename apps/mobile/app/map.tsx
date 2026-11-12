@@ -3,11 +3,12 @@ import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams, useSegments } from 'expo-router';
 import { Alert, Share, StyleSheet, TextInput, View, Pressable, Text, ScrollView } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { Icon } from '@/components/Icon';
 import { ScreenShell } from '@/components/ScreenShell';
 import { Analytics, AppEvents, FirebaseCrashlytics } from '@/services/firebase';
 import { useThemeColors } from '@/theme/ThemeProvider';
-import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { AppRadius, AppSpacing, AppTypography, BlueMatcha } from '@/theme/tokens';
 import { debugListKeys } from '@/debug/listDebug';
 import { campusDirectoryServiceProvider } from '@/campus/services/campusDirectoryService';
 import { useCampusData } from '@/state/CampusDataProvider';
@@ -167,7 +168,7 @@ function LocationDetailCard({
               pressed && { opacity: 0.8 },
             ]}
           >
-            <Icon name="map-outline" size={16} color={theme.linkText} />
+            <MaterialIcons name="directions" size={16} color={theme.linkText} />
             <Text style={[styles.actionText, { color: theme.linkText }]}>
               Maps
             </Text>
@@ -621,7 +622,7 @@ const styles = StyleSheet.create({
     maxHeight: 300,
     zIndex: 20,
     elevation: 6,
-    shadowColor: '#000',
+    shadowColor: BlueMatcha.black,
     shadowOpacity: 0.12,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
