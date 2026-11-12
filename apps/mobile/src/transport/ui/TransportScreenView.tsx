@@ -74,7 +74,7 @@ const FAVORITES_KEY = '@iitj1/favorite_stops';
 
 const DAY_TYPES: { key: 'mon-sat' | 'sun-holiday'; label: string }[] = [
   { key: 'mon-sat', label: 'Mon – Fri' },
-  { key: 'sun-holiday', label: 'Sat, Sun & Holidays' },
+  { key: 'sun-holiday', label: 'Sat – Sun' },
 ];
 
 const DIRECTIONS: BusDirection[] = ['departure', 'arrival'];
@@ -635,7 +635,7 @@ export function TransportScreenView({
                       {isLive ? (
                         <View style={[styles.liveBadge, { backgroundColor: theme.vegTint }]}>
                           <View style={[styles.liveDot, { backgroundColor: theme.veg }]} />
-                          <Text style={[styles.liveBadgeText, { color: theme.veg }]}>LIVE</Text>
+                          <Text style={[styles.liveBadgeText, { color: theme.veg }]}>UPDATED</Text>
                         </View>
                       ) : null}
                       {reminderSet ? (
@@ -737,6 +737,7 @@ export function TransportScreenView({
         direction={quickViewItem ? getRideDirection(quickViewItem.trip) : undefined}
         liveTrip={quickViewItem ? matchLiveTrip(quickViewItem.trip, getRideDirection(quickViewItem.trip)) : undefined}
         liveDataStale={liveDataStale}
+        progressNow={isTodaySchedule ? nowMin : null}
         reminderSet={quickViewItem ? reminderIds.has(busReminderId(quickViewItem.trip)) : false}
         onToggleReminder={reminderHandler}
         isFavorited={isFavorited}
