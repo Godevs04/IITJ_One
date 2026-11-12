@@ -1,141 +1,89 @@
+import { useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Icon } from '@/components/Icon';
-import { ContentCard } from '@/components/ContentCard';
+import type { CampusDriver, ServiceArea } from '@iitj1/types';
 import { ScreenShell } from '@/components/ScreenShell';
+import { DriverCard } from '@/cabs/ui/DriverCard';
+import { SECTION_VEHICLES, driversFor, driversFromErickshaw, fareBadgeText } from '@/cabs/directoryLogic';
+import { erickshawServiceProvider } from '@/erickshaw/services/erickshawService';
+import { useCampusData } from '@/state/CampusDataProvider';
+import { useCampusSync } from '@/hooks/useCampusSync';
 import { useThemeColors } from '@/theme/ThemeProvider';
-import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
-import { debugListKeys } from '@/debug/listDebug';
+import { AppRadius, AppTypography, spacing } from '@/theme/tokens';
 
-const FUTURE_FEATURES: { icon: keyof typeof Icon.glyphMap; label: string }[] = [
-  { icon: 'call-outline', label: 'One-tap Call Driver' },
-  { icon: 'car-outline', label: 'Auto & Cab Directory' },
-  { icon: 'shield-checkmark-outline', label: 'Verified Drivers' },
-  { icon: 'location-outline', label: 'Areas Served' },
-  { icon: 'information-circle-outline', label: 'Vehicle Details' },
-  { icon: 'star-outline', label: 'Featured Drivers' },
-  { icon: 'search-outline', label: 'Search & Filter' },
-  { icon: 'heart-outline', label: 'Save Favorite Drivers' },
-];
-
-export default function CabsAutosScreen() {
+function Section({
+  title,
+  area,
+  drivers,
+  badge,
+}: {
+  title: string;
+  area: ServiceArea;
+  drivers: CampusDriver[];
+  badge: string | null;
+}) {
   const theme = useThemeColors();
-
-  debugListKeys('CabsAutosScreen', 'futureFeatures', FUTURE_FEATURES, (feature) => feature.label);
-
   return (
-    <ScreenShell hideTitle subtitle="Local transportation directory">
-      <View style={styles.hero}>
-        <View style={[styles.heroIcon, { backgroundColor: theme.primaryTint }]}>
-          <Icon name="car-sport-outline" size={36} color={theme.linkText} />
-        </View>
-        <Text style={[styles.heroTitle, { color: theme.text }]}>Cabs & Autos</Text>
-        <Text style={[styles.heroBody, { color: theme.textMuted }]}>
-          Find verified auto and cab drivers serving IIT Jodhpur. Browse driver contacts, call
-          directly, and discover trusted local transportation options.
-        </Text>
-        <View style={[styles.badge, { backgroundColor: theme.secondaryTint }]}>
-          <Icon name="time-outline" size={14} color={theme.secondary} />
-          <Text style={[styles.badgeText, { color: theme.secondary }]}>Coming Soon</Text>
-        </View>
+    <View style={styles.section}>
+      <Text style={[styles.sectionTitle, { color: theme.text }]} accessibilityRole="header">
+        {title}
+      </Text>
+      <View style={styles.subRow}>
+        <Text style={[styles.vehicles, { color: theme.textMuted }]}>{SECTION_VEHICLES[area]}</Text>
+        {badge ? (
+          <View style={[styles.fare, { backgroundColor: theme.highlight }]}>
+            <Text style={[styles.fareText, { color: theme.onHighlight }]}>{badge}</Text>
+          </View>
+        ) : null}
       </View>
-
-      <View style={[styles.noteCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-        <Text style={[styles.noteText, { color: theme.textMuted }]}>
-          This feature is currently under development. We are onboarding local auto and cab
-          drivers to provide students, faculty, and staff with reliable transportation options.
-        </Text>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={[styles.sectionLabel, { color: theme.textMuted }]}>What&apos;s coming</Text>
-        <View style={styles.featureGrid}>
-          {FUTURE_FEATURES.map((feature) => (
-            <View
-              key={feature.label}
-              style={[styles.featureCard, { backgroundColor: theme.surfaceMuted, borderColor: theme.border }]}
-            >
-              <Icon name={feature.icon} size={22} color={theme.iconMuted} />
-              <Text style={[styles.featureLabel, { color: theme.textMuted }]}>{feature.label}</Text>
-            </View>
+      {drivers.length > 0 ? (
+        <View style={styles.list}>
+          {drivers.map((d) => (
+            <DriverCard key={d.id} driver={d} />
           ))}
         </View>
-      </View>
+      ) : (
+        <Text style={[styles.empty, { color: theme.textMuted }]}>No registered drivers available in this category.</Text>
+      )}
+    </View>
+  );
+}
 
-      <ContentCard title="Are you an Auto or Cab Driver?" subtitle="Interested in joining the IITJ Cabs & Autos Directory? Registration will be available soon.">
-        <View style={[styles.ctaButton, { borderColor: theme.border, backgroundColor: theme.chipBackground }]}>
-          <Text style={[styles.ctaButtonText, { color: theme.textMuted }]}>Driver Registration</Text>
-          <View style={[styles.ctaBadge, { backgroundColor: theme.secondaryTint }]}>
-            <Text style={[styles.ctaBadgeText, { color: theme.secondary }]}>Coming Soon</Text>
-          </View>
-        </View>
-      </ContentCard>
+/**
+ * Screen 10 — Cab & Auto: a directory of drivers to call, in two stacked sections. Inside Campus is filled from the
+ * campus e-rickshaw service the app already syncs. Outside Campus stays empty until drivers are registered for it —
+ * nothing is invented in the meantime. There is no booking, payment or tracking here.
+ */
+export default function CabsAutosScreen() {
+  const { revision } = useCampusData();
+  const { syncing, sync, error } = useCampusSync(false);
+
+  const service = useMemo(
+    () => erickshawServiceProvider.getService(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [revision],
+  );
+  const drivers = useMemo(() => driversFromErickshaw(service), [service]);
+  const insideBadge = fareBadgeText(undefined, service.fares);
+
+  const onRefresh = useCallback(async () => {
+    await sync();
+  }, [sync]);
+
+  return (
+    <ScreenShell hideTitle onRefresh={onRefresh} refreshing={syncing} error={error}>
+      <Section title="Inside Campus" area="insideCampus" drivers={driversFor(drivers, 'insideCampus')} badge={insideBadge} />
+      <Section title="Outside Campus" area="outsideCampus" drivers={driversFor(drivers, 'outsideCampus')} badge={null} />
     </ScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    alignItems: 'center',
-    gap: AppSpacing.sm,
-    paddingVertical: AppSpacing.md,
-  },
-  heroIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: AppRadius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroTitle: { ...AppTypography.display },
-  heroBody: {
-    ...AppTypography.body,
-    textAlign: 'center',
-  },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: AppSpacing.xs,
-    borderRadius: AppRadius.full,
-    paddingHorizontal: AppSpacing.md,
-    paddingVertical: AppSpacing.xs,
-    marginTop: AppSpacing.xs,
-  },
-  badgeText: { ...AppTypography.bodySmall, fontWeight: '600' },
-  noteCard: {
-    borderRadius: AppRadius.md,
-    borderWidth: 1,
-    padding: AppSpacing.lg,
-  },
-  noteText: { ...AppTypography.bodySmall },
-  section: { gap: AppSpacing.sm },
-  sectionLabel: { ...AppTypography.sectionLabel },
-  featureGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: AppSpacing.sm,
-  },
-  featureCard: {
-    width: '47%',
-    borderRadius: AppRadius.md,
-    borderWidth: 1,
-    padding: AppSpacing.md,
-    gap: AppSpacing.xs,
-  },
-  featureLabel: { ...AppTypography.bodySmall },
-  ctaButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: AppRadius.md,
-    borderWidth: 1,
-    paddingHorizontal: AppSpacing.lg,
-    paddingVertical: AppSpacing.md,
-  },
-  ctaButtonText: { ...AppTypography.button },
-  ctaBadge: {
-    borderRadius: AppRadius.full,
-    paddingHorizontal: AppSpacing.sm,
-    paddingVertical: 2,
-  },
-  ctaBadgeText: { ...AppTypography.caption, fontWeight: '600' },
+  section: { gap: spacing.sm },
+  sectionTitle: { ...AppTypography.h2 },
+  subRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  vehicles: { ...AppTypography.body, flexShrink: 1 },
+  fare: { borderRadius: AppRadius.full, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
+  fareText: { ...AppTypography.bodySmall, fontWeight: '700' },
+  list: { gap: spacing.sm },
+  empty: { ...AppTypography.body, paddingVertical: spacing.sm },
 });

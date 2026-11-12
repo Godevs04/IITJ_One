@@ -18,7 +18,7 @@ build each screen. The design tokens are in [BLUE_MATCHA_DESIGN_SYSTEM.md](BLUE_
 | 06 | QR uploaded / caption | Done (status reads "Image selected" — saved on device, not uploaded) |
 | 07 | Quick Links & Services Directory | Done |
 | 08–09 | Bus Schedule + Route popup | Done. Existing Transportation screen reworded to the spec (Mon – Fri / Sat – Sun, Leave to City, Return to Campus); the route popup gains per-stop estimated times and a calculated "Current status" (no GPS wording) |
-| 10 | Cab & Auto directory | Not started. Needs a driver / fare data source (no backend model exists yet) |
+| 10 | Cab & Auto directory | Built. Inside Campus lists the three drivers from the campus e-rickshaw service (name, number, verified flag); Outside Campus is empty until drivers are registered. Vehicle number, description, seats, rating, photos and fare limits have no data source yet — the card and types support them, nothing is invented |
 | 11–13 | Events, Clubs, Saved Events | Not started. Needs club + event data and follow/save storage |
 | 14 | Timetable (time-grid) | Done. Classes are the app's weekly recurring ones (stored on the device), shown on a 6 AM–8 PM grid; "Add New" opens the existing class form, so one-off dated entries are not supported yet |
 | 15 | PHC (Day / Night, Special Visit, Contacts) | Done. Roster, visits and contacts come from the synced Health Center data; the old Health Center screen stays behind "More about the Health Center" |

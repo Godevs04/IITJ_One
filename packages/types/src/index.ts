@@ -18,3 +18,4 @@ export * from './academicCalendar';
 export * from './messPricing';
 export * from './messUpdate';
 export * from './aiCommands';
+export * from './driverDirectory';
