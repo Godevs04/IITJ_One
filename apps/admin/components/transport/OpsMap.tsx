@@ -38,14 +38,14 @@ function popupHtml(trip: AdminTrip, kind: MarkerKind): string {
   const updated = new Date(trip.busState.lastUpdated).toLocaleTimeString();
   return `
     <div style="font-family: var(--font-ibm-plex-sans, sans-serif); font-size: 12px; min-width: 160px;">
-      <div style="font-weight: 700; color: #22292F; margin-bottom: 2px;">${vehicleName}</div>
-      <div style="color: #5C6570; text-transform: capitalize; margin-bottom: 4px;">${trip.direction} · ${trip.status}</div>
+      <div style="font-weight: 700; color: #01050D; margin-bottom: 2px;">${vehicleName}</div>
+      <div style="color: #566173; text-transform: capitalize; margin-bottom: 4px;">${trip.direction} · ${trip.status}</div>
       <div style="display:flex; align-items:center; gap:4px; margin-bottom: 4px;">
         <span style="width:8px;height:8px;border-radius:4px;background:${KIND_COLOR[kind]};display:inline-block;"></span>
         <span style="font-weight:600; color:${KIND_COLOR[kind]};">${KIND_LABEL[kind]}</span>
-        <span style="color:#5C6570;">· ${trip.busState.confidence} confidence</span>
+        <span style="color:#566173;">· ${trip.busState.confidence} confidence</span>
       </div>
-      <div style="color:#5C6570;">${trip.busState.contributors} sharing · updated ${updated}</div>
+      <div style="color:#566173;">${trip.busState.contributors} sharing · updated ${updated}</div>
     </div>
   `;
 }

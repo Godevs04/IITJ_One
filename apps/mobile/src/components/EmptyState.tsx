@@ -1,10 +1,10 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppSpacing, AppTypography } from '@/theme/tokens';
 
 interface EmptyStateProps {
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: keyof typeof Icon.glyphMap;
   title: string;
   message?: string;
 }
@@ -18,7 +18,7 @@ export function EmptyState({
 
   return (
     <View style={styles.container}>
-      <Ionicons name={icon} size={40} color={theme.iconMuted} />
+      <Icon name={icon} size={40} color={theme.iconMuted} />
       <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
       {message ? (
         <Text style={[styles.message, { color: theme.textMuted }]}>

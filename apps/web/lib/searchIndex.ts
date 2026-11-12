@@ -11,6 +11,8 @@ export interface SearchEntry {
 
 const PAGES: SearchEntry[] = [
   { title: 'Home', description: 'IITJ One overview', href: '/', group: 'Pages' },
+  { title: 'IIT Jodhpur Campus Guide', description: 'IITJ campus details, location, academics, and student services', href: '/iit-jodhpur', group: 'Pages' },
+  { title: 'IIT Jodhpur Departments', description: 'IITJ departments and faculty directory', href: '/iit-jodhpur-departments', group: 'Pages' },
   { title: 'Features', description: 'Everything the app does', href: '/#features', group: 'Pages' },
   { title: 'About', description: 'Mission and disclaimer', href: '/#about', group: 'Pages' },
   { title: 'Download', description: 'Get the app on Google Play and the App Store', href: '/#download', group: 'Pages' },

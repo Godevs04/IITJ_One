@@ -36,7 +36,7 @@ export default function LoginPage() {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            'radial-gradient(ellipse 80% 50% at 20% 10%, rgba(198,134,66,0.18), transparent), radial-gradient(ellipse 60% 40% at 90% 80%, rgba(29,63,94,0.12), transparent), #F6F0E4',
+            'radial-gradient(ellipse 80% 50% at 20% 10%, rgba(61,169,216,0.16), transparent), radial-gradient(ellipse 60% 40% at 90% 80%, rgba(241,255,10,0.10), transparent), #F5F7FB',
         }}
       />
       <div className="relative w-full max-w-md animate-fadeIn">
@@ -44,7 +44,7 @@ export default function LoginPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sandstone">
             IITJ one
           </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-indigo-deep">
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink">
             Admin desk
           </h1>
           <p className="mt-2 text-sm text-muted">

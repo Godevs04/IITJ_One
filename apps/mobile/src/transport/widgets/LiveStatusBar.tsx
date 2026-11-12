@@ -1,5 +1,5 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { formatRelativeTime } from '@/utils/date';
@@ -16,7 +16,7 @@ interface LiveStatusBarProps {
 
 type BusLiveness = 'live' | 'no_one_sharing' | 'connecting' | 'offline';
 
-const LIVENESS_META: Record<BusLiveness, { icon: keyof typeof Ionicons.glyphMap; color: string; label: string }> = {
+const LIVENESS_META: Record<BusLiveness, { icon: keyof typeof Icon.glyphMap; color: string; label: string }> = {
   // A real contributor is currently sharing for at least one trip — this is
   // the only case that should ever read "Live" in green. Socket connectivity
   // alone (previously what this badge showed) says nothing about whether
@@ -55,7 +55,7 @@ export function LiveStatusBar({ trips, connectionState, lastUpdated, loading, er
     <View style={styles.container}>
       <View style={styles.row}>
         <View style={styles.statusGroup}>
-          <Ionicons name={meta.icon} size={14} color={meta.color} />
+          <Icon name={meta.icon} size={14} color={meta.color} />
           <Text style={[styles.text, { color: meta.color, fontWeight: '600' }]}>{meta.label}</Text>
         </View>
         {lastUpdated ? (
@@ -65,12 +65,12 @@ export function LiveStatusBar({ trips, connectionState, lastUpdated, loading, er
 
       {error ? (
         <View style={[styles.banner, { backgroundColor: theme.chipBackground, borderColor: theme.border }]}>
-          <Ionicons name="cloud-offline-outline" size={14} color={theme.textMuted} />
+          <Icon name="cloud-offline-outline" size={14} color={theme.textMuted} />
           <Text style={[styles.bannerText, { color: theme.textMuted }]}>{error}</Text>
         </View>
       ) : showOfflineBanner ? (
         <View style={[styles.banner, { backgroundColor: theme.chipBackground, borderColor: theme.border }]}>
-          <Ionicons name="sync-outline" size={14} color="#F59E0B" />
+          <Icon name="sync-outline" size={14} color="#F59E0B" />
           <Text style={[styles.bannerText, { color: theme.textMuted }]}>
             {connectionState === 'reconnecting' ? 'Reconnecting…' : 'Offline — showing last known schedule.'}
           </Text>

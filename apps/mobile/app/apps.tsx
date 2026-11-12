@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { Linking, Platform, View, Text, Pressable, Image, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
@@ -129,7 +129,7 @@ export default function AppsScreen() {
                     {logoSrc ? (
                       <Image source={logoSrc} style={styles.logoImage} />
                     ) : (
-                      <Ionicons name="apps-outline" size={28} color={theme.textMuted} />
+                      <Icon name="apps-outline" size={28} color={theme.textMuted} />
                     )}
                   </View>
                   <View style={styles.headerText}>
@@ -152,7 +152,7 @@ export default function AppsScreen() {
 
                 {app.locationName ? (
                   <View style={styles.locationContainer}>
-                    <Ionicons name="location-outline" size={16} color={theme.textMuted} />
+                    <Icon name="location-outline" size={16} color={theme.textMuted} />
                     <Text style={[styles.locationText, { color: theme.textMuted }]}>
                       {app.locationName}
                     </Text>
@@ -169,7 +169,7 @@ export default function AppsScreen() {
                         pressed && styles.pressed,
                       ]}
                     >
-                      <Ionicons name="globe-outline" size={16} color={theme.text} />
+                      <Icon name="globe-outline" size={16} color={theme.text} />
                       <Text style={[styles.actionButtonText, { color: theme.text }]}>
                         Visit Website
                       </Text>
@@ -183,7 +183,7 @@ export default function AppsScreen() {
                         pressed && styles.pressed,
                       ]}
                     >
-                      <Ionicons name="map-outline" size={16} color={theme.text} />
+                      <Icon name="map-outline" size={16} color={theme.text} />
                       <Text style={[styles.actionButtonText, { color: theme.text }]}>
                         Open in Maps
                       </Text>
@@ -198,7 +198,7 @@ export default function AppsScreen() {
                       pressed && styles.pressed,
                     ]}
                   >
-                    <Ionicons
+                    <Icon
                       name={Platform.OS === 'ios' ? 'logo-apple' : 'logo-google-playstore'}
                       size={16}
                       color={theme.surface}

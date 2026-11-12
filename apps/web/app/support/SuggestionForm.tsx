@@ -9,10 +9,11 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || '/backend/api/v1';
 export function SuggestionForm() {
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const valid = message.trim().length >= 10 && message.trim().length <= 1000;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (!valid || status === 'sending') return;
     setStatus('sending');
     try {
       const res = await fetch(`${API_URL}/suggestions`, {
@@ -48,19 +49,20 @@ export function SuggestionForm() {
         onChange={(e) => setMessage(e.target.value)}
         rows={5}
         required
+        maxLength={1000}
         placeholder="A bug, an idea, or anything else — sent anonymously."
         aria-describedby="suggestion-hint"
-        className="w-full rounded-xl border border-border bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-muted focus:border-indigo focus:outline-none focus:ring-2 focus:ring-indigo/15 dark:bg-surface/60"
+        className="w-full rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-muted focus:border-indigo focus:outline-none focus:ring-2 focus:ring-indigo/15"
       />
       <p id="suggestion-hint" className="text-xs text-muted">
-        No account or email required — this goes straight to the admin panel&apos;s Suggestions inbox.
+        Use 10–1,000 characters. No account or email required.
       </p>
       {status === 'error' ? (
         <p role="alert" className="text-sm text-non-veg">
           Couldn&apos;t send that — check your connection and try again.
         </p>
       ) : null}
-      <Button type="submit" disabled={status === 'sending'}>
+      <Button type="submit" disabled={!valid || status === 'sending'}>
         {status === 'sending' ? 'Sending…' : 'Send feedback'}
       </Button>
     </form>

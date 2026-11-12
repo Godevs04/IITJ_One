@@ -6,7 +6,7 @@
 # stage only needs the pruned standalone server + static assets, not the
 # full node_modules tree.
 
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -25,7 +25,7 @@ COPY apps/admin ./apps/admin
 
 RUN npm run build -w @iitj1/types && npm run build -w @iitj1/admin
 
-FROM node:20-alpine AS runner
+FROM node:24-alpine AS runner
 
 WORKDIR /app
 ENV NODE_ENV=production

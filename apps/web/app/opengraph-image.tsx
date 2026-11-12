@@ -16,7 +16,7 @@ export default function OpengraphImage() {
           flexDirection: 'column',
           justifyContent: 'center',
           padding: '80px',
-          background: 'linear-gradient(135deg, #002947 0%, #123652 55%, #1d3f5e 100%)',
+          background: 'linear-gradient(135deg, #01050d 0%, #0b1b2a 55%, #11303f 100%)',
           fontFamily: 'sans-serif',
         }}
       >
@@ -33,24 +33,23 @@ export default function OpengraphImage() {
               width: 56,
               height: 56,
               borderRadius: 16,
-              background: '#1d3f5e',
+              background: '#3da9d8',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: 28,
               fontWeight: 700,
-              color: '#f4ece0',
-              border: '2px solid rgba(244,236,224,0.35)',
+              color: '#01050d',
             }}
           >
             1
           </div>
-          <div style={{ fontSize: 32, fontWeight: 600, color: '#f4ece0' }}>{BRAND_NAME}</div>
+          <div style={{ fontSize: 32, fontWeight: 600, color: '#f5f7fb' }}>{BRAND_NAME}</div>
         </div>
-        <div style={{ fontSize: 64, fontWeight: 700, color: '#f4ece0', lineHeight: 1.1, maxWidth: 900 }}>
+        <div style={{ fontSize: 64, fontWeight: 700, color: '#f5f7fb', lineHeight: 1.1, maxWidth: 900 }}>
           {TAGLINE}
         </div>
-        <div style={{ fontSize: 28, color: 'rgba(244,236,224,0.75)', marginTop: 24, maxWidth: 820 }}>
+        <div style={{ fontSize: 28, color: 'rgba(245,247,251,0.75)', marginTop: 24, maxWidth: 820 }}>
           IIT Jodhpur mess menu, bus timings, calendar, and more — free, offline-first, no login.
         </div>
       </div>

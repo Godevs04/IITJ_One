@@ -5,7 +5,7 @@ import { useState } from 'react';
 // Fixed categorical hue order — reused across every donut on the dashboard so
 // the same entity (e.g. "ios") always gets the same color. Never cycled;
 // entries beyond the 5th fold into "Other" (muted gray).
-const CATEGORY_COLORS = ['#1d3f5e', '#c68642', '#6e8b74', '#e2703a', '#b23a34'];
+const CATEGORY_COLORS = ['#3da9d8', '#11303f', '#6b6a00', '#6e8b74', '#b23a34'];
 const OTHER_COLOR = '#9aa3ad';
 
 export interface DonutSlice {

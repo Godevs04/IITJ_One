@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 interface InfoCardProps {
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: keyof typeof Icon.glyphMap;
   title: string;
   children: ReactNode;
 }
@@ -16,7 +16,7 @@ export function InfoCard({ icon, title, children }: InfoCardProps) {
   return (
     <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <View style={styles.header}>
-        {icon ? <Ionicons name={icon} size={18} color={theme.error} /> : null}
+        {icon ? <Icon name={icon} size={18} color={theme.error} /> : null}
         <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
       </View>
       <View style={styles.body}>{children}</View>

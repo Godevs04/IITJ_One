@@ -14,3 +14,7 @@ export * from './messMenu';
 export * from './suggestions';
 export * from './campusDirectory';
 export * from './campaigns';
+export * from './academicCalendar';
+export * from './messPricing';
+export * from './messUpdate';
+export * from './aiCommands';

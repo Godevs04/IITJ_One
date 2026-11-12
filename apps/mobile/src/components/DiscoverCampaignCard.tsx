@@ -1,6 +1,6 @@
 import { memo, useEffect } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { openCampaignDetails } from '@/utils/campaignNav';
@@ -63,11 +63,11 @@ function DiscoverCampaignCardImpl({ campaign, trackView = true }: DiscoverCampai
           {primaryImage ? (
             <Image source={{ uri: optimizeCloudinaryUrl(primaryImage, 800) }} style={styles.image} resizeMode="cover" />
           ) : (
-            <Ionicons name="megaphone-outline" size={28} color={theme.iconMuted} />
+            <Icon name="megaphone-outline" size={28} color={theme.iconMuted} />
           )}
           {campaign.featured ? (
             <View style={[styles.featuredBadge, { backgroundColor: theme.secondaryTint }]}>
-              <Ionicons name="star" size={11} color={theme.secondary} />
+              <Icon name="star" size={11} color={theme.secondary} />
               <Text style={[styles.featuredBadgeText, { color: theme.secondary }]}>Featured</Text>
             </View>
           ) : null}

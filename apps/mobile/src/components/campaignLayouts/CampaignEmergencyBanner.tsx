@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { openCampaignDetails } from '@/utils/campaignNav';
@@ -42,7 +42,7 @@ export function CampaignEmergencyBanner({ campaigns }: CampaignEmergencyBannerPr
         pressed && styles.pressed,
       ]}
     >
-      <Ionicons name="warning" size={24} color={theme.error} />
+      <Icon name="warning" size={24} color={theme.error} />
       <View style={styles.textBlock}>
         <Text style={[styles.label, { color: theme.error }]}>EMERGENCY</Text>
         <Text style={[styles.title, { color: theme.text }]} numberOfLines={2}>
@@ -54,7 +54,7 @@ export function CampaignEmergencyBanner({ campaigns }: CampaignEmergencyBannerPr
           </Text>
         ) : null}
       </View>
-      <Ionicons name="chevron-forward" size={20} color={theme.error} />
+      <Icon name="chevron-forward" size={20} color={theme.error} />
     </Pressable>
   );
 }

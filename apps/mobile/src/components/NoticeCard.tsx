@@ -1,17 +1,18 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useThemeColors } from '@/theme/ThemeProvider';
+import { useAppColorScheme, useThemeColors } from '@/theme/ThemeProvider';
 import {
   AppRadius,
   AppSpacing,
   AppTypography,
-  CategoryColors,
+  getCategoryColors,
+  type NoticeCategory,
 } from '@/theme/tokens';
 import { optimizeCloudinaryUrl } from '@/utils/cloudinary';
 
 interface NoticeCardProps {
   title: string;
   body: string;
-  category: keyof typeof CategoryColors;
+  category: NoticeCategory;
   isImportant?: boolean;
   expiryLabel?: string;
   imageUrl?: string;
@@ -30,7 +31,8 @@ export function NoticeCard({
   onPress,
 }: NoticeCardProps) {
   const theme = useThemeColors();
-  const categoryColor = CategoryColors[category] ?? CategoryColors.general;
+  const categoryColors = getCategoryColors(useAppColorScheme());
+  const categoryColor = categoryColors[category] ?? categoryColors.general;
 
   return (
     <Pressable
@@ -52,7 +54,7 @@ export function NoticeCard({
         <View style={[styles.importantBar, { backgroundColor: theme.accent }]} />
       )}
       {imageUrl ? (
-        <Image source={{ uri: optimizeCloudinaryUrl(imageUrl, 800) }} style={styles.image} resizeMode="cover" />
+        <Image source={{ uri: optimizeCloudinaryUrl(imageUrl, 800) }} style={[styles.image, { backgroundColor: theme.surfaceMuted }]} resizeMode="cover" />
       ) : null}
       <View style={styles.content}>
         <View style={styles.headerRow}>
@@ -62,7 +64,7 @@ export function NoticeCard({
             </Text>
           </View>
           {isImportant && (
-            <View style={[styles.importantBadge, { backgroundColor: theme.accent }]}>
+            <View style={[styles.importantBadge, { backgroundColor: theme.primary }]}>
               <Text style={[styles.importantBadgeText, { color: theme.onPrimary }]}>
                 Important
               </Text>
@@ -103,7 +105,6 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: 140,
-    backgroundColor: '#E8E4DC',
   },
   content: {
     padding: AppSpacing.lg,

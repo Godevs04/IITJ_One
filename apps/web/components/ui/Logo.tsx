@@ -8,15 +8,15 @@ export function Logo({ className = '' }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2 ${className}`}>
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
-        <rect width="28" height="28" rx="8" className="fill-indigo" />
+        <rect width="28" height="28" rx="8" className="fill-primary" />
         <path
           d="M14 6.5v11.5"
-          stroke="rgb(var(--color-sand))"
+          stroke="rgb(var(--color-navy))"
           strokeWidth="2.5"
           strokeLinecap="round"
         />
-        <path d="M11.2 8.6 14 6.5l1.4 1.05" stroke="rgb(var(--color-sand))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="14" cy="21" r="1.6" className="fill-sandstone" />
+        <path d="M11.2 8.6 14 6.5l1.4 1.05" stroke="rgb(var(--color-navy))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="14" cy="21" r="1.6" className="fill-navy" />
       </svg>
       <span className="text-base font-semibold tracking-tight text-ink">IITJ One</span>
     </span>

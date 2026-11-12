@@ -12,7 +12,7 @@ function getEntries(): SearchEntry[] {
     route: '/(tabs)/transport' as const,
   }));
 
-  const busEntries: SearchEntry[] = ['B1', 'B2'].map((bus) => ({
+  const busEntries: SearchEntry[] = ['B1', 'B2', 'B3'].map((bus) => ({
     id: `transport-bus-${bus}`,
     title: `Bus ${bus}`,
     subtitle: 'Departure & arrival schedule',

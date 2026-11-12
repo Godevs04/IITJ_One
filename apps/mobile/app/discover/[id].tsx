@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Linking, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { ScreenShell } from '@/components/ScreenShell';
 import { EmptyState } from '@/components/EmptyState';
 import { CampaignGallery } from '@/components/CampaignGallery';
@@ -17,7 +17,7 @@ import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 interface ContactAction {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: keyof typeof Icon.glyphMap;
   label: string;
   onPress: () => void;
 }
@@ -136,10 +136,10 @@ export default function CampaignDetailsScreen() {
           headerRight: () => (
             <View style={styles.headerActions}>
               <Pressable onPress={() => void onShare()} hitSlop={12} accessibilityRole="button" accessibilityLabel="Share campaign">
-                <Ionicons name="share-outline" size={22} color={theme.text} />
+                <Icon name="share-outline" size={22} color={theme.text} />
               </Pressable>
               <Pressable onPress={toggle} hitSlop={12} accessibilityRole="button" accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Bookmark'} accessibilityState={{ selected: bookmarked }}>
-                <Ionicons name={bookmarked ? 'bookmark' : 'bookmark-outline'} size={22} color={theme.text} />
+                <Icon name={bookmarked ? 'bookmark' : 'bookmark-outline'} size={22} color={theme.text} />
               </Pressable>
             </View>
           ),
@@ -160,7 +160,7 @@ export default function CampaignDetailsScreen() {
         ) : null}
         {campaign.featured ? (
           <View style={[styles.badge, { backgroundColor: theme.secondaryTint }]}>
-            <Ionicons name="star" size={11} color={theme.secondary} />
+            <Icon name="star" size={11} color={theme.secondary} />
             <Text style={[styles.badgeText, { color: theme.secondary }]}>Featured</Text>
           </View>
         ) : null}
@@ -210,7 +210,7 @@ export default function CampaignDetailsScreen() {
                   pressed && styles.pressed,
                 ]}
               >
-                <Ionicons name={action.icon} size={18} color={theme.linkText} />
+                <Icon name={action.icon} size={18} color={theme.linkText} />
                 <Text style={[styles.contactButtonText, { color: theme.text }]}>{action.label}</Text>
               </Pressable>
             ))}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { goBack } from '@/navigation/goBack';
 import {
   Alert,
   Pressable,
@@ -112,7 +113,7 @@ export default function AddClassScreen() {
         show_on_home: showOnHome,
       });
     }
-    router.back();
+    goBack();
   }, [className, startTime, endTime, classType, daysOfWeek, room, reminderEnabled, showOnHome, id, posthog]);
 
   const remove = useCallback(async () => {
@@ -121,7 +122,7 @@ export default function AddClassScreen() {
     if (old) await cancelClassNotifications(old.id, old.daysOfWeek);
     await deleteTimetableEntry(String(id));
     posthog.capture('timetable_class_deleted', { class_type: old?.classType ?? null });
-    router.back();
+    goBack();
   }, [id, posthog]);
 
   const inputStyle = [

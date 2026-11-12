@@ -1,117 +1,98 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { useCallback, useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { SecondaryButton } from '@/components/Buttons';
 import { WEEKDAYS, monthNumberToName } from '@iitj1/types';
 import { EmptyState } from '@/components/EmptyState';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
-import { useSwipeGesture } from '@/navigation/SwipeContext';
-import { useModalOverlayLock } from '@/services/overlayGate';
 import type { MessMenuDoc } from '@/types/campus';
-import { getMealTimeStatus, getMealWindows } from '@/utils/date';
+import { getMealWindows } from '@/utils/date';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { debugListKeys } from '@/debug/listDebug';
+import { useDietPreference } from '@/mess/dietPreference';
+import { MEALS, MEAL_LABELS, getMealStatus, type MealKey } from '@/mess/mealPhase';
+import { dayMenuFor, dishesFor, menuFor, weekdayName } from '@/mess/menuData';
+import { DietPreferenceSelect } from '@/mess/ui/DietPreferenceSelect';
+import { MessChargesSheet } from '@/mess/ui/MessChargesSheet';
+import { useActiveMessUpdates } from '@/hooks/useActiveMessUpdates';
 
-const MEALS = ['breakfast', 'lunch', 'snacks', 'dinner'] as const;
-const MEAL_LABELS: Record<string, string> = {
-  breakfast: 'Breakfast',
-  lunch: 'Lunch',
-  snacks: 'Snacks',
-  dinner: 'Dinner',
+
+type IconName = keyof typeof MaterialIcons.glyphMap;
+
+const MEAL_ICONS: Record<MealKey, IconName> = {
+  breakfast: 'free-breakfast',
+  lunch: 'lunch-dining',
+  snacks: 'bakery-dining',
+  dinner: 'dinner-dining',
 };
 
-const MEAL_ICONS: Record<string, string> = {
-  breakfast: 'cafe-outline',
-  lunch: 'restaurant-outline',
-  snacks: 'fast-food-outline',
-  dinner: 'restaurant-outline',
-};
-
-const WEEKDAY_NAMES_BY_JS_DAY = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-function todayWeekdayName(): string {
-  return WEEKDAY_NAMES_BY_JS_DAY[new Date().getDay()];
+/** Ticks once a minute so the current-meal highlight and countdowns stay correct while the screen is open. */
+function useMinuteClock(): Date {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(timer);
+  }, []);
+  return now;
 }
 
-type DishSectionProps = {
-  label: string;
-  labelColor: string;
-  dotColor: string;
-  textColor: string;
-  items: string[];
-  /** 1 = one dish per row (long names), 2 = compact grid (short names). */
-  columns: 1 | 2;
-};
-
-function DishSection({ label, labelColor, dotColor, textColor, items, columns }: DishSectionProps) {
-  if (items.length === 0) return null;
-
-  return (
-    <View style={styles.dishSection}>
-      <Text style={[styles.dishSectionLabel, { color: labelColor }]}>{label}</Text>
-      <View style={styles.dishesGrid}>
-        {items.map((dish, idx) => (
-          <View
-            key={`${dish}-${idx}`}
-            style={columns === 2 ? styles.dishGridItemHalf : styles.dishGridItemFull}
-          >
-            <View style={styles.dishRow}>
-              <View style={[styles.dishDot, { backgroundColor: dotColor }]} />
-              <Text style={[styles.dishText, { color: textColor }]}>{dish}</Text>
-            </View>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
+function getDateForWeekday(selectedWeekday: string, now: Date): string {
+  const weekdayMap: Record<string, number> = {
+    Sunday: 0,
+    Monday: 1,
+    Tuesday: 2,
+    Wednesday: 3,
+    Thursday: 4,
+    Friday: 5,
+    Saturday: 6,
+  };
+  const currentDay = now.getDay();
+  const targetDay = weekdayMap[selectedWeekday] ?? currentDay;
+  const diff = targetDay - currentDay;
+  const d = new Date(now);
+  d.setDate(now.getDate() + diff);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 export default function MenuScreen() {
   const theme = useThemeColors();
   const { syncing, sync, error } = useCampusSync(false);
-  const { lockSwipe, unlockSwipe } = useSwipeGesture();
   const vegMenu = useCampusModule<MessMenuDoc>('messMenuVeg');
   const nonVegMenu = useCampusModule<MessMenuDoc>('messMenuNonVeg');
-  const [dietPreference, setDietPreference] = useState<'veg' | 'nonVeg'>('veg');
-  const [selectedWeekday, setSelectedWeekday] = useState<string>(() => todayWeekdayName());
+  const [pref, setPref] = useDietPreference();
+  const now = useMinuteClock();
+  const today = weekdayName(now);
+  const [selectedDay, setSelectedDay] = useState<string>(today);
   const [showCharges, setShowCharges] = useState(false);
-  useModalOverlayLock(showCharges);
 
-  // Never cross-fall back: showing the non-veg menu under the "Veg Mess" toggle
-  // (or vice versa) is worse than showing nothing.
-  const menu = dietPreference === 'veg' ? vegMenu : nonVegMenu;
-  // The day/diet strips stay mounted as long as *either* menu exists, so the
-  // user can always toggle back out of an unpublished one.
+  const targetDate = getDateForWeekday(selectedDay, now);
+  const { updates: activeUpdates, refetch: refetchUpdates, updatesForMeal } = useActiveMessUpdates(
+    undefined,
+    targetDate,
+  );
+
+  const menu = menuFor(pref, vegMenu, nonVegMenu);
+  // The day strip stays usable as long as either menu exists, so the user can switch back out of an
+  // unpublished one.
   const anyMenu = vegMenu ?? nonVegMenu;
-
-  // Case-insensitive weekday matching. No fallback to days[0] — silently
-  // rendering Monday while the Friday chip is highlighted is a wrong menu.
-  const dayMenu = useMemo(() => {
-    if (!menu?.days || menu.days.length === 0) return null;
-    const target = selectedWeekday.trim().toLowerCase();
-    return menu.days.find((d) => d.day.trim().toLowerCase() === target) ?? null;
-  }, [menu, selectedWeekday]);
+  const dayMenu = dayMenuFor(menu, selectedDay);
+  const isToday = selectedDay === today;
+  const windows = getMealWindows(selectedDay);
+  const nowMin = isToday ? now.getHours() * 60 + now.getMinutes() : null;
 
   const onRefresh = useCallback(async () => {
-    await sync();
-  }, [sync]);
+    await Promise.all([sync(), refetchUpdates()]);
+  }, [sync, refetchUpdates]);
+
 
   debugListKeys('MenuScreen', 'weekdayStrip', WEEKDAYS, (day) => day);
-  debugListKeys('MenuScreen', 'mealCharges', [
-    { meal: 'Breakfast', veg: '₹45', nonVeg: '₹45' },
-    { meal: 'Lunch', veg: '₹75', nonVeg: '₹80' },
-    { meal: 'Snacks', veg: '₹35', nonVeg: '₹35' },
-    { meal: 'Dinner', veg: '₹75', nonVeg: '₹80' },
-  ], (item) => item.meal);
 
-  const isSelectedToday =
-    selectedWeekday.trim().toLowerCase() === todayWeekdayName().trim().toLowerCase();
-
-  const subtitle = anyMenu
-    ? `${monthNumberToName(anyMenu.month)} ${anyMenu.year} — weekly rotation`
-    : undefined;
+  const subtitle = anyMenu ? `${monthNumberToName(anyMenu.month)} ${anyMenu.year} — weekly rotation` : undefined;
+  const prefLabel = pref === 'veg' ? 'Veg' : 'Non-Veg';
 
   return (
     <ScreenShell
@@ -120,169 +101,113 @@ export default function MenuScreen() {
       onRefresh={onRefresh}
       refreshing={syncing}
       error={error}
+      headerRight={<DietPreferenceSelect value={pref} onChange={setPref} />}
     >
+      <SecondaryButton label="Veg Mess entry via FretBox" onPress={() => router.push('/veg-mess-entry')} />
       {anyMenu ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.dayStripScroll}
-          onScrollBeginDrag={lockSwipe}
-          onScrollEndDrag={unlockSwipe}
-          onMomentumScrollEnd={unlockSwipe}
-        >
+        <View style={[styles.dayTabs, { borderBottomColor: theme.border }]} accessibilityRole="tablist">
           {WEEKDAYS.map((day) => {
-            const active = day === selectedWeekday;
-            const isToday = day === todayWeekdayName();
-
+            const active = day === selectedDay;
+            const dayIsToday = day === today;
             return (
-              // One Pressable for both states so every chip keeps the exact same
-              // box. The old active variant nested the card in a bordered outer
-              // View, making it 66×66 inside a 62-wide slot — it overflowed into
-              // its neighbours and sat taller than the rest of the strip.
               <Pressable
                 key={day}
-                onPress={() => setSelectedWeekday(day)}
-                accessibilityRole="button"
+                onPress={() => setSelectedDay(day)}
+                accessibilityRole="tab"
                 accessibilityState={{ selected: active }}
-                accessibilityLabel={isToday ? `${day}, today` : day}
-                style={[
-                  styles.dayCard,
-                  {
-                    backgroundColor: active ? theme.primary : theme.chipBackground,
-                    borderColor: active ? theme.primary : 'transparent',
-                  },
-                ]}
+                accessibilityLabel={dayIsToday ? `${day}, today` : day}
+                style={styles.dayTab}
               >
                 <Text
                   style={[
-                    styles.dayNameText,
-                    {
-                      color: active ? theme.onPrimary : isToday ? theme.accent : theme.textMuted,
-                      fontWeight: active || isToday ? '700' : '600',
-                    },
+                    styles.dayText,
+                    { color: active ? theme.text : theme.textMuted, fontWeight: active ? '700' : '500' },
                   ]}
                 >
-                  {day.slice(0, 3).toUpperCase()}
+                  {day.slice(0, 3)}
                 </Text>
-                {/* Always rendered so the label stays vertically centred whether
-                    or not the chip is today. */}
-                <View
-                  style={[
-                    styles.todayDot,
-                    {
-                      backgroundColor: isToday
-                        ? active
-                          ? theme.onPrimary
-                          : theme.accent
-                        : 'transparent',
-                    },
-                  ]}
-                />
+                <View style={[styles.todayDot, { backgroundColor: dayIsToday ? theme.linkText : 'transparent' }]} />
+                <View style={[styles.underline, { backgroundColor: active ? theme.primary : 'transparent' }]} />
               </Pressable>
             );
           })}
-        </ScrollView>
+        </View>
       ) : null}
 
-      {anyMenu ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.toggleStripScroll}
-          contentContainerStyle={styles.toggleStrip}
-          onScrollBeginDrag={lockSwipe}
-          onScrollEndDrag={unlockSwipe}
-          onMomentumScrollEnd={unlockSwipe}
+      {/* Prices don't depend on the menu, so they stay reachable even when no menu has synced. */}
+      <View style={styles.links}>
+        {anyMenu && !isToday ? (
+          <Pressable onPress={() => setSelectedDay(today)} hitSlop={8} style={styles.link} accessibilityRole="button">
+            <MaterialIcons name="today" size={16} color={theme.linkText} />
+            <Text style={[styles.linkText, { color: theme.linkText }]}>Back to today</Text>
+          </Pressable>
+        ) : (
+          <View />
+        )}
+        <Pressable
+          onPress={() => setShowCharges(true)}
+          hitSlop={8}
+          style={styles.link}
+          accessibilityRole="button"
+          accessibilityLabel="Mess prices and contact"
         >
-          {!isSelectedToday && (
-            <Pressable
-              onPress={() => setSelectedWeekday(todayWeekdayName())}
-              style={[
-                styles.toggleButton,
-                {
-                  backgroundColor: theme.primaryTint,
-                  borderColor: theme.primary,
-                },
-              ]}
-            >
-              <Ionicons name="today-outline" size={15} color={theme.linkText} />
-              <Text style={[styles.toggleButtonText, { color: theme.linkText, fontWeight: 'bold' }]}>
-                Today
-              </Text>
-            </Pressable>
-          )}
-          <Pressable
-            onPress={() => setDietPreference('veg')}
-            style={[
-              styles.toggleButton,
-              {
-                backgroundColor:
-                  dietPreference === 'veg' ? theme.vegTint : theme.chipBackground,
-                borderColor: dietPreference === 'veg' ? theme.veg : theme.border,
-              },
-            ]}
-          >
-            <View style={[styles.indicatorDot, { backgroundColor: theme.veg }]} />
-            <Text
-              style={[
-                styles.toggleButtonText,
-                { color: dietPreference === 'veg' ? theme.veg : theme.textMuted },
-              ]}
-            >
-              Veg Mess
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setDietPreference('nonVeg')}
-            style={[
-              styles.toggleButton,
-              {
-                backgroundColor:
-                  dietPreference === 'nonVeg' ? theme.errorTint : theme.chipBackground,
-                borderColor: dietPreference === 'nonVeg' ? theme.nonVeg : theme.border,
-              },
-            ]}
-          >
-            <View style={[styles.indicatorDot, { backgroundColor: theme.nonVeg }]} />
-            <Text
-              style={[
-                styles.toggleButtonText,
-                { color: dietPreference === 'nonVeg' ? theme.nonVeg : theme.textMuted },
-              ]}
-            >
-              Non-Veg Mess
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setShowCharges(true)}
-            style={[
-              styles.toggleButton,
-              {
-                backgroundColor: theme.chipBackground,
-                borderColor: theme.border,
-              },
-            ]}
-          >
-            <Ionicons name="card-outline" size={15} color={theme.textMuted} />
-            <Text style={[styles.toggleButtonText, { color: theme.textMuted }]}>
-              Pay & Use
-            </Text>
-          </Pressable>
-        </ScrollView>
+          <MaterialIcons name="sell" size={16} color={theme.linkText} />
+          <Text style={[styles.linkText, { color: theme.linkText }]}>Mess prices</Text>
+        </Pressable>
+      </View>
+
+      {/* Lightweight Menu Update Banner */}
+      {activeUpdates.length > 0 ? (
+        <View style={[styles.bannerContainer, { backgroundColor: theme.surface, borderColor: '#F59E0B' }]}>
+          <View style={styles.bannerHeader}>
+            <MaterialIcons name="warning" size={18} color="#D97706" />
+            <Text style={[styles.bannerTitle, { color: theme.text }]}>Menu Update</Text>
+          </View>
+          {activeUpdates.map((u) => {
+            let text = '';
+            if (u.updateType === 'item_substitution') {
+              text = `${u.originalItem || 'Scheduled dish'} is unavailable. ${u.replacementItem} will be served instead.`;
+            } else if (u.updateType === 'item_unavailable') {
+              text = `${u.originalItem} is unavailable.`;
+            } else if (u.updateType === 'special_menu') {
+              const items = u.specialItems?.join(', ') || 'special festive items';
+              text = `Special ${u.meal} menu featuring ${items}.`;
+            } else if (u.updateType === 'timing_change') {
+              const time =
+                u.newTiming?.label ||
+                (u.newTiming?.start ? `${u.newTiming.start} - ${u.newTiming.end}` : 'updated hours');
+              text = `Timing changed to ${time}.`;
+            } else {
+              text = u.replacementItem || 'Notice regarding menu.';
+            }
+            return (
+              <View key={u._id} style={styles.bannerRow}>
+                <Text style={[styles.bannerBullet, { color: '#D97706' }]}>•</Text>
+                <Text style={[styles.bannerText, { color: theme.text }]}>
+                  <Text style={{ fontWeight: '600' }}>{u.meal[0].toUpperCase() + u.meal.slice(1)}: </Text>
+                  {text}
+                  {u.reason ? ` (${u.reason})` : ''}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
       ) : null}
 
       {dayMenu ? (
         MEALS.map((meal) => {
-          const items = dayMenu.meals[meal];
+          const dishes = dishesFor(pref, dayMenu.meals[meal]);
+          const status = getMealStatus(meal, nowMin, windows);
+          const isOpen = status?.state === 'open';
+          const mealUpdates = updatesForMeal(meal);
+          debugListKeys('MenuScreen', `${meal}Dishes`, dishes?.main ?? [], (_, index) => `${index}`);
 
-          debugListKeys('MenuScreen', `${meal}VegItems`, items.vegItems, (_, index) => `${index}`);
-          debugListKeys('MenuScreen', `${meal}NonVegItems`, items.nonVegItems, (_, index) => `${index}`);
-
-          const isToday = isSelectedToday;
-          const timeStatus = isToday ? getMealTimeStatus(meal, selectedWeekday) : null;
-          const mealWindow = getMealWindows(selectedWeekday)[meal];
-
-          const isActive = timeStatus?.status === 'active';
+          const timingUpdate = mealUpdates.find((u) => u.updateType === 'timing_change' && u.newTiming);
+          const timeLabel =
+            timingUpdate?.newTiming?.label ||
+            (timingUpdate?.newTiming?.start
+              ? `${timingUpdate.newTiming.start} - ${timingUpdate.newTiming.end}`
+              : windows[meal].timeLabel);
 
           return (
             <View
@@ -291,429 +216,306 @@ export default function MenuScreen() {
                 styles.mealCard,
                 {
                   backgroundColor: theme.surface,
-                  borderColor: isActive ? theme.accent : theme.border,
-                  borderWidth: isActive ? 2 : 1,
+                  borderColor: isOpen ? theme.primary : mealUpdates.length > 0 ? '#F59E0B' : theme.border,
+                  borderWidth: isOpen || mealUpdates.length > 0 ? 2 : StyleSheet.hairlineWidth,
+                  opacity: status?.state === 'closed' ? 0.75 : 1,
                 },
               ]}
             >
-              {/* Header Row */}
-              <View style={styles.cardHeader}>
-                <View style={styles.mealTitleContainer}>
-                  <Ionicons
-                    name={MEAL_ICONS[meal] as any}
-                    size={22}
-                    color={theme.linkText}
-                  />
-                  <Text style={[styles.mealTitle, { color: theme.linkText }]}>
-                    {MEAL_LABELS[meal]}
-                  </Text>
+              <View style={styles.mealHeader}>
+                <View style={[styles.mealIcon, { backgroundColor: isOpen ? theme.primary : theme.primaryTint }]}>
+                  <MaterialIcons name={MEAL_ICONS[meal]} size={18} color={isOpen ? theme.onPrimary : theme.linkText} />
                 </View>
-                <View style={[styles.timeBadge, { backgroundColor: theme.chipBackground }]}>
-                  <Text style={[styles.timeBadgeText, { color: theme.textMuted }]}>
-                    {mealWindow.timeLabel}
-                  </Text>
-                </View>
+                <Text style={[styles.mealTitle, { color: theme.text }]}>{MEAL_LABELS[meal]}</Text>
+                <Text style={[styles.mealTime, { color: timingUpdate ? '#D97706' : theme.textMuted }]}>
+                  {timeLabel}
+                </Text>
               </View>
 
-              {/* Active / Countdown Badge */}
-              {timeStatus && timeStatus.status !== 'passed' && (
+              {/* Meal-specific updates notice */}
+              {mealUpdates.length > 0 ? (
+                <View style={{ gap: 4 }}>
+                  {mealUpdates.map((u) => {
+                    let msg = '';
+                    if (u.updateType === 'item_substitution') {
+                      msg = `${u.originalItem || 'Item'} is unavailable. ${u.replacementItem} will be served instead.`;
+                    } else if (u.updateType === 'item_unavailable') {
+                      msg = `${u.originalItem} is unavailable.`;
+                    } else if (u.updateType === 'special_menu') {
+                      msg = `Special menu: ${u.specialItems?.join(', ') || 'Special dishes'}`;
+                    } else if (u.updateType === 'timing_change') {
+                      msg = `Updated timing: ${timeLabel}`;
+                    } else {
+                      msg = u.replacementItem || 'Menu update';
+                    }
+                    return (
+                      <View key={u._id} style={[styles.mealUpdateAlert, { backgroundColor: theme.surfaceMuted }]}>
+                        <MaterialIcons name="info-outline" size={14} color="#D97706" />
+                        <Text style={[styles.mealUpdateAlertText, { color: theme.text }]}>{msg}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              ) : null}
+
+              {status && status.state !== 'closed' ? (
                 <View
                   style={[
-                    styles.mealBadge,
-                    {
-                      backgroundColor: isActive ? theme.importantCardBg : theme.chipBackground,
-                      borderColor: isActive ? theme.importantCardBorder : theme.border,
-                      borderWidth: 1,
-                    },
+                    styles.statusChip,
+                    { backgroundColor: isOpen ? theme.highlight : theme.surfaceMuted },
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.mealBadgeText,
-                      { color: isActive ? theme.accent : theme.textMuted },
-                    ]}
-                  >
-                    {isActive ? 'ACTIVE NOW' : 'UPCOMING'} • {timeStatus.timeLeftString}
+                  <MaterialIcons
+                    name={isOpen ? 'restaurant' : 'schedule'}
+                    size={12}
+                    color={isOpen ? theme.onHighlight : theme.textMuted}
+                  />
+                  <Text style={[styles.statusText, { color: isOpen ? theme.onHighlight : theme.textMuted }]}>
+                    {status.label}
                   </Text>
                 </View>
+              ) : null}
+
+              {dishes && dishes.main.length > 0 ? (
+                <View style={styles.dishes}>
+                  {dishes.main.map((dish, i) => {
+                    const sub = mealUpdates.find(
+                      (u) =>
+                        u.updateType === 'item_substitution' &&
+                        u.originalItem &&
+                        dish.name.toLowerCase().includes(u.originalItem.toLowerCase()),
+                    );
+                    const unavail = mealUpdates.find(
+                      (u) =>
+                        u.updateType === 'item_unavailable' &&
+                        u.originalItem &&
+                        dish.name.toLowerCase().includes(u.originalItem.toLowerCase()),
+                    );
+
+                    return (
+                      <View key={`${dish.name}-${i}`} style={styles.dishRow}>
+                        <View style={[styles.dot, { backgroundColor: dish.isVeg ? theme.veg : theme.nonVeg }]} />
+                        <Text
+                          style={[
+                            styles.dishText,
+                            { color: theme.text },
+                            sub || unavail ? styles.dishSubstituted : undefined,
+                          ]}
+                        >
+                          {dish.name}
+                        </Text>
+                        {sub ? (
+                          <Text style={styles.dishReplacementBadge}>
+                            → {sub.replacementItem} (Substituted)
+                          </Text>
+                        ) : null}
+                        {unavail ? (
+                          <Text style={[styles.dishReplacementBadge, { color: '#EF4444' }]}>
+                            (Unavailable)
+                          </Text>
+                        ) : null}
+                      </View>
+                    );
+                  })}
+                </View>
+              ) : (
+                <Text style={[styles.noDishes, { color: theme.textMuted }]}>Nothing listed for this meal.</Text>
               )}
 
-              {/* Divider */}
-              <View style={[styles.cardDivider, { backgroundColor: theme.border }]} />
 
-              {/* Veg / Non-Veg / Always Served sections.
-                  Dish names are long and uneven ("Idli+Fried Idli / Idli+Mendu
-                  Vada", "Salad(Beetroot+tomato+onion+carrot+lemon+chilli)"), so
-                  they get one full-width row each. Only the compulsory items are
-                  short and uniform enough to survive two columns. */}
-              <DishSection
-                label="VEG"
-                labelColor={theme.veg}
-                dotColor={theme.veg}
-                textColor={theme.text}
-                items={items.vegItems}
-                columns={1}
-              />
-              <DishSection
-                label="NON-VEG"
-                labelColor={theme.nonVeg}
-                dotColor={theme.nonVeg}
-                textColor={theme.text}
-                items={items.nonVegItems}
-                columns={1}
-              />
-              <DishSection
-                label="ALWAYS SERVED"
-                labelColor={theme.textMuted}
-                dotColor={theme.textMuted}
-                textColor={theme.text}
-                items={items.compulsoryItems}
-                columns={2}
-              />
+              {dishes && dishes.always.length > 0 ? (
+                <Text style={[styles.always, { color: theme.textMuted, borderTopColor: theme.border }]}>
+                  <Text style={styles.alwaysLabel}>Always served: </Text>
+                  {dishes.always.join(', ')}
+                </Text>
+              ) : null}
             </View>
           );
         })
       ) : (
         <EmptyState
           icon="restaurant-outline"
-          title={
-            menu
-              ? `No ${selectedWeekday} menu`
-              : `${dietPreference === 'veg' ? 'Veg' : 'Non-Veg'} menu not available`
-          }
+          title={menu ? `No ${selectedDay} menu` : `${prefLabel} menu not available`}
           message={
             menu
-              ? `The published ${dietPreference === 'veg' ? 'veg' : 'non-veg'} menu has no entry for ${selectedWeekday} — pick another day, or pull down to sync.`
+              ? `The published ${prefLabel.toLowerCase()} menu has no entry for ${selectedDay} — pick another day, or pull down to sync.`
               : "This month's menu hasn't been published yet — pull down to sync, or check back later."
           }
         />
       )}
 
-      <Modal
-        visible={showCharges}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowCharges(false)}
-      >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setShowCharges(false)}
-        >
-          <View style={[styles.modalContent, { backgroundColor: theme.surface }]} onStartShouldSetResponder={() => true}>
-            {/* Modal Header */}
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.text }]}>Mess Charges</Text>
-              <Pressable
-                onPress={() => setShowCharges(false)}
-                style={styles.modalCloseButton}
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityLabel="Close"
-              >
-                <Ionicons name="close" size={24} color={theme.textMuted} />
-              </Pressable>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Regular Users */}
-              <Text style={[styles.sectionHeading, { color: theme.linkText }]}>
-                Regular Users (Per Day)
-              </Text>
-              <Text style={[styles.sectionDescription, { color: theme.textMuted }]}>
-                Students, staff, or faculty members who consume all meals in the mess. ERP or register maintained.
-              </Text>
-
-              <View style={[styles.priceCard, { backgroundColor: theme.chipBackground }]}>
-                <View style={styles.priceRow}>
-                  <Text style={[styles.priceLabel, { color: theme.text }]}>Veg Mess</Text>
-                  <Text style={[styles.priceVal, { color: theme.veg }]}>₹170 + GST (~₹179)</Text>
-                </View>
-                <View style={[styles.modalDivider, { backgroundColor: theme.border }]} />
-                <View style={styles.priceRow}>
-                  <Text style={[styles.priceLabel, { color: theme.text }]}>Non-veg Mess</Text>
-                  <Text style={[styles.priceVal, { color: theme.nonVeg }]}>₹180 + GST (~₹189)</Text>
-                </View>
-              </View>
-
-              {/* Meal-wise Users */}
-              <Text style={[styles.sectionHeading, { color: theme.linkText, marginTop: AppSpacing.md }]}>
-                Meal-wise Users (Pay & Use)
-              </Text>
-              <Text style={[styles.sectionDescription, { color: theme.textMuted }]}>
-                Any user (students, staff, faculty, or visitors) availing only selected meals. Inclusive of GST.
-              </Text>
-
-              <View style={[styles.tableHeader, { borderBottomColor: theme.border }]}>
-                <Text style={[styles.th, { flex: 2, color: theme.textMuted }]}>Meal</Text>
-                <Text style={[styles.th, { flex: 1.5, textAlign: 'right', color: theme.textMuted }]}>Veg</Text>
-                <Text style={[styles.th, { flex: 1.5, textAlign: 'right', color: theme.textMuted }]}>Non-Veg</Text>
-              </View>
-
-              {[
-                { meal: 'Breakfast', veg: '₹45', nonVeg: '₹45' },
-                { meal: 'Lunch', veg: '₹75', nonVeg: '₹80' },
-                { meal: 'Snacks', veg: '₹35', nonVeg: '₹35' },
-                { meal: 'Dinner', veg: '₹75', nonVeg: '₹80' },
-              ].map((item, index) => (
-                <View key={index} style={[styles.tableRow, { borderBottomColor: theme.border }]}>
-                  <Text style={[styles.td, { flex: 2, fontWeight: '600', color: theme.text }]}>{item.meal}</Text>
-                  <Text style={[styles.td, { flex: 1.5, textAlign: 'right', color: theme.text }]}>{item.veg}</Text>
-                  <Text style={[styles.td, { flex: 1.5, textAlign: 'right', color: theme.text }]}>{item.nonVeg}</Text>
-                </View>
-              ))}
-
-              {/* Footer / Queries */}
-              <View style={[styles.queryContainer, { backgroundColor: theme.primaryTint }]}>
-                <Ionicons name="mail-outline" size={18} color={theme.linkText} />
-                <Text style={[styles.queryText, { color: theme.linkText }]}>
-                  For queries, contact Mess Office at mess@iitj.ac.in
-                </Text>
-              </View>
-            </ScrollView>
-          </View>
-        </Pressable>
-      </Modal>
+      <MessChargesSheet visible={showCharges} onClose={() => setShowCharges(false)} />
     </ScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  dayStripScroll: {
+  dayTabs: {
     flexDirection: 'row',
-    gap: AppSpacing.sm,
-    paddingVertical: AppSpacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  dayCard: {
-    width: 62,
-    height: 62,
-    borderRadius: 12,
-    borderWidth: 2,
-    justifyContent: 'center',
+  dayTab: {
+    flex: 1,
     alignItems: 'center',
-    gap: 5,
+    paddingTop: AppSpacing.sm,
+    minHeight: 48,
+    justifyContent: 'flex-end',
+    gap: 4,
   },
-  dayNameText: {
-    ...AppTypography.caption,
-    fontWeight: '600',
-    fontSize: 11,
+  dayText: {
+    ...AppTypography.body,
+    fontSize: 15,
   },
   todayDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
   },
-  toggleStripScroll: {
-    marginTop: AppSpacing.md,
-    marginBottom: AppSpacing.sm,
+  underline: {
+    alignSelf: 'stretch',
+    marginHorizontal: AppSpacing.xs,
+    height: 3,
+    borderRadius: 2,
   },
-  toggleStrip: {
-    flexDirection: 'row',
-    gap: AppSpacing.md,
-    paddingRight: AppSpacing.md,
-  },
-  toggleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: AppSpacing.md,
-    paddingVertical: AppSpacing.sm,
-    borderRadius: AppRadius.md,
-    borderWidth: 1,
-    gap: AppSpacing.xs,
-  },
-  toggleButtonText: {
-    ...AppTypography.button,
-    fontSize: 13,
-  },
-  indicatorDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  mealCard: {
-    borderRadius: AppRadius.md,
-    padding: AppSpacing.lg,
-    gap: AppSpacing.sm,
-    marginBottom: AppSpacing.md,
-  },
-  cardHeader: {
+  links: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: -AppSpacing.sm,
   },
-  mealTitleContainer: {
+  link: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    minHeight: 32,
+  },
+  linkText: {
+    ...AppTypography.bodySmall,
+    fontWeight: '600',
+  },
+  mealCard: {
+    borderRadius: AppRadius.lg,
+    padding: AppSpacing.lg,
+    gap: AppSpacing.sm + 4,
+  },
+  mealHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: AppSpacing.sm,
   },
+  mealIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: AppRadius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   mealTitle: {
-    ...AppTypography.h2,
-    fontWeight: '700',
-    fontSize: 18,
+    ...AppTypography.bodyHeader,
+    flex: 1,
   },
-  timeBadge: {
-    borderRadius: AppRadius.sm,
-    paddingHorizontal: AppSpacing.sm,
-    paddingVertical: 4,
+  mealTime: {
+    ...AppTypography.bodySmall,
+    fontWeight: '600',
   },
-  timeBadgeText: {
-    ...AppTypography.caption,
-    fontFamily: 'monospace',
-    fontWeight: '700',
-    fontSize: 11,
-  },
-  mealBadge: {
-    flexDirection: 'row',
+  statusChip: {
     alignSelf: 'flex-start',
-    paddingHorizontal: AppSpacing.md,
-    paddingVertical: AppSpacing.xs,
-    borderRadius: AppRadius.sm,
-    marginTop: AppSpacing.xs,
-    gap: AppSpacing.xs,
-  },
-  mealBadgeText: {
-    ...AppTypography.caption,
-    fontWeight: '700',
-    fontSize: 10,
-    letterSpacing: 0.5,
-  },
-  cardDivider: {
-    height: 1,
-    marginVertical: AppSpacing.sm,
-  },
-  dishSection: {
-    marginBottom: AppSpacing.sm,
-  },
-  dishSectionLabel: {
-    ...AppTypography.caption,
-    fontWeight: '700',
-    fontSize: 10,
-    letterSpacing: 0.5,
-    marginBottom: 4,
-  },
-  dishesGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: AppRadius.full,
+    paddingHorizontal: AppSpacing.sm,
+    paddingVertical: 2,
   },
-  dishGridItemFull: {
-    width: '100%',
-    paddingVertical: 3,
+  statusText: {
+    ...AppTypography.bodySmall,
+    fontWeight: '700',
   },
-  dishGridItemHalf: {
-    width: '50%',
-    paddingRight: AppSpacing.sm,
-    paddingVertical: 3,
+  dishes: {
+    gap: AppSpacing.sm,
   },
   dishRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: AppSpacing.xs,
+    gap: AppSpacing.sm,
   },
-  dishDot: {
+  dot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    marginTop: 6,
+    marginTop: 8,
   },
   dishText: {
+    ...AppTypography.body,
+    flex: 1,
+  },
+  noDishes: {
+    ...AppTypography.body,
+  },
+  always: {
     ...AppTypography.bodySmall,
-    fontSize: 13,
-    lineHeight: 18,
-    flex: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: AppSpacing.sm,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    width: '90%',
-    maxHeight: '80%',
-    borderRadius: AppRadius.md,
-    padding: AppSpacing.lg,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: AppSpacing.md,
-  },
-  modalTitle: {
-    ...AppTypography.h2,
+  alwaysLabel: {
     fontWeight: '700',
   },
-  modalCloseButton: {
-    padding: 4,
+  bannerContainer: {
+    borderRadius: AppRadius.md,
+    borderWidth: 1,
+    padding: AppSpacing.md,
+    gap: AppSpacing.xs,
   },
-  sectionHeading: {
+  bannerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.xs,
+    marginBottom: 2,
+  },
+  bannerTitle: {
     ...AppTypography.body,
     fontWeight: '700',
-    marginBottom: 4,
+    fontSize: 14,
   },
-  sectionDescription: {
-    ...AppTypography.caption,
-    fontSize: 12,
-    marginBottom: AppSpacing.sm,
-    lineHeight: 16,
-  },
-  priceCard: {
-    borderRadius: AppRadius.sm,
-    padding: AppSpacing.md,
-    marginVertical: AppSpacing.xs,
-  },
-  priceRow: {
+  bannerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 4,
+    alignItems: 'flex-start',
+    gap: 6,
+    paddingLeft: 4,
   },
-  priceLabel: {
+  bannerBullet: {
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  bannerText: {
     ...AppTypography.bodySmall,
-    fontWeight: '600',
-  },
-  priceVal: {
-    ...AppTypography.bodySmall,
-    fontWeight: '700',
-  },
-  modalDivider: {
-    height: 1,
-    marginVertical: 6,
-  },
-  tableHeader: {
-    flexDirection: 'row',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-  },
-  th: {
-    ...AppTypography.caption,
-    fontWeight: '700',
-    fontSize: 12,
-  },
-  tableRow: {
-    flexDirection: 'row',
-    paddingVertical: AppSpacing.sm,
-    borderBottomWidth: 1,
-  },
-  td: {
-    ...AppTypography.bodySmall,
+    flex: 1,
     fontSize: 13,
+    lineHeight: 18,
   },
-  queryContainer: {
+  mealUpdateAlert: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: AppSpacing.sm,
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
     borderRadius: AppRadius.sm,
-    padding: AppSpacing.md,
-    marginTop: AppSpacing.lg,
   },
-  queryText: {
-    ...AppTypography.caption,
-    flex: 1,
-    fontWeight: '600',
+  mealUpdateAlertText: {
+    ...AppTypography.bodySmall,
     fontSize: 12,
+    fontWeight: '600',
+    flex: 1,
+  },
+  dishSubstituted: {
+    textDecorationLine: 'line-through',
+    opacity: 0.5,
+  },
+  dishReplacementBadge: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#D97706',
+    marginLeft: 6,
   },
 });
+

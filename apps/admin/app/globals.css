@@ -3,19 +3,21 @@
 @tailwind utilities;
 
 :root {
-  --color-indigo: #1d3f5e;
-  --color-indigo-deep: #002947;
-  --color-indigo-tint: #e8edf2;
-  --color-sandstone: #c68642;
-  --color-sandstone-tint: #f7ede0;
-  --color-dusk: #e2703a;
-  --color-sand: #f4ece0;
-  --color-ink: #1a2229;
-  --color-muted: #5c6570;
-  --color-border: #e2d8c8;
+  /* IITJ One palette — shared with the mobile app and website. `indigo` is the readable shade of the
+     primary (#1A78A3) for text/links; the #3DA9D8 fill is `primary` (tailwind.config.ts). */
+  --color-indigo: #1a78a3;
+  --color-indigo-deep: #11303f;
+  --color-indigo-tint: #e2f2fa;
+  --color-sandstone: #6b6a00;
+  --color-sandstone-tint: #fbffd6;
+  --color-dusk: #c2410c;
+  --color-sand: #f5f7fb;
+  --color-ink: #01050d;
+  --color-muted: #566173;
+  --color-border: #e1e6ef;
   --color-sage: #6e8b74;
   --color-non-veg: #b23a34;
-  --color-surface: #fffcf7;
+  --color-surface: #ffffff;
 }
 
 html {
@@ -33,8 +35,8 @@ body {
   color: var(--color-ink);
   overflow-x: hidden;
   background:
-    radial-gradient(1200px 600px at 8% -10%, rgba(198, 134, 66, 0.14), transparent 55%),
-    radial-gradient(900px 500px at 100% 0%, rgba(29, 63, 94, 0.08), transparent 50%),
+    radial-gradient(1200px 600px at 8% -10%, rgba(61, 169, 216, 0.12), transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, rgba(241, 255, 10, 0.08), transparent 50%),
     var(--color-sand);
   background-attachment: fixed;
 }

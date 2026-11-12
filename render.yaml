@@ -13,7 +13,7 @@ services:
     rootDir: apps/api
     envVars:
       - key: NODE_VERSION
-        value: "20.18.1"
+        value: "24.22.2"
       - key: NODE_ENV
         value: production
       # Set secrets in the Render dashboard:

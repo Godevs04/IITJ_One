@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { StyleSheet, Text, View, Linking, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { ContentCard } from '@/components/ContentCard';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
@@ -16,6 +16,21 @@ const DISCLAIMER =
 
 const SUPPORT_URL = process.env.EXPO_PUBLIC_SUPPORT_URL || 'https://iitjone.in/support';
 const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'support@iitjone.in';
+const PRIVACY_POLICY_URL = process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL || 'https://iitjone.in/privacy';
+const TERMS_URL = process.env.EXPO_PUBLIC_TERMS_URL || 'https://iitjone.in/terms';
+
+/**
+ * Section titles that would repeat something this screen already shows: the disclaimer banner already
+ * says what IITJ One is, and "IIT Jodhpur contacts" already lists the institute's phone/email/website.
+ */
+const REDUNDANT_SECTION_TITLES = new Set([
+  'about iitj one',
+  'contact & resources',
+  'contact and resources',
+  'contact information',
+  'contact',
+  'contacts',
+]);
 
 const INSTITUTE_DETAILS = [
   {
@@ -63,7 +78,7 @@ function ContactRow({
   onPress,
   theme,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: keyof typeof Icon.glyphMap;
   label: string;
   value: string;
   onPress?: () => void;
@@ -80,7 +95,7 @@ function ContactRow({
       ]}
     >
       <View style={styles.contactLeft}>
-        <Ionicons name={icon} size={20} color={theme.linkText} />
+        <Icon name={icon} size={20} color={theme.linkText} />
         <View>
           <Text style={[styles.contactLabel, { color: theme.textMuted }]}>
             {label}
@@ -90,7 +105,7 @@ function ContactRow({
           </Text>
         </View>
       </View>
-      {onPress ? <Ionicons name="chevron-forward" size={18} color={theme.iconMuted} /> : null}
+      {onPress ? <Icon name="chevron-forward" size={18} color={theme.iconMuted} /> : null}
     </Pressable>
   );
 }
@@ -100,7 +115,9 @@ export default function AboutScreen() {
   const { syncing, sync, error } = useCampusSync(false);
   const about = useCampusModule<AboutDoc>('about');
   const syncedSections = about?.sections ?? [];
-  const sections = syncedSections.length > 0 ? syncedSections : INSTITUTE_DETAILS;
+  const sections = (syncedSections.length > 0 ? syncedSections : INSTITUTE_DETAILS).filter(
+    (section) => !REDUNDANT_SECTION_TITLES.has(section.title.trim().toLowerCase()),
+  );
   debugListKeys('AboutScreen', 'sections', sections, (section) => section.title);
 
   const onRefresh = useCallback(async () => {
@@ -124,7 +141,7 @@ export default function AboutScreen() {
       {isHttpUrl(SUPPORT_URL) || SUPPORT_EMAIL ? (
         <View style={styles.contactSection}>
           <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
-            IITJ One Support
+            IITJ One support
           </Text>
           {isHttpUrl(SUPPORT_URL) ? (
             <ContactRow
@@ -144,6 +161,24 @@ export default function AboutScreen() {
               theme={theme}
             />
           ) : null}
+          {isHttpUrl(PRIVACY_POLICY_URL) ? (
+            <ContactRow
+              icon="shield-outline"
+              label="Privacy policy"
+              value="How your data is handled"
+              onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
+              theme={theme}
+            />
+          ) : null}
+          {isHttpUrl(TERMS_URL) ? (
+            <ContactRow
+              icon="document-text-outline"
+              label="Terms of use"
+              value="Rules for using IITJ One"
+              onPress={() => Linking.openURL(TERMS_URL)}
+              theme={theme}
+            />
+          ) : null}
         </View>
       ) : null}
 
@@ -155,7 +190,7 @@ export default function AboutScreen() {
 
       <View style={styles.contactSection}>
         <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
-          Quick Contact
+          IIT Jodhpur contacts
         </Text>
         <ContactRow
           icon="call-outline"

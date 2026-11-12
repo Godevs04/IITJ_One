@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { ScreenShell } from '@/components/ScreenShell';
 import { EmptyState } from '@/components/EmptyState';
 import { useThemeColors } from '@/theme/ThemeProvider';
@@ -22,7 +22,7 @@ function ServiceInfoCard({
     <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <View style={styles.cardHeader}>
         <View style={[styles.headerIcon, { backgroundColor: theme.primaryTint }]}>
-          <Ionicons name="car-outline" size={24} color={theme.linkText} />
+          <Icon name="car-outline" size={24} color={theme.linkText} />
         </View>
         <View style={styles.headerText}>
           <Text style={[styles.cardTitle, { color: theme.text }]}>
@@ -44,7 +44,7 @@ function ServiceInfoCard({
             key={vehicle.type}
             style={[styles.vehicleItem, { backgroundColor: theme.surfaceMuted, borderColor: theme.border }]}
           >
-            <Ionicons name="battery-charging-outline" size={18} color={theme.linkText} />
+            <Icon name="battery-charging-outline" size={18} color={theme.linkText} />
             <Text style={[styles.vehicleText, { color: theme.text }]}>
               {vehicle.count}× {vehicle.type}
             </Text>
@@ -77,7 +77,7 @@ function DriverCard({
     >
       <View style={styles.driverInfo}>
         <View style={[styles.driverAvatar, { backgroundColor: theme.primaryTint }]}>
-          <Ionicons name="person-circle-outline" size={28} color={theme.linkText} />
+          <Icon name="person-circle-outline" size={28} color={theme.linkText} />
         </View>
         <View style={styles.driverDetails}>
           <View style={styles.driverNameRow}>
@@ -86,7 +86,7 @@ function DriverCard({
             </Text>
             {driver.isVerified ? (
               <View style={[styles.verifiedBadge, { backgroundColor: theme.primaryTint }]}>
-                <Ionicons name="checkmark-circle" size={14} color={theme.veg} />
+                <Icon name="checkmark-circle" size={14} color={theme.veg} />
                 <Text style={[styles.verifiedText, { color: theme.veg }]}>
                   Verified
                 </Text>
@@ -94,7 +94,7 @@ function DriverCard({
             ) : null}
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Ionicons name="call-outline" size={13} color={theme.textMuted} />
+            <Icon name="call-outline" size={13} color={theme.textMuted} />
             <Text style={[styles.driverPhone, { color: theme.textMuted }]}>
               {driver.phone}
             </Text>
@@ -102,7 +102,7 @@ function DriverCard({
         </View>
       </View>
       <View style={[styles.callButton, { backgroundColor: theme.primaryTint }]}>
-        <Ionicons name="call-outline" size={18} color={theme.linkText} />
+        <Icon name="call-outline" size={18} color={theme.linkText} />
       </View>
     </Pressable>
   );
@@ -210,7 +210,7 @@ export default function ERickshawScreen() {
 
       <View style={[styles.ctaSection, { backgroundColor: theme.primaryTint, borderColor: theme.border }]}>
         <View style={styles.ctaIcon}>
-          <Ionicons name="bulb-outline" size={24} color={theme.linkText} />
+          <Icon name="bulb-outline" size={24} color={theme.linkText} />
         </View>
         <View style={styles.ctaContent}>
           <Text style={[styles.ctaTitle, { color: theme.text }]}>

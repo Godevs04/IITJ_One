@@ -6,7 +6,7 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
@@ -136,12 +136,14 @@ export function ImageCropEditor({ imageUri, onCancel, onSave }: ImageCropEditorP
       const frameLeftFromImageCenter = baseWidth * scale.value / 2 - frameSize / 2 - translateX.value;
       const frameTopFromImageCenter = baseHeight * scale.value / 2 - frameSize / 2 - translateY.value;
 
-      const originX = Math.max(0, frameLeftFromImageCenter / effectiveScale);
-      const originY = Math.max(0, frameTopFromImageCenter / effectiveScale);
-      const cropSize = frameSize / effectiveScale;
+      // Whole pixels, kept inside the image: fractional or out-of-bounds crop rects can come back
+      // empty/black on some devices.
+      const originX = Math.min(naturalSize.width - 1, Math.max(0, Math.round(frameLeftFromImageCenter / effectiveScale)));
+      const originY = Math.min(naturalSize.height - 1, Math.max(0, Math.round(frameTopFromImageCenter / effectiveScale)));
+      const cropSize = Math.round(frameSize / effectiveScale);
 
-      const width = Math.min(cropSize, naturalSize.width - originX);
-      const height = Math.min(cropSize, naturalSize.height - originY);
+      const width = Math.max(1, Math.min(cropSize, naturalSize.width - originX));
+      const height = Math.max(1, Math.min(cropSize, naturalSize.height - originY));
 
       const result = await ImageManipulator.manipulateAsync(
         workingUri,
@@ -219,7 +221,7 @@ export function ImageCropEditor({ imageUri, onCancel, onSave }: ImageCropEditorP
           onPress={() => void rotate()}
           disabled={busy}
         >
-          <Ionicons name="refresh-outline" size={20} color={theme.text} />
+          <Icon name="refresh-outline" size={20} color={theme.text} />
           <Text style={[styles.toolLabel, { color: theme.text }]}>Rotate</Text>
         </Pressable>
         <Pressable
@@ -227,7 +229,7 @@ export function ImageCropEditor({ imageUri, onCancel, onSave }: ImageCropEditorP
           onPress={resetPanZoom}
           disabled={busy}
         >
-          <Ionicons name="scan-outline" size={20} color={theme.text} />
+          <Icon name="scan-outline" size={20} color={theme.text} />
           <Text style={[styles.toolLabel, { color: theme.text }]}>Reset Crop</Text>
         </Pressable>
       </View>

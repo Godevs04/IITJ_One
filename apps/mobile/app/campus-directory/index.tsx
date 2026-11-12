@@ -1,7 +1,7 @@
 import { router, type Href } from 'expo-router';
 import { type ComponentProps } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { QuickAccessTile } from '@/components/QuickAccessTile';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useThemeColors } from '@/theme/ThemeProvider';
@@ -10,7 +10,7 @@ import { debugListKeys } from '@/debug/listDebug';
 
 interface DirectoryCard {
   title: string;
-  icon: ComponentProps<typeof Ionicons>['name'];
+  icon: ComponentProps<typeof Icon>['name'];
   route: Href;
 }
 
@@ -41,7 +41,7 @@ export default function CampusDirectoryScreen() {
         accessibilityRole="button"
         accessibilityLabel="Search Campus Directory"
       >
-        <Ionicons name="search-outline" size={18} color={theme.textMuted} />
+        <Icon name="search-outline" size={18} color={theme.textMuted} />
         <Text style={[styles.searchText, { color: theme.textMuted }]}>
           Search people, departments, organizations…
         </Text>

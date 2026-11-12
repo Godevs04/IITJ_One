@@ -10,9 +10,13 @@ import type {
   TemporaryTransportSchedule,
   ActiveScheduleExceptionResponse,
 } from '@/types/campus';
-import { nowMinutes, parseTimeToMinutes, todayDayName } from '@/utils/date';
+import { isWeekendDay, resolveExceptionTrips } from '@iitj1/types';
+import { nowMinutes, parseTimeToMinutes } from '@/utils/date';
 import type { TripStatus, TripWithStatus } from '../models/BusTypes';
 import { parseRouteStops } from '../utils/coordinates';
+import { tripEndMinutes } from '../nextBus';
+
+const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
 export function isAlertActive(alert: TransportAlert, now: Date = new Date()): boolean {
   if (!alert.isActive) return false;
@@ -56,29 +60,40 @@ function mapTemporaryTrip(temp: TemporaryTransportSchedule): TransportTrip {
   };
 }
 
-function isHolidayToday(holidays?: HolidaysDoc | null): boolean {
+function isHolidayOn(holidays: HolidaysDoc | null | undefined, d: Date): boolean {
   if (!holidays?.holidays) return false;
-  const d = new Date();
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
-  const today = `${year}-${month}-${day}`;
-  return holidays.holidays.some((h: Holiday) => h.isActive && h.date === today);
+  const date = `${year}-${month}-${day}`;
+  return holidays.holidays.some((h: Holiday) => h.isActive && h.date === date);
+}
+
+/**
+ * Which timetable runs on `date` (default today): Saturdays, Sundays and configured holidays use the
+ * Sat, Sun & Holidays one ('sun-holiday'); 'mon-sat' is the historical key for the Mon–Fri timetable.
+ */
+export function getScheduleKeyForDate(
+  date: Date,
+  holidays?: HolidaysDoc | null,
+): 'mon-sat' | 'sun-holiday' {
+  if (isWeekendDay(date.getDay()) || isHolidayOn(holidays, date)) return 'sun-holiday';
+  return 'mon-sat';
 }
 
 export function getScheduleKey(
   calendar: CalendarDoc | null,
   holidays?: HolidaysDoc | null
 ): 'mon-sat' | 'sun-holiday' {
-  const day = new Date().getDay();
-  if (day === 0 || isHolidayToday(holidays)) return 'sun-holiday';
-  return 'mon-sat';
+  return getScheduleKeyForDate(new Date(), holidays);
 }
 
 export function getTripsForDayType(
   transport: TransportDoc,
   calendar: CalendarDoc | null,
-  dayType: 'mon-sat' | 'sun-holiday'
+  dayType: 'mon-sat' | 'sun-holiday',
+  /** The day being looked up (default today) — decides whether the Thursday override applies. */
+  date: Date = new Date(),
 ): TransportTrip[] {
   const groups = transport.routes.filter((r) => r.weekday === dayType);
   // Stamp each trip with its group's direction — this is authoritative and
@@ -88,16 +103,16 @@ export function getTripsForDayType(
     g.trips.map((t) => ({ ...t, direction: g.direction })),
   );
 
-  const day = todayDayName();
+  const day = DAY_NAMES[date.getDay()];
   if (dayType === 'mon-sat' && day === 'thursday') {
-    const override = transport.scheduleOverrides.find(
-      (o) => o.dayOfWeek.toLowerCase() === 'thursday',
-    );
+    const serviceDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const override = transport.scheduleOverrides
+      .filter((o) => o.dayOfWeek.trim().toLowerCase() === 'thursday' && o.effectiveFrom.slice(0, 10) <= serviceDate)
+      .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0];
     if (override?.trips.length) {
       trips = trips.filter(
         (t) =>
-          !(t.bus === 'B2' && t.startTime === '9:15 AM') &&
-          !(t.bus === 'B2' && t.startTime === '1:30 PM')
+          !(t.bus.trim().toUpperCase() === 'B2' && [9 * 60 + 15, 13 * 60 + 30].includes(parseTimeToMinutes(t.startTime)))
       );
       trips = [...trips, ...override.trips];
     }
@@ -116,8 +131,13 @@ export function getTripsForToday(
   activeException?: ActiveScheduleExceptionResponse | null,
 ): TransportTrip[] {
   if (isExceptionActive(activeException)) {
-    const trips = activeException!.schedule!.trips;
-    return [...trips].sort((a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime));
+    // Replace mode: the exception's trips (marked 'modified'). Cancel mode: today's regular timetable with
+    // only the listed trips marked 'cancelled' — every other trip runs as normal.
+    const schedule = activeException!.schedule!;
+    const regular = schedule.mode === 'cancel' && transport ? getTripsForDayType(transport, calendar, getScheduleKey(calendar, holidays)) : [];
+    return (resolveExceptionTrips(schedule, regular) as TransportTrip[]).sort(
+      (a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime),
+    );
   }
   if (isScheduleOverridden(alerts)) {
     if (!tempSchedule?.schedules) return [];
@@ -139,10 +159,15 @@ export function evaluateTripStatus(trip: TransportTrip): {
 } {
   const now = nowMinutes();
   const start = parseTimeToMinutes(trip.startTime);
-  const end = parseTimeToMinutes(trip.endTime);
+  const end = tripEndMinutes(start, parseTimeToMinutes(trip.endTime));
 
   const diffStart = start - now;
   const diffEnd = end - now;
+
+  if (trip.serviceStatus === 'cancelled') {
+    // Still listed (so riders know) until its slot has passed, but never counted down to.
+    return { status: diffEnd <= 0 ? 'completed' : 'upcoming', secondsUntilStart: 0, secondsUntilEnd: 0, statusText: 'Cancelled' };
+  }
 
   const secondsUntilStart = Math.max(0, diffStart * 60);
   const secondsUntilEnd = Math.max(0, diffEnd * 60);
@@ -194,7 +219,7 @@ export function getTripsWithStatus(
   tempSchedule?: TemporaryTransportScheduleDoc | null,
   activeException?: ActiveScheduleExceptionResponse | null,
 ): TripWithStatus[] {
-  if (!transport && !isExceptionActive(activeException)) return [];
+  if (!transport && !isExceptionActive(activeException) && !isScheduleOverridden(alerts)) return [];
 
   const trips = getTripsForToday(transport, calendar, holidays, alerts, tempSchedule, activeException);
   return trips.map((trip) => {
@@ -216,6 +241,7 @@ export function getNextAndPrevBuses(tripsWithStatus: TripWithStatus[]): {
   let prev: TripWithStatus | null = null;
 
   for (const t of tripsWithStatus) {
+    if (t.trip.serviceStatus === 'cancelled') continue;
     if (t.status === 'upcoming' || t.status === 'boarding') {
       if (!next || t.secondsUntilStart < next.secondsUntilStart) {
         next = t;

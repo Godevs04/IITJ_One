@@ -6,6 +6,20 @@ export const metadata: Metadata = {
   title: 'Terms of Use',
   alternates: { canonical: '/terms' },
   description: 'Terms for using IITJ One — a free, student-built campus companion app for IIT Jodhpur.',
+  openGraph: {
+    title: 'Terms of Use | IITJ One',
+    description: 'Terms for using the student-built IITJ One campus companion app.',
+    url: '/terms',
+    type: 'website',
+    siteName: 'IITJ One',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'IITJ One' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Terms of Use | IITJ One',
+    description: 'Terms for using the student-built IITJ One campus companion app.',
+    images: ['/twitter-image'],
+  },
 };
 
 export default function TermsPage() {
@@ -115,11 +129,11 @@ export default function TermsPage() {
           <h2 className="text-lg font-semibold text-ink">Contact</h2>
           <p className="mt-2 text-muted">
             If you have any questions about these Terms of Use, please contact us through the{' '}
-            <a href="/support" className="text-indigo hover:underline">
+            <a href="/support" className="text-accent hover:underline">
               Support
             </a>{' '}
             page or at{' '}
-            <a href={`mailto:${SUPPORT_EMAIL}`} className="text-indigo hover:underline">
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="text-accent hover:underline">
               {SUPPORT_EMAIL}
             </a>
             .

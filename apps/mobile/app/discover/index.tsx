@@ -9,10 +9,11 @@ import {
   TextInput,
   View,
   type ListRenderItemInfo,
-  type ViewToken,
 } from 'react-native';
+
+type ViewToken = { item: any; key?: string; index?: number | null; isViewable?: boolean };
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { EmptyState } from '@/components/EmptyState';
 import { DiscoverCampaignCard } from '@/components/DiscoverCampaignCard';
 import { DiscoverCardSkeleton } from '@/components/Skeleton';
@@ -110,13 +111,13 @@ export default function DiscoverScreen() {
 
       {syncError ? (
         <View style={[styles.errorBanner, { backgroundColor: theme.errorTint, borderColor: theme.error }]}>
-          <Ionicons name="alert-circle-outline" size={16} color={theme.error} />
+          <Icon name="alert-circle-outline" size={16} color={theme.error} />
           <Text style={[styles.errorText, { color: theme.error }]}>Sync issue: {syncError}</Text>
         </View>
       ) : null}
 
       <View style={[styles.searchRow, { borderColor: theme.border, backgroundColor: theme.surface }]}>
-        <Ionicons name="search-outline" size={18} color={theme.textMuted} />
+        <Icon name="search-outline" size={18} color={theme.textMuted} />
         <TextInput
           value={query}
           onChangeText={setQuery}
@@ -200,7 +201,7 @@ export default function DiscoverScreen() {
         ListHeaderComponent={header}
         ItemSeparatorComponent={() => <View style={styles.itemGap} />}
         ListEmptyComponent={
-          loading ? null : campaigns === null ? (
+          loading ? undefined : campaigns === null ? (
             <EmptyState
               icon="cloud-offline-outline"
               title="Couldn't load Discover"
@@ -221,7 +222,7 @@ export default function DiscoverScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl refreshing={syncing} onRefresh={sync} tintColor={theme.linkText} />}
+        refreshControl={<RefreshControl refreshing={syncing} onRefresh={() => { void sync(); }} tintColor={theme.linkText} />}
         viewabilityConfig={VIEWABILITY_CONFIG}
         onViewableItemsChanged={onViewableItemsChanged}
         removeClippedSubviews

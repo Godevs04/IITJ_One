@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google';
+import { IBM_Plex_Mono } from 'next/font/google';
 import { ThemeProvider, THEME_INIT_SCRIPT } from '@/components/theme/ThemeProvider';
 import { MotionProvider } from '@/components/motion/MotionProvider';
 import { SmoothScroll } from '@/components/motion/SmoothScroll';
@@ -11,13 +11,6 @@ import { SITE_URL, PLAY_STORE_URL, APP_STORE_URL } from '@/lib/constants';
 import { SiteJsonLd } from '@/components/seo/JsonLd';
 import './globals.css';
 
-const plexSans = IBM_Plex_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-ibm-plex-sans',
-  display: 'swap',
-});
-
 const plexMono = IBM_Plex_Mono({
   subsets: ['latin'],
   weight: ['500'],
@@ -25,9 +18,9 @@ const plexMono = IBM_Plex_Mono({
   display: 'swap',
 });
 
-const DEFAULT_TITLE = 'IITJ One — IIT Jodhpur Campus App: Mess Menu, Bus Timings & More';
+const DEFAULT_TITLE = 'IITJ One | IIT Jodhpur Mess Menu, Bus Timings & Campus Guide';
 const DEFAULT_DESCRIPTION =
-  'IITJ One is the free campus app for IIT Jodhpur (IITJ) students — today’s mess menu, IITJ bus timings, academic calendar, laundry, Wi-Fi setup, and Health Center contacts. Offline-first, no login.';
+  'Explore IIT Jodhpur (IITJ) mess menus, bus timings, departments, campus contacts and student services. Get IITJ One, the free campus companion app.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -41,7 +34,7 @@ export const metadata: Metadata = {
   creator: 'IITJ One',
   publisher: 'IITJ One',
   formatDetection: { telephone: false },
-  alternates: { canonical: '/' },
+  alternates: { canonical: `${SITE_URL}/` },
   robots: {
     index: true,
     follow: true,
@@ -64,6 +57,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_IN',
     siteName: 'IITJ One',
+    url: `${SITE_URL}/`,
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
   },
@@ -102,13 +96,15 @@ export const metadata: Metadata = {
     'IITJ wifi',
     'IIT Jodhpur health center',
     'IIT Jodhpur campus map',
+    'IIT Jodhpur departments',
+    'IITJ campus guide',
   ],
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#1d3f5e' },
-    { media: '(prefers-color-scheme: dark)', color: '#0f1b2b' },
+    { media: '(prefers-color-scheme: light)', color: '#f5f7fb' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0f18' },
   ],
   width: 'device-width',
   initialScale: 1,
@@ -124,7 +120,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <SiteJsonLd />
       </head>
-      <body className={`${plexSans.variable} ${plexMono.variable} min-h-dvh font-sans antialiased`} suppressHydrationWarning>
+      <body className={`${plexMono.variable} min-h-dvh font-sans antialiased`} suppressHydrationWarning>
         <ThemeProvider>
           <MotionProvider>
             <SearchPaletteProvider>

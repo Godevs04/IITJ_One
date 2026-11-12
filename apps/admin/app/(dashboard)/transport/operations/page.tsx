@@ -133,7 +133,7 @@ export default function TransportOperationsPage() {
             type="button"
             onClick={() => setTab(t.key)}
             className={`rounded-xl px-3 py-2 text-sm font-medium transition ${
-              tab === t.key ? 'bg-indigo text-sand' : 'text-muted hover:bg-indigo-tint/60 hover:text-ink'
+              tab === t.key ? 'bg-primary text-on-primary' : 'text-muted hover:bg-indigo-tint/60 hover:text-ink'
             }`}
           >
             {t.label}

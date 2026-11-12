@@ -1,22 +1,22 @@
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import type { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
+import { MaterialIcons } from '@expo/vector-icons';
+import type { MaterialTopTabBarProps } from 'expo-router/js-top-tabs';
 import { useSegments } from 'expo-router';
 import { useThemeColors } from '@/theme/ThemeProvider';
-import { AppRadius, AppSpacing } from '@/theme/tokens';
+import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { debugListKeys } from '@/debug/listDebug';
 
-type IconName = keyof typeof Ionicons.glyphMap;
+type IconName = keyof typeof MaterialIcons.glyphMap;
 
-/** Icon per route name — keep in sync with the `(tabs)` screen files. */
+/** Google Material icon per route name — keep in sync with the `(tabs)` screen files. */
 const TAB_ICONS: Record<string, { inactive: IconName; active: IconName }> = {
-  index: { inactive: 'home-outline', active: 'home' },
-  menu: { inactive: 'restaurant-outline', active: 'restaurant' },
-  notices: { inactive: 'megaphone-outline', active: 'megaphone' },
-  transport: { inactive: 'bus-outline', active: 'bus' },
-  more: { inactive: 'grid-outline', active: 'grid' },
+  index: { inactive: 'home', active: 'home' },
+  menu: { inactive: 'restaurant', active: 'restaurant' },
+  notices: { inactive: 'campaign', active: 'campaign' },
+  transport: { inactive: 'directions-bus', active: 'directions-bus' },
+  more: { inactive: 'apps', active: 'apps' },
 };
 
 /** Resolve active tab from expo-router segments (reliable with custom tab bar). */
@@ -25,7 +25,8 @@ function activeRouteFromSegments(segments: string[]): string | null {
   return (segments[1] as string | undefined) ?? 'index';
 }
 
-export function BottomTabBar({ state, descriptors, navigation }: MaterialTopTabBarProps) {
+export function BottomTabBar(props: MaterialTopTabBarProps & { navigation?: any }) {
+  const { state, descriptors, navigation, emitter, navigateToTab } = props as any;
   const theme = useThemeColors();
   const insets = useSafeAreaInsets();
   const segments = useSegments();
@@ -36,7 +37,7 @@ export function BottomTabBar({ state, descriptors, navigation }: MaterialTopTabB
     return state.routes[state.index]?.name ?? 'index';
   }, [segments, state.index, state.routes]);
 
-  debugListKeys('BottomTabBar', 'routes', state.routes, (route) => route.key);
+  debugListKeys('BottomTabBar', 'routes', state.routes, (route: any) => route.key);
 
   return (
     <View
@@ -49,27 +50,30 @@ export function BottomTabBar({ state, descriptors, navigation }: MaterialTopTabB
         },
       ]}
     >
-      {state.routes.map((route, index) => {
+      {state.routes.map((route: any, index: number) => {
         const { options } = descriptors[route.key];
         const label =
           typeof options.title === 'string' ? options.title : route.name;
-        const isFocused =
-          route.name === activeRouteName || state.routes[state.index]?.key === route.key;
+        const isFocused = route.name === activeRouteName;
         const icons = TAB_ICONS[route.name] ?? {
-          inactive: 'ellipse-outline' as IconName,
-          active: 'ellipse' as IconName,
+          inactive: 'circle' as IconName,
+          active: 'circle' as IconName,
         };
         const iconName = isFocused ? icons.active : icons.inactive;
         const color = isFocused ? theme.tabActive : theme.tabInactive;
 
         const onPress = () => {
-          const event = navigation.emit({
+          const event = (emitter ?? navigation)?.emit({
             type: 'tabPress',
             target: route.key,
             canPreventDefault: true,
           });
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
+          if (!isFocused && !event?.defaultPrevented) {
+            if (navigateToTab) {
+              navigateToTab(route.key);
+            } else {
+              navigation?.navigate(route.name);
+            }
           }
         };
 
@@ -86,11 +90,11 @@ export function BottomTabBar({ state, descriptors, navigation }: MaterialTopTabB
               style={[
                 styles.iconWrap,
                 isFocused && {
-                  backgroundColor: theme.primaryTint,
+                  backgroundColor: theme.tabActiveBackground,
                 },
               ]}
             >
-              <Ionicons name={iconName} size={22} color={color} />
+              <MaterialIcons name={iconName} size={24} color={color} />
             </View>
             <Text
               style={[
@@ -101,11 +105,6 @@ export function BottomTabBar({ state, descriptors, navigation }: MaterialTopTabB
             >
               {label}
             </Text>
-            {isFocused ? (
-              <View style={[styles.activeDot, { backgroundColor: theme.accent }]} />
-            ) : (
-              <View style={styles.activeDotPlaceholder} />
-            )}
           </Pressable>
         );
       })}
@@ -125,30 +124,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 2,
     paddingVertical: 4,
+    minHeight: 56,
   },
   iconWrap: {
-    width: 40,
+    width: 56,
     height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: AppRadius.md,
+    borderRadius: AppRadius.full,
   },
   label: {
+    ...AppTypography.small,
     fontSize: 11,
     fontWeight: '500',
   },
   labelActive: {
     fontWeight: '700',
-  },
-  activeDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    marginTop: 1,
-  },
-  activeDotPlaceholder: {
-    width: 4,
-    height: 4,
-    marginTop: 1,
   },
 });

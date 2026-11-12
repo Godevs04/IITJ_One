@@ -35,6 +35,9 @@ import campusDirectoryOrganizationsRouter from './campusDirectoryOrganizations';
 import campusDirectoryPeopleRouter from './campusDirectoryPeople';
 import campusDirectoryRolesRouter from './campusDirectoryRoles';
 import campaignsRouter from './campaigns';
+import messPricingRouter from './messPricing';
+import messUpdatesRouter from './messUpdates';
+import aiRouter from './ai';
 
 const router = Router();
 
@@ -94,5 +97,10 @@ router.use('/campusDirectory/organizations', campusDirectoryOrganizationsRouter)
 router.use('/campusDirectory/people', campusDirectoryPeopleRouter);
 router.use('/campusDirectory/roles', campusDirectoryRolesRouter);
 router.use('/campaigns', campaignsRouter);
+router.use('/messPricing', messPricingRouter);
+router.use('/messUpdates', messUpdatesRouter);
+router.use('/mess/updates', messUpdatesRouter);
+router.use('/ai', aiRouter);
 
 export default router;
+

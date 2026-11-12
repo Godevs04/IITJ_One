@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, TextInput, type TextInputInstance, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { goBack } from '@/navigation/goBack';
+import { Icon } from '@/components/Icon';
 import { EmptyState } from '@/components/EmptyState';
 import { GlobalSearchResultCard } from '@/components/GlobalSearchResultCard';
 import { debugKeyExtractor, debugListKeys } from '@/debug/listDebug';
@@ -16,7 +17,7 @@ export default function GlobalSearchScreen() {
   const theme = useThemeColors();
   const [query, setQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
 
   useEffect(() => {
     void globalRecentSearchesStore.get().then(setRecentSearches);
@@ -64,10 +65,10 @@ export default function GlobalSearchScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={[styles.searchRow, { borderColor: theme.border, backgroundColor: theme.surface }]}>
-        <Pressable onPress={() => router.back()} hitSlop={10} accessibilityRole="button" accessibilityLabel="Back">
-          <Ionicons name="arrow-back" size={22} color={theme.text} />
+        <Pressable onPress={goBack} hitSlop={12} style={styles.iconButton} accessibilityRole="button" accessibilityLabel="Back">
+          <Icon name="arrow-back" size={22} color={theme.text} />
         </Pressable>
-        <Ionicons name="search-outline" size={18} color={theme.textMuted} />
+        <Icon name="search-outline" size={18} color={theme.textMuted} />
         <TextInput
           ref={inputRef}
           value={query}
@@ -82,7 +83,7 @@ export default function GlobalSearchScreen() {
         />
         {query.length > 0 ? (
           <Pressable onPress={() => setQuery('')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Clear search">
-            <Ionicons name="close-circle" size={20} color={theme.textMuted} />
+            <Icon name="close-circle" size={20} color={theme.textMuted} />
           </Pressable>
         ) : null}
       </View>
@@ -113,7 +114,7 @@ export default function GlobalSearchScreen() {
                     onPress={() => setQuery(q)}
                     style={[styles.recentRow, { borderColor: theme.border, backgroundColor: theme.surface }]}
                   >
-                    <Ionicons name="time-outline" size={16} color={theme.textMuted} />
+                    <Icon name="time-outline" size={16} color={theme.textMuted} />
                     <Text style={[styles.recentText, { color: theme.text }]} numberOfLines={1}>
                       {q}
                     </Text>
@@ -123,7 +124,7 @@ export default function GlobalSearchScreen() {
                       accessibilityRole="button"
                       accessibilityLabel={`Remove "${q}" from recent searches`}
                     >
-                      <Ionicons name="close-outline" size={16} color={theme.textMuted} />
+                      <Icon name="close-outline" size={16} color={theme.textMuted} />
                     </Pressable>
                   </Pressable>
                 ))}
@@ -161,8 +162,19 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    ...AppTypography.body,
+    // No lineHeight here: on iOS a TextInput lineHeight pushes the text and
+    // placeholder off vertical centre inside the fixed-height bar.
+    fontSize: AppTypography.body.fontSize,
+    height: '100%',
     paddingVertical: 0,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+  },
+  iconButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   listContent: {
     padding: AppSpacing.lg,

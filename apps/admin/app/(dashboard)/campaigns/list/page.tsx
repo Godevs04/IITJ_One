@@ -375,7 +375,7 @@ function CampaignsListInner() {
             type="button"
             onClick={() => setTab(t.key)}
             className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-              tab === t.key ? 'bg-indigo text-sand' : 'bg-white text-muted border border-border hover:bg-indigo-tint/60'
+              tab === t.key ? 'bg-primary text-on-primary' : 'bg-white text-muted border border-border hover:bg-indigo-tint/60'
             }`}
           >
             {t.label}

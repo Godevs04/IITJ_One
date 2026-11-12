@@ -8,7 +8,10 @@ const ENTRIES: SearchEntry[] = [
   { id: 'svc-cabs', title: 'Cabs & Autos', subtitle: 'Book a cab or auto', module: 'Institute Services', icon: 'car-outline', route: '/cabs-autos' },
   { id: 'svc-health-center', title: 'Health Center', subtitle: 'Doctors, hospitals & health contacts', module: 'Institute Services', icon: 'medical-outline', route: '/health-center' },
   { id: 'svc-services', title: 'Campus Services', subtitle: 'Student services directory', module: 'Institute Services', icon: 'construct-outline', keywords: ['student services'], route: '/services' },
+  { id: 'svc-id-card', title: 'ID Card & No Dues Clearance', subtitle: 'Contact the ID Card Cell', module: 'Institute Services', icon: 'card-outline', keywords: ['lost id', 'replacement', 'renewal', 'idcard'], route: { pathname: '/services', params: { query: 'ID Card & No Dues Clearance' } } },
+  { id: 'svc-lost-found', title: 'Lost & Found and CCTV Requests', subtitle: 'Report a lost or found item or request CCTV viewing', module: 'Institute Services', icon: 'search-outline', keywords: ['lost and found', 'lost item', 'cctv footage'], route: { pathname: '/services', params: { query: 'Lost & Found and CCTV Requests' } } },
   { id: 'svc-qr', title: 'Mess QR', subtitle: 'Your Mess QR pass', module: 'Institute Services', icon: 'qr-code-outline', keywords: ['qr'], route: '/mess-qr' },
+  { id: 'svc-veg-mess-entry', title: 'Veg Mess entry via FretBox', subtitle: 'Sign in and scan the dining hall QR', module: 'Institute Services', icon: 'qr-code-outline', keywords: ['saroja', 'meal token', 'veg mess qr'], route: '/veg-mess-entry' },
   { id: 'svc-portals', title: 'Essential Portals', subtitle: 'Institute web portals', module: 'Institute Services', icon: 'link-outline', route: '/portals' },
   { id: 'svc-calendar', title: 'Academic Calendar', subtitle: 'Semester calendar & holidays', module: 'Institute Services', icon: 'calendar-outline', route: '/calendar' },
 ];

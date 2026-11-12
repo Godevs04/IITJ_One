@@ -298,7 +298,7 @@ export default function MessMenuAdminPage() {
             onClick={() => setActiveTab(tab)}
             className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
               activeTab === tab
-                ? 'border-indigo bg-indigo text-sand'
+                ? 'border-primary bg-primary text-on-primary'
                 : 'border-border bg-white text-ink hover:border-indigo/40'
             }`}
           >

@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import type { ComponentProps } from 'react';
 import type { CampusLocation } from '../types';
 import { LOCATION_CATEGORIES } from '../types';
@@ -8,7 +8,7 @@ import { highlightText } from '../utils/highlightText';
 import type { ThemeColors } from '@/theme/tokens';
 import { debugListKeys } from '@/debug/listDebug';
 
-type IoniconName = ComponentProps<typeof Ionicons>['name'];
+type IoniconName = ComponentProps<typeof Icon>['name'];
 
 interface SearchResultCardProps {
   location: CampusLocation;
@@ -52,7 +52,7 @@ export function SearchResultCard({
     <View style={[styles.container, { borderColor: theme.border }]}>
       <View style={styles.header}>
         <View style={[styles.categoryIcon, { backgroundColor: theme.primaryTint }]}>
-          <Ionicons name={categoryInfo.icon} size={18} color={theme.linkText} />
+          <Icon name={categoryInfo.icon} size={18} color={theme.linkText} />
         </View>
 
         <View style={styles.content}>
@@ -84,7 +84,7 @@ export function SearchResultCard({
         </View>
 
         <View style={[styles.badge, { backgroundColor: theme.primaryTint }]}>
-          <Ionicons name={MATCH_TYPE_ICONS[matchType]} size={12} color={theme.linkText} />
+          <Icon name={MATCH_TYPE_ICONS[matchType]} size={12} color={theme.linkText} />
           <Text style={[styles.badgeText, { color: theme.linkText }]}>
             {MATCH_TYPE_LABELS[matchType]}
           </Text>
@@ -93,7 +93,7 @@ export function SearchResultCard({
 
       {location.address && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-          <Ionicons name="location-outline" size={14} color={theme.textMuted} />
+          <Icon name="location-outline" size={14} color={theme.textMuted} />
           <Text style={[styles.address, { color: theme.textMuted, flex: 1 }]} numberOfLines={1}>
             {location.address}
           </Text>
@@ -102,7 +102,7 @@ export function SearchResultCard({
 
       {location.plusCode && (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Ionicons name="locate-outline" size={14} color={theme.textMuted} />
+          <Icon name="locate-outline" size={14} color={theme.textMuted} />
           <Text style={[styles.plusCode, { color: theme.textMuted, flex: 1 }]} numberOfLines={1}>
             {location.plusCode}
           </Text>

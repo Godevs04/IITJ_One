@@ -11,6 +11,20 @@ export const metadata: Metadata = {
   title: 'Support',
   alternates: { canonical: '/support' },
   description: 'Get help with IITJ One — contact us, browse the FAQ, report a bug, or suggest a feature.',
+  openGraph: {
+    title: 'Support | IITJ One',
+    description: 'Get help with IITJ One, report a bug, or suggest a campus app feature.',
+    url: '/support',
+    type: 'website',
+    siteName: 'IITJ One',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'IITJ One' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Support | IITJ One',
+    description: 'Get help with IITJ One, report a bug, or suggest a campus app feature.',
+    images: ['/twitter-image'],
+  },
 };
 
 interface FaqCategory {
@@ -91,7 +105,7 @@ export default function SupportPage() {
           <h2 className="text-base font-semibold text-ink">Need Help or Reporting an Issue?</h2>
           <p className="text-sm leading-relaxed text-ink/80">
             If you&apos;re experiencing a problem with <strong>IITJ One</strong>, email us at{' '}
-            <a href={`mailto:${SUPPORT_EMAIL}`} className="font-semibold text-indigo hover:underline">
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="font-semibold text-accent hover:underline">
               {SUPPORT_EMAIL}
             </a>.
           </p>
@@ -162,7 +176,7 @@ export default function SupportPage() {
 
       <p className="mt-10 text-sm text-muted">
         Looking for something else? Check the{' '}
-        <Link href="/#faq" className="text-indigo hover:underline">
+        <Link href="/#faq" className="text-accent hover:underline">
           general FAQ
         </Link>{' '}
         on the homepage.

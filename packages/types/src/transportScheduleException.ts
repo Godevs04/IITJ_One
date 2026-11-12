@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { transportTripSchema } from './transport';
+import { cancelledTripRefSchema, scheduleExceptionModeSchema, transportTripSchema } from './transport';
 
 export const scheduleExceptionPrioritySchema = z.enum(['low', 'normal', 'high', 'critical']);
 
@@ -26,6 +26,9 @@ export const transportScheduleExceptionCreateSchema = z
     priority: scheduleExceptionPrioritySchema.default('normal'),
     affectedBuses: z.array(z.string().min(1)).default([]),
     trips: z.array(transportTripSchema).default([]),
+    /** 'replace' (default): `trips` is the whole schedule. 'cancel': regular timetable minus `cancelledTrips`. */
+    mode: scheduleExceptionModeSchema.default('replace'),
+    cancelledTrips: z.array(cancelledTripRefSchema).max(50).default([]),
     showBanner: z.boolean().default(true),
     sendPush: z.boolean().default(false),
     createNotice: z.boolean().default(false),
@@ -35,6 +38,10 @@ export const transportScheduleExceptionCreateSchema = z
   .refine((v) => new Date(v.effectiveUntil) > new Date(v.effectiveFrom), {
     message: 'effectiveUntil must be after effectiveFrom',
     path: ['effectiveUntil'],
+  })
+  .refine((v) => (v.mode === 'cancel' ? v.trips.length === 0 : v.cancelledTrips.length === 0), {
+    message: 'A cancellation lists cancelledTrips only; a replacement schedule lists trips only — not both',
+    path: ['mode'],
   });
 
 export const transportScheduleExceptionUpdateSchema = z.object({
@@ -47,6 +54,8 @@ export const transportScheduleExceptionUpdateSchema = z.object({
   priority: scheduleExceptionPrioritySchema.optional(),
   affectedBuses: z.array(z.string().min(1)).optional(),
   trips: z.array(transportTripSchema).optional(),
+  mode: scheduleExceptionModeSchema.optional(),
+  cancelledTrips: z.array(cancelledTripRefSchema).max(50).optional(),
   showBanner: z.boolean().optional(),
   sendPush: z.boolean().optional(),
   createNotice: z.boolean().optional(),

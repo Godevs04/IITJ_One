@@ -112,6 +112,7 @@ export interface TransportTrip {
   to: string;
   route: string;
   direction?: 'departure' | 'arrival';
+  note?: string;
 }
 
 export interface TransportDoc {
@@ -177,16 +178,8 @@ export interface ScheduleExceptionRevision {
   publishedBy: string;
 }
 
-export interface CalendarDoc {
-  campusId: string;
-  semester: string;
-  events: {
-    title: string;
-    type: string;
-    startDate: string;
-    endDate: string;
-  }[];
-}
+/** Normalized academic calendar incl. the admin-only review queue (packages/types/src/academicCalendar.ts). */
+export type CalendarDoc = import('@iitj1/types').AcademicCalendarDoc;
 
 export interface PortalsDoc {
   campusId: string;

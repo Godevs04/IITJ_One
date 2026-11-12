@@ -2,9 +2,15 @@ import { test } from 'node:test';
 import * as assert from 'node:assert';
 import { getScheduleKey, getTripsForDayType } from '../services/tripSchedule';
 import type { TransportDoc, HolidaysDoc } from '../types';
+import { transportTripSchema, cancelledTripRefSchema, tripTimeToMinutes, temporaryTransportScheduleSchema } from '@iitj1/types';
 
 test('getScheduleKey: Sunday is always sun-holiday, regardless of the holidays list', () => {
   const key = getScheduleKey(null, '2026-07-26', 'sunday');
+  assert.strictEqual(key, 'sun-holiday');
+});
+
+test('getScheduleKey: Saturday runs the weekend (sun-holiday) timetable', () => {
+  const key = getScheduleKey({ campusId: 'iitj', holidays: [] }, '2026-11-07', 'saturday');
   assert.strictEqual(key, 'sun-holiday');
 });
 
@@ -110,4 +116,26 @@ test('getTripsForDayType: returns an empty list when no route group matches the 
   const transport: TransportDoc = { ...baseTransport(), routes: [] };
   const trips = getTripsForDayType(transport, 'mon-sat', 'monday');
   assert.deepStrictEqual(trips, []);
+});
+
+test('Thursday overrides replace equivalent 24-hour times and respect their effective date', () => {
+  const transport = baseTransport();
+  transport.routes[0].trips[1].startTime = '09:15';
+  transport.routes[1].trips[0].startTime = '13:30';
+  assert.strictEqual(getTripsForDayType(transport, 'mon-sat', 'thursday', '2025-12-25').length, 3);
+  const trips = getTripsForDayType(transport, 'mon-sat', 'thursday', '2026-01-01');
+  assert.deepStrictEqual(trips.map((t) => t.startTime), ['8:00 AM', '9:00 AM']);
+});
+
+test('transport input rejects impossible times instead of persisting broken schedules', () => {
+  const trip = baseTransport().routes[0].trips[0];
+  for (const invalid of ['99:99', '24:00', '13:30 PM', '00:30 AM', '09:60', '9 AM', '']) {
+    assert.strictEqual(transportTripSchema.safeParse({ ...trip, startTime: invalid }).success, false, invalid);
+    assert.strictEqual(cancelledTripRefSchema.safeParse({ bus: 'B1', direction: 'departure', startTime: invalid }).success, false, invalid);
+    assert.ok(Number.isNaN(tripTimeToMinutes(invalid)), invalid);
+  }
+  for (const valid of ['00:00', '23:59', '12:00 AM', '12:00 PM', '9:30 am']) {
+    assert.strictEqual(transportTripSchema.safeParse({ ...trip, startTime: valid }).success, true, valid);
+  }
+  assert.strictEqual(temporaryTransportScheduleSchema.safeParse({ id: 'temp', busNumber: 'B1', departureTime: '25:00', from: 'IITJ', to: 'City', route: 'IITJ → City', displayOrder: 1, enabled: true }).success, false);
 });

@@ -4,6 +4,7 @@ import { campusQuerySchema } from '../../models/schemas';
 import { cached, cacheKey } from '../../cache';
 import { getCalendar } from '../../store';
 import { asyncHandler } from '../../middleware/asyncHandler';
+import { toPublicCalendarDoc } from '@iitj1/types';
 
 const router = Router();
 
@@ -17,7 +18,8 @@ router.get(
       res.status(404).json({ error: 'Calendar not found' });
       return;
     }
-    res.json(data);
+    // Unresolved source conflicts (reviewQueue) are admin-only and never reach students.
+    res.json(toPublicCalendarDoc(data));
   }),
 );
 

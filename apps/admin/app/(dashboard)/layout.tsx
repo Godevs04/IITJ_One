@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { isAuthenticated } from '@/lib/auth';
 import { Sidebar } from '@/components/Sidebar';
@@ -36,6 +36,8 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [ready, setReady] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -51,15 +53,33 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (!menuOpen) return undefined;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    drawerRef.current?.querySelector<HTMLElement>('button, a[href]')?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setMenuOpen(false);
+      if (e.key !== 'Tab') return;
+      const controls = Array.from(drawerRef.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex="0"]') ?? []);
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (e.shiftKey && (document.activeElement === first || !drawerRef.current?.contains(document.activeElement))) {
+        e.preventDefault();
+        last?.focus();
+      } else if (!e.shiftKey && (document.activeElement === last || !drawerRef.current?.contains(document.activeElement))) {
+        e.preventDefault();
+        first?.focus();
+      }
     };
+    const desktop = window.matchMedia('(min-width: 1024px)');
+    const closeOnDesktop = () => { if (desktop.matches) setMenuOpen(false); };
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', onKey);
+    desktop.addEventListener('change', closeOnDesktop);
     return () => {
       document.body.style.overflow = prev;
       window.removeEventListener('keydown', onKey);
+      desktop.removeEventListener('change', closeOnDesktop);
+      (previousFocus ?? menuButtonRef.current)?.focus();
     };
   }, [menuOpen]);
 
@@ -83,6 +103,7 @@ export default function DashboardLayout({
       <div
         className={`fixed inset-0 z-40 lg:hidden ${menuOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
         aria-hidden={!menuOpen}
+        inert={!menuOpen}
       >
         <button
           type="button"
@@ -94,22 +115,37 @@ export default function DashboardLayout({
           onClick={() => setMenuOpen(false)}
         />
         <div
+          id="admin-mobile-navigation"
+          ref={drawerRef}
+          role="dialog"
+          aria-modal={menuOpen ? true : undefined}
+          aria-label="Admin navigation"
           className={`relative z-10 h-full w-[min(18rem,88vw)] shadow-glow transition-transform duration-300 ease-out ${
             menuOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
+          <button
+            type="button"
+            onClick={() => setMenuOpen(false)}
+            className="absolute right-3 top-3 z-20 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 text-xl text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-highlight"
+            aria-label="Close navigation"
+          >
+            <span aria-hidden>×</span>
+          </button>
           <Sidebar onNavigate={() => setMenuOpen(false)} className="w-full max-w-none" />
         </div>
       </div>
 
-      <main className="scroll-thin min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
+      <main inert={menuOpen} className="scroll-thin min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
         <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border/70 bg-sand/85 px-3 py-2.5 backdrop-blur-xl safe-top sm:px-4 lg:hidden">
           <button
             type="button"
+            ref={menuButtonRef}
             onClick={() => setMenuOpen((v) => !v)}
             className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-surface shadow-card transition hover:shadow-soft"
             aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}
             aria-expanded={menuOpen}
+            aria-controls="admin-mobile-navigation"
           >
             <MenuIcon open={menuOpen} />
           </button>

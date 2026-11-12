@@ -24,7 +24,8 @@ export const hospitalSchema = z.object({
 export const visitingSpecialistSchema = z.object({
   specialty: z.string().min(1),
   doctorName: z.string().optional(),
-  qualification: z.string().optional(),
+  // Older MongoDB records can store a missing worksheet qualification as null.
+  qualification: z.string().nullish().transform((value) => value ?? undefined),
   room: z.string().optional(),
   timing: z.string().optional(),
 });

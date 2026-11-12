@@ -1,6 +1,7 @@
 import Constants from 'expo-constants';
-import type { SuggestionCategory } from '@iitj1/types';
+import type { SuggestionCategory, TemporaryMessUpdateDoc } from '@iitj1/types';
 import type { ActiveScheduleExceptionResponse } from '@/types/campus';
+
 
 const DEFAULT_API_URL = 'http://localhost:6002/api/v1';
 
@@ -125,3 +126,13 @@ export interface SubmitSuggestionPayload {
 export function submitSuggestion(payload: SubmitSuggestionPayload) {
   return apiPost<{ success: boolean; id?: string }>('/suggestions', payload);
 }
+
+export function getActiveMessUpdates(campusId = CAMPUS_ID, date?: string) {
+  return apiGet<{
+    campusId: string;
+    date: string;
+    hasUpdates: boolean;
+    updates: TemporaryMessUpdateDoc[];
+  }>('/messUpdates/active', { campus: campusId, ...(date ? { date } : {}) });
+}
+

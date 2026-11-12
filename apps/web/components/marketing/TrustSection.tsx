@@ -5,7 +5,7 @@ import { FEATURES } from '@/lib/constants';
 
 const stats = [
   { value: FEATURES.length, suffix: '', label: 'Campus essentials' },
-  { value: 100, suffix: '%', label: 'Offline-first' },
+  { value: 1, suffix: '', label: 'App for campus essentials' },
   { value: 0, suffix: '', label: 'Accounts required' },
 ];
 
@@ -19,7 +19,7 @@ export function TrustSection() {
         {stats.map((stat, index) => (
           <Reveal key={stat.label} delay={index * 0.06}>
             <Card className="text-center">
-              <p className="font-mono text-3xl font-semibold text-indigo">
+              <p className="font-mono text-3xl font-semibold text-accent">
                 <AnimatedCounter value={stat.value} suffix={stat.suffix} />
               </p>
               <p className="mt-2 text-sm text-muted">{stat.label}</p>

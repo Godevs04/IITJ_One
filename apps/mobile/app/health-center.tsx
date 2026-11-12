@@ -1,15 +1,13 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { DEFAULT_HEALTH_CENTER_DOC } from '@iitj1/types';
 import { DirectoryRow } from '@/components/DirectoryRow';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
 import { InfoCard } from '@/healthCenter/widgets/InfoCard';
-import { FacilityGrid } from '@/healthCenter/widgets/FacilityGrid';
-import { FACILITIES, STUDENT_HEALTHCARE_INFO, ABOUT_TEXT } from '@/healthCenter/data/healthCenterData';
 import type { HealthCenterDoc } from '@/types/campus';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
@@ -24,7 +22,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function PrimaryButton({ label, icon, onPress }: { label: string; icon: keyof typeof Ionicons.glyphMap; onPress: () => void }) {
+function PrimaryButton({ label, icon, onPress }: { label: string; icon: keyof typeof Icon.glyphMap; onPress: () => void }) {
   const theme = useThemeColors();
   return (
     <Pressable
@@ -33,9 +31,49 @@ function PrimaryButton({ label, icon, onPress }: { label: string; icon: keyof ty
       accessibilityRole="button"
       accessibilityLabel={label}
     >
-      <Ionicons name={icon} size={18} color={theme.onPrimary} />
+      <Icon name={icon} size={18} color={theme.onPrimary} />
       <Text style={[styles.buttonLabel, { color: theme.onPrimary }]}>{label}</Text>
     </Pressable>
+  );
+}
+
+const GENERAL_PHYSICIAN = 'General Physician';
+
+function normaliseName(name: string): string {
+  return name.toLowerCase().replace(/^dr\.?\s*/, '').replace(/\s+/g, ' ').trim();
+}
+
+/** One doctor per full-width row: name, then specialisation, then room/timing. */
+function DoctorRow({
+  name,
+  specialisation,
+  detail,
+  badge,
+}: {
+  name: string;
+  specialisation?: string;
+  detail?: string;
+  badge?: string;
+}) {
+  const theme = useThemeColors();
+  return (
+    <View style={[styles.doctorRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+      <View style={[styles.doctorIcon, { backgroundColor: theme.errorTint }]}>
+        <Icon name="medkit-outline" size={18} color={theme.error} />
+      </View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={[styles.doctorName, { color: theme.text }]}>{name}</Text>
+        {specialisation ? (
+          <Text style={[styles.doctorSpecialisation, { color: theme.secondary }]}>{specialisation}</Text>
+        ) : null}
+        {detail ? <Text style={[styles.doctorDetail, { color: theme.textMuted }]}>{detail}</Text> : null}
+      </View>
+      {badge ? (
+        <View style={[styles.shiftPill, { backgroundColor: theme.errorTint }]}>
+          <Text style={[styles.shiftPillText, { color: theme.error }]}>{badge}</Text>
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -111,12 +149,16 @@ export default function HealthCenterScreen() {
   // Default to today's tab if the sheet has one, otherwise the first available worksheet.
   const activeDate = useMemo(() => {
     if (selectedDate && dateTabs.some((t) => t.date === selectedDate)) return selectedDate;
-    const today = new Date().toISOString().slice(0, 10);
+    // Roster dates are campus dates. UTC still reads yesterday until 5:30 AM IST.
+    const today = new Date(Date.now() + (5 * 60 + 30) * 60_000).toISOString().slice(0, 10);
     if (dateTabs.some((t) => t.date === today)) return today;
     return dateTabs[0]?.date ?? null;
   }, [selectedDate, dateTabs]);
 
   const selectedDay = doc.doctorSchedules.find((s) => s.date === activeDate) ?? null;
+  // Every duty doctor usually sits in the same OPD room — say it once instead of on every row.
+  const dutyRooms = new Set((selectedDay?.regularDoctors ?? []).map((d) => d.room).filter(Boolean));
+  const sharedRoom = dutyRooms.size === 1 && (selectedDay?.regularDoctors.length ?? 0) > 1 ? [...dutyRooms][0] : null;
   const visitingSpecialistsToShow =
     selectedDay && selectedDay.visitingSpecialists.length > 0 ? selectedDay.visitingSpecialists : doc.visitingSpecialists;
 
@@ -140,117 +182,76 @@ export default function HealthCenterScreen() {
     void Clipboard.setStringAsync(doc.address);
   }, [doc.address]);
 
+  // Shift doctors on the roster are the Health Center's own medical officers
+  // (general physicians); a name that matches a visiting specialist gets their specialty instead.
+  const specialisationFor = (doctorName: string): string => {
+    const key = normaliseName(doctorName);
+    const specialist = visitingSpecialistsToShow.find((s) => s.doctorName && normaliseName(s.doctorName) === key);
+    if (specialist) return specialist.specialty;
+    const officer = doc.medicalOfficers.find((o) => normaliseName(o.name) === key);
+    return officer?.designation || GENERAL_PHYSICIAN;
+  };
+
   return (
     <ScreenShell
-      title="🏥 Health Center"
-      subtitle="24×7 Healthcare Services — Indian Institute of Technology Jodhpur"
+      title="Health Center"
+      subtitle="24×7 healthcare for the IIT Jodhpur campus"
       onRefresh={onRefresh}
       refreshing={syncing}
       error={error}
     >
-      {/* Official website */}
-      <InfoCard icon="globe-outline" title="Official Health Center Website">
-        <Text style={[styles.body, { color: theme.textMuted }]}>
-          View the official IIT Jodhpur Health Center website for announcements, policies, schedules and
-          additional information.
-        </Text>
-        <PrimaryButton label="Open Website" icon="open-outline" onPress={openOfficialSite} />
-      </InfoCard>
-
       {/* Today's Doctors — one tab per worksheet the sheet actually has, shift-based (Morning/Evening/Night) roster per day */}
-      <Section title="Today's Doctors">
+      <Section title="Doctors on duty">
         {dateTabs.length > 0 ? <DateTabs dates={dateTabs} selected={activeDate ?? ''} onSelect={setSelectedDate} /> : null}
-        <InfoCard icon="calendar-outline" title={selectedDay ? `${selectedDay.day} Shift Duty Roster` : 'Shift Duty Roster'}>
-          {selectedDay && selectedDay.regularDoctors.length > 0 ? (
-            <View style={{ gap: AppSpacing.sm }}>
-              {selectedDay.regularDoctors.map((entry, i) => (
-                <View key={i} style={styles.shiftRow}>
-                  <View style={[styles.shiftPill, { backgroundColor: theme.errorTint }]}>
-                    <Text style={[styles.shiftPillText, { color: theme.error }]}>{entry.shift}</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.body, { color: theme.text, fontWeight: '600' }]}>{entry.doctorName}</Text>
-                    <Text style={[styles.note, { color: theme.textMuted, fontStyle: 'normal' }]}>
-                      {entry.room} • {entry.timing}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <Text style={[styles.body, { color: theme.textMuted }]}>
-              Today's schedule isn't available yet — check the official website for the latest doctor
-              schedule.
-            </Text>
-          )}
-          <PrimaryButton label="View Full Schedule" icon="open-outline" onPress={openDoctorSchedule} />
-        </InfoCard>
-      </Section>
-
-      {/* Medical officers */}
-      <Section title="Medical Officers">
-        <View style={{ gap: AppSpacing.sm }}>
-          {doc.medicalOfficers.map((officer) => (
-            <DirectoryRow key={officer.name} title={officer.name} subtitle={officer.designation} />
-          ))}
-        </View>
-      </Section>
-
-      {/* Visiting specialists for the selected day — real doctor+qualification+room+timing when the schedule has data, specialty chips otherwise */}
-      <Section title="Visiting Specialists">
-        {visitingSpecialistsToShow.some((s) => s.doctorName) ? (
-          <View style={{ gap: AppSpacing.sm }}>
-            {visitingSpecialistsToShow.map((s, i) => (
-              <DirectoryRow
-                key={`${s.doctorName ?? s.specialty}-${i}`}
-                title={s.doctorName ?? s.specialty}
-                subtitle={[s.specialty, s.qualification, s.room, s.timing].filter(Boolean).join(' • ')}
+        {selectedDay && selectedDay.regularDoctors.length > 0 ? (
+          <View style={styles.doctorList}>
+            {sharedRoom ? (
+              <View style={styles.sharedRoom}>
+                <Icon name="location-outline" size={14} color={theme.textMuted} />
+                <Text style={[styles.sharedRoomText, { color: theme.textMuted }]}>{sharedRoom}</Text>
+              </View>
+            ) : null}
+            {selectedDay.regularDoctors.map((entry, i) => (
+              <DoctorRow
+                key={`${entry.doctorName}-${entry.shift}-${i}`}
+                name={entry.doctorName}
+                specialisation={specialisationFor(entry.doctorName)}
+                detail={[sharedRoom ? null : entry.room, entry.timing].filter(Boolean).join(' • ')}
+                badge={entry.shift}
               />
             ))}
           </View>
         ) : (
-          <View style={styles.chipRow}>
-            {visitingSpecialistsToShow.map((s) => (
-              <View key={s.specialty} style={[styles.chip, { backgroundColor: theme.errorTint }]}>
-                <Text style={[styles.chipLabel, { color: theme.error }]}>{s.specialty}</Text>
-              </View>
-            ))}
-          </View>
+          <Text style={[styles.body, { color: theme.textMuted }]}>
+            Today&apos;s roster isn&apos;t published yet. Check the full schedule for the latest.
+          </Text>
         )}
-        <Text style={[styles.note, { color: theme.textMuted }]}>
-          Specialist schedules are announced by the Institute and updated regularly.
-        </Text>
+        <PrimaryButton label="View full schedule" icon="open-outline" onPress={openDoctorSchedule} />
       </Section>
 
-      {/* Healthcare services */}
-      <Section title="Healthcare Services">
-        <View style={{ gap: AppSpacing.xs }}>
-          {doc.services.map((service) => (
-            <View key={service} style={styles.serviceRow}>
-              <Ionicons name="checkmark-circle-outline" size={16} color={theme.secondary} />
-              <Text style={[styles.body, { color: theme.text, flex: 1 }]}>{service}</Text>
-            </View>
-          ))}
-        </View>
-      </Section>
-
-      {/* Empanelled hospitals */}
-      <Section title="Empanelled Hospitals">
-        <View style={{ gap: AppSpacing.sm }}>
-          {doc.hospitals.map((hospital) => (
-            <DirectoryRow
-              key={hospital.name}
-              title={hospital.name}
-              subtitle={hospital.address}
-              phone={hospital.phone}
-              onCopy={hospital.phone ? () => void Clipboard.setStringAsync(hospital.phone!) : undefined}
+      {/* Visiting specialists for the selected day — one doctor per row, specialisation first */}
+      <Section title="Visiting specialists">
+        <View style={styles.doctorList}>
+          {visitingSpecialistsToShow.map((s, i) => (
+            <DoctorRow
+              key={`${s.doctorName ?? s.specialty}-${i}`}
+              name={s.doctorName ?? s.specialty}
+              specialisation={s.doctorName ? s.specialty : undefined}
+              detail={[s.qualification, s.room, s.timing].filter(Boolean).join(' • ') || undefined}
             />
           ))}
         </View>
       </Section>
 
-      {/* Important contacts */}
-      <Section title="Important Contacts">
+      <Section title="Medical officers">
+        <View style={styles.doctorList}>
+          {doc.medicalOfficers.map((officer) => (
+            <DoctorRow key={officer.name} name={officer.name} specialisation={officer.designation || GENERAL_PHYSICIAN} />
+          ))}
+        </View>
+      </Section>
+
+      <Section title="Important contacts">
         <View style={{ gap: AppSpacing.sm }}>
           {doc.contacts.map((contact) => (
             <DirectoryRow
@@ -264,54 +265,48 @@ export default function HealthCenterScreen() {
         </View>
       </Section>
 
-      {/* Location */}
+      <Section title="Empanelled hospitals">
+        <View style={{ gap: AppSpacing.sm }}>
+          {doc.hospitals.map((hospital) => (
+            <DirectoryRow
+              key={hospital.name}
+              title={hospital.name}
+              subtitle={hospital.address}
+              phone={hospital.phone}
+              onCopy={hospital.phone ? () => void Clipboard.setStringAsync(hospital.phone!) : undefined}
+            />
+          ))}
+        </View>
+      </Section>
+
       <Section title="Location">
         <InfoCard icon="location-outline" title="Office of Health Center">
           <Text style={[styles.body, { color: theme.textMuted }]}>{doc.address}</Text>
           <View style={styles.buttonRow}>
             <PrimaryButton label="Navigate" icon="navigate-outline" onPress={openInMaps} />
-            <PrimaryButton label="Copy Address" icon="copy-outline" onPress={copyAddress} />
+            <PrimaryButton label="Copy address" icon="copy-outline" onPress={copyAddress} />
           </View>
         </InfoCard>
       </Section>
 
-      {/* Student healthcare */}
-      <Section title="Student Healthcare">
-        <View style={{ gap: AppSpacing.sm }}>
-          {STUDENT_HEALTHCARE_INFO.map((item) => (
-            <View key={item} style={styles.serviceRow}>
-              <Ionicons name="heart-circle-outline" size={16} color={theme.error} />
-              <Text style={[styles.body, { color: theme.text, flex: 1 }]}>{item}</Text>
-            </View>
-          ))}
-        </View>
-      </Section>
-
-      {/* Facilities */}
-      <Section title="Facilities">
-        <FacilityGrid items={FACILITIES} />
-      </Section>
-
-      {/* About */}
-      <Section title="About">
-        <InfoCard icon="information-circle-outline" title="IIT Jodhpur Health Center">
-          <Text style={[styles.body, { color: theme.textMuted }]}>{ABOUT_TEXT}</Text>
-        </InfoCard>
-      </Section>
-
-      {/* Bottom reference card */}
-      <InfoCard icon="school-outline" title="Official Reference">
-        <Text style={[styles.body, { color: theme.textMuted }]}>
-          Always refer to the official IIT Jodhpur Health Center website for the latest schedules,
-          announcements and policies.
-        </Text>
-        <PrimaryButton label="Open Official Website" icon="open-outline" onPress={openOfficialSite} />
-      </InfoCard>
+      <Pressable onPress={openOfficialSite} hitSlop={8} style={styles.officialLink} accessibilityRole="link">
+        <Text style={[styles.body, { color: theme.linkText, fontWeight: '600' }]}>Official Health Center website</Text>
+        <Icon name="open-outline" size={14} color={theme.linkText} />
+      </Pressable>
     </ScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
+  sharedRoom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  sharedRoomText: {
+    ...AppTypography.bodySmall,
+    fontWeight: '600',
+  },
   section: {
     gap: AppSpacing.md,
   },
@@ -320,24 +315,6 @@ const styles = StyleSheet.create({
   },
   body: {
     ...AppTypography.bodySmall,
-  },
-  note: {
-    ...AppTypography.caption,
-    fontStyle: 'italic',
-  },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: AppSpacing.sm,
-  },
-  chip: {
-    borderRadius: AppRadius.full,
-    paddingHorizontal: AppSpacing.md,
-    paddingVertical: AppSpacing.xs,
-  },
-  chipLabel: {
-    ...AppTypography.caption,
-    fontWeight: '600',
   },
   dateTabsScroll: {
     marginBottom: -AppSpacing.xs,
@@ -357,10 +334,41 @@ const styles = StyleSheet.create({
     ...AppTypography.caption,
     fontWeight: '700',
   },
-  shiftRow: {
+  doctorList: {
+    gap: AppSpacing.sm,
+  },
+  doctorRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: AppSpacing.sm,
+    gap: AppSpacing.md,
+    borderWidth: 1,
+    borderRadius: AppRadius.md,
+    padding: AppSpacing.md,
+  },
+  doctorIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: AppRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  doctorName: {
+    ...AppTypography.body,
+    fontWeight: '600',
+  },
+  doctorSpecialisation: {
+    ...AppTypography.bodySmall,
+    fontWeight: '600',
+  },
+  doctorDetail: {
+    ...AppTypography.caption,
+  },
+  officialLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: AppSpacing.xs,
+    paddingVertical: AppSpacing.sm,
   },
   shiftPill: {
     borderRadius: AppRadius.full,
@@ -371,11 +379,6 @@ const styles = StyleSheet.create({
     ...AppTypography.caption,
     fontWeight: '700',
     fontSize: 11,
-  },
-  serviceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: AppSpacing.sm,
   },
   button: {
     flexDirection: 'row',

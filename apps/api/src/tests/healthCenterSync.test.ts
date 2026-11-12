@@ -314,3 +314,18 @@ describe('parseWorksheetTitle', () => {
     assert.equal(parseWorksheetTitle('Sheet1'), null);
   });
 });
+
+describe('TLS certificate chain configuration for iitj.ac.in', () => {
+  it('supplies the Sectigo intermediate certificate with valid X509 attributes', () => {
+    const pem = __testing.SECTIGO_INTERMEDIATE_CA_PEM;
+    assert.ok(pem.includes('BEGIN CERTIFICATE'));
+    assert.ok(pem.includes('END CERTIFICATE'));
+
+    // Validate using Node's crypto X509Certificate parser
+    const crypto = require('crypto');
+    const cert = new crypto.X509Certificate(pem);
+    assert.ok(cert.subject.includes('Sectigo Public Server Authentication CA OV R36'));
+    assert.ok(cert.issuer.includes('Sectigo Public Server Authentication Root R46'));
+  });
+});
+

@@ -10,7 +10,14 @@ import type { LocalStore } from './localStore';
  */
 
 export interface MessQR {
+  /** Absolute file URI, resolved at read time from `fileName` (see resolveRecord). */
   imagePath: string;
+  /**
+   * File name inside <documentDirectory>/mess-qr/. The absolute path is NOT stable: on iOS the app's
+   * container path changes on reinstall/update (and between Expo Go installs), so a stored absolute
+   * path can point at nothing — which showed as a black QR screen.
+   */
+  fileName?: string;
   addedAt: string;
   width: number;
   height: number;
@@ -68,9 +75,35 @@ async function hasValidImageSignature(uri: string): Promise<boolean> {
   }
 }
 
+const QR_DIRECTORY = () => `${FileSystem.documentDirectory}mess-qr/`;
+
+function baseName(path: string): string {
+  return path.split('/').pop() ?? path;
+}
+
 class LocalMessQrStore implements MessQrStore {
+  /**
+   * Resolves the stored record against the *current* document directory (older records stored an
+   * absolute path) and confirms the file still exists. A missing file returns null, so the screen shows
+   * "add your QR" instead of an empty black viewer.
+   */
   async get(): Promise<MessQR | null> {
-    return getSetting<MessQR | null>(MESS_QR_KEY, null);
+    const stored = getSetting<MessQR | null>(MESS_QR_KEY, null);
+    if (!stored?.imagePath && !stored?.fileName) return null;
+    const fileName = stored.fileName ?? baseName(stored.imagePath);
+    const imagePath = `${QR_DIRECTORY()}${fileName}`;
+    try {
+      const info = await FileSystem.getInfoAsync(imagePath);
+      if (!info.exists) {
+        setSetting(MESS_QR_KEY, null);
+        return null;
+      }
+    } catch {
+      return null;
+    }
+    const record: MessQR = { ...stored, fileName, imagePath };
+    if (stored.fileName !== fileName || stored.imagePath !== imagePath) setSetting(MESS_QR_KEY, record);
+    return record;
   }
 
   async save(value: MessQR | null): Promise<void> {
@@ -92,10 +125,11 @@ class LocalMessQrStore implements MessQrStore {
       throw new MessQrStorageError('invalid_image', 'That file could not be read as an image.');
     }
 
-    const directory = `${FileSystem.documentDirectory}mess-qr/`;
+    const directory = QR_DIRECTORY();
     try {
       await FileSystem.makeDirectoryAsync(directory, { intermediates: true });
-      const destination = `${directory}mess-qr-${Date.now()}.jpg`;
+      const fileName = `mess-qr-${Date.now()}.jpg`;
+      const destination = `${directory}${fileName}`;
       await FileSystem.copyAsync({ from: uri, to: destination });
 
       if (!(await hasValidImageSignature(destination))) {
@@ -108,7 +142,7 @@ class LocalMessQrStore implements MessQrStore {
         await FileSystem.deleteAsync(existing.imagePath, { idempotent: true });
       }
 
-      const record: MessQR = { imagePath: destination, addedAt: new Date().toISOString(), width, height };
+      const record: MessQR = { imagePath: destination, fileName, addedAt: new Date().toISOString(), width, height };
       await this.save(record);
       return record;
     } catch (err) {

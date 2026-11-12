@@ -1,8 +1,8 @@
 import type { ComponentProps } from 'react';
-import type { Ionicons } from '@expo/vector-icons';
+import type { Icon } from '@/components/Icon';
 import type { Href } from 'expo-router';
 
-export type IoniconName = ComponentProps<typeof Ionicons>['name'];
+export type IoniconName = ComponentProps<typeof Icon>['name'];
 
 export interface SearchEntry {
   /** Unique across the whole index — prefix with the provider id. */

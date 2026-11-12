@@ -111,21 +111,25 @@ export default function MenuAdminPage() {
   }
 
   function addBlankWeek() {
-    const base = new Date(`${month}-01T12:00:00`);
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
+      push('error', 'Choose a month', 'Select a valid month before adding days.');
+      return;
+    }
+    const base = new Date(`${month}-01T00:00:00Z`);
     const names = [
+      'sunday',
       'monday',
       'tuesday',
       'wednesday',
       'thursday',
       'friday',
       'saturday',
-      'sunday',
     ];
-    const next: MenuDay[] = names.map((dayName, idx) => {
+    const next: MenuDay[] = names.map((_, idx) => {
       const d = new Date(base);
-      d.setDate(1 + idx);
+      d.setUTCDate(1 + idx);
       const date = d.toISOString().slice(0, 10);
-      return emptyDay(date, dayName);
+      return emptyDay(date, names[d.getUTCDay()]);
     });
     setDays(next);
     setSelectedIdx(0);
@@ -322,7 +326,7 @@ export default function MenuAdminPage() {
                   onClick={() => setSelectedIdx(d.i)}
                   className={`min-w-[4.5rem] rounded-xl border px-3 py-2 text-center transition ${
                     active
-                      ? 'border-indigo bg-indigo text-sand'
+                      ? 'border-primary bg-primary text-on-primary'
                       : 'border-border bg-white text-ink hover:border-indigo/40'
                   }`}
                 >
@@ -331,7 +335,7 @@ export default function MenuAdminPage() {
                   </span>
                   <span
                     className={`mt-0.5 block font-mono text-[10px] ${
-                      active ? 'text-sand/70' : 'text-muted'
+                      active ? 'text-on-primary/70' : 'text-muted'
                     }`}
                   >
                     {d.date.slice(8)}

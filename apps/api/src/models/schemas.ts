@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  academicCalendarDocSchema,
   transportTripSchema,
   messMenuPutSchema,
   SUGGESTION_CATEGORIES,
@@ -165,10 +166,11 @@ export const noticeCreateSchema = z.object({
   body: z.string().min(1).max(5000),
   category: z.string().min(1),
   isImportant: z.boolean().default(false),
-  link: z.string().url().optional().or(z.literal('')),
+  link: z.string().url().or(z.string().regex(/^\/[a-zA-Z0-9_()/-]*$/)).optional().or(z.literal('')),
   imageUrl: z.string().url().optional().or(z.literal('')),
   startDate: z.string().datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}/)),
   expiryDate: z.string().datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}/)),
+  metadata: z.record(z.unknown()).optional(),
 });
 
 export const noticePatchSchema = noticeCreateSchema.partial();
@@ -196,17 +198,27 @@ export const transportPutSchema = z.object({
     .default([]),
 });
 
-export const calendarPutSchema = z.object({
-  campusId: z.string().min(1),
-  semester: z.string().min(1),
-  events: z.array(
-    z.object({
-      title: z.string(),
-      type: z.string(),
-      startDate: z.string(),
-      endDate: z.string(),
-    }),
-  ),
+// Shared with admin/mobile (packages/types/src/academicCalendar.ts). It declares every normalized field —
+// sourceText, dateSourceText, sources, tentative, audience, reviewQueue… — so zod does not strip them on save.
+export const calendarPutSchema = academicCalendarDocSchema;
+
+export const calendarReviewResolveSchema = z
+  .object({
+    candidateIndex: z.number().int().nonnegative().optional(),
+    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    resolvedSource: z.string().trim().min(1, 'resolvedSource is required'),
+    notes: z.string().max(2000).optional(),
+  })
+  .refine((v) => v.candidateIndex !== undefined || (v.startDate && v.endDate), {
+    message: 'Pick a candidate (candidateIndex) or give both startDate and endDate',
+  });
+
+export const calendarReviewReopenSchema = z.object({ note: z.string().max(2000).optional() });
+
+export const transportForDateQuerySchema = z.object({
+  campus: z.string().min(1),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected YYYY-MM-DD'),
 });
 
 export const portalsPutSchema = z.object({
@@ -376,24 +388,27 @@ export {
 };
 
 const campusDirectorySortSchema = z.enum(['asc', 'desc']).default('asc');
+// URL query values are strings: Boolean('false') is true, so z.coerce.boolean()
+// silently reverses inactive/disabled filters. Only accept explicit booleans.
+const queryBooleanSchema = z.union([z.boolean(), z.enum(['true', 'false']).transform((value) => value === 'true')]).optional();
 
 export const adminDepartmentsQuerySchema = campusQuerySchema.merge(paginationQuerySchema).extend({
   search: z.string().optional(),
-  active: z.coerce.boolean().optional(),
+  active: queryBooleanSchema,
   sort: campusDirectorySortSchema,
 });
 
 export const adminOrganizationsQuerySchema = campusQuerySchema.merge(paginationQuerySchema).extend({
   search: z.string().optional(),
   type: z.enum(ORGANIZATION_TYPES).optional(),
-  active: z.coerce.boolean().optional(),
+  active: queryBooleanSchema,
   sort: campusDirectorySortSchema,
 });
 
 export const adminPeopleQuerySchema = campusQuerySchema.merge(paginationQuerySchema).extend({
   search: z.string().optional(),
   departmentId: z.string().optional(),
-  active: z.coerce.boolean().optional(),
+  active: queryBooleanSchema,
   sort: campusDirectorySortSchema,
 });
 
@@ -402,7 +417,7 @@ export const adminRolesQuerySchema = campusQuerySchema.merge(paginationQuerySche
   personId: z.string().optional(),
   organizationId: z.string().optional(),
   category: z.string().optional(),
-  active: z.coerce.boolean().optional(),
+  active: queryBooleanSchema,
   sort: campusDirectorySortSchema,
 });
 
@@ -424,8 +439,8 @@ export const adminCampaignsQuerySchema = campusQuerySchema.merge(paginationQuery
    * for transport schedule exceptions.
    */
   effectiveStatus: z.enum(['draft', 'published', 'expired', 'paused', 'archived']).optional(),
-  featured: z.coerce.boolean().optional(),
-  isEnabled: z.coerce.boolean().optional(),
+  featured: queryBooleanSchema,
+  isEnabled: queryBooleanSchema,
   sort: campusDirectorySortSchema,
 });
 
@@ -438,3 +453,16 @@ export const campaignTrackBodySchema = z.object({
   action: z.enum(['view', 'click']),
   deviceId: z.string().trim().max(100).optional(),
 });
+
+// --- Temporary Mess Updates ---
+
+export const publicMessUpdatesQuerySchema = campusQuerySchema.extend({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD').optional(),
+});
+
+export const adminMessUpdatesQuerySchema = campusQuerySchema.extend({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD').optional(),
+  status: z.enum(['active', 'archived']).optional(),
+  meal: z.enum(['breakfast', 'lunch', 'snacks', 'dinner']).optional(),
+});
+

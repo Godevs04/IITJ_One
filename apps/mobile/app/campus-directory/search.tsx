@@ -1,8 +1,9 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
-import { FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TextInput, type TextInputInstance, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Stack } from 'expo-router';
+import { goBack } from '@/navigation/goBack';
+import { Icon } from '@/components/Icon';
 import { Pressable } from 'react-native';
 import { EmptyState } from '@/components/EmptyState';
 import { useCampusModule } from '@/hooks/useCampusModule';
@@ -12,7 +13,7 @@ import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 interface DirectoryResult {
   id: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: keyof typeof Icon.glyphMap;
   typeLabel: string;
   title: string;
   subtitle?: string;
@@ -29,7 +30,7 @@ function matches(query: string, ...fields: (string | undefined)[]): boolean {
 export default function CampusDirectorySearchScreen() {
   const theme = useThemeColors();
   const [query, setQuery] = useState('');
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
 
   const departments = useCampusModule<DepartmentDoc[]>('campusDirectoryDepartments') ?? [];
   const people = useCampusModule<PersonDoc[]>('campusDirectoryPeople') ?? [];
@@ -100,10 +101,10 @@ export default function CampusDirectorySearchScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={[styles.searchRow, { borderColor: theme.border, backgroundColor: theme.surface }]}>
-        <Pressable onPress={() => router.back()} hitSlop={10} accessibilityRole="button" accessibilityLabel="Back">
-          <Ionicons name="arrow-back" size={22} color={theme.text} />
+        <Pressable onPress={goBack} hitSlop={12} style={styles.iconButton} accessibilityRole="button" accessibilityLabel="Back">
+          <Icon name="arrow-back" size={22} color={theme.text} />
         </Pressable>
-        <Ionicons name="search-outline" size={18} color={theme.textMuted} />
+        <Icon name="search-outline" size={18} color={theme.textMuted} />
         <TextInput
           ref={inputRef}
           value={query}
@@ -117,7 +118,7 @@ export default function CampusDirectorySearchScreen() {
         />
         {query.length > 0 ? (
           <Pressable onPress={() => setQuery('')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Clear search">
-            <Ionicons name="close-circle" size={20} color={theme.textMuted} />
+            <Icon name="close-circle" size={20} color={theme.textMuted} />
           </Pressable>
         ) : null}
       </View>
@@ -130,7 +131,7 @@ export default function CampusDirectorySearchScreen() {
         renderItem={({ item }) => (
           <View style={[styles.resultRow, { borderColor: theme.border, backgroundColor: theme.surface }]}>
             <View style={[styles.resultIcon, { backgroundColor: theme.surfaceMuted }]}>
-              <Ionicons name={item.icon} size={18} color={theme.iconMuted} />
+              <Icon name={item.icon} size={18} color={theme.iconMuted} />
             </View>
             <View style={styles.resultText}>
               <Text style={[styles.resultTitle, { color: theme.text }]} numberOfLines={1}>
@@ -176,8 +177,19 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    ...AppTypography.body,
+    // No lineHeight here: on iOS a TextInput lineHeight pushes the text and
+    // placeholder off vertical centre inside the fixed-height bar.
+    fontSize: AppTypography.body.fontSize,
+    height: '100%',
     paddingVertical: 0,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+  },
+  iconButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   listContent: {
     padding: AppSpacing.lg,

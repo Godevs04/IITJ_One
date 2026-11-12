@@ -38,7 +38,7 @@ export const SYNC_MODULES = [
   'messMenuVeg', 'messMenuNonVeg',
   'campusDirectoryDepartments', 'campusDirectoryPeople',
   'campusDirectoryOrganizations', 'campusDirectoryRoles',
-  'campaigns',
+  'campaigns', 'messPricing',
 ] as const;
 
 export type SyncModule = (typeof SYNC_MODULES)[number];
@@ -110,7 +110,7 @@ const VERSION_KEY: Record<SyncModule, string> = {
   messMenuVeg: 'messMenuVeg', messMenuNonVeg: 'messMenuNonVeg',
   campusDirectoryDepartments: 'campusDirectoryDepartments', campusDirectoryPeople: 'campusDirectoryPeople',
   campusDirectoryOrganizations: 'campusDirectoryOrganizations', campusDirectoryRoles: 'campusDirectoryRoles',
-  campaigns: 'campaigns',
+  campaigns: 'campaigns', messPricing: 'messPricing',
 };
 
 /**
@@ -443,10 +443,10 @@ class SyncEngine {
   }
 
   private monitorAppState(): void {
-    let lastState: AppStateStatus = AppState.currentState;
+    let lastState = AppState.currentState;
 
     this.appStateUnsub = AppState.addEventListener('change', (nextState) => {
-      if (lastState.match(/inactive|background/) && nextState === 'active') {
+      if (lastState && lastState.match(/inactive|background/) && nextState === 'active') {
         // App came to foreground — sync if stale
         const elapsed = Date.now() - (this.state.lastFullSyncAt ?? 0);
         if (elapsed > SYNC_INTERVAL_MS) {

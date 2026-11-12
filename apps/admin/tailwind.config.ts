@@ -9,6 +9,10 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Brand fills (hex so opacity modifiers work): primary #3DA9D8 with near-black text, secondary #F1FF0A.
+        primary: '#3DA9D8',
+        'on-primary': '#01050D',
+        highlight: '#F1FF0A',
         indigo: {
           DEFAULT: 'var(--color-indigo)',
           deep: 'var(--color-indigo-deep)',
@@ -28,14 +32,15 @@ const config: Config = {
         surface: 'var(--color-surface)',
       },
       fontFamily: {
-        sans: ['var(--font-ibm-plex-sans)', 'system-ui', 'sans-serif'],
+        // Helvetica Neue — the IITJ One typeface, same as the app and website.
+        sans: ['"Helvetica Neue"', 'Helvetica', 'Arial', 'system-ui', 'sans-serif'],
         mono: ['var(--font-ibm-plex-mono)', 'ui-monospace', 'monospace'],
       },
       boxShadow: {
-        card: '0 1px 2px rgba(26, 34, 41, 0.04), 0 8px 24px rgba(29, 63, 94, 0.05)',
-        elevated: '0 18px 40px -16px rgba(29, 63, 94, 0.22)',
-        soft: '0 10px 28px -12px rgba(26, 34, 41, 0.18)',
-        glow: '0 24px 60px -20px rgba(0, 41, 71, 0.55)',
+        card: '0 1px 2px rgba(1, 5, 13, 0.04), 0 8px 24px rgba(1, 5, 13, 0.05)',
+        elevated: '0 18px 40px -16px rgba(1, 5, 13, 0.22)',
+        soft: '0 10px 28px -12px rgba(1, 5, 13, 0.18)',
+        glow: '0 24px 60px -20px rgba(61, 169, 216, 0.45)',
       },
       keyframes: {
         fadeIn: {

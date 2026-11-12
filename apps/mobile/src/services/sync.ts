@@ -33,6 +33,7 @@ export const SYNC_MODULES = [
   'campusDirectoryOrganizations',
   'campusDirectoryRoles',
   'campaigns',
+  'messPricing',
 ] as const;
 
 export type SyncModule = (typeof SYNC_MODULES)[number];
@@ -63,6 +64,7 @@ const VERSION_KEY: Record<SyncModule, string> = {
   campusDirectoryOrganizations: 'campusDirectoryOrganizations',
   campusDirectoryRoles: 'campusDirectoryRoles',
   campaigns: 'campaigns',
+  messPricing: 'messPricing',
 };
 
 export interface SyncResult {

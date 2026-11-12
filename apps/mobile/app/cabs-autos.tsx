@@ -1,12 +1,12 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { ContentCard } from '@/components/ContentCard';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { debugListKeys } from '@/debug/listDebug';
 
-const FUTURE_FEATURES: { icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
+const FUTURE_FEATURES: { icon: keyof typeof Icon.glyphMap; label: string }[] = [
   { icon: 'call-outline', label: 'One-tap Call Driver' },
   { icon: 'car-outline', label: 'Auto & Cab Directory' },
   { icon: 'shield-checkmark-outline', label: 'Verified Drivers' },
@@ -26,7 +26,7 @@ export default function CabsAutosScreen() {
     <ScreenShell hideTitle subtitle="Local transportation directory">
       <View style={styles.hero}>
         <View style={[styles.heroIcon, { backgroundColor: theme.primaryTint }]}>
-          <Ionicons name="car-sport-outline" size={36} color={theme.linkText} />
+          <Icon name="car-sport-outline" size={36} color={theme.linkText} />
         </View>
         <Text style={[styles.heroTitle, { color: theme.text }]}>Cabs & Autos</Text>
         <Text style={[styles.heroBody, { color: theme.textMuted }]}>
@@ -34,7 +34,7 @@ export default function CabsAutosScreen() {
           directly, and discover trusted local transportation options.
         </Text>
         <View style={[styles.badge, { backgroundColor: theme.secondaryTint }]}>
-          <Ionicons name="time-outline" size={14} color={theme.secondary} />
+          <Icon name="time-outline" size={14} color={theme.secondary} />
           <Text style={[styles.badgeText, { color: theme.secondary }]}>Coming Soon</Text>
         </View>
       </View>
@@ -54,7 +54,7 @@ export default function CabsAutosScreen() {
               key={feature.label}
               style={[styles.featureCard, { backgroundColor: theme.surfaceMuted, borderColor: theme.border }]}
             >
-              <Ionicons name={feature.icon} size={22} color={theme.iconMuted} />
+              <Icon name={feature.icon} size={22} color={theme.iconMuted} />
               <Text style={[styles.featureLabel, { color: theme.textMuted }]}>{feature.label}</Text>
             </View>
           ))}

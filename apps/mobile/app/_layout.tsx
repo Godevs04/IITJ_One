@@ -6,7 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PostHogProvider } from 'posthog-react-native';
 import { posthog } from '@/config/posthog';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import {
   IBMPlexSans_400Regular,
   IBMPlexSans_500Medium,
@@ -24,6 +24,7 @@ import '@/services/search/registerBuiltInProviders';
 import { CampusDataProvider } from '@/state/CampusDataProvider';
 import { LiveTrackingProvider } from '@/transport/state/LiveTrackingProvider';
 import { ThemeProvider, useTheme } from '@/theme/ThemeProvider';
+import { AppFontFamily } from '@/theme/tokens';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { setRuntimeDebugContext } from '@/debug/listDebug';
 import {
@@ -41,6 +42,12 @@ import {
 registerBackgroundHandler();
 
 void SplashScreen.preventAutoHideAsync();
+
+// Keep the tabs underneath any screen opened directly (push notification,
+// deep link, cold start) so the header back button always has somewhere to go.
+export const unstable_settings = {
+  anchor: '(tabs)',
+};
 
 export default function RootLayout() {
   const [ready, setReady] = useState(false);
@@ -163,7 +170,7 @@ function RootNavigator() {
         screenOptions={{
           headerStyle: { backgroundColor: colors.headerBackground },
           headerTintColor: colors.headerTint,
-          headerTitleStyle: { fontWeight: '600', fontFamily: 'IBMPlexSans_600SemiBold' },
+          headerTitleStyle: { fontWeight: '600', fontFamily: AppFontFamily },
           headerBackTitle: 'Back',
           contentStyle: { backgroundColor: colors.background },
           headerRight: () => (
@@ -174,7 +181,7 @@ function RootNavigator() {
               accessibilityRole="button"
               accessibilityLabel="Search"
             >
-              <Ionicons name="search-outline" size={22} color={colors.headerTint} />
+              <Icon name="search-outline" size={22} color={colors.headerTint} />
             </Pressable>
           ),
         }}
@@ -182,6 +189,8 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="search" options={{ headerShown: false }} />
         <Stack.Screen name="map" options={{ title: 'Campus Map' }} />
+        <Stack.Screen name="bus-routes" options={{ title: 'Bus Routes' }} />
+        <Stack.Screen name="transport-alerts" options={{ title: 'Transport Alerts' }} />
         <Stack.Screen name="discover/index" options={{ title: 'Discover' }} />
         <Stack.Screen name="discover/[id]" options={{ title: 'Campaign' }} />
         <Stack.Screen name="campus-directory/index" options={{ title: 'Campus Directory' }} />
@@ -204,7 +213,9 @@ function RootNavigator() {
         <Stack.Screen name="health-center" options={{ title: 'Health Center' }} />
         <Stack.Screen name="about" options={{ title: 'About IITJ One' }} />
         <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+        <Stack.Screen name="customize-home" options={{ title: 'Customize Home' }} />
         <Stack.Screen name="mess-qr" options={{ title: 'My Mess QR' }} />
+        <Stack.Screen name="veg-mess-entry" options={{ title: 'Veg Mess entry' }} />
         <Stack.Screen name="timetable" options={{ headerShown: false }} />
         <Stack.Screen name="notes" options={{ title: 'Notes' }} />
         <Stack.Screen name="notes/edit" options={{ title: 'Edit Note' }} />

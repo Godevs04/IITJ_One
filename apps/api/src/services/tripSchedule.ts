@@ -6,6 +6,7 @@ import {
   getActiveTransportScheduleException,
 } from '../store';
 import { computeScheduleStatus } from './transportScheduleExceptionStatus';
+import { resolveExceptionTrips, runningTrips } from '@iitj1/types';
 import { getIstDateString, getIstDayName, getIstMinutesOfDay, parseTimeToMinutes } from '../utils/istTime';
 import type { TransportTrip, TransportDoc, HolidaysDoc, TransportAlertsDoc, TemporaryTransportScheduleDoc } from '../types';
 
@@ -65,7 +66,8 @@ export function getScheduleKey(
   todayIso: string,
   weekday: string,
 ): 'mon-sat' | 'sun-holiday' {
-  if (weekday === 'sunday' || isHolidayToday(holidays, todayIso)) return 'sun-holiday';
+  // 'mon-sat' is the historical key for the weekday (Mon–Fri) timetable; Saturdays run the weekend one.
+  if (weekday === 'saturday' || weekday === 'sunday' || isHolidayToday(holidays, todayIso)) return 'sun-holiday';
   return 'mon-sat';
 }
 
@@ -73,6 +75,7 @@ export function getTripsForDayType(
   transport: TransportDoc,
   dayType: 'mon-sat' | 'sun-holiday',
   weekday: string,
+  serviceDate: string = getIstDateString(),
 ): TransportTrip[] {
   const groups = transport.routes.filter((r) => r.weekday === dayType);
   // Stamp each trip with its group's direction — authoritative, must not be
@@ -80,10 +83,12 @@ export function getTripsForDayType(
   let trips: TransportTrip[] = groups.flatMap((g) => g.trips.map((t) => ({ ...t, direction: g.direction })));
 
   if (dayType === 'mon-sat' && weekday === 'thursday') {
-    const override = transport.scheduleOverrides.find((o) => o.dayOfWeek.toLowerCase() === 'thursday');
+    const override = transport.scheduleOverrides
+      .filter((o) => o.dayOfWeek.trim().toLowerCase() === 'thursday' && o.effectiveFrom.slice(0, 10) <= serviceDate)
+      .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0];
     if (override?.trips.length) {
       trips = trips.filter(
-        (t) => !(t.bus === 'B2' && t.startTime === '9:15 AM') && !(t.bus === 'B2' && t.startTime === '1:30 PM'),
+        (t) => !(t.bus.trim().toUpperCase() === 'B2' && [9 * 60 + 15, 13 * 60 + 30].includes(parseTimeToMinutes(t.startTime))),
       );
       trips = [...trips, ...override.trips];
     }
@@ -101,6 +106,12 @@ export async function getResolvedTripsForToday(
 ): Promise<TransportTrip[]> {
   const activeException = await getActiveTransportScheduleException(campusId, at);
   if (activeException && computeScheduleStatus(activeException, at) === 'active') {
+    if ((activeException.mode ?? 'replace') === 'cancel') {
+      // Cancellation: the regular (holiday-aware) timetable runs, minus the cancelled trips — those must not
+      // be materialized or assigned GPS pings.
+      const regular = await getRegularTripsForDay(campusId, todayIso, weekday);
+      return runningTrips(resolveExceptionTrips(activeException, regular));
+    }
     return [...activeException.trips].sort((a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime));
   }
 
@@ -114,11 +125,16 @@ export async function getResolvedTripsForToday(
       .sort((a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime));
   }
 
+  return getRegularTripsForDay(campusId, todayIso, weekday);
+}
+
+/** The regular timetable for a day: Mon–Fri, or Sat, Sun & Holidays on a weekend day or an active holiday. */
+export async function getRegularTripsForDay(campusId: string, todayIso: string, weekday: string): Promise<TransportTrip[]> {
   const transport = await getTransport(campusId);
   if (!transport) return [];
   const holidays = await getHolidays(campusId);
   const key = getScheduleKey(holidays, todayIso, weekday);
-  return getTripsForDayType(transport, key, weekday);
+  return getTripsForDayType(transport, key, weekday, todayIso);
 }
 
 /** Convenience wrapper that resolves the IST calendar day/weekday for `at` and calls getResolvedTripsForToday. */

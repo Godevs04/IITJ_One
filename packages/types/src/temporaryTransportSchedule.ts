@@ -1,9 +1,10 @@
 import { z } from 'zod';
+import { transportTimeSchema } from './transport';
 
 export const temporaryTransportScheduleSchema = z.object({
   id: z.string(),
   busNumber: z.string().min(1),
-  departureTime: z.string().min(1),
+  departureTime: transportTimeSchema,
   from: z.string().min(1),
   to: z.string().min(1),
   route: z.string().min(1),

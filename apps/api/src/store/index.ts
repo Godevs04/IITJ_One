@@ -79,6 +79,25 @@ import {
   fallbackSoftDeleteCampaign,
   fallbackRestoreCampaign,
   getFallbackState,
+  fallbackListMessPricing,
+  fallbackGetMessPricingById,
+  fallbackInsertMessPricing,
+  fallbackUpdateMessPricing,
+  fallbackFindAiCommand,
+  fallbackInsertAiCommand,
+  fallbackTransitionAiCommand,
+  fallbackListAiCommands,
+  fallbackInsertAiSession,
+  fallbackGetAiSession,
+  fallbackLatestAiSession,
+  fallbackUpdateAiSession,
+  fallbackCreateTemporaryMessUpdate,
+  fallbackGetTemporaryMessUpdateById,
+  fallbackGetTemporaryMessUpdatesForDate,
+  fallbackGetActiveTemporaryMessUpdates,
+  fallbackUpdateTemporaryMessUpdate,
+  fallbackArchiveTemporaryMessUpdate,
+  fallbackDeleteTemporaryMessUpdate,
 } from './fallback';
 import type {
   MetaDoc,
@@ -124,9 +143,14 @@ import type {
   RoleDoc,
   RoleCreateInput,
   CampaignDoc,
+  MessPricingConfig,
+  AiCommandRecord,
+  AiSessionRecord,
   CampaignCreateInput,
+  TemporaryMessUpdateDoc,
 } from '../types';
 import { defaultVersions } from '../constants/defaultVersions';
+import { recordAuditId } from './auditCapture';
 
 export async function ensureMeta(campusId: string): Promise<MetaDoc> {
   if (isDbConnected()) {
@@ -150,18 +174,22 @@ export async function logAudit(
   action: string,
   diffSummary: string,
   module = 'admin',
-): Promise<void> {
+): Promise<string> {
+  let auditId: string;
   if (isDbConnected()) {
-    await collections.auditLog().insertOne({
+    const inserted = await collections.auditLog().insertOne({
       adminEmail,
       action,
       module,
       timestamp: new Date(),
       diffSummary,
     });
+    auditId = inserted.insertedId.toString();
   } else {
-    fallbackAddAudit({ adminEmail, action, module, timestamp: new Date(), diffSummary });
+    auditId = fallbackAddAudit({ adminEmail, action, module, timestamp: new Date(), diffSummary });
   }
+  recordAuditId(auditId);
+  return auditId;
 }
 
 export async function bumpVersion(
@@ -171,14 +199,15 @@ export async function bumpVersion(
   action: string,
   diffSummary: string,
   session?: ClientSession,
-): Promise<void> {
+): Promise<string> {
+  let auditId: string;
   if (isDbConnected()) {
     await collections.meta().updateOne(
       { campusId },
       { $inc: { [`versions.${module}`]: 1 }, $set: { updatedAt: new Date() } },
       { upsert: true, session },
     );
-    await collections.auditLog().insertOne(
+    const inserted = await collections.auditLog().insertOne(
       {
         adminEmail,
         action,
@@ -188,13 +217,17 @@ export async function bumpVersion(
       },
       { session },
     );
+    auditId = inserted.insertedId.toString();
   } else {
     fallbackBumpVersion(module, campusId);
-    fallbackAddAudit({ adminEmail, action, module, timestamp: new Date(), diffSummary });
+    auditId = fallbackAddAudit({ adminEmail, action, module, timestamp: new Date(), diffSummary });
   }
   invalidateModule(module, campusId);
   invalidateModule('meta', campusId);
   invalidateModule('home', campusId);
+  // Lets withAuditCapture() (store/auditCapture.ts) report exactly which audit entry a mutation produced.
+  recordAuditId(auditId);
+  return auditId;
 }
 
 export async function getMeta(campusId: string): Promise<MetaDoc> {
@@ -406,6 +439,32 @@ export async function restoreNotice(id: string, adminEmail: string): Promise<Not
   return saved;
 }
 
+export async function getNoticeByScheduleExceptionId(scheduleExceptionId: string): Promise<NoticeDoc | null> {
+  if (isDbConnected()) {
+    const doc = await collections.notices().findOne({
+      'metadata.scheduleExceptionId': scheduleExceptionId,
+    });
+    return doc ? { ...doc, _id: doc._id?.toString() } : null;
+  }
+  const notice = getFallbackState().notices.find(
+    (n) => n.metadata?.scheduleExceptionId === scheduleExceptionId,
+  );
+  return notice ?? null;
+}
+
+export async function getNoticeByMessUpdateId(messUpdateId: string): Promise<NoticeDoc | null> {
+  if (isDbConnected()) {
+    const doc = await collections.notices().findOne({
+      'metadata.messUpdateId': messUpdateId,
+    });
+    return doc ? { ...doc, _id: doc._id?.toString() } : null;
+  }
+  const notice = getFallbackState().notices.find(
+    (n) => n.metadata?.messUpdateId === messUpdateId,
+  );
+  return notice ?? null;
+}
+
 export async function getCalendar(campusId: string): Promise<CalendarDoc | null> {
   if (isDbConnected()) return collections.calendar().findOne({ campusId });
   initFallbackStore();
@@ -416,14 +475,21 @@ export async function putCalendar(
   doc: CalendarDoc,
   adminEmail: string,
   expectedVersion?: number,
+  audit?: { action: string; summary: string },
 ): Promise<void> {
   await assertVersionMatches('calendar', doc.campusId, expectedVersion);
+  // A save that does not carry the review queue (e.g. an older admin client) must not erase unresolved
+  // conflicts or their resolution history — keep the stored queue in that case.
+  if (doc.reviewQueue === undefined) {
+    const existing = await getCalendar(doc.campusId);
+    if (existing?.reviewQueue) doc = { ...doc, reviewQueue: existing.reviewQueue };
+  }
   if (isDbConnected()) {
     await collections.calendar().replaceOne({ campusId: doc.campusId }, doc, { upsert: true });
   } else {
     getFallbackState().calendar = doc;
   }
-  await bumpVersion('calendar', doc.campusId, adminEmail, 'update', `Calendar ${doc.semester}`);
+  await bumpVersion('calendar', doc.campusId, adminEmail, audit?.action ?? 'update', audit?.summary ?? `Calendar ${doc.semester}`);
 }
 
 export async function getPortals(campusId: string): Promise<PortalsDoc | null> {
@@ -732,6 +798,97 @@ export async function listMessMenuHistory(
     .messMenuHistory.filter((h) => h.campusId === campusId && h.menuType === menuType)
     .sort((a, b) => b.version - a.version)
     .slice(0, limit);
+}
+
+// ─── Temporary Mess Updates ─────────────────────────────────────────────────────
+
+function withMessUpdateStringId(doc: TemporaryMessUpdateDoc): TemporaryMessUpdateDoc {
+  return { ...doc, _id: doc._id?.toString() };
+}
+
+export async function createTemporaryMessUpdate(doc: TemporaryMessUpdateDoc): Promise<TemporaryMessUpdateDoc> {
+  if (isDbConnected()) {
+    const res = await collections.temporaryMessUpdates().insertOne(doc as never);
+    return { ...doc, _id: res.insertedId.toString() };
+  }
+  return fallbackCreateTemporaryMessUpdate(doc);
+}
+
+export async function getTemporaryMessUpdateById(id: string): Promise<TemporaryMessUpdateDoc | null> {
+  if (isDbConnected()) {
+    const query = isStrictObjectId(id) ? { _id: new ObjectId(id) } : { _id: id };
+    const doc = await collections.temporaryMessUpdates().findOne(query as never);
+    return doc ? withMessUpdateStringId(doc) : null;
+  }
+  return fallbackGetTemporaryMessUpdateById(id);
+}
+
+export async function getTemporaryMessUpdatesForDate(
+  campusId: string,
+  date: string,
+  activeOnly = true,
+): Promise<TemporaryMessUpdateDoc[]> {
+  if (isDbConnected()) {
+    const filter: Record<string, unknown> = { campusId, date };
+    if (activeOnly) filter.status = 'active';
+    const docs = await collections.temporaryMessUpdates().find(filter).sort({ createdAt: -1 }).toArray();
+    return docs.map(withMessUpdateStringId);
+  }
+  return fallbackGetTemporaryMessUpdatesForDate(campusId, date, activeOnly);
+}
+
+export async function getActiveTemporaryMessUpdates(
+  campusId: string,
+  now: Date = new Date(),
+): Promise<TemporaryMessUpdateDoc[]> {
+  if (isDbConnected()) {
+    const docs = await collections
+      .temporaryMessUpdates()
+      .find({
+        campusId,
+        status: 'active',
+        expiresAt: { $gt: now.toISOString() },
+      })
+      .sort({ date: 1, createdAt: -1 })
+      .toArray();
+    return docs.map(withMessUpdateStringId);
+  }
+  return fallbackGetActiveTemporaryMessUpdates(campusId, now);
+}
+
+export async function updateTemporaryMessUpdate(
+  id: string,
+  patch: Partial<TemporaryMessUpdateDoc>,
+  adminEmail: string,
+): Promise<TemporaryMessUpdateDoc | null> {
+  const set = { ...patch, updatedBy: adminEmail, updatedAt: new Date().toISOString() };
+  if (isDbConnected()) {
+    const query = isStrictObjectId(id) ? { _id: new ObjectId(id) } : { _id: id };
+    const doc = await collections
+      .temporaryMessUpdates()
+      .findOneAndUpdate(query as never, { $set: set }, { returnDocument: 'after' });
+    return doc ? withMessUpdateStringId(doc) : null;
+  }
+  return fallbackUpdateTemporaryMessUpdate(id, set);
+}
+
+export async function archiveTemporaryMessUpdate(id: string, adminEmail: string): Promise<boolean> {
+  const set = { status: 'archived' as const, updatedBy: adminEmail, updatedAt: new Date().toISOString() };
+  if (isDbConnected()) {
+    const query = isStrictObjectId(id) ? { _id: new ObjectId(id) } : { _id: id };
+    const res = await collections.temporaryMessUpdates().updateOne(query as never, { $set: set });
+    return res.matchedCount > 0;
+  }
+  return fallbackArchiveTemporaryMessUpdate(id);
+}
+
+export async function deleteTemporaryMessUpdate(id: string): Promise<boolean> {
+  if (isDbConnected()) {
+    const query = isStrictObjectId(id) ? { _id: new ObjectId(id) } : { _id: id };
+    const res = await collections.temporaryMessUpdates().deleteOne(query as never);
+    return res.deletedCount > 0;
+  }
+  return fallbackDeleteTemporaryMessUpdate(id);
 }
 
 export async function getAbout(campusId: string): Promise<AboutDoc | null> {
@@ -1046,13 +1203,19 @@ export type UnpublishScheduleExceptionResult =
   | { ok: false; reason: 'invalid_transition' };
 
 function validatePublishFields(
-  doc: Pick<TransportScheduleExceptionDoc, 'title' | 'effectiveFrom' | 'effectiveUntil' | 'affectedBuses' | 'trips'>,
+  doc: Pick<TransportScheduleExceptionDoc, 'title' | 'effectiveFrom' | 'effectiveUntil' | 'affectedBuses' | 'trips' | 'mode' | 'cancelledTrips'>,
 ): string[] {
   const errors: string[] = [];
   if (!doc.title?.trim()) errors.push('Title is required');
   if (!(doc.effectiveFrom < doc.effectiveUntil)) errors.push('Effective From must be before Effective Until');
   if (!doc.affectedBuses || doc.affectedBuses.length === 0) errors.push('At least one affected bus is required');
-  if (!doc.trips || doc.trips.length === 0) errors.push('At least one trip is required');
+  if ((doc.mode ?? 'replace') === 'cancel') {
+    if (!doc.cancelledTrips || doc.cancelledTrips.length === 0) errors.push('At least one cancelled trip is required');
+    if (doc.trips && doc.trips.length > 0) errors.push('A cancellation cannot also list replacement trips');
+  } else {
+    if (!doc.trips || doc.trips.length === 0) errors.push('At least one trip is required');
+    if (doc.cancelledTrips && doc.cancelledTrips.length > 0) errors.push('A replacement schedule cannot also list cancelled trips');
+  }
   return errors;
 }
 
@@ -1120,6 +1283,45 @@ export async function getActiveTransportScheduleException(
     return matches.length > 0 ? withStringId(matches[0]) : null;
   }
   return fallbackGetActiveTransportScheduleException(campusId, now);
+}
+
+/**
+ * Read-only: the published exception whose effective window overlaps [dayStart, dayEnd) — i.e. the special
+ * schedule that applies on a given (future) IST date. Same selection rule as the "active" lookup above
+ * (most recent effectiveFrom wins); used by the academic calendar's holiday bus-schedule lookup.
+ */
+export async function getTransportScheduleExceptionForDay(
+  campusId: string,
+  dayStart: Date,
+  dayEnd: Date,
+): Promise<TransportScheduleExceptionDoc | null> {
+  if (isDbConnected()) {
+    const matches = await collections
+      .transportScheduleExceptions()
+      .find({
+        campusId,
+        lifecycleState: 'published',
+        $or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
+        effectiveFrom: { $lt: dayEnd },
+        effectiveUntil: { $gt: dayStart },
+      })
+      .sort({ effectiveFrom: -1 })
+      .limit(1)
+      .toArray();
+    return matches.length > 0 ? withStringId(matches[0]) : null;
+  }
+  initFallbackStore();
+  const matches = getFallbackState()
+    .transportScheduleExceptions.filter(
+      (e) =>
+        e.campusId === campusId &&
+        e.lifecycleState === 'published' &&
+        !e.deletedAt &&
+        e.effectiveFrom < dayEnd &&
+        e.effectiveUntil > dayStart,
+    )
+    .sort((a, b) => b.effectiveFrom.getTime() - a.effectiveFrom.getTime());
+  return matches[0] ?? null;
 }
 
 export async function createTransportScheduleException(
@@ -2412,4 +2614,170 @@ export async function getBusStatesByTripIds(tripIds: string[]): Promise<BusState
     return items.map((b) => ({ ...b, _id: b._id?.toString() }));
   }
   return fallbackGetBusStatesByTripIds(tripIds);
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Mess pricing — one document per pricing configuration (multi-document per
+// campus, like departments). Persistence + audit only; the rules (which
+// configuration applies, no ambiguous effective dates, safe edits) live in
+// services/messPricing.ts so the admin routes and later AI Admin share them.
+// Every write goes through bumpVersion → audit log + mobile sync version.
+// ─────────────────────────────────────────────────────────────────────────
+
+function withMessPricingStringId(doc: MessPricingConfig): MessPricingConfig {
+  return { ...doc, _id: doc._id?.toString() };
+}
+
+/** All configurations for a campus (active and inactive), newest effective date first. */
+export async function listMessPricing(campusId: string): Promise<MessPricingConfig[]> {
+  const sortDesc = (a: MessPricingConfig, b: MessPricingConfig) =>
+    b.effectiveFrom.localeCompare(a.effectiveFrom) || b.createdAt.localeCompare(a.createdAt);
+  if (isDbConnected()) {
+    const items = await collections.messPricing().find({ campusId }).toArray();
+    return items.map(withMessPricingStringId).sort(sortDesc);
+  }
+  return [...fallbackListMessPricing(campusId)].sort(sortDesc);
+}
+
+export async function getMessPricingById(id: string): Promise<MessPricingConfig | null> {
+  if (isDbConnected()) {
+    const result = await collections.messPricing().findOne({ _id: new ObjectId(id) } as never);
+    return result ? withMessPricingStringId(result) : null;
+  }
+  return fallbackGetMessPricingById(id);
+}
+
+export async function insertMessPricing(
+  doc: Omit<MessPricingConfig, '_id'>,
+  adminEmail: string,
+  auditSummary: string,
+): Promise<MessPricingConfig> {
+  let saved: MessPricingConfig;
+  if (isDbConnected()) {
+    const result = await collections.messPricing().insertOne(doc as MessPricingConfig);
+    saved = { ...doc, _id: result.insertedId.toString() };
+  } else {
+    saved = fallbackInsertMessPricing(doc);
+  }
+  await bumpVersion('messPricing', doc.campusId, adminEmail, 'create', auditSummary);
+  return saved;
+}
+
+export async function updateMessPricingDoc(
+  id: string,
+  patch: Partial<MessPricingConfig>,
+  adminEmail: string,
+  action: string,
+  auditSummary: string,
+): Promise<MessPricingConfig | null> {
+  let saved: MessPricingConfig | null;
+  if (isDbConnected()) {
+    const result = await collections
+      .messPricing()
+      .findOneAndUpdate({ _id: new ObjectId(id) } as never, { $set: patch }, { returnDocument: 'after' });
+    saved = result ? withMessPricingStringId(result) : null;
+  } else {
+    saved = fallbackUpdateMessPricing(id, patch);
+  }
+  if (saved) await bumpVersion('messPricing', saved.campusId, adminEmail, action, auditSummary);
+  return saved;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// AI command records (model only). Lifecycle rules live in services/aiCommands.ts;
+// these are the persistence primitives, with unique commandId / idempotencyKey
+// and compare-and-set status transitions so a command can never run twice.
+// ─────────────────────────────────────────────────────────────────────────
+
+function withAiCommandStringId(doc: AiCommandRecord): AiCommandRecord {
+  return { ...doc, _id: doc._id?.toString() };
+}
+
+export async function findAiCommand(by: { commandId?: string; idempotencyKey?: string }): Promise<AiCommandRecord | null> {
+  if (isDbConnected()) {
+    const filter = by.commandId ? { commandId: by.commandId } : { idempotencyKey: by.idempotencyKey };
+    const doc = await collections.aiCommands().findOne(filter);
+    return doc ? withAiCommandStringId(doc) : null;
+  }
+  return fallbackFindAiCommand(by);
+}
+
+/** Inserts a new command; returns false when the commandId or idempotencyKey already exists. */
+export async function insertAiCommand(doc: AiCommandRecord): Promise<boolean> {
+  if (isDbConnected()) {
+    try {
+      await collections.aiCommands().insertOne(doc);
+      return true;
+    } catch (err) {
+      if ((err as { code?: number }).code === 11000) return false;
+      throw err;
+    }
+  }
+  return fallbackInsertAiCommand(doc);
+}
+
+/**
+ * Atomic compare-and-set: updates only while the command is in one of `from` (and, when given, still at
+ * `revision` / showing `previewToken`). Returns null when another request changed it first.
+ */
+export async function transitionAiCommand(
+  commandId: string,
+  from: readonly string[],
+  set: Partial<AiCommandRecord>,
+  match: { revision?: number; previewToken?: string } = {},
+): Promise<AiCommandRecord | null> {
+  if (isDbConnected()) {
+    const filter: Record<string, unknown> = { commandId, status: { $in: [...from] } };
+    if (match.revision !== undefined) filter.revision = match.revision;
+    if (match.previewToken !== undefined) filter.previewToken = match.previewToken;
+    const result = await collections.aiCommands().findOneAndUpdate(filter as never, { $set: set }, { returnDocument: 'after' });
+    return result ? withAiCommandStringId(result) : null;
+  }
+  return fallbackTransitionAiCommand(commandId, from, set, match);
+}
+
+export async function listAiCommands(campusId: string, limit = 20): Promise<AiCommandRecord[]> {
+  if (isDbConnected()) {
+    const docs = await collections.aiCommands().find({ campusId }).sort({ createdAt: -1 }).limit(limit).toArray();
+    return docs.map(withAiCommandStringId);
+  }
+  return fallbackListAiCommands(campusId, limit);
+}
+
+// AI Admin conversations. The service caps messages; a session only points at its current command.
+
+function withAiSessionStringId(doc: AiSessionRecord): AiSessionRecord {
+  return { ...doc, _id: doc._id?.toString() };
+}
+
+export async function insertAiSession(doc: AiSessionRecord): Promise<void> {
+  if (isDbConnected()) {
+    await collections.aiSessions().insertOne(doc);
+    return;
+  }
+  fallbackInsertAiSession(doc);
+}
+
+export async function getAiSession(sessionId: string): Promise<AiSessionRecord | null> {
+  if (isDbConnected()) {
+    const doc = await collections.aiSessions().findOne({ sessionId });
+    return doc ? withAiSessionStringId(doc) : null;
+  }
+  return fallbackGetAiSession(sessionId);
+}
+
+export async function getLatestAiSession(adminId: string, campusId: string): Promise<AiSessionRecord | null> {
+  if (isDbConnected()) {
+    const doc = await collections.aiSessions().find({ adminId, campusId }).sort({ updatedAt: -1 }).limit(1).next();
+    return doc ? withAiSessionStringId(doc) : null;
+  }
+  return fallbackLatestAiSession(adminId, campusId);
+}
+
+export async function updateAiSession(sessionId: string, set: Partial<AiSessionRecord>): Promise<AiSessionRecord | null> {
+  if (isDbConnected()) {
+    const doc = await collections.aiSessions().findOneAndUpdate({ sessionId }, { $set: set }, { returnDocument: 'after' });
+    return doc ? withAiSessionStringId(doc) : null;
+  }
+  return fallbackUpdateAiSession(sessionId, set);
 }

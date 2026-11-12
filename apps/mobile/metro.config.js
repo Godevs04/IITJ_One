@@ -1,3 +1,7 @@
+// Disables the strict expo-router check against @react-navigation/* imports,
+// allowing apps/mobile to use @react-navigation/material-top-tabs with withLayoutContext.
+process.env.EXPO_ROUTER_DISABLE_RN_NAVIGATION_CHECK = '1';
+
 const { getDefaultConfig } = require('expo/metro-config');
 const fs = require('fs');
 const path = require('path');
@@ -34,6 +38,7 @@ function resolvePackageDir(name) {
 const reactDir = resolvePackageDir('react');
 const reactNativeDir = resolvePackageDir('react-native');
 const useSyncExternalStoreDir = resolvePackageDir('use-sync-external-store');
+const typesDir = path.resolve(workspaceRoot, 'packages/types');
 
 // Force a single copy of React and its store shim to avoid the
 // "Invalid hook call" crash caused by posthog-react-native / @react-navigation
@@ -42,6 +47,7 @@ config.resolver.extraNodeModules = {
   react: reactDir,
   'react-native': reactNativeDir,
   'use-sync-external-store': useSyncExternalStoreDir,
+  '@iitj1/types': typesDir,
 };
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
@@ -50,6 +56,9 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   }
   if (moduleName === 'react-native') {
     return context.resolveRequest(context, reactNativeDir, platform);
+  }
+  if (moduleName === '@iitj1/types') {
+    return context.resolveRequest(context, typesDir, platform);
   }
   return context.resolveRequest(context, moduleName, platform);
 };
@@ -68,12 +77,21 @@ config.server.enhanceMiddleware = (middleware, metroServer) => {
   return originalEnhanceMiddleware ? originalEnhanceMiddleware(withCoepCoop, metroServer) : withCoepCoop;
 };
 
-// Next.js (Admin) rewrites apps/admin/.next on every dev-server restart or
+// Next.js (Admin & Web) rewrites .next on every dev-server restart or
 // rebuild. Since watchFolders covers the whole workspace root, Metro's
 // watcher used to race those writes on Windows — Next mid-write to
-// routes-manifest.json / webpack's cache while Metro's crawler touched the
-// same files — corrupting .next and throwing ENOENT. Block build-output
-// dirs outright so Metro never watches them; it has no reason to.
-config.resolver.blockList = /apps[\\/](admin[\\/]\.next|api[\\/]dist)[\\/].*/;
+// routes-manifest.json / chunks while Metro's crawler touched the same files —
+// corrupting .next and throwing ENOENT. Block build outputs and sibling apps
+// (admin, web, api) outright so Metro never watches them; it has no reason to.
+const defaultBlockList = Array.isArray(config.resolver.blockList)
+  ? config.resolver.blockList
+  : (config.resolver.blockList ? [config.resolver.blockList] : []);
+
+config.resolver.blockList = [
+  ...defaultBlockList,
+  /.*[\\/]\.next([\\/].*)?$/,
+  /apps[\\/](admin|web|api)[\\/].*/,
+  /apps[\\/]mobile[\\/](dist|\.expo)([\\/].*)?$/,
+];
 
 module.exports = config;

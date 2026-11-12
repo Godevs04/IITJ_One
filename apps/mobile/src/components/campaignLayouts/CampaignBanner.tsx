@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '@/components/Icon';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import { openCampaignDetails } from '@/utils/campaignNav';
@@ -50,7 +50,7 @@ function BannerItem({ campaign }: { campaign: CampaignDoc }) {
         {image ? (
           <Image source={{ uri: optimizeCloudinaryUrl(image, 112) }} style={styles.thumbImage} resizeMode="cover" />
         ) : (
-          <Ionicons name="megaphone-outline" size={22} color={theme.iconMuted} />
+          <Icon name="megaphone-outline" size={22} color={theme.iconMuted} />
         )}
       </View>
       <View style={styles.textBlock}>
@@ -68,7 +68,7 @@ function BannerItem({ campaign }: { campaign: CampaignDoc }) {
           </Text>
         ) : null}
       </View>
-      <Ionicons name="chevron-forward" size={18} color={theme.iconMuted} />
+      <Icon name="chevron-forward" size={18} color={theme.iconMuted} />
     </Pressable>
   );
 }

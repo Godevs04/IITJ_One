@@ -40,6 +40,10 @@ import type {
   PersonDoc,
   RoleDoc,
   CampaignDoc,
+  MessPricingConfig,
+  AiCommandRecord,
+  AiSessionRecord,
+  TemporaryMessUpdateDoc,
 } from './types';
 
 let client: MongoClient | null = null;
@@ -50,15 +54,18 @@ export function isDbConnected(): boolean {
   return connected && db !== null;
 }
 
+import dns from 'dns';
+try {
+  dns.setDefaultResultOrder('ipv4first');
+} catch {
+  // ignore
+}
+
 export async function connectDb(): Promise<boolean> {
   if (connected && db) return true;
 
   try {
     client = new MongoClient(config.mongodbUri, {
-      // 3000ms was too tight for a real Atlas TLS handshake under normal
-      // network conditions (observed ~6.5s cold-connect during testing),
-      // causing the API to silently and permanently fall back to the
-      // non-persistent in-memory store on the very first slow connect.
       serverSelectionTimeoutMS: 10000,
       connectTimeoutMS: 10000,
     });
@@ -69,6 +76,23 @@ export async function connectDb(): Promise<boolean> {
     console.log('[db] Connected to MongoDB');
     return true;
   } catch (err) {
+    if ((err as Error).message?.includes('querySrv') || (err as Error).message?.includes('ECONNREFUSED')) {
+      try {
+        dns.setServers(['8.8.8.8', '1.1.1.1']);
+        client = new MongoClient(config.mongodbUri, {
+          serverSelectionTimeoutMS: 10000,
+          connectTimeoutMS: 10000,
+        });
+        await client.connect();
+        db = client.db();
+        connected = true;
+        await ensureIndexes();
+        console.log('[db] Connected to MongoDB (via public DNS resolver)');
+        return true;
+      } catch {
+        // proceed to normal fallback
+      }
+    }
     connected = false;
     db = null;
     if (client) {
@@ -203,6 +227,15 @@ async function ensureIndexes(): Promise<void> {
   await db.collection('campaigns').createIndex({ campusId: 1, status: 1 });
   await db.collection('campaigns').createIndex({ campusId: 1, placement: 1 });
   await db.collection('campaigns').createIndex({ campusId: 1, startDate: 1, endDate: 1 });
+  // Mess pricing: one document per pricing configuration; looked up by campus + effective date.
+  await db.collection('messPricing').createIndex({ campusId: 1, effectiveFrom: 1 });
+  await db.collection('messPricing').createIndex({ campusId: 1, isActive: 1 });
+  // AI Admin command records (model only — no AI execution yet). Unique keys back duplicate-execution safety.
+  await db.collection('aiCommands').createIndex({ commandId: 1 }, { unique: true });
+  await db.collection('aiCommands').createIndex({ idempotencyKey: 1 }, { unique: true });
+  await db.collection('aiCommands').createIndex({ campusId: 1, createdAt: -1 });
+  await db.collection('aiSessions').createIndex({ sessionId: 1 }, { unique: true });
+  await db.collection('aiSessions').createIndex({ adminId: 1, updatedAt: -1 });
 
   // Mess menu JSON import: up to 2 live docs per (campus, menuType) — one draft, one
   // published — so a plain {campusId:1} unique index (the singleton loop below) doesn't
@@ -210,6 +243,10 @@ async function ensureIndexes(): Promise<void> {
   await db.collection('messMenus').createIndex({ campusId: 1, menuType: 1, status: 1 }, { unique: true });
   // Append-only publish history — never unique, newest-first listing.
   await db.collection('messMenuHistory').createIndex({ campusId: 1, menuType: 1, version: -1 });
+
+  // Temporary mess menu updates
+  await db.collection('temporaryMessUpdates').createIndex({ campusId: 1, date: 1, status: 1 });
+  await db.collection('temporaryMessUpdates').createIndex({ campusId: 1, status: 1, expiresAt: 1 });
 
   // One document per campus for singleton modules
   const uniqueCampus = { campusId: 1 } as const;
@@ -291,6 +328,10 @@ export const collections = {
   people: () => col<PersonDoc>('people'),
   roles: () => col<RoleDoc>('roles'),
   campaigns: () => col<CampaignDoc>('campaigns'),
+  messPricing: () => col<MessPricingConfig>('messPricing'),
+  aiCommands: () => col<AiCommandRecord>('aiCommands'),
+  aiSessions: () => col<AiSessionRecord>('aiSessions'),
+  temporaryMessUpdates: () => col<TemporaryMessUpdateDoc>('temporaryMessUpdates'),
 };
 
 export async function disconnectDb(): Promise<void> {

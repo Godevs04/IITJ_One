@@ -18,19 +18,25 @@
     "build:web": "npm run build -w @iitj1/web",
     "typecheck": "npm run typecheck -w @iitj1/types && npm run build -w @iitj1/types && npm run typecheck -w @iitj1/api && npm run typecheck -w @iitj1/admin && npm run typecheck -w @iitj1/web",
     "fix:brace-expansion": "node scripts/fix-brace-expansion.js",
-    "prepare": "(husky || true) && npm run fix:brace-expansion && npm run build -w @iitj1/types"
+    "prepare": "(husky || true) && npm run fix:brace-expansion && npm run build -w @iitj1/types",
+    "test:unit": "npm run test:unit -w @iitj1/api",
+    "test:rc": "npm run test:rc -w @iitj1/api"
   },
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
-  "packageManager": "npm@10.9.2",
+  "packageManager": "npm@11.19.1",
   "dependencies": {
-    "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
   },
   "overrides": {
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "expo": "~58.0.22",
+    "react-native": "0.88.1",
     "use-sync-external-store": "^1.6.0",
     "tar": "^7.5.22",
     "uuid": "^11.1.1",
@@ -69,6 +75,13 @@
     }
   },
   "devDependencies": {
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0"
+  },
+  "allowScripts": {
+    "bcrypt": true,
+    "esbuild": true,
+    "protobufjs": true
   }
 }

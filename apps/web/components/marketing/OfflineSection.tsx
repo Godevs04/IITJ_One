@@ -15,17 +15,17 @@ export function OfflineSection() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sandstone">Offline-first, by design</p>
           <h2 id="offline-heading" className="mt-2 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
-            Everything, offline
+            Campus essentials, even offline
           </h2>
           <p className="mt-3 text-balance text-base text-muted">
-            No signal, no problem. IITJ One works the same whether you&apos;re on hostel Wi-Fi, in a basement, or
-            completely offline.
+            Open cached menus, schedules, and campus information after your first sync. Live updates and external
+            links need an internet connection.
           </p>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {available.map((item) => (
             <div key={item.label} className="flex items-center gap-3">
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-tint text-indigo">
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-tint text-accent">
                 <item.Icon className="h-4 w-4" aria-hidden />
               </span>
               <p className="text-sm font-medium text-ink">{item.label}</p>

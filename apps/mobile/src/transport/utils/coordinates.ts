@@ -4,12 +4,19 @@ export {
   BUS_STOPS,
   getNormalizedStopName,
   getStopCoords,
+  hasStopCoords,
   parseRouteStops,
   getRouteWaypoints,
   densifyRoute,
   type BusStop,
   type RouteWaypoint,
 } from '@iitj1/types';
+
+/** For stops without stored coordinates: let the maps app find "<stop>, Jodhpur" by name. */
+export function searchStopInMaps(stopName: string): void {
+  const query = encodeURIComponent(`${stopName}, Jodhpur`);
+  void Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${query}`);
+}
 
 export function openStopInMaps(stopName: string, lat: number, lng: number): void {
   const label = encodeURIComponent(stopName);

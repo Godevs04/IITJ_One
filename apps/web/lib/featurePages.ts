@@ -2,13 +2,9 @@ import type { FeatureKey } from './constants';
 import type { FaqItem } from '@/components/marketing/FaqAccordion';
 
 /**
- * One indexable landing page per thing students actually search for
- * ("IIT Jodhpur mess menu", "IITJ bus timings", ...). The homepage can only
- * rank for one topic; these pages let each search intent land on a page whose
- * title, H1, and copy answer that exact query.
- *
- * Copy describes what the app offers — it does not publish live campus data
- * (see memory: project_not_open_source.md). Keep claims to what the app ships.
+ * Campus guides answer distinct student questions, with links to official
+ * sources. Timetable data stays in the app. Dated reference information on
+ * these pages must be reviewed when the institute changes its guidance.
  */
 export interface FeaturePage {
   slug: string;
@@ -25,6 +21,14 @@ export interface FeaturePage {
   highlights: { title: string; body: string }[];
   faqs: FaqItem[];
   keywords: string[];
+  updatedAt?: string;
+  sections?: {
+    heading: string;
+    body: string;
+    items?: string[];
+    links?: { label: string; href: string }[];
+    table?: { caption: string; columns: string[]; rows: string[][] };
+  }[];
 }
 
 export const FEATURE_PAGES: FeaturePage[] = [
@@ -32,9 +36,9 @@ export const FEATURE_PAGES: FeaturePage[] = [
     slug: 'iit-jodhpur-mess-menu',
     feature: 'mess',
     label: 'Mess Menu',
-    title: 'IIT Jodhpur Mess Menu Today — IITJ Mess Menu App',
+    title: 'IITJ Mess Menu & Meal Timings | IITJ One',
     description:
-      "Check today's IIT Jodhpur mess menu — breakfast, lunch, snacks, and dinner with veg/non-veg tags. Free IITJ mess menu app that works offline.",
+      'Find IIT Jodhpur weekday and weekend mess timings, Veg Mess QR entry guidance, and how to check today’s menu in the IITJ One app.',
     h1: 'IIT Jodhpur mess menu, today and every day',
     intro:
       "IITJ One puts the IIT Jodhpur mess menu on your phone's home screen. Open the app and it lands on today's menu — breakfast, lunch, snacks, and dinner — so you never have to hunt through a group chat or a PDF to find out what's being served.",
@@ -49,11 +53,11 @@ export const FEATURE_PAGES: FeaturePage[] = [
       },
       {
         title: 'Monthly menus, kept current',
-        body: 'When the mess committee publishes a new monthly menu, the app picks it up automatically — no update needed.',
+        body: 'Sync the app to download the latest menu published by the IITJ One team. Saved menus remain available offline.',
       },
       {
-        title: 'Mess QR on your phone',
-        body: 'Save your mess QR code inside the app for quick access at the counter. It stays on your device and is never uploaded.',
+        title: 'Veg Mess entry with FretBox',
+        body: 'Since 1 November 2026, students mapped to Saroja Caterers’ Veg Mess scan the dining hall QR in FretBox Resident during meal hours.',
       },
     ],
     faqs: [
@@ -69,18 +73,54 @@ export const FEATURE_PAGES: FeaturePage[] = [
       },
       {
         question: 'Is the menu updated when the monthly mess menu changes?',
-        answer: 'Yes. New monthly menus are published to the app as soon as they are released, without an app update.',
+        answer: 'Sync IITJ One to get the latest menu published by the team. A newly published menu does not require an app update.',
       },
     ],
     keywords: ['IIT Jodhpur mess menu', 'IITJ mess menu', 'IITJ mess menu today', 'IIT Jodhpur mess', 'IITJ mess QR'],
+    updatedAt: '2026-11-05',
+    sections: [
+      {
+        heading: 'IIT Jodhpur mess timings',
+        body: 'Use these meal windows to plan breakfast, lunch, snacks, and dinner. All times are in Indian Standard Time. These reference hours reflect the campus schedule shared for November 2026. Check mess notices for temporary changes.',
+        table: {
+          caption: 'Weekday and weekend mess serving hours',
+          columns: ['Meal', 'Monday to Friday', 'Saturday and Sunday'],
+          rows: [
+            ['Breakfast', '7:30 AM – 10:00 AM', '8:00 AM – 10:30 AM'],
+            ['Lunch', '12:15 PM – 2:45 PM', '12:30 PM – 3:00 PM'],
+            ['Snacks', '5:30 PM – 6:30 PM', '5:30 PM – 6:30 PM'],
+            ['Dinner', '7:45 PM – 10:30 PM', '7:45 PM – 10:30 PM'],
+          ],
+        },
+      },
+      {
+        heading: 'How to check today’s IITJ menu',
+        body: 'Open the Menu tab in IITJ One, choose Veg or Non-Veg, and select the day you need. The meal cards show the dishes and serving windows. Pull down to sync before relying on a recently changed menu.',
+        links: [{ label: 'Download IITJ One for Android or iPhone', href: '/#download' }],
+      },
+      {
+        heading: 'Saroja Caterers and FretBox Resident QR entry',
+        body: 'The Mess Office announcement of 30 October 2026 introduced a shared dining hall QR for Veg Mess from 1 November. Access is enabled for students mapped to Veg Mess for that month.',
+        items: [
+          'Install FretBox Resident, select “My Hostel is using FretBox”, and sign in as a resident with your official IITJ email. Complete the puzzle and email OTP verification.',
+          'During meal hours, tap “Scan QR” in “Today’s Meal” and scan the code displayed at the mess outlet.',
+          'Show the digital meal token at the counter. Wait until you receive your meal before tapping “OK”, because the entry scan cannot be repeated.',
+          'If scanning or internet access fails, show your Institute ID card so the vendor can check your mapping. Contact the mess office for profile corrections.',
+        ],
+        links: [
+          { label: 'FretBox Resident on Google Play', href: 'https://play.google.com/store/apps/details?id=com.binarydots.fretboxresident' },
+          { label: 'FretBox Resident on the App Store', href: 'https://apps.apple.com/in/app/fretbox-resident/id1505219868' },
+        ],
+      },
+    ],
   },
   {
     slug: 'iit-jodhpur-bus-timings',
     feature: 'transport',
     label: 'Bus Timings',
-    title: 'IIT Jodhpur Bus Timings — IITJ Bus & Shuttle Schedule',
+    title: 'IITJ Bus Timings & Jodhpur City Routes | IITJ One',
     description:
-      'IIT Jodhpur bus timings to Paota, MBM, and Jodhpur Railway Station, with a countdown to the next bus, plus transport alerts and e-rickshaw info.',
+      'Find IITJ bus schedules in the app, understand city and campus directions, and check the official IIT Jodhpur transport source for updates.',
     h1: 'IIT Jodhpur bus timings and campus transport',
     intro:
       'The IIT Jodhpur campus sits at Karwar, outside the city, so the institute bus is how most students get into Jodhpur. IITJ One shows every IITJ bus schedule with a countdown to the next departure, plus alerts when service changes.',
@@ -119,6 +159,28 @@ export const FEATURE_PAGES: FeaturePage[] = [
       },
     ],
     keywords: ['IIT Jodhpur bus timings', 'IITJ bus', 'IITJ bus schedule', 'IIT Jodhpur transport', 'IITJ e-rickshaw'],
+    updatedAt: '2026-11-05',
+    sections: [
+      {
+        heading: 'Finding your next IITJ bus',
+        body: 'Open the Bus Schedule screen in IITJ One. Choose the relevant day’s schedule and check the route, departure stop, destination, and time. The next-bus indicator refers to the published timetable. Refresh before travelling to receive any published cancellations or temporary schedules.',
+        items: [
+          'To City means a journey leaving the IIT Jodhpur campus for Jodhpur city.',
+          'From City means a return journey towards the IITJ campus. Confirm the pickup stop for that particular trip.',
+          'Check the weekday or weekend schedule and any holiday changes before choosing a departure.',
+          'Bus routes may use stops such as Paota, MBM, and Jodhpur Railway Station. Read the individual route rather than assuming every bus serves every stop.',
+        ],
+      },
+      {
+        heading: 'Official IIT Jodhpur transport updates',
+        body: 'The Office of Security publishes institute transport information. Confirm time-sensitive travel details against the official schedule, especially on holidays or when a cancellation has been announced.',
+        links: [
+          { label: 'IIT Jodhpur Office of Security transport page', href: 'https://www.iitj.ac.in/office-of-security-transports/en/transport' },
+          { label: 'Find campus places and stops', href: '/iit-jodhpur-campus-directory' },
+          { label: 'On-campus e-rickshaw information', href: '/iit-jodhpur-e-rickshaw' },
+        ],
+      },
+    ],
   },
   {
     slug: 'iit-jodhpur-academic-calendar',
@@ -266,7 +328,7 @@ export const FEATURE_PAGES: FeaturePage[] = [
   },
   {
     slug: 'iit-jodhpur-campus-directory',
-    feature: null,
+    feature: 'campus-directory',
     label: 'Campus Directory & Map',
     title: 'IIT Jodhpur Campus Map & Directory — Departments, Clubs',
     description:
@@ -332,6 +394,152 @@ export const FEATURE_PAGES: FeaturePage[] = [
       },
     ],
     keywords: ['IIT Jodhpur ERP', 'IITJ ERP', 'IITJ portal', 'IIT Jodhpur library', 'IITJ links'],
+  },
+  {
+    slug: 'iit-jodhpur-e-rickshaw',
+    feature: 'e-rickshaw',
+    label: 'E-rickshaw',
+    title: 'IIT Jodhpur E-rickshaw — Contacts & Fares | IITJ One',
+    description: 'Find campus e-rickshaw contacts, published fares, and service information in IITJ One.',
+    h1: 'Getting around campus by e-rickshaw',
+    intro: 'Find driver contacts and published fare information in the E-rickshaw screen of IITJ One. Contact a driver directly to check availability before travelling.',
+    highlights: [
+      { title: 'Driver contacts', body: 'Browse the published driver list and call directly from the app.' },
+      { title: 'Fare information', body: 'Check the published fare structure and service details before your trip.' },
+    ],
+    faqs: [{ question: 'Can I book an e-rickshaw in the app?', answer: 'The app provides driver contacts and service information. Call a driver directly to arrange a ride and confirm availability.' }],
+    keywords: ['IITJ e-rickshaw', 'IIT Jodhpur campus transport'],
+  },
+  {
+    slug: 'iit-jodhpur-notices',
+    feature: 'notices',
+    label: 'Campus Notices',
+    title: 'IIT Jodhpur Campus Notices & Updates | IITJ One',
+    description: 'Keep campus notices and academic announcements together in the IITJ One app.',
+    h1: 'Campus notices, easier to find',
+    intro: 'Browse published campus notices in one feed. Open the Notices screen in IITJ One to read announcements and follow links to their source.',
+    highlights: [
+      { title: 'One notice feed', body: 'Read campus announcements without hunting through multiple conversations.' },
+      { title: 'Topic preferences', body: 'Choose the notice topics you want to see from the app settings.' },
+    ],
+    faqs: [{ question: 'Where can I read campus notices?', answer: 'Open the Notices screen in IITJ One. Connect to the internet to sync the latest published updates.' }],
+    keywords: ['IITJ notices', 'IIT Jodhpur announcements'],
+  },
+  {
+    slug: 'iit-jodhpur-timetable',
+    feature: 'timetable',
+    label: 'Class Timetable',
+    title: 'IITJ Class Timetable Planner | IITJ One',
+    description: 'Build your weekly class timetable in IITJ One. Personal class details stay on your device.',
+    h1: 'Your week of classes, in one place',
+    intro: 'Add your classes to a personal timetable inside IITJ One. Keep your schedule close to your academic calendar and the campus information you use each day.',
+    highlights: [
+      { title: 'Your class schedule', body: 'Add and manage your weekly classes from the Timetable screen.' },
+      { title: 'Stored on your device', body: 'Your personal timetable does not require an account and stays on your phone.' },
+    ],
+    faqs: [{ question: 'Does this automatically import my institute timetable?', answer: 'The timetable is a personal planner. Add your own classes in the app and update them when your schedule changes.' }],
+    keywords: ['IITJ timetable', 'IIT Jodhpur class schedule'],
+  },
+  {
+    slug: 'iit-jodhpur-notes',
+    feature: 'notes',
+    label: 'Personal Notes',
+    title: 'Personal Campus Notes | IITJ One',
+    description: 'Keep personal notes on your phone in IITJ One, with no account required.',
+    h1: 'A little space for your notes',
+    intro: 'Save the things you need to remember in the Notes screen, right alongside your everyday campus essentials.',
+    highlights: [
+      { title: 'Quick to find', body: 'Create and edit notes from the app’s Notes screen.' },
+      { title: 'Private to your device', body: 'Notes stay on your phone and are not uploaded to the campus service.' },
+    ],
+    faqs: [{ question: 'Will my notes sync to another phone?', answer: 'Notes are stored locally on your device. They are not synced through an IITJ One account.' }],
+    keywords: ['IITJ One notes', 'campus notes app'],
+  },
+  {
+    slug: 'iit-jodhpur',
+    feature: null,
+    label: 'Campus Guide',
+    title: 'IIT Jodhpur Campus Guide, Departments & Services | IITJ One',
+    description: 'Explore IIT Jodhpur (IITJ) campus details, departments, mess menu guides, bus timings, and student services with links to official sources.',
+    h1: 'IIT Jodhpur campus guide',
+    intro: 'Indian Institute of Technology Jodhpur, commonly called IIT Jodhpur or IITJ, is in Karwar, Jodhpur, Rajasthan. This student guide connects the campus information you need each day with the institute’s official sources.',
+    updatedAt: '2026-11-05',
+    highlights: [
+      { title: 'Meals and travel', body: 'Use the mess and transport guides to find meal windows, understand city bus directions, and reach the relevant schedules in the app.' },
+      { title: 'People and places', body: 'Find the department directory, faculty links, campus map, and offices that help with everyday student requests.' },
+    ],
+    sections: [
+      {
+        heading: 'Where is IIT Jodhpur?',
+        body: 'The institute’s contact address is NH 62, Nagaur Road, Karwar 342030, Jodhpur District, Rajasthan, India. For a campus visit, confirm the building or office you need as well as your arrival point.',
+        links: [
+          { label: 'Official IIT Jodhpur contact and address', href: 'https://www.iitj.ac.in/main/en/contact' },
+          { label: 'IITJ campus map and directory guide', href: '/iit-jodhpur-campus-directory' },
+        ],
+      },
+      {
+        heading: 'Departments and academic information',
+        body: 'Start with the department directory to find academic units and faculty pages. For programmes, admissions, fees, or academic rules, use the institute’s official website and the appropriate department page.',
+        links: [
+          { label: 'Explore IIT Jodhpur departments', href: '/iit-jodhpur-departments' },
+          { label: 'Official Indian Institute of Technology Jodhpur website', href: 'https://www.iitj.ac.in/' },
+          { label: 'Academic calendar and holidays', href: '/iit-jodhpur-academic-calendar' },
+        ],
+      },
+      {
+        heading: 'Everyday student services',
+        body: 'Use these guides for the tasks students often need during their first weeks on campus and throughout the semester.',
+        links: [
+          { label: 'IITJ mess menu, serving times, and Veg Mess entry', href: '/iit-jodhpur-mess-menu' },
+          { label: 'IITJ bus timings and city routes', href: '/iit-jodhpur-bus-timings' },
+          { label: 'Campus Wi-Fi setup', href: '/iit-jodhpur-wifi' },
+          { label: 'Hostel laundry schedule', href: '/iit-jodhpur-laundry-schedule' },
+          { label: 'Health Center contacts and doctor schedules', href: '/iit-jodhpur-health-center' },
+          { label: 'Official portals and campus links', href: '/iit-jodhpur-portals' },
+        ],
+      },
+    ],
+    faqs: [
+      { question: 'Are IITJ and IIT Jodhpur the same institute?', answer: 'Yes. IITJ is the common abbreviation for Indian Institute of Technology Jodhpur, also called IIT Jodhpur.' },
+      { question: 'Is IITJ One the official institute website?', answer: 'IITJ One is an independent student-built campus companion. The institute’s official website is iitj.ac.in.' },
+      { question: 'Where can I find IIT Jodhpur departments and faculty?', answer: 'The departments guide links to the institute’s department directory. Each official department page provides its academic and faculty information.' },
+    ],
+    keywords: ['IITJ', 'IIT Jodhpur', 'Indian Institute of Technology Jodhpur', 'Jodhpur IIT', 'IITJ campus details', 'IITJ student services'],
+  },
+  {
+    slug: 'iit-jodhpur-departments',
+    feature: null,
+    label: 'Departments',
+    title: 'IIT Jodhpur Departments & Faculty Directory | IITJ One',
+    description: 'Browse IIT Jodhpur department names and find official academic and faculty pages, with guidance on using the IITJ campus directory.',
+    h1: 'IIT Jodhpur departments and faculty',
+    intro: 'Find the academic department you need, then use its official page for faculty profiles, research areas, and programme information. The institute maintains the current department directory on its website.',
+    updatedAt: '2026-11-05',
+    highlights: [
+      { title: 'Browse in the app', body: 'The IITJ One campus directory brings departments and people into a searchable view on your phone.' },
+      { title: 'Check official details', body: 'Use the department’s institute page for current faculty roles, research groups, academic programmes, and contact details.' },
+    ],
+    sections: [
+      {
+        heading: 'IITJ department list',
+        body: 'The institute’s department directory lists the following academic departments. Names were checked on 5 November 2026. Schools, centres, and interdisciplinary programmes may be listed separately by the institute.',
+        items: ['Aerospace Engineering', 'Bioscience & Bioengineering', 'Chemical Engineering', 'Chemistry', 'Civil and Infrastructure Engineering', 'Computer Science & Engineering', 'Economics', 'Electrical Engineering', 'Electronics Engineering', 'Energy and Automotive Engineering', 'Environmental and Sustainability Engineering', 'Materials Engineering', 'Mathematics', 'Mechanical Engineering', 'Physics'],
+        links: [{ label: 'Open the official IIT Jodhpur department directory', href: 'https://www.iitj.ac.in/m/Index/main-departments?lg=en' }],
+      },
+      {
+        heading: 'Finding a faculty member or department office',
+        body: 'Choose the department first, then follow its faculty or people section. Match the person’s name and research area, and use the contact information on the official profile. In IITJ One, the campus directory also helps you browse departments and associated people.',
+        links: [
+          { label: 'Campus directory and map', href: '/iit-jodhpur-campus-directory' },
+          { label: 'Institute contact information', href: 'https://www.iitj.ac.in/main/en/contact' },
+        ],
+      },
+    ],
+    faqs: [
+      { question: 'Where can I find the IITJ Computer Science department?', answer: 'Open the official IIT Jodhpur department directory and select Computer Science & Engineering. The department page provides its faculty, research, and academic information.' },
+      { question: 'Where should I check IIT Jodhpur admission requirements?', answer: 'Use the institute’s official admissions and academic programme pages for eligibility, deadlines, and requirements for the specific programme you are considering.' },
+    ],
+    keywords: ['IIT Jodhpur departments', 'IITJ departments', 'IITJ faculty', 'IIT Jodhpur CSE', 'IIT Jodhpur academic departments'],
   },
 ];
 

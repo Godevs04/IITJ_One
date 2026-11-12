@@ -29,51 +29,51 @@ const QUICK: {
     href: '/menu',
     title: 'Mess Menu',
     desc: 'Edit day × meal, import CSV, publish.',
-    accent: 'from-[#1d3f5e] to-[#345a7a]',
-    glow: 'group-hover:shadow-[0_20px_40px_-18px_rgba(29,63,94,0.45)]',
+    accent: 'from-[#3da9d8] to-[#1a78a3]',
+    glow: 'group-hover:shadow-[0_20px_40px_-18px_rgba(61,169,216,0.45)]',
     Icon: IconMenu,
   },
   {
     href: '/notices',
     title: 'Notices',
     desc: 'Create campus announcements.',
-    accent: 'from-[#c68642] to-[#e0a45e]',
-    glow: 'group-hover:shadow-[0_20px_40px_-18px_rgba(198,134,66,0.45)]',
+    accent: 'from-[#1a78a3] to-[#11303f]',
+    glow: 'group-hover:shadow-[0_20px_40px_-18px_rgba(26,120,163,0.45)]',
     Icon: IconNotices,
   },
   {
     href: '/transport',
     title: 'Transport',
     desc: 'Update shuttle routes & times.',
-    accent: 'from-[#e2703a] to-[#f08a58]',
-    glow: 'group-hover:shadow-[0_20px_40px_-18px_rgba(226,112,58,0.4)]',
+    accent: 'from-[#11303f] to-[#01050d]',
+    glow: 'group-hover:shadow-[0_20px_40px_-18px_rgba(1,5,13,0.4)]',
     Icon: IconTransport,
   },
   {
     href: '/suggestions',
     title: 'Suggestions',
     desc: 'Read anonymous student inbox.',
-    accent: 'from-[#6e8b74] to-[#8aa890]',
-    glow: 'group-hover:shadow-[0_20px_40px_-18px_rgba(110,139,116,0.45)]',
+    accent: 'from-[#6b6a00] to-[#11303f]',
+    glow: 'group-hover:shadow-[0_20px_40px_-18px_rgba(107,106,0,0.4)]',
     Icon: IconInbox,
   },
 ];
 
 const VERSION_META: Record<string, { label: string; hue: string }> = {
-  menu: { label: 'Menu', hue: 'bg-[#1d3f5e]' },
-  notices: { label: 'Notices', hue: 'bg-[#c68642]' },
-  transport: { label: 'Transport', hue: 'bg-[#e2703a]' },
+  menu: { label: 'Menu', hue: 'bg-[#1a78a3]' },
+  notices: { label: 'Notices', hue: 'bg-[#6b6a00]' },
+  transport: { label: 'Transport', hue: 'bg-[#c2410c]' },
   calendar: { label: 'Calendar', hue: 'bg-[#6e8b74]' },
-  portals: { label: 'Portals', hue: 'bg-[#1d3f5e]' },
-  apps: { label: 'Apps', hue: 'bg-[#345a7a]' },
-  map: { label: 'Map', hue: 'bg-[#c68642]' },
+  portals: { label: 'Portals', hue: 'bg-[#1a78a3]' },
+  apps: { label: 'Apps', hue: 'bg-[#3da9d8]' },
+  map: { label: 'Map', hue: 'bg-[#6b6a00]' },
   services: { label: 'Services', hue: 'bg-[#6e8b74]' },
   healthCenter: { label: 'Health Center', hue: 'bg-[#b23a34]' },
-  about: { label: 'About', hue: 'bg-[#1d3f5e]' },
+  about: { label: 'About', hue: 'bg-[#1a78a3]' },
   laundry: { label: 'Laundry', hue: 'bg-[#6e8b74]' },
-  wifi: { label: 'Wi-Fi', hue: 'bg-[#345a7a]' },
-  erickshaw: { label: 'E-Rickshaw', hue: 'bg-[#e2703a]' },
-  mealWindows: { label: 'Meal windows', hue: 'bg-[#c68642]' },
+  wifi: { label: 'Wi-Fi', hue: 'bg-[#3da9d8]' },
+  erickshaw: { label: 'E-Rickshaw', hue: 'bg-[#c2410c]' },
+  mealWindows: { label: 'Meal windows', hue: 'bg-[#6b6a00]' },
   messMenuVeg: { label: 'Mess Menu (Veg)', hue: 'bg-[#6e8b74]' },
   messMenuNonVeg: { label: 'Mess Menu (Non-Veg)', hue: 'bg-[#b23a34]' },
 };
@@ -131,7 +131,7 @@ export default function DashboardPage() {
 
       {/* Hero */}
       <section
-        className="dash-reveal relative overflow-hidden rounded-[1.35rem] border border-white/60 bg-gradient-to-br from-indigo-deep via-[#123652] to-[#1d3f5e] p-5 text-sand shadow-glow sm:rounded-[1.75rem] sm:p-8"
+        className="dash-reveal relative overflow-hidden rounded-[1.35rem] border border-white/60 bg-gradient-to-br from-[#01050d] via-[#0b1b2a] to-[#11303f] p-5 text-sand shadow-glow sm:rounded-[1.75rem] sm:p-8"
         style={{ animationDelay: '0ms' }}
       >
         <div
@@ -139,7 +139,7 @@ export default function DashboardPage() {
           className="pointer-events-none absolute inset-0 opacity-40"
           style={{
             backgroundImage:
-              'radial-gradient(circle at 20% 20%, rgba(198,134,66,0.35), transparent 42%), radial-gradient(circle at 90% 10%, rgba(255,255,255,0.12), transparent 35%)',
+              'radial-gradient(circle at 20% 20%, rgba(61,169,216,0.35), transparent 42%), radial-gradient(circle at 90% 10%, rgba(255,255,255,0.12), transparent 35%)',
           }}
         />
         <div
@@ -148,13 +148,13 @@ export default function DashboardPage() {
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute -bottom-2 -right-2 h-32 w-32 rounded-full border border-sandstone/30"
+          className="pointer-events-none absolute -bottom-2 -right-2 h-32 w-32 rounded-full border border-primary/30"
         />
 
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-sand/90 backdrop-blur">
-              <IconSpark className="h-3.5 w-3.5 text-sandstone" />
+              <IconSpark className="h-3.5 w-3.5 text-highlight" />
               Campus console
             </div>
             <h1 className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-3xl lg:text-4xl">
@@ -310,7 +310,7 @@ export default function DashboardPage() {
 
           <Link
             href="/suggestions"
-            className="group relative mt-auto inline-flex w-fit items-center gap-2 rounded-full bg-indigo px-4 py-2.5 text-sm font-medium text-white shadow-soft transition hover:bg-indigo-deep hover:shadow-elevated"
+            className="group relative mt-auto inline-flex w-fit items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-on-primary shadow-soft transition hover:brightness-95 hover:shadow-elevated"
           >
             View inbox
             <IconArrow className="h-4 w-4 transition group-hover:translate-x-0.5" />

@@ -26,6 +26,7 @@ export interface NoticeDoc {
   expiryDate: string;
   publishedAt?: string;
   deletedAt?: string | null;
+  metadata?: Record<string, unknown>;
 }
 
 export interface TransportTrip {
@@ -39,6 +40,11 @@ export interface TransportTrip {
    * authoritative source of truth for direction. Prefer this over guessing
    * from `to`/`from` text, which varies in how campus is labelled. */
   direction?: 'departure' | 'arrival';
+  /** Rider-facing remark from the timetable, e.g. "MedTech Course (Timing may change)". */
+  note?: string;
+  /** Set only on days with an active schedule exception: 'modified' (replacement timetable) or
+   *  'cancelled' (this regular trip does not run today). Absent = normal service. */
+  serviceStatus?: import('@iitj1/types').TripServiceStatus;
 }
 
 export interface TransportRouteGroup {
@@ -82,6 +88,10 @@ export interface TransportScheduleException {
   effectiveUntil: string;
   priority: ScheduleExceptionPriority;
   affectedBuses: string[];
+  /** 'replace' (default; older docs have no mode): `trips` is the whole day's timetable.
+   *  'cancel': the regular timetable runs except the `cancelledTrips`. */
+  mode?: import('@iitj1/types').ScheduleExceptionMode;
+  cancelledTrips?: import('@iitj1/types').CancelledTripRef[];
   trips: TransportTrip[];
   showBanner: boolean;
   attachments: ScheduleExceptionAttachment[];
@@ -98,18 +108,12 @@ export interface ActiveScheduleExceptionResponse {
   schedule: TransportScheduleException | null;
 }
 
-export interface CalendarEvent {
-  title: string;
-  type: string;
-  startDate: string;
-  endDate: string;
-}
-
-export interface CalendarDoc {
-  campusId: string;
-  semester: string;
-  events: CalendarEvent[];
-}
+/**
+ * Normalized academic calendar (packages/types/src/academicCalendar.ts). Legacy fields stay required, so
+ * older cached documents still type-check. The public API never sends `reviewQueue` (unresolved conflicts).
+ */
+export type CalendarEvent = import('@iitj1/types').AcademicEvent;
+export type CalendarDoc = Omit<import('@iitj1/types').AcademicCalendarDoc, 'reviewQueue'>;
 
 export interface PortalLink {
   name: string;

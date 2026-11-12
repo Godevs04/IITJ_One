@@ -26,7 +26,8 @@ export type ModuleName =
   | 'campusDirectoryPeople'
   | 'campusDirectoryOrganizations'
   | 'campusDirectoryRoles'
-  | 'campaigns';
+  | 'campaigns'
+  | 'messPricing';
 
 export interface MetaVersions {
   menu: number;
@@ -55,6 +56,7 @@ export interface MetaVersions {
   campusDirectoryOrganizations: number;
   campusDirectoryRoles: number;
   campaigns: number;
+  messPricing: number;
 }
 
 export type {
@@ -90,6 +92,27 @@ export interface MenuDoc {
 
 import type { ObjectId } from 'mongodb';
 
+export interface NoticeMetadata {
+  type?: string;
+  route?: string;
+  startTime?: string;
+  direction?: 'departure' | 'arrival';
+  date?: string;
+  origin?: string;
+  destination?: string;
+  reason?: string | null;
+  scheduleExceptionId?: string;
+  messUpdateId?: string;
+  meal?: string;
+  diet?: string;
+  updateType?: string;
+  originalItem?: string;
+  replacementItem?: string;
+  specialItems?: string[];
+  newTiming?: string;
+  [key: string]: unknown;
+}
+
 export interface NoticeDoc {
   _id?: string | ObjectId;
   campusId: string;
@@ -104,6 +127,7 @@ export interface NoticeDoc {
   publishedAt: Date;
   /** Soft-delete marker — omitted/null means active. */
   deletedAt?: Date | null;
+  metadata?: NoticeMetadata;
 }
 
 export interface TransportTrip {
@@ -114,6 +138,7 @@ export interface TransportTrip {
   to: string;
   route: string;
   direction?: 'departure' | 'arrival';
+  note?: string;
 }
 
 export interface TransportRouteGroup {
@@ -138,6 +163,10 @@ export interface TransportDoc {
 }
 
 export type { ScheduleExceptionPriority, ScheduleExceptionSource, ScheduleExceptionAttachment } from '@iitj1/types';
+export type { MessPricingConfig, MessPricingDoc, MessPricingInput, MessPricingUpdate } from '@iitj1/types';
+import type { CancelledTripRef, ScheduleExceptionMode } from '@iitj1/types';
+export type { CancelledTripRef, ScheduleExceptionMode } from '@iitj1/types';
+export type { AiCommandRecord, AiCommandStatus, AiSessionRecord } from '@iitj1/types';
 
 export interface TransportScheduleExceptionDoc {
   _id?: string | ObjectId;
@@ -150,9 +179,17 @@ export interface TransportScheduleExceptionDoc {
   priority: 'low' | 'normal' | 'high' | 'critical';
   affectedBuses: string[];
   trips: TransportTrip[];
+  /** 'replace' (default; older documents have no mode): `trips` is the whole schedule for the window.
+   *  'cancel': the regular timetable runs minus `cancelledTrips` (exact bus + start time + direction). */
+  mode?: ScheduleExceptionMode;
+  cancelledTrips?: CancelledTripRef[];
   showBanner: boolean;
+  /** Stored but not acted on — pending product approval (see docs). */
   sendPush: boolean;
   createNotice: boolean;
+  noticeId?: string;
+  pushSent?: boolean;
+  pushSentAt?: Date;
   source: {
     type: 'manual' | 'email' | 'ai_import' | 'csv' | 'api';
     reference?: string;
@@ -181,18 +218,9 @@ export interface TransportScheduleExceptionRevisionDoc {
   publishedBy: string;
 }
 
-export interface CalendarEvent {
-  title: string;
-  type: string;
-  startDate: string;
-  endDate: string;
-}
-
-export interface CalendarDoc {
-  campusId: string;
-  semester: string;
-  events: CalendarEvent[];
-}
+/** Normalized academic calendar (packages/types/src/academicCalendar.ts) — legacy fields stay required. */
+export type CalendarEvent = import('@iitj1/types').AcademicEvent;
+export type CalendarDoc = import('@iitj1/types').AcademicCalendarDoc;
 
 export interface PortalLink {
   name: string;
@@ -320,6 +348,7 @@ export interface AdminDoc {
 }
 
 export interface AuditLogDoc {
+  _id?: string | ObjectId;
   adminEmail: string;
   action: string;
   module: string;
@@ -522,3 +551,6 @@ export interface BusStateDoc {
   status: TripOperationalState;
   lastUpdated: Date;
 }
+
+export type { TemporaryMessUpdateDoc } from '@iitj1/types';
+

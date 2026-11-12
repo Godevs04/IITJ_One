@@ -7,36 +7,17 @@ import {
   getMealWindows,
 } from '../store';
 import { DEFAULT_MEAL_WINDOWS, DEFAULT_WEEKEND_MEAL_WINDOWS, type MealKey, type MealWindowsDoc } from '@iitj1/types';
+import { getIstDayName, getIstMinutesOfDay, parseTimeToMinutes, type DayName } from '../utils/istTime';
 
-function todayDayName(): string {
-  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  return days[new Date().getDay()];
-}
-
-function parseHourMinute(time: string): number {
-  const clean = time.trim().toUpperCase();
-  const isPM = clean.includes('PM');
-  const isAM = clean.includes('AM');
-  const parts = clean.replace(/[AP]M/, '').trim().split(':');
-  let h = parseInt(parts[0], 10) || 0;
-  const m = parseInt(parts[1], 10) || 0;
-  if (isPM && h < 12) h += 12;
-  else if (isAM && h === 12) h = 0;
-  return h * 60 + m;
-}
-
-function currentMeal(mealWindowsDoc?: MealWindowsDoc | null): MealKey {
-  const now = new Date();
-  const day = now.getDay();
-  const isWeekend = day === 0 || day === 6;
+function currentMeal(day: DayName, mins: number, mealWindowsDoc?: MealWindowsDoc | null): MealKey {
+  const isWeekend = day === 'saturday' || day === 'sunday';
   const windows = isWeekend
     ? (mealWindowsDoc?.weekendWindows ?? DEFAULT_WEEKEND_MEAL_WINDOWS)
     : (mealWindowsDoc?.windows ?? DEFAULT_MEAL_WINDOWS);
 
-  const mins = now.getHours() * 60 + now.getMinutes();
-  if (mins < parseHourMinute(windows.breakfast.end)) return 'breakfast';
-  if (mins < parseHourMinute(windows.lunch.end)) return 'lunch';
-  if (mins < parseHourMinute(windows.snacks.end)) return 'snacks';
+  if (mins < parseTimeToMinutes(windows.breakfast.end)) return 'breakfast';
+  if (mins < parseTimeToMinutes(windows.lunch.end)) return 'lunch';
+  if (mins < parseTimeToMinutes(windows.snacks.end)) return 'snacks';
   return 'dinner';
 }
 
@@ -50,9 +31,10 @@ export async function buildHomeBundle(campusId: string) {
     getMealWindows(campusId),
   ]);
 
-  const dayName = todayDayName();
+  const now = new Date();
+  const dayName = getIstDayName(now);
   const todayMenu = menu?.days.find((d) => d.dayName === dayName) ?? null;
-  const meal = currentMeal(mealWindows);
+  const meal = currentMeal(dayName, getIstMinutesOfDay(now), mealWindows);
 
   const upcomingEvents =
     calendar?.events

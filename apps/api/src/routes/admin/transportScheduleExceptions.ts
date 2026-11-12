@@ -7,17 +7,19 @@ import {
 } from '../../models/schemas';
 import { AuthRequest } from '../../middleware/auth';
 import {
-  createTransportScheduleException,
-  updateTransportScheduleException,
-  deleteTransportScheduleException,
   listTransportScheduleExceptions,
   getTransportScheduleExceptionById,
-  publishTransportScheduleException,
-  unpublishTransportScheduleException,
-  archiveTransportScheduleException,
   listScheduleExceptionRevisions,
   ScheduleExceptionArchivedError,
 } from '../../store';
+import {
+  archiveScheduleException,
+  createScheduleException,
+  deleteScheduleException,
+  publishScheduleException,
+  unpublishScheduleException,
+  updateScheduleException,
+} from '../../services/transportExceptions';
 import { isDbConnected } from '../../db';
 import { isStrictObjectId } from '../../utils/objectId';
 import type { TransportScheduleExceptionDoc } from '../../types';
@@ -64,13 +66,7 @@ router.post(
   '/',
   validateBody(transportScheduleExceptionCreateSchema),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const body = req.body as TransportScheduleExceptionCreateInput;
-    const input = {
-      ...body,
-      effectiveFrom: new Date(body.effectiveFrom),
-      effectiveUntil: new Date(body.effectiveUntil),
-    };
-    const saved = await createTransportScheduleException(input, req.admin!.email);
+    const { value: saved } = await createScheduleException(req.body as TransportScheduleExceptionCreateInput, req.admin!.email);
     res.status(201).json(withStatus(saved));
   }),
 );
@@ -82,12 +78,8 @@ router.put(
     const id = String(req.params.id);
     if (!assertScheduleExceptionId(id, res)) return;
 
-    const patch = { ...req.body } as Partial<TransportScheduleExceptionDoc>;
-    if (patch.effectiveFrom) patch.effectiveFrom = new Date(patch.effectiveFrom as unknown as string);
-    if (patch.effectiveUntil) patch.effectiveUntil = new Date(patch.effectiveUntil as unknown as string);
-
     try {
-      const saved = await updateTransportScheduleException(id, patch, req.admin!.email);
+      const { value: saved } = await updateScheduleException(id, req.body as Partial<TransportScheduleExceptionDoc>, req.admin!.email);
       if (!saved) {
         res.status(404).json({ error: 'Schedule exception not found' });
         return;
@@ -109,7 +101,7 @@ router.delete(
     const id = String(req.params.id);
     if (!assertScheduleExceptionId(id, res)) return;
 
-    const ok = await deleteTransportScheduleException(id, req.admin!.email);
+    const { value: ok } = await deleteScheduleException(id, req.admin!.email);
     if (!ok) {
       res.status(404).json({ error: 'Schedule exception not found' });
       return;
@@ -124,7 +116,7 @@ router.post(
     const id = String(req.params.id);
     if (!assertScheduleExceptionId(id, res)) return;
 
-    const result = await publishTransportScheduleException(id, req.admin!.email);
+    const { value: result } = await publishScheduleException(id, req.admin!.email);
     if (result.ok) {
       res.json(withStatus(result.doc));
       return;
@@ -156,7 +148,7 @@ router.post(
     const id = String(req.params.id);
     if (!assertScheduleExceptionId(id, res)) return;
 
-    const result = await unpublishTransportScheduleException(id, req.admin!.email);
+    const { value: result } = await unpublishScheduleException(id, req.admin!.email);
     if (result.ok) {
       res.json(withStatus(result.doc));
       return;
@@ -175,7 +167,7 @@ router.post(
     const id = String(req.params.id);
     if (!assertScheduleExceptionId(id, res)) return;
 
-    const saved = await archiveTransportScheduleException(id, req.admin!.email);
+    const { value: saved } = await archiveScheduleException(id, req.admin!.email);
     if (!saved) {
       res.status(404).json({ error: 'Schedule exception not found' });
       return;

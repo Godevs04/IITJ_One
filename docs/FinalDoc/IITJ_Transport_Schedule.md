@@ -1,94 +1,83 @@
 # IITJ Campus Transport Schedule
 
-**Source:** [IITJ Office of Security & Transports — Transport page](https://iitj.ac.in/office-of-security-transports/en/transport)
-**Last verified:** July 2026
-**Note:** Bus schedules are subject to change by the Institute. Verify against the official page before each semester, and update this document (and the app's `transport` collection) whenever a revision is announced.
+**Source:** IITJ_Bus_Schedule_App_Database.xlsx (Office of Security & Transports, effective November 2026)
+**Last verified:** November 2026
+**Note:** Bus schedules are subject to change by the Institute. Update this document whenever a revision is announced, then publish it with `npm run seed:transport -w @iitj1/api`.
+
+Saturdays now run the weekend timetable. The app's route groups keep their historical keys: `mon-sat` holds the Monday–Friday timetable and `sun-holiday` the Saturday, Sunday & Institute Holidays one.
+
+The Route column lists every stop after the origin, in order. Trips marked "(Ends at …)" go out to the named stop and finish at the stop in brackets.
 
 ---
 
-## Monday to Saturday
+## Monday to Friday
 
 ### Departure from Campus
 
-| Bus | Start Time | From (IITJ) | End Time | To | Route |
-|---|---|---|---|---|---|
-| B1 | 6:30 AM | Main Gate Parking | 7:40 AM | GPRA | Paota → Railway Station → GPRA |
-| B2 | 9:15 AM | Old Mess | 10:20 AM | AIIMS Jodhpur* | Paota → MBM → AIIMS |
-| B1 | 10:30 AM | Old Mess | 11:30 AM | MBM | Paota → Railway Station → MBM |
-| B2 | 4:15 PM | Old Mess | 5:15 PM | AIIMS Jodhpur | Paota → Railway Station |
-| B1 | 5:45 PM | Shamiyana | 6:45 PM | GPRA | Paota → MBM → Riktiya Bheruji Circle |
-| B2 | 6:45 PM | Old Mess | 7:45 PM | Jaljog Circle | Paota → MBM → Riktiya Bheruji Circle → MBM |
-
-*\*See Thursday revision below — this timing changes on Thursdays.*
-
-### Arrival at Campus
-
-| Bus | Start Time | From | End Time | To | Route |
-|---|---|---|---|---|---|
-| B1 | 7:50 AM | GPRA | 8:50 AM | IITJ | MBM → Paota → Mandore → IITJ |
-| B2 | 1:30 PM | Gate 4: AIIMS Jodhpur | 2:30 PM | IITJ | AIIMS Jodhpur → IITJ |
-| B1 | 2:30 PM | Gate 1: MBM | 3:30 PM | IITJ | MBM College → Paota → IITJ |
-| B2 | 5:20 PM | Gate 4: AIIMS Jodhpur | 6:20 PM | IITJ | Riktiya Bheruji Circle → MBM → Paota |
-| B1 | 9:00 PM | Gate 1: MBM | 10:00 PM | IITJ | MBM → Paota |
-| B2 | 9:00 PM | Gate 1: MBM | 10:00 PM | IITJ | MBM → Railway Station → Paota |
-
----
-
-## Sunday & Institute Holidays
-
-### Departure from Campus
-
-| Bus | Start Time | From (IITJ) | End Time | To | Route |
-|---|---|---|---|---|---|
-| B1 | 10:00 AM | Old Mess | 11:00 AM | MBM | Paota → Riktiya Bheruji Circle → MBM |
-| B2 | 11:30 AM | Old Mess | 12:30 PM | MBM | Paota → MBM |
-| B1 | 4:45 PM | Old Mess | 5:45 PM | MBM | Paota → MBM → Riktiya Bheruji Circle |
-| B2 | 5:45 PM | Old Mess | 6:45 PM | MBM | Paota → MBM → Riktiya Bheruji Circle |
-
-### Arrival at Campus
-
-| Bus | Start Time | From | End Time | To | Route |
-|---|---|---|---|---|---|
-| B1 | 1:00 PM | Gate 1: MBM | 2:00 PM | IITJ | MBM College → Paota → IITJ |
-| B2 | 4:00 PM | Gate 1: MBM | 5:00 PM | IITJ | MBM → Paota → Mandore → IITJ |
-| B1 | 9:00 PM | Gate 1: MBM | 10:00 PM | IITJ | MBM → Railway Station → Paota |
-| B2 | 9:00 PM | Gate 1: MBM | 10:00 PM | IITJ | — |
-
----
-
-## Special Notice — Thursday Revision
-
-> Due to the Surgical Device Development class scheduled at AIIMS every Thursday, the B2 departure previously at 9:15 AM is revised to **8:00 AM**, effective every Thursday from **05 February 2026** onward. The return time remains unchanged at 1:30 PM.
-
-### Revised Thursday Schedule (effective 05 Feb 2026, every Thursday)
-
-| Direction | Bus | Start Time | From | End Time | To | Route |
+| Bus | Start Time | From (IITJ) | End Time | To | Route | Note |
 |---|---|---|---|---|---|---|
-| Departure | B2 | 8:00 AM | Old Mess | 9:00 AM | AIIMS | Paota → AIIMS |
-| Arrival | B2 | 1:30 PM | AIIMS → MBM | 2:30 PM | IITJ | AIIMS → Paota → Mandore → IITJ |
+| B1 | 6:15 AM | Main Gate Parking | 7:30 AM | GPRA | 8 Mill → D Mart → Mandore → Krishi Mandi Mandore → Mahamandir → Paota Zudio → Railway Station Back Gate → Bhati Circle → MBM → Riktiya Bheru Ji → Bhagat ki Kothi Railway Station → Krishi Mandi Basni → Madhuban → Jhalamand → GPRA |  |
+| B2 | 6:15 AM | Main Gate | 7:30 AM | Akhaliya Circle | 8 Mill → D Mart → Mandore → Krishi Mandi Mandore → Mahamandir → Paota Zudio → Circuit House → Bhati Circle → MBM → Riktiya Bheru Ji → Jaljog Circle → 12 Road Circle → Bombay Motor Circle → Akhaliya Circle |  |
+| B1 | 9:15 AM | Old Mess | 10:20 AM | AIIMS Jodhpur | 8 Mill → D Mart → Mandore → Krishi Mandi Mandore → Mahamandir → Paota Zudio → Circuit House → Bhati Circle → MBM → Riktiya Bheru Ji → Bhagat ki Kothi Railway Station → Krishi Mandi Turn → AIIMS | MedTech Course (Timing may change) |
+| B2 | 10:30 AM | Old Mess | 11:45 AM | MBM | 8 Mill → D Mart → Mandore → Krishi Mandi Mandore → Mahamandir → Paota Zudio → Railway Station Back Gate → Bhati Circle → MBM |  |
+| B3 | 12:00 PM | Old Mess | 1:00 PM | Airport Circle (Ends at MBM) | 8 Mill → D Mart → Mandore → Krishi Mandi Mandore → Mahamandir → Paota Zudio → Circuit House → Bhati Circle → MBM → Paanch Batti Circle → Airport Circle → Paanch Batti Circle → MBM |  |
+| B1 | 3:15 PM | Old Mess | 3:46 PM | Paota | 8 Mill → D Mart → Mandore → Krishi Mandi Mandore → Mahamandir → Paota Zudio |  |
+| B3 | 4:15 PM | Old Mess | 5:30 PM | AIIMS | 8 Mill → D Mart → Mandore → Krishi Mandi Mandore → Mahamandir → Paota Zudio → Circuit House → Bhati Circle → MBM → Riktiya Bheru Ji → Bhagat ki Kothi Railway Station → Krishi Mandi Basni Turn → AIIMS |  |
+| B1 | 5:45 PM | Shamiyana | 7:30 PM | GPRA (Ends at MBM) | 8 Mill → D Mart → Mandore → Krishi Mandi Mandore → Mahamandir → Paota Zudio → Circuit House → Bhati Circle → MBM → Riktiya Bheru Ji → Bhagat ki Kothi Railway Station → Krishi Mandi Basni → Madhuban → Jhalamand → GPRA → Jhalamand → Madhuban → Krishi Mandi → Bhagat ki Kothi Railway Station → Riktiya Bheru Circle → MBM |  |
+| B2 | 6:00 PM | Old Mess | 8:30 PM | Akhaliya Circle (Ends at MBM) | 8 Mill → D Mart → Mandore → Krishi Mandi Mandore → Mahamandir → Paota Zudio → Circuit House → Bhati Circle → MBM → Riktiya Bheru Ji → Jaljog Circle → 12 Road Circle → Bombay Motor Circle → Akhaliya Circle → Bombay Motor Circle → 12 Road Circle → Jaljog Circle → MBM |  |
+| B3 | 7:10 PM | Old Mess | 8:00 PM | MBM | 8 Mill → D Mart → Mandore → Krishi Mandi Mandore → Mahamandir → Paota Zudio → Bhati Circle → MBM |  |
+
+### Arrival at Campus
+
+| Bus | Start Time | From | End Time | To | Route | Note |
+|---|---|---|---|---|---|---|
+| B1 | 7:40 AM | GPRA | 8:55 AM | IITJ | Jhalamand → Madhuban → Krishi Mandi → Bhagat ki Kothi Railway Station → Riktiya Bheru Circle → MBM → Bhati Circle → Circuit House → Paota Zudio → Mahamandir → Krishi Mandi → Mandore → D Mart → 8 Mill → IITJ |  |
+| B2 | 7:45 AM | Akhaliya Circle | 8:55 AM | IITJ | Bombay Motor Circle → 12 Road Circle → Jaljog Circle → Riktiya Bheru Ji → MBM → Bhati Circle → Circuit House → Paota Zudio → Mahamandir → Krishi Mandi Mandore → Mandore → D Mart → 8 Mill → IITJ |  |
+| B2 | 12:15 PM | MBM | 1:30 PM | IITJ | Bhati Circle → Circuit House → Paota Zudio → Mahamandir → Krishi Mandi → Mandore → D Mart → 8 Mill → IITJ |  |
+| B3 | 1:15 PM | MBM | 2:15 PM | IITJ | Bhati Circle → Circuit House → Paota Zudio → Mahamandir → Krishi Mandi → Mandore → D Mart → 8 Mill → IITJ |  |
+| B1 | 1:30 PM | Gate 5: AIIMS Jodhpur | 2:35 PM | IITJ | Krishi Mandi Turn → Bhagat ki Kothi Railway Station → Riktiya Bheru Ji → MBM → Bhati Circle → Circuit House → Paota Zudio → Mahamandir → Mandore Krishi Mandi → Mandore → D Mart → 8 Mill → IITJ | MedTech Course (Timing may change) |
+| B1 | 4:00 PM | Paota | 5:00 PM | IITJ | Mahamandir → Mandore Krishi Mandi → Mandore → D Mart → 8 Mill → IITJ |  |
+| B3 | 5:45 PM | AIIMS | 7:00 PM | IITJ | Krishi Mandi Basni Turn → Bhagat ki Kothi Railway Station → Riktiya Bheru Ji → MBM → Bhati Circle → Circuit House → Paota Zudio → Mahamandir → Mandore Krishi Mandi → Mandore → D Mart → 8 Mill → IITJ |  |
+| B2 | 8:45 PM | MBM | 9:45 PM | IITJ | Bhati Circle → Railway Station Back Gate → Paota Zudio → Mahamandir → Krishi Mandi → Mandore → D Mart → 8 Mill → IITJ |  |
+| B3 | 9:00 PM | MBM | 10:00 PM | IITJ | Bhati Circle → Circuit House → Paota Zudio → Mahamandir → Krishi Mandi → Mandore → D Mart → 8 Mill → IITJ |  |
+| B1 | 9:15 PM | MBM | 10:00 PM | IITJ | Bhati Circle → Circuit House → Paota Zudio → Mahamandir → Krishi Mandi → Mandore → D Mart → 8 Mill → IITJ |  |
 
 ---
 
-## Key Locations Referenced
+## Saturday, Sunday & Institute Holidays
 
-| Location | Notes |
-|---|---|
-| Main Gate Parking | IITJ campus boundary stop |
-| Old Mess | IITJ campus boundary stop |
-| Shamiyana | IITJ campus boundary stop |
-| Paota | Common transit point on most routes |
-| Railway Station | Jodhpur Railway Station |
-| MBM | MBM Engineering College (Gate 1) |
-| AIIMS Jodhpur | AIIMS Jodhpur (Gate 4) |
-| GPRA | Destination stop |
-| Mandore | Transit point on some return routes |
-| Riktiya Bheruji Circle | Transit point on evening/holiday routes |
-| Jaljog Circle | Destination stop (evening route) |
+### Departure from Campus
+
+| Bus | Start Time | From (IITJ) | End Time | To | Route | Note |
+|---|---|---|---|---|---|---|
+| B1 | 6:30 AM | Old Mess | 7:30 AM | Airport Circle (Ends at MBM) | 8 Mill → D Mart → Mandore → Krishi Mandi Mandore → Mahamandir → Paota Zudio → Circuit House → Bhati Circle → MBM → Paanch Batti Circle → Airport Circle → Paanch Batti Circle → MBM |  |
+| B2 | 9:00 AM | Old Mess | 9:45 AM | MBM | 8 Mill → D Mart → Mandore → Krishi Mandi Mandore → Mahamandir → Paota Zudio → Paota → Bhati Circle → MBM |  |
+| B3 | 11:00 AM | Old Mess | 12:00 PM | MBM | 8 Mill → D Mart → Mandore → Krishi Mandi Mandore → Mahamandir → Paota Zudio → Bhati Circle → MBM |  |
+| B1 | 2:00 PM | Old Mess | 2:45 PM | MBM | 8 Mill → D Mart → Mandore → Krishi Mandi Mandore → Mahamandir → Paota Zudio → Circuit House → Bhati Circle → MBM |  |
+| B2 | 3:00 PM | Old Mess | 3:45 PM | MBM | 8 Mill → D Mart → Mandore → Krishi Mandi Mandore → Mahamandir → Paota Zudio → Paota → Bhati Circle → MBM |  |
+| B3 | 4:00 PM | Old Mess | 5:00 PM | MBM | 8 Mill → D Mart → Mandore → Krishi Mandi Mandore → Mahamandir → Paota Zudio → Railway Station Back Gate → Bhati Circle → MBM |  |
+| B1 | 4:30 PM | Old Mess | 5:20 PM | MBM | 8 Mill → D Mart → Mandore → Krishi Mandi Mandore → Mahamandir → Paota Zudio → Circuit House → Bhati Circle → MBM |  |
+| B2 | 5:00 PM | Old Mess | 5:45 PM | MBM | 8 Mill → D Mart → Mandore → Krishi Mandi Mandore → Mahamandir → Paota Zudio → Paota → Bhati Circle → MBM |  |
+| B3 | 6:15 PM | Old Mess | 7:00 PM | MBM | 8 Mill → D Mart → Mandore → Krishi Mandi Mandore → Mahamandir → Paota Zudio → Bhati Circle → MBM |  |
+
+### Arrival at Campus
+
+| Bus | Start Time | From | End Time | To | Route | Note |
+|---|---|---|---|---|---|---|
+| B1 | 8:00 AM | MBM | 9:00 AM | IITJ | Bhati Circle → Circuit House → Paota Zudio → Mahamandir → Krishi Mandi → Mandore → D Mart → 8 Mill → IITJ |  |
+| B2 | 10:15 AM | MBM | 11:00 AM | IITJ | Bhati Circle → Paota Zudio → Mahamandir → Krishi Mandi → Mandore → D Mart → 8 Mill → IITJ |  |
+| B3 | 12:45 PM | MBM | 1:45 PM | IITJ | Bhati Circle → Circuit House → Paota Zudio → Mahamandir → Krishi Mandi → Mandore → D Mart → 8 Mill → IITJ |  |
+| B1 | 2:50 PM | MBM | 3:40 PM | IITJ | Bhati Circle → Circuit House → Paota Zudio → Mahamandir → Krishi Mandi → Mandore → D Mart → 8 Mill → IITJ |  |
+| B2 | 4:00 PM | MBM | 4:45 PM | IITJ | Bhati Circle → Paota Zudio → Mahamandir → Krishi Mandi → Mandore → D Mart → 8 Mill → IITJ |  |
+| B3 | 5:05 PM | MBM | 6:05 PM | IITJ | Bhati Circle → Railway Station Back Gate → Paota Zudio → Mahamandir → Krishi Mandi → Mandore → D Mart → 8 Mill → IITJ |  |
+| B1 | 8:30 PM | MBM | 9:30 PM | IITJ | Bhati Circle → Circuit House → Paota Zudio → Mahamandir → Krishi Mandi → Mandore → D Mart → 8 Mill → IITJ |  |
+| B2 | 9:00 PM | MBM | 10:00 PM | IITJ | Bhati Circle → Paota Zudio → Mahamandir → Krishi Mandi → Mandore → D Mart → 8 Mill → IITJ |  |
+| B3 | 9:15 PM | MBM | 10:05 PM | IITJ | Bhati Circle → Circuit House → Paota Zudio → Mahamandir → Krishi Mandi → Mandore → D Mart → 8 Mill → IITJ |  |
 
 ---
 
 ## Notes for IITJ1 App Integration
 
-- Store this schedule in the `transport` collection as the `routes` array, with the Thursday exception stored separately (e.g., a `scheduleOverrides` field keyed by day-of-week) so admins can edit the exception without touching the regular six-day schedule.
-- Recommend surfacing a "Today's schedule" view in the app that automatically applies the Thursday override, rather than showing all schedules at once.
-- Flag this document for re-verification against the [official transport page](https://iitj.ac.in/office-of-security-transports/en/transport) before each semester and whenever students report a mismatch.
+- Stored in the `transport` collection as the `routes` array (four groups: weekday/weekend × departure/arrival). There is no Thursday override in this revision, so `scheduleOverrides` is empty.
+- One-off changes (cancellations, special days) go through dated schedule exceptions in the admin panel, not this file.
+- Stops without coordinates in `packages/types/src/busStops.ts` are shown in the app but skipped when drawing GPS route geometry.
