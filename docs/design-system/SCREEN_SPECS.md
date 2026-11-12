@@ -20,7 +20,7 @@ build each screen. The design tokens are in [BLUE_MATCHA_DESIGN_SYSTEM.md](BLUE_
 | 08–09 | Bus Schedule + Route popup | Done. Existing Transportation screen reworded to the spec (Mon – Fri / Sat – Sun, Leave to City, Return to Campus); the route popup gains per-stop estimated times and a calculated "Current status" (no GPS wording) |
 | 10 | Cab & Auto directory | Not started. Needs a driver / fare data source (no backend model exists yet) |
 | 11–13 | Events, Clubs, Saved Events | Not started. Needs club + event data and follow/save storage |
-| 14 | Timetable (time-grid) | Not started. Existing timetable is a list; needs the 06:00 AM–8 PM timeline with positioned blocks |
+| 14 | Timetable (time-grid) | Done. Classes are the app's weekly recurring ones (stored on the device), shown on a 6 AM–8 PM grid; "Add New" opens the existing class form, so one-off dated entries are not supported yet |
 | 15 | PHC (Day / Night, Special Visit, Contacts) | Done. Roster, visits and contacts come from the synced Health Center data; the old Health Center screen stays behind "More about the Health Center" |
 | — | Campus Map restyle | Tokens already restyle it; icon / control pass not done |
 

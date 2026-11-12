@@ -15,6 +15,14 @@ export interface Reminder {
   timezone: string;
   createdAt: string;
   updatedAt: string;
+  /** What this reminder was made from (a timetable class on a given date, later an event); absent for personal ones. */
+  source?: ReminderSource;
+}
+
+export interface ReminderSource {
+  type: 'timetable' | 'event';
+  /** For a class: "<class id>:<YYYY-MM-DD>", so each day's class has its own reminder. */
+  id: string;
 }
 
 export interface ReminderDraft {
@@ -24,6 +32,7 @@ export interface ReminderDraft {
   /** Minutes after midnight, local time. */
   startMinutes: number | null;
   endMinutes: number | null;
+  source?: ReminderSource;
 }
 
 export const MEMO_MAX_LENGTH = 500;
@@ -144,5 +153,19 @@ export function buildReminder(draft: ReminderDraft, now: Date, id: string): Remi
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'Asia/Kolkata',
     createdAt: stamp,
     updatedAt: stamp,
+    ...(draft.source ? { source: draft.source } : {}),
   };
+}
+
+/** True when this exact source (e.g. one class on one day) already has a reminder — used to avoid duplicates. */
+export function hasSourceReminder(reminders: readonly Reminder[], type: ReminderSource['type'], id: string): boolean {
+  return reminders.some((r) => r.source?.type === type && r.source.id === id);
+}
+
+/** Reads "YYYY-MM-DD" as a local calendar day; null if it is not one. */
+export function parseDateKey(key: string | undefined): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key ?? '');
+  if (!m) return null;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return d.getMonth() === Number(m[2]) - 1 ? d : null;
 }

@@ -14,8 +14,8 @@ export default function TimetableLayout() {
         contentStyle: { backgroundColor: colors.background },
       }}
     >
-      <Stack.Screen name="index" options={{ title: 'My Timetable' }} />
-      <Stack.Screen name="add" options={{ title: 'Add Class' }} />
+      <Stack.Screen name="index" options={{ title: 'Time Table' }} />
+      <Stack.Screen name="add" options={{ title: 'Add New' }} />
     </Stack>
   );
 }

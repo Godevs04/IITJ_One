@@ -11,7 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useNavigation } from 'expo-router';
+import { useLocalSearchParams, useNavigation } from 'expo-router';
 import * as Crypto from 'expo-crypto';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -21,6 +21,7 @@ import {
   buildReminder,
   formatClock,
   formatLongDate,
+  parseDateKey,
   validateDraft,
   type ReminderDraft,
 } from '@/reminders/reminderLogic';
@@ -78,7 +79,16 @@ export default function NewReminderScreen() {
   const theme = useThemeColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const [draft, setDraft] = useState<ReminderDraft>({ memo: '', date: null, startMinutes: null, endMinutes: null });
+  // A class (or, later, an event) opens this form pre-filled; the user can change anything before saving.
+  const params = useLocalSearchParams<{ memo?: string; date?: string; start?: string; end?: string; sourceType?: string; sourceId?: string }>();
+  const minutesParam = (v?: string) => (v != null && /^\d+$/.test(v) && Number(v) < 24 * 60 ? Number(v) : null);
+  const [draft, setDraft] = useState<ReminderDraft>(() => ({
+    memo: typeof params.memo === 'string' ? params.memo.slice(0, MEMO_MAX_LENGTH) : '',
+    date: parseDateKey(params.date),
+    startMinutes: minutesParam(params.start),
+    endMinutes: minutesParam(params.end),
+    ...(params.sourceType === 'timetable' && params.sourceId ? { source: { type: 'timetable' as const, id: params.sourceId } } : {}),
+  }));
   const [picker, setPicker] = useState<PickerKind>(null);
   const [showErrors, setShowErrors] = useState(false);
   const [saving, setSaving] = useState(false);
