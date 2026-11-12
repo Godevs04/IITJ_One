@@ -21,7 +21,7 @@ build each screen. The design tokens are in [BLUE_MATCHA_DESIGN_SYSTEM.md](BLUE_
 | 10 | Cab & Auto directory | Not started. Needs a driver / fare data source (no backend model exists yet) |
 | 11–13 | Events, Clubs, Saved Events | Not started. Needs club + event data and follow/save storage |
 | 14 | Timetable (time-grid) | Not started. Existing timetable is a list; needs the 06:00 AM–8 PM timeline with positioned blocks |
-| 15 | PHC (Day / Night, Special Visit, Contacts) | Not started. Existing Health Center screen has rosters by date and needs reshaping |
+| 15 | PHC (Day / Night, Special Visit, Contacts) | Done. Roster, visits and contacts come from the synced Health Center data; the old Health Center screen stays behind "More about the Health Center" |
 | — | Campus Map restyle | Tokens already restyle it; icon / control pass not done |
 
 ## Decided: per-user data stays on the device for now
