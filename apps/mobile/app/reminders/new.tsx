@@ -87,7 +87,9 @@ export default function NewReminderScreen() {
     date: parseDateKey(params.date),
     startMinutes: minutesParam(params.start),
     endMinutes: minutesParam(params.end),
-    ...(params.sourceType === 'timetable' && params.sourceId ? { source: { type: 'timetable' as const, id: params.sourceId } } : {}),
+    ...((params.sourceType === 'timetable' || params.sourceType === 'event') && params.sourceId
+      ? { source: { type: params.sourceType, id: params.sourceId } }
+      : {}),
   }));
   const [picker, setPicker] = useState<PickerKind>(null);
   const [showErrors, setShowErrors] = useState(false);

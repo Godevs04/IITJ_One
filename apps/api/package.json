@@ -20,7 +20,7 @@
     "mess-pricing:seed": "tsx scripts/seed-mess-pricing.ts",
     "dev:isolated": "tsx scripts/dev-isolated-api.ts",
     "test": "node --import tsx --test --test-concurrency=1 src/tests/*.test.ts",
-    "test:unit": "node --import tsx --test --test-concurrency=1 src/tests/parsers.test.ts src/tests/academicCalendar.test.ts src/tests/academicCalendarTimeline.test.ts src/tests/mobileNowLogic.test.ts src/tests/reminderLogic.test.ts src/tests/phcLogic.test.ts src/tests/tripProgress.test.ts src/tests/timelineLogic.test.ts src/tests/driverDirectory.test.ts src/tests/gpsValidation.test.ts src/tests/tripSchedule.test.ts src/tests/adminServices.test.ts src/tests/aiAdmin.test.ts src/tests/aiConversationalScenarios.test.ts src/tests/messAnnouncementFlow.test.ts src/tests/messPricing.test.ts src/tests/transportAnnouncementFlow.test.ts src/tests/transportCancellationFlow.test.ts",
+    "test:unit": "node --import tsx --test --test-concurrency=1 src/tests/parsers.test.ts src/tests/academicCalendar.test.ts src/tests/academicCalendarTimeline.test.ts src/tests/mobileNowLogic.test.ts src/tests/reminderLogic.test.ts src/tests/phcLogic.test.ts src/tests/tripProgress.test.ts src/tests/timelineLogic.test.ts src/tests/driverDirectory.test.ts src/tests/eventsLogic.test.ts src/tests/gpsValidation.test.ts src/tests/tripSchedule.test.ts src/tests/adminServices.test.ts src/tests/aiAdmin.test.ts src/tests/aiConversationalScenarios.test.ts src/tests/messAnnouncementFlow.test.ts src/tests/messPricing.test.ts src/tests/transportAnnouncementFlow.test.ts src/tests/transportCancellationFlow.test.ts",
     "test:rc": "tsx scripts/rc/runCi.ts",
     "typecheck": "tsc --noEmit"
   },

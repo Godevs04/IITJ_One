@@ -194,6 +194,8 @@ function RootNavigator() {
         <Stack.Screen name="more" options={{ title: 'More' }} />
         <Stack.Screen name="reminders/index" options={{ title: 'Reminder' }} />
         <Stack.Screen name="quick-links" options={{ title: 'Quick Link' }} />
+        <Stack.Screen name="events/index" options={{ title: 'All Events' }} />
+        <Stack.Screen name="events/saved" options={{ title: 'Saved Events' }} />
         <Stack.Screen name="qr/index" options={{ title: 'My QR' }} />
         <Stack.Screen name="qr/add" options={{ presentation: 'transparentModal', headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="reminders/new" options={{ title: 'New Reminder' }} />

@@ -30,7 +30,7 @@ const external = (url: string): ServiceDestination => ({ type: 'external', url }
 
 export const HOME_SERVICES = [
   { key: 'quickLinks', label: 'Quick Links', icon: 'link-outline', destination: internal('/quick-links'), defaultOnHome: true },
-  { key: 'eventsClubs', label: 'Events & Clubs', icon: 'megaphone-outline', destination: internal('/discover'), defaultOnHome: true },
+  { key: 'eventsClubs', label: 'Events & Clubs', icon: 'megaphone-outline', destination: internal('/events'), defaultOnHome: true },
   { key: 'cabAuto', label: 'Cab / Auto', icon: 'car-outline', destination: internal('/cabs-autos'), defaultOnHome: true },
   { key: 'timetable', label: 'Timetable', icon: 'calendar-outline', destination: internal('/timetable'), defaultOnHome: true },
 
