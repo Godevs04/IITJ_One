@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
-import type { AiCommandStatus, AiHistoryItem, AiMessage, AiPreview, AiSessionView } from '@iitj1/types';
+import type { AiCommandStatus, AiHistoryItem, AiPreview, AiSessionView } from '@iitj1/types';
 import { ApiError, apiFetch, campusId } from '@/lib/api';
 import { Button } from '@/components/Button';
 import { Card, EmptyState, LoadingBlock, PageHeader, ScrollX, StatusPill } from '@/components/ui';
