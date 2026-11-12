@@ -27,7 +27,7 @@ export function MessQrCard() {
     }, []),
   );
 
-  const subtitle = hasQr == null ? ' ' : hasQr ? 'Tap to show your mess QR' : 'Add your QR';
+  const subtitle = 'Redeem / Add';
 
   return (
     <Pressable
@@ -42,7 +42,7 @@ export function MessQrCard() {
     >
       <View style={styles.text}>
         <Text style={[styles.title, { color: theme.text }]}>My QR</Text>
-        <Text style={[styles.subtitle, { color: hasQr ? theme.textMuted : theme.linkText }]}>{subtitle}</Text>
+        <Text style={[styles.subtitle, { color: theme.textMuted }]}>{subtitle}</Text>
       </View>
       <View
         style={[

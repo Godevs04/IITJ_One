@@ -192,6 +192,8 @@ function RootNavigator() {
         <Stack.Screen name="menu" options={{ title: 'Mess Menu' }} />
         <Stack.Screen name="notices" options={{ title: 'Notices' }} />
         <Stack.Screen name="more" options={{ title: 'More' }} />
+        <Stack.Screen name="reminders/index" options={{ title: 'Reminder' }} />
+        <Stack.Screen name="reminders/new" options={{ title: 'New Reminder' }} />
         <Stack.Screen name="bus-routes" options={{ title: 'Bus Routes' }} />
         <Stack.Screen name="transport-alerts" options={{ title: 'Transport Alerts' }} />
         <Stack.Screen name="discover/index" options={{ title: 'Discover' }} />

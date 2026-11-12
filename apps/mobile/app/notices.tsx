@@ -1,13 +1,13 @@
 import { useCallback, useMemo } from 'react';
 import * as WebBrowser from 'expo-web-browser';
 import { View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { EmptyState } from '@/components/EmptyState';
 import { NoticeCard } from '@/components/NoticeCard';
 import { ScreenShell } from '@/components/ScreenShell';
 import { useCampusSync } from '@/hooks/useCampusSync';
 import { useCampusModule } from '@/hooks/useCampusModule';
-import { Analytics, AppEvents, FirebaseCrashlytics } from '@/services/firebase';
+import { Analytics, AppEvents, FirebaseCrashlytics, markAllNotificationsRead } from '@/services/firebase';
 import { loadTopicPrefs } from '@/services/pushTopics';
 import type { NoticeDoc } from '@/types/campus';
 import { expirySeconds, formatExpiryLabel } from '@/utils/date';
@@ -47,6 +47,8 @@ export default function NoticesScreen() {
   const onRefresh = useCallback(async () => {
     await sync();
   }, [sync]);
+
+  useFocusEffect(useCallback(() => markAllNotificationsRead(), []));
 
   return (
     <ScreenShell

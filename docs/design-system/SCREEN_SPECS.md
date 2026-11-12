@@ -10,21 +10,21 @@ build each screen. The design tokens are in [BLUE_MATCHA_DESIGN_SYSTEM.md](BLUE_
 |---|---|---|
 | — | Colour, typography, spacing tokens | Done |
 | — | Floating bottom navigation (Home · Map · Search · PHC · Transport) | Done |
-| 01 | Home Dashboard | Not started |
-| 02 | Reminder List | Not started |
-| 03 | New Reminder | Not started |
+| 01 | Home Dashboard | Done, except: My QR Add/Redeem chooser (with Screens 05–06) and "More →" target (Screen 07) |
+| 02 | Reminder List | Done |
+| 03 | New Reminder | Done (no reminder notifications yet) |
 | 04 | Full Mess Menu | Not started (existing screen moved to `/menu`) |
 | 05 | Add QR popup | Not started |
 | 06 | QR uploaded / caption | Not started |
 | 07 | Quick Links & Services Directory | Not started |
 
-## Open decision: accounts
+## Decided: per-user data stays on the device for now
 
 Every spec assumes an authenticated user with reminders, QR codes and service preferences stored on the
 backend. The app today has **no student accounts** (JWT is admin-only; the wireframe header itself says
 "Guest"), and Mess QR, notes, timetable and home customisation are stored on the device.
-Until that is decided, per-user data in these screens is stored on the device, behind a small store
-interface so it can move to the backend later.
+Decided 12 Nov 2026: per-user data in these screens is stored on the device, behind a small store
+interface (`reminderStore`, `homeServices`) so it can move to the backend when accounts exist.
 
 ## Screen 01 — Home Dashboard
 

@@ -59,7 +59,23 @@ export function MessMenuWidget({ now }: { now: Date }) {
       title="Mess Menu"
       onPress={() => router.push('/menu')}
       accessibilityLabel="Open the full mess menu"
-      right={<DietPreferenceSelect value={pref} onChange={setPref} />}
+      right={
+        menu && statusLabel ? (
+          <View
+            style={[
+              styles.status,
+              { backgroundColor: status?.state === 'open' ? theme.highlight : theme.surfaceMuted },
+            ]}
+          >
+            <Text
+              numberOfLines={1}
+              style={[styles.statusText, { color: status?.state === 'open' ? theme.onHighlight : theme.text }]}
+            >
+              {statusLabel}
+            </Text>
+          </View>
+        ) : null
+      }
     >
       {!menu ? (
         <Text style={[styles.empty, { color: theme.textMuted }]}>
@@ -105,19 +121,24 @@ export function MessMenuWidget({ now }: { now: Date }) {
             })}
           </View>
 
-          <Pressable
-            onPress={() => router.push('/menu')}
-            accessibilityRole="link"
-            accessibilityLabel={`${MEAL_LABELS[selected]} menu. Open the full mess menu`}
-            style={({ pressed }) => [
+          <View
+            style={[
               styles.panel,
               {
                 borderColor: status?.state === 'open' ? theme.primary : theme.border,
                 borderWidth: status?.state === 'open' ? 2 : StyleSheet.hairlineWidth,
               },
-              pressed && { opacity: 0.85 },
             ]}
           >
+            <View style={styles.panelTop}>
+              <DietPreferenceSelect value={pref} onChange={setPref} />
+            </View>
+            <Pressable
+              onPress={() => router.push('/menu')}
+              accessibilityRole="link"
+              accessibilityLabel={`${MEAL_LABELS[selected]} menu. Open the full mess menu`}
+              style={({ pressed }) => [styles.panelLink, pressed && { opacity: 0.85 }]}
+            >
             <View style={styles.dishes}>
               {shown.length > 0 ? (
                 shown.map((dish, i) => (
@@ -144,19 +165,10 @@ export function MessMenuWidget({ now }: { now: Date }) {
                   {windows[selected].timeLabel}
                 </Text>
               </View>
-              {statusLabel ? (
-                <Text
-                  numberOfLines={1}
-                  style={[
-                    styles.footerStatus,
-                    { color: status?.state === 'open' ? theme.linkText : theme.textMuted },
-                  ]}
-                >
-                  {statusLabel}
-                </Text>
-              ) : null}
+              <MaterialIcons name="open-in-new" size={18} color={theme.text} />
             </View>
-          </Pressable>
+            </Pressable>
+          </View>
         </View>
       )}
     </WidgetCard>
@@ -225,10 +237,31 @@ const styles = StyleSheet.create({
     ...AppTypography.bodySmall,
     fontWeight: '600',
   },
+  panelTop: {
+    alignItems: 'flex-end',
+  },
+  panelLink: {
+    flex: 1,
+    justifyContent: 'space-between',
+    gap: AppSpacing.sm,
+  },
   panelFooter: {
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingTop: AppSpacing.sm,
-    gap: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: AppSpacing.sm,
+  },
+  status: {
+    borderRadius: AppRadius.full,
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: AppSpacing.xs,
+    flexShrink: 1,
+  },
+  statusText: {
+    ...AppTypography.bodySmall,
+    fontWeight: '700',
   },
   footerItem: {
     flexDirection: 'row',
@@ -237,10 +270,6 @@ const styles = StyleSheet.create({
   },
   footerText: {
     ...AppTypography.bodySmall,
-  },
-  footerStatus: {
-    ...AppTypography.bodySmall,
-    fontWeight: '700',
   },
   empty: {
     ...AppTypography.body,
