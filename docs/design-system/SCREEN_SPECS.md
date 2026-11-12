@@ -17,6 +17,12 @@ build each screen. The design tokens are in [BLUE_MATCHA_DESIGN_SYSTEM.md](BLUE_
 | 05 | Add QR popup | Done |
 | 06 | QR uploaded / caption | Done (status reads "Image selected" — saved on device, not uploaded) |
 | 07 | Quick Links & Services Directory | Done |
+| 08–09 | Bus Schedule + Route popup | Not restyled. Existing transport screen has the Mon–Fri / Sat–Sun toggle, next-bus card and route sheet; needs the spec's layout and "trip progress" wording (no GPS language) |
+| 10 | Cab & Auto directory | Not started. Needs a driver / fare data source (no backend model exists yet) |
+| 11–13 | Events, Clubs, Saved Events | Not started. Needs club + event data and follow/save storage |
+| 14 | Timetable (time-grid) | Not started. Existing timetable is a list; needs the 06:00 AM–8 PM timeline with positioned blocks |
+| 15 | PHC (Day / Night, Special Visit, Contacts) | Not started. Existing Health Center screen has rosters by date and needs reshaping |
+| — | Campus Map restyle | Tokens already restyle it; icon / control pass not done |
 
 ## Decided: per-user data stays on the device for now
 
