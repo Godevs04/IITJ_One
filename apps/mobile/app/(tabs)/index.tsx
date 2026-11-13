@@ -107,9 +107,14 @@ export default function HomeScreen() {
   const campaigns = useCampusModule<CampaignDoc[]>('campaigns');
 
   useEffect(() => {
+    // Everything on Home is minute-based (meal status, schedule), so a tick that lands in the same minute returns the
+    // same state and React skips the re-render — Home no longer re-renders every ten seconds for nothing.
     const timer = setInterval(() => {
-      setNow(new Date());
-    }, 10000); // 10s tick keeps the meal status and today's schedule fresh
+      setNow((prev) => {
+        const next = new Date();
+        return next.getMinutes() === prev.getMinutes() && next.getDate() === prev.getDate() ? prev : next;
+      });
+    }, 10000);
     return () => clearInterval(timer);
   }, []);
 

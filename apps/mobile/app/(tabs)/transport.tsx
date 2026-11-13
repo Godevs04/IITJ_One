@@ -31,9 +31,16 @@ export default function TransportScreen() {
 
   const [tick, setTick] = useState(0);
 
-  // Trigger recalculation of active/upcoming status countdowns periodically (every 10s)
+  // Countdowns and "next bus" are minute-based, so only a change of minute re-renders this large screen.
   useEffect(() => {
-    const timer = setInterval(() => setTick((t) => t + 1), 10000);
+    let lastMinute = new Date().getMinutes();
+    const timer = setInterval(() => {
+      const minute = new Date().getMinutes();
+      if (minute !== lastMinute) {
+        lastMinute = minute;
+        setTick((t) => t + 1);
+      }
+    }, 10000);
     return () => clearInterval(timer);
   }, []);
 

@@ -207,12 +207,16 @@ function LocationDetailCard({
   );
 }
 
+const LIST_PAGE = 20;
+
 export default function MapScreen() {
   const theme = useThemeColors();
   const inTabs = useSegments()[0] === '(tabs)';
   const { revision } = useCampusData();
   const { focus } = useLocalSearchParams<{ focus?: string }>();
   const [searchQuery, setSearchQuery] = useState('');
+  // The directory has many cards; drawing them all when the tab first opens made it slow, so they come in pages.
+  const [shown, setShown] = useState(LIST_PAGE);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<Set<LocationCategory>>(new Set());
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
@@ -346,6 +350,9 @@ export default function MapScreen() {
   debugListKeys('MapScreen', 'recentSearches', recentSearches.slice(0, 5), (query) => query);
   debugListKeys('MapScreen', 'categories', categories, (cat) => cat.id);
   debugListKeys('MapScreen', 'filteredLocations', filteredLocations, (item) => item.id);
+  useEffect(() => {
+    setShown(LIST_PAGE);
+  }, [filteredLocations]);
 
 
   return (
@@ -551,7 +558,7 @@ export default function MapScreen() {
         </View>
       ) : (
         <View style={styles.list}>
-          {filteredLocations.map((item) => {
+          {filteredLocations.slice(0, shown).map((item) => {
             if (isSearchActive) {
               // Find search result details
               const searchResult = searchResults.find((r) => r.location.id === item.id);
@@ -585,6 +592,17 @@ export default function MapScreen() {
               />
             );
           })}
+          {filteredLocations.length > shown ? (
+            <Pressable
+              onPress={() => setShown((n) => n + LIST_PAGE)}
+              accessibilityRole="button"
+              style={[styles.showMore, { borderColor: theme.border, backgroundColor: theme.surface }]}
+            >
+              <Text style={[styles.showMoreText, { color: theme.linkText }]}>
+                Show more ({filteredLocations.length - shown} left)
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
       )}
     </ScreenShell>
@@ -592,6 +610,16 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
+  showMore: {
+    minHeight: 48,
+    borderRadius: AppRadius.md,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  showMoreText: {
+    ...AppTypography.bodyHeader,
+  },
   searchBarWrapper: {
     position: 'relative',
     zIndex: 20,
