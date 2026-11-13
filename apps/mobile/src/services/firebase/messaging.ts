@@ -65,9 +65,9 @@ export type FCMTopic = (typeof TOPICS)[number];
 export { TOPICS as FCM_TOPICS };
 
 const SCREEN_ROUTES: Record<string, string> = {
-  notices: '/(tabs)/notices',
+  notices: '/notices',
   transport: '/(tabs)/transport',
-  menu: '/(tabs)/menu',
+  menu: '/menu',
   calendar: '/calendar',
   healthCenter: '/health-center',
   laundry: '/laundry',

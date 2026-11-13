@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, type TextInputInstance, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, Stack } from 'expo-router';
+import { router, Stack, useSegments } from 'expo-router';
 import { goBack } from '@/navigation/goBack';
+import { useFloatingTabBarInset } from '@/components/BottomTabBar';
 import { Icon } from '@/components/Icon';
 import { EmptyState } from '@/components/EmptyState';
 import { GlobalSearchResultCard } from '@/components/GlobalSearchResultCard';
@@ -15,12 +16,15 @@ import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 
 export default function GlobalSearchScreen() {
   const theme = useThemeColors();
+  const inTabs = useSegments()[0] === '(tabs)';
+  const tabBarInset = useFloatingTabBarInset();
   const [query, setQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const inputRef = useRef<TextInputInstance>(null);
 
   useEffect(() => {
     void globalRecentSearchesStore.get().then(setRecentSearches);
+    if (inTabs) return;
     const timer = setTimeout(() => inputRef.current?.focus(), 150);
     return () => clearTimeout(timer);
   }, []);
@@ -62,12 +66,14 @@ export default function GlobalSearchScreen() {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.safe, { backgroundColor: theme.background }]}>
-      <Stack.Screen options={{ headerShown: false }} />
+      {inTabs ? null : <Stack.Screen options={{ headerShown: false }} />}
 
       <View style={[styles.searchRow, { borderColor: theme.border, backgroundColor: theme.surface }]}>
-        <Pressable onPress={goBack} hitSlop={12} style={styles.iconButton} accessibilityRole="button" accessibilityLabel="Back">
-          <Icon name="arrow-back" size={22} color={theme.text} />
-        </Pressable>
+        {inTabs ? null : (
+          <Pressable onPress={goBack} hitSlop={12} style={styles.iconButton} accessibilityRole="button" accessibilityLabel="Back">
+            <Icon name="arrow-back" size={22} color={theme.text} />
+          </Pressable>
+        )}
         <Icon name="search-outline" size={18} color={theme.textMuted} />
         <TextInput
           ref={inputRef}
@@ -92,7 +98,7 @@ export default function GlobalSearchScreen() {
         data={showRecents ? [] : results}
         keyExtractor={(item, index) => String(debugKeyExtractor('GlobalSearchScreen', 'results', item, index, (entry) => entry.entry.id))}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, tabBarInset > 0 && { paddingBottom: tabBarInset }]}
         renderItem={({ item }) => (
           <Pressable onPress={() => handleResultPress(item)}>
             <GlobalSearchResultCard entry={item.entry} query={query} matchedField={item.matchedField} />

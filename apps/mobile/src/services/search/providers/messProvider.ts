@@ -48,7 +48,7 @@ function getEntries(): SearchEntry[] {
       module: 'Mess',
       icon: MEAL_ICONS[meal],
       keywords: dishes,
-      route: '/(tabs)/menu' as const,
+      route: '/menu' as const,
     };
   });
 }

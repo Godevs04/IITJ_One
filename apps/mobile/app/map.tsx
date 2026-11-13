@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useSegments } from 'expo-router';
 import { Alert, Share, StyleSheet, TextInput, View, Pressable, Text, ScrollView } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { Icon } from '@/components/Icon';
 import { ScreenShell } from '@/components/ScreenShell';
 import { Analytics, AppEvents, FirebaseCrashlytics } from '@/services/firebase';
 import { useThemeColors } from '@/theme/ThemeProvider';
-import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
+import { AppRadius, AppSpacing, AppTypography, BlueMatcha } from '@/theme/tokens';
 import { debugListKeys } from '@/debug/listDebug';
 import { campusDirectoryServiceProvider } from '@/campus/services/campusDirectoryService';
 import { useCampusData } from '@/state/CampusDataProvider';
@@ -167,7 +168,7 @@ function LocationDetailCard({
               pressed && { opacity: 0.8 },
             ]}
           >
-            <Icon name="map-outline" size={16} color={theme.linkText} />
+            <MaterialIcons name="directions" size={16} color={theme.linkText} />
             <Text style={[styles.actionText, { color: theme.linkText }]}>
               Maps
             </Text>
@@ -206,11 +207,16 @@ function LocationDetailCard({
   );
 }
 
+const LIST_PAGE = 20;
+
 export default function MapScreen() {
   const theme = useThemeColors();
+  const inTabs = useSegments()[0] === '(tabs)';
   const { revision } = useCampusData();
   const { focus } = useLocalSearchParams<{ focus?: string }>();
   const [searchQuery, setSearchQuery] = useState('');
+  // The directory has many cards; drawing them all when the tab first opens made it slow, so they come in pages.
+  const [shown, setShown] = useState(LIST_PAGE);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<Set<LocationCategory>>(new Set());
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
@@ -344,10 +350,13 @@ export default function MapScreen() {
   debugListKeys('MapScreen', 'recentSearches', recentSearches.slice(0, 5), (query) => query);
   debugListKeys('MapScreen', 'categories', categories, (cat) => cat.id);
   debugListKeys('MapScreen', 'filteredLocations', filteredLocations, (item) => item.id);
+  useEffect(() => {
+    setShown(LIST_PAGE);
+  }, [filteredLocations]);
 
 
   return (
-    <ScreenShell hideTitle subtitle="Campus Directory">
+    <ScreenShell title="Campus Map" hideTitle={!inTabs} subtitle="Campus Directory">
       {/* Search Bar */}
       <View style={styles.searchBarWrapper}>
         <View style={[styles.searchBar, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -549,7 +558,7 @@ export default function MapScreen() {
         </View>
       ) : (
         <View style={styles.list}>
-          {filteredLocations.map((item) => {
+          {filteredLocations.slice(0, shown).map((item) => {
             if (isSearchActive) {
               // Find search result details
               const searchResult = searchResults.find((r) => r.location.id === item.id);
@@ -583,6 +592,17 @@ export default function MapScreen() {
               />
             );
           })}
+          {filteredLocations.length > shown ? (
+            <Pressable
+              onPress={() => setShown((n) => n + LIST_PAGE)}
+              accessibilityRole="button"
+              style={[styles.showMore, { borderColor: theme.border, backgroundColor: theme.surface }]}
+            >
+              <Text style={[styles.showMoreText, { color: theme.linkText }]}>
+                Show more ({filteredLocations.length - shown} left)
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
       )}
     </ScreenShell>
@@ -590,6 +610,16 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
+  showMore: {
+    minHeight: 48,
+    borderRadius: AppRadius.md,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  showMoreText: {
+    ...AppTypography.bodyHeader,
+  },
   searchBarWrapper: {
     position: 'relative',
     zIndex: 20,
@@ -620,7 +650,7 @@ const styles = StyleSheet.create({
     maxHeight: 300,
     zIndex: 20,
     elevation: 6,
-    shadowColor: '#000',
+    shadowColor: BlueMatcha.black,
     shadowOpacity: 0.12,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },

@@ -11,7 +11,7 @@ import { setAttribute } from './crashlytics';
 
 /**
  * Converts a pathname like "/transport" to a screen name like "Transport".
- * Handles nested routes: "/(tabs)/menu" → "Menu"
+ * Handles nested routes: "/menu" → "Menu"
  */
 export function pathnameToScreenName(pathname: string): string {
   // Remove group segments like (tabs)

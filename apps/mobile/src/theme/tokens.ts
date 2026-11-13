@@ -1,38 +1,60 @@
 import { Platform } from 'react-native';
 
 /**
- * IITJ One design tokens.
+ * IITJ One design tokens — Blue Matcha design system (docs/design-system/BLUE_MATCHA_DESIGN_SYSTEM.md).
  * Never hardcode hex in screens; use useThemeColors() or getThemeColors().
  *
- * IITJ One redesign palette (light):
- *   background #F5F7FB · layer/card #FFFFFF · text #01050D · primary #3DA9D8 · secondary #F1FF0A
- * Dark mode uses the same two accents on a matching dark base. Additional colours are limited to
- * accessibility (readable variants of the accents), status (veg/non-veg, warnings, errors) and disabled states.
+ * Seven foundation colours carry the whole UI. Everything else in this file is either an opacity mix of
+ * two of them (tints, borders, muted text) or a status colour kept only for accessibility
+ * (errors, veg / non-veg marks).
  */
+export const BlueMatcha = {
+  deepOcean: '#31465A',
+  matchaGreen: '#C7DFA3',
+  vanillaMilk: '#FFFDF7',
+  airyBlue: '#89B9E6',
+  frozenAqua: '#D9F0FF',
+  black: '#000000',
+  white: '#FFFFFF',
+} as const;
 
+/**
+ * Derived palette. Each value is a foundation colour or a mix of two (noted per line), checked for contrast:
+ * Deep Ocean reads at 9.7:1 on white and 4.7:1 on Airy Blue; white on Airy Blue is only 2.1:1, so text on
+ * Airy Blue or Matcha Green is always Deep Ocean.
+ */
 export const RedesignColors = {
-  background: '#F5F7FB',
-  layer: '#FFFFFF',
-  text: '#01050D',
-  primary: '#3DA9D8',
-  secondary: '#F1FF0A',
-  /** #3DA9D8 is too light for text on white (2.6:1); this darker shade of it reaches ~4.6:1. */
-  primaryText: '#1A78A3',
-  textMuted: '#566173',
-  border: '#E1E6EF',
-  primaryTint: '#E2F2FA',
-  /** Readable text/icon variant of the yellow secondary on light surfaces. */
-  secondaryText: '#6B6A00',
-  secondaryTint: '#FBFFD6',
-  darkBackground: '#0A0F18',
-  darkLayer: '#141B26',
-  darkLayerRaised: '#1C2533',
-  darkText: '#F5F7FB',
-  darkTextMuted: '#9DA7B6',
-  darkBorder: '#263142',
-  darkPrimaryText: '#6CC3EA',
-  darkPrimaryTint: '#11303F',
-  darkSecondaryTint: '#2A2D06',
+  background: BlueMatcha.white,
+  layer: BlueMatcha.vanillaMilk,
+  text: BlueMatcha.deepOcean,
+  primary: BlueMatcha.deepOcean,
+  secondary: BlueMatcha.airyBlue,
+  primaryText: BlueMatcha.deepOcean,
+  /** Deep Ocean 78% on white — 5.2:1 on white. */
+  textMuted: '#5E6F7E',
+  /** Deep Ocean 16% on white. */
+  border: '#DEE1E5',
+  primaryTint: BlueMatcha.frozenAqua,
+  /** Frozen Aqua 45% on white — insets inside cards. */
+  layerMuted: '#EEF8FF',
+  secondaryText: BlueMatcha.deepOcean,
+  /** Matcha Green 35% on white. */
+  secondaryTint: '#EBF4DF',
+  darkBackground: BlueMatcha.black,
+  darkLayer: BlueMatcha.deepOcean,
+  /** White 10% on Deep Ocean. */
+  darkLayerRaised: '#46586A',
+  /** Deep Ocean 55% on black — insets inside Deep Ocean cards. */
+  darkLayerMuted: '#1B2632',
+  darkText: BlueMatcha.white,
+  darkTextMuted: BlueMatcha.frozenAqua,
+  /** White 18% on Deep Ocean. */
+  darkBorder: '#566778',
+  darkPrimaryText: BlueMatcha.airyBlue,
+  /** Airy Blue 16% on black. */
+  darkPrimaryTint: '#161E25',
+  /** Matcha Green 16% on black. */
+  darkSecondaryTint: '#20241A',
 } as const;
 
 /**
@@ -77,6 +99,28 @@ export const AppColors = {
   indigoGlow: '#7BA7D9',
 } as const;
 
+/**
+ * Layout spacing (design system §2): 16 screen margin, 8 gutter, larger gaps in multiples of 8.
+ * Use this for new and redesigned components.
+ */
+export const spacing = {
+  unit: 8,
+  screenMargin: 16,
+  gutter: 8,
+
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 40,
+} as const;
+
+/**
+ * Legacy scale still used by screens that predate the Blue Matcha system. Its names sit one step off
+ * `spacing` (lg = 16 here, md = 16 there), so the two are kept apart rather than renumbered under
+ * existing layouts. `AppSpacing.lg` is the 16 screen margin.
+ */
 export const AppSpacing = {
   xs: 4,
   sm: 8,
@@ -94,87 +138,116 @@ export const AppRadius = {
   full: 999,
 } as const;
 
-/**
- * Type scale (redesign spec): Big heading 24 · Section heading 20 · Body header 16 · Body 16 ·
- * Secondary body 12 · Small body 10.
- */
+/** Type scale (design system §1). Sizes are dp on mobile. */
+export const typography = {
+  fontFamily: {
+    primary: 'Helvetica Neue',
+    fallback: 'System',
+  },
+  fontSize: {
+    bigHeading: 24,
+    sectionHeading: 20,
+    bodyHeader: 16,
+    body: 16,
+    secondaryBody: 12,
+    smallBody: 10,
+  },
+  fontWeight: {
+    regular: '400',
+    medium: '500',
+    semibold: '600',
+    bold: '700',
+  },
+  lineHeight: {
+    bigHeading: 32,
+    sectionHeading: 28,
+    bodyHeader: 24,
+    body: 24,
+    secondaryBody: 18,
+    smallBody: 14,
+  },
+} as const;
+
+const { fontSize: size, lineHeight: leading, fontWeight: weight } = typography;
+
+/** Ready-made text styles built from `typography`. */
 export const AppTypography = {
   /** Big heading */
   display: {
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: '700' as const,
+    fontSize: size.bigHeading,
+    lineHeight: leading.bigHeading,
+    fontWeight: weight.bold,
     fontFamily: AppFontFamily,
   },
   /** Big heading (screen titles) */
   h1: {
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: '700' as const,
+    fontSize: size.bigHeading,
+    lineHeight: leading.bigHeading,
+    fontWeight: weight.bold,
     fontFamily: AppFontFamily,
   },
   /** Section heading */
   h2: {
-    fontSize: 20,
-    lineHeight: 26,
-    fontWeight: '600' as const,
+    fontSize: size.sectionHeading,
+    lineHeight: leading.sectionHeading,
+    fontWeight: weight.semibold,
     fontFamily: AppFontFamily,
   },
   /** Body text header */
   bodyHeader: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: '600' as const,
+    fontSize: size.bodyHeader,
+    lineHeight: leading.bodyHeader,
+    fontWeight: weight.semibold,
     fontFamily: AppFontFamily,
   },
   body: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: '400' as const,
+    fontSize: size.body,
+    lineHeight: leading.body,
+    fontWeight: weight.regular,
     fontFamily: AppFontFamily,
   },
   /** Secondary body text */
   bodySmall: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '400' as const,
+    fontSize: size.secondaryBody,
+    lineHeight: leading.secondaryBody,
+    fontWeight: weight.regular,
     fontFamily: AppFontFamily,
   },
   caption: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '400' as const,
+    fontSize: size.secondaryBody,
+    lineHeight: leading.secondaryBody,
+    fontWeight: weight.regular,
     fontFamily: AppFontFamily,
   },
   /** Small body text */
   small: {
-    fontSize: 10,
-    lineHeight: 14,
-    fontWeight: '400' as const,
+    fontSize: size.smallBody,
+    lineHeight: leading.smallBody,
+    fontWeight: weight.regular,
     fontFamily: AppFontFamily,
   },
   button: {
-    fontSize: 16,
-    fontWeight: '600' as const,
+    fontSize: size.body,
+    fontWeight: weight.semibold,
     letterSpacing: 0.2,
     fontFamily: AppFontFamily,
   },
   dataMono: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: '600' as const,
+    fontSize: size.body,
+    lineHeight: leading.body,
+    fontWeight: weight.semibold,
     fontFamily: AppFontFamily,
   },
   dataLargeMono: {
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: '600' as const,
+    fontSize: size.bigHeading,
+    lineHeight: leading.bigHeading,
+    fontWeight: weight.semibold,
     fontFamily: AppFontFamily,
   },
   sectionLabel: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '600' as const,
+    fontSize: size.secondaryBody,
+    lineHeight: leading.secondaryBody,
+    fontWeight: weight.semibold,
     letterSpacing: 1.2,
     textTransform: 'uppercase' as const,
     fontFamily: AppFontFamily,
@@ -195,7 +268,7 @@ export type NoticeCategory = keyof typeof CategoryColors;
 export function getCategoryColors(scheme: 'light' | 'dark'): Record<NoticeCategory, string> {
   if (scheme === 'light') return CategoryColors;
   return {
-    mess: RedesignColors.secondary,
+    mess: BlueMatcha.matchaGreen,
     transport: RedesignColors.darkPrimaryText,
     institute: RedesignColors.darkText,
     orientation: AppColors.sageDark,
@@ -228,11 +301,16 @@ export interface ThemeColors {
   primaryTint: string;
   secondary: string;
   secondaryTint: string;
+  /** Floating bottom navigation: pill fill, its outer border, and icon colours. */
   tabBar: string;
+  tabBarBorder: string;
+  /** Icon colour on the active capsule. */
   tabActive: string;
-  /** Pill behind the focused tab icon. */
+  /** Capsule behind the focused tab icon. */
   tabActiveBackground: string;
   tabInactive: string;
+  /** Capsule tint while a tab is pressed. */
+  tabPressed: string;
   headerBackground: string;
   headerTint: string;
   inputBackground: string;
@@ -258,7 +336,7 @@ export interface ThemeColors {
   onDiet: string;
   countdown: string;
   countdownUrgent: string;
-  /** Secondary-accent fill (#F1FF0A) that marks "now": the current meal, the next bus. */
+  /** Matcha Green fill that marks "now" or "selected": the current meal, the next bus. */
   highlight: string;
   /** Text/icon colour on a `highlight` fill. */
   onHighlight: string;
@@ -266,103 +344,109 @@ export interface ThemeColors {
 
 export function getThemeColors(scheme: ColorScheme): ThemeColors {
   const R = RedesignColors;
+  const B = BlueMatcha;
   if (scheme === 'dark') {
     return {
       background: R.darkBackground,
       surface: R.darkLayer,
       surfaceRaised: R.darkLayerRaised,
-      // Insets inside cards (meal tabs, "no more buses") need to separate from the card layer.
-      surfaceMuted: R.darkLayerRaised,
+      // Insets inside cards (meal tabs, "no more buses") need to separate from the Deep Ocean card.
+      surfaceMuted: R.darkLayerMuted,
       text: R.darkText,
       textMuted: R.darkTextMuted,
       border: R.darkBorder,
-      // #3DA9D8 is light enough to stay a fill in dark mode, with near-black text on it.
-      primary: R.primary,
-      onPrimary: R.text,
+      // Deep Ocean is the card colour in dark mode, so filled buttons switch to Airy Blue.
+      primary: B.airyBlue,
+      onPrimary: B.deepOcean,
       linkText: R.darkPrimaryText,
       accent: R.darkPrimaryText,
       primaryTint: R.darkPrimaryTint,
-      // On dark surfaces the yellow secondary is readable as text/icons directly.
-      secondary: R.secondary,
+      secondary: B.matchaGreen,
       secondaryTint: R.darkSecondaryTint,
-      tabBar: R.darkLayer,
-      tabActive: R.darkPrimaryText,
-      tabActiveBackground: R.darkPrimaryTint,
-      tabInactive: R.darkTextMuted,
+      tabBar: B.deepOcean,
+      tabBarBorder: B.white,
+      tabActive: B.deepOcean,
+      tabActiveBackground: B.airyBlue,
+      tabInactive: B.white,
+      tabPressed: B.matchaGreen,
       headerBackground: R.darkBackground,
       headerTint: R.darkText,
-      inputBackground: R.darkLayerRaised,
-      chipBackground: R.darkLayerRaised,
-      chipActiveBackground: R.primary,
-      chipActiveText: R.text,
+      inputBackground: R.darkLayerMuted,
+      chipBackground: R.darkLayerMuted,
+      chipActiveBackground: B.matchaGreen,
+      chipActiveText: B.deepOcean,
       chipText: R.darkTextMuted,
       iconMuted: R.darkTextMuted,
-      quickAccessProminentBg: R.primary,
-      quickAccessProminentIcon: R.text,
-      quickAccessBg: R.darkLayerRaised,
+      quickAccessProminentBg: B.airyBlue,
+      quickAccessProminentIcon: B.deepOcean,
+      quickAccessBg: R.darkLayer,
       quickAccessBorder: R.darkBorder,
-      quickAccessIcon: R.darkPrimaryText,
+      quickAccessIcon: B.airyBlue,
       importantCardBg: R.darkSecondaryTint,
-      importantCardBorder: R.secondary,
+      importantCardBorder: B.matchaGreen,
       noteCardBg: R.darkLayerRaised,
-      error: AppColors.nonVegRed,
+      // Status colours — accessibility exceptions to the palette.
+      error: '#FFB4AB',
       errorTint: AppColors.errorContainerDark,
-      veg: AppColors.sageDark,
-      vegTint: '#1E2A22',
-      nonVeg: '#E07A75',
-      onDiet: R.darkBackground,
+      veg: B.matchaGreen,
+      vegTint: R.darkSecondaryTint,
+      nonVeg: '#FFB4AB',
+      onDiet: B.black,
       countdown: R.darkText,
-      countdownUrgent: AppColors.duskDark,
-      highlight: R.secondary,
-      onHighlight: R.text,
+      countdownUrgent: '#FFB4AB',
+      highlight: B.matchaGreen,
+      onHighlight: B.deepOcean,
     };
   }
 
   return {
     background: R.background,
     surface: R.layer,
-    surfaceRaised: R.layer,
-    surfaceMuted: R.background,
+    surfaceRaised: B.white,
+    surfaceMuted: R.layerMuted,
     text: R.text,
     textMuted: R.textMuted,
     border: R.border,
-    primary: R.primary,
-    // Near-black on #3DA9D8 reads at ~8:1; white on it would be ~2.6:1.
-    onPrimary: R.text,
+    primary: B.deepOcean,
+    onPrimary: B.white,
     linkText: R.primaryText,
     accent: R.primaryText,
     primaryTint: R.primaryTint,
+    // Airy Blue is too light to read on white (2.1:1), so as a text/icon colour the secondary is Deep Ocean.
     secondary: R.secondaryText,
     secondaryTint: R.secondaryTint,
-    tabBar: R.layer,
-    tabActive: R.primaryText,
-    tabActiveBackground: R.primaryTint,
-    tabInactive: R.textMuted,
+    tabBar: B.deepOcean,
+    tabBarBorder: B.white,
+    tabActive: B.deepOcean,
+    tabActiveBackground: B.airyBlue,
+    tabInactive: B.white,
+    tabPressed: B.matchaGreen,
     headerBackground: R.background,
     headerTint: R.text,
     inputBackground: R.layer,
     chipBackground: R.layer,
-    chipActiveBackground: R.primary,
-    chipActiveText: R.text,
+    chipActiveBackground: B.matchaGreen,
+    chipActiveText: B.deepOcean,
     chipText: R.textMuted,
     iconMuted: R.textMuted,
-    quickAccessProminentBg: R.primary,
-    quickAccessProminentIcon: R.text,
-    quickAccessBg: R.layer,
+    quickAccessProminentBg: B.deepOcean,
+    quickAccessProminentIcon: B.white,
+    quickAccessBg: R.primaryTint,
     quickAccessBorder: R.border,
-    quickAccessIcon: R.primaryText,
+    quickAccessIcon: B.deepOcean,
     importantCardBg: R.secondaryTint,
-    importantCardBorder: R.secondaryText,
-    noteCardBg: R.background,
+    importantCardBorder: B.matchaGreen,
+    noteCardBg: R.layer,
+    // Status colours — accessibility exceptions to the palette.
     error: AppColors.nonVegRed,
     errorTint: AppColors.errorContainer,
-    veg: AppColors.sageWell,
-    vegTint: AppColors.sageTint,
+    veg: '#3F7D4E',
+    vegTint: R.secondaryTint,
     nonVeg: AppColors.nonVegRed,
-    onDiet: AppColors.white,
+    onDiet: B.white,
     countdown: R.text,
     countdownUrgent: '#C2410C',
-    highlight: R.secondary,
-    onHighlight: R.text,
+    highlight: B.matchaGreen,
+    onHighlight: B.deepOcean,
   };
 }

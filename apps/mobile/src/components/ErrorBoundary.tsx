@@ -7,7 +7,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { recordError } from '@/services/firebase/crashlytics';
-import { AppFontFamily, RedesignColors } from '@/theme/tokens';
+import { AppFontFamily, BlueMatcha, RedesignColors } from '@/theme/tokens';
 
 interface Props {
   children: ReactNode;
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   buttonText: {
-    color: RedesignColors.text,
+    color: BlueMatcha.white,
     fontFamily: AppFontFamily,
     fontSize: 16,
     fontWeight: '600',

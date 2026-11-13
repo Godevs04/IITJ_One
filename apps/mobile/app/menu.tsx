@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { SecondaryButton } from '@/components/Buttons';
 import { WEEKDAYS, monthNumberToName } from '@iitj1/types';
 import { EmptyState } from '@/components/EmptyState';
@@ -95,14 +95,11 @@ export default function MenuScreen() {
   const prefLabel = pref === 'veg' ? 'Veg' : 'Non-Veg';
 
   return (
-    <ScreenShell
-      title="Mess Menu"
-      subtitle={subtitle}
-      onRefresh={onRefresh}
-      refreshing={syncing}
-      error={error}
-      headerRight={<DietPreferenceSelect value={pref} onChange={setPref} />}
-    >
+    <ScreenShell hideTitle subtitle={subtitle} onRefresh={onRefresh} refreshing={syncing} error={error}>
+      {/* Screen 04: "← Mess Menu" with the Veg / Non-Veg selector on the right of the header. */}
+      <Stack.Screen
+        options={{ title: 'Mess Menu', headerRight: () => <DietPreferenceSelect value={pref} onChange={setPref} /> }}
+      />
       <SecondaryButton label="Veg Mess entry via FretBox" onPress={() => router.push('/veg-mess-entry')} />
       {anyMenu ? (
         <View style={[styles.dayTabs, { borderBottomColor: theme.border }]} accessibilityRole="tablist">

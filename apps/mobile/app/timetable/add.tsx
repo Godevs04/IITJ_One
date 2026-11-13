@@ -38,14 +38,15 @@ function uuid(): string {
 export default function AddClassScreen() {
   const theme = useThemeColors();
   const posthog = usePostHog();
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, day } = useLocalSearchParams<{ id?: string; day?: string }>();
   const isEdit = Boolean(id);
 
   const [className, setClassName] = useState('');
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:00');
   const [classType, setClassType] = useState<ClassType>('lecture');
-  const [daysOfWeek, setDaysOfWeek] = useState<string[]>(['mon']);
+  // "+ Add New" on the timetable opens this with the day being viewed already chosen.
+  const [daysOfWeek, setDaysOfWeek] = useState<string[]>([(DAYS as readonly string[]).includes(String(day)) ? String(day) : 'mon']);
   const [room, setRoom] = useState('');
   const [reminderEnabled, setReminderEnabled] = useState(true);
   const [showOnHome, setShowOnHome] = useState(false);

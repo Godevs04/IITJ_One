@@ -10,6 +10,9 @@ import { getStopCoords, hasStopCoords, openStopInMaps, searchStopInMaps } from '
 import type { RideDirection, TransportLiveTrip } from '../services/liveTrackingApi';
 import { RideButton } from '../widgets/RideButton';
 import { displayStop } from './BusTripRow';
+import { formatClock } from '@/reminders/reminderLogic';
+import { parseTimeToMinutes } from '@/utils/date';
+import { estimateStopTimes, tripProgress } from '../tripProgress';
 
 const LIVE_STATUS_LABEL: Record<string, string> = {
   WAITING: 'Waiting to depart',
@@ -29,10 +32,9 @@ const CONFIDENCE_LABEL: Record<string, string> = {
 };
 
 /**
- * Bus quick view (bottom sheet): route and stop timeline for one scheduled trip.
- * The timeline is built from the trip's structured stop list. The timetable only publishes departure and
- * arrival times, so intermediate stops are listed without a time rather than with an invented one. Live
- * position is shown only when the live-tracking backend has this trip.
+ * Bus route popup (Screen 09): route banner, stop-by-stop timeline and the trip's current status.
+ * The timetable publishes only departure and arrival, so the stops in between carry an evenly spread estimate
+ * (marked "≈"), and the current status is calculated from those times — it is trip progress, not a GPS position.
  */
 export function BusQuickView({
   item,
@@ -41,6 +43,7 @@ export function BusQuickView({
   direction,
   liveTrip,
   liveDataStale,
+  progressNow = null,
   reminderSet = false,
   onToggleReminder,
   isFavorited,
@@ -53,6 +56,8 @@ export function BusQuickView({
   direction?: RideDirection;
   liveTrip?: TransportLiveTrip;
   liveDataStale?: boolean;
+  /** Now, as minutes after midnight, when this is today's schedule — null when viewing another day's. */
+  progressNow?: number | null;
   reminderSet?: boolean;
   onToggleReminder?: (item: TripWithStatus) => void;
   isFavorited: (stopName: string) => boolean;
@@ -65,6 +70,14 @@ export function BusQuickView({
 
   const stops = item?.stops ?? [];
   debugListKeys('BusQuickView', 'stops', stops, (stop, index) => `${stop}-${index}`);
+
+  const startMin = item ? parseTimeToMinutes(item.trip.startTime) : 0;
+  const endMin = item ? parseTimeToMinutes(item.trip.endTime) : 0;
+  const stopTimes = estimateStopTimes(startMin, endMin, stops.length);
+  const progress =
+    item && progressNow != null && item.trip.serviceStatus !== 'cancelled'
+      ? tripProgress(stops, startMin, endMin, progressNow, displayStop)
+      : null;
 
   const showLive = !!liveTrip && !liveDataStale;
   const isLive = liveTrip?.busState.positionSource === 'live';
@@ -156,11 +169,22 @@ export function BusQuickView({
               </View>
             ) : null}
 
+            {progress ? (
+              <View
+                style={[styles.statusBanner, { backgroundColor: theme.primaryTint }]}
+                accessibilityLiveRegion="polite"
+              >
+                <MaterialIcons name="timeline" size={18} color={theme.linkText} />
+                <Text style={[styles.statusBannerText, { color: theme.text }]}>{progress.label}</Text>
+              </View>
+            ) : null}
+
             <ScrollView style={styles.scroll} contentContainerStyle={styles.timeline} showsVerticalScrollIndicator={false}>
               {stops.map((stop, index) => {
                 const isFirst = index === 0;
                 const isLast = index === stops.length - 1;
-                const time = isFirst ? item.trip.startTime : isLast ? item.trip.endTime : '';
+                const time = isFirst ? item.trip.startTime : isLast ? item.trip.endTime : `≈ ${formatClock(stopTimes[index] % (24 * 60))}`;
+                const isCurrent = progress?.stopIndex === index;
                 const favorited = isFavorited(stop);
                 const coords = hasStopCoords(stop) ? getStopCoords(stop) : null;
                 return (
@@ -176,9 +200,11 @@ export function BusQuickView({
                       <View
                         style={[
                           styles.stopDot,
-                          isFirst || isLast
-                            ? { backgroundColor: theme.primary, borderColor: theme.primary }
-                            : { backgroundColor: theme.surface, borderColor: theme.textMuted },
+                          isCurrent
+                            ? { backgroundColor: theme.highlight, borderColor: theme.primary, borderWidth: 3 }
+                            : isFirst || isLast
+                              ? { backgroundColor: theme.primary, borderColor: theme.primary }
+                              : { backgroundColor: theme.surface, borderColor: theme.textMuted },
                         ]}
                       />
                       <View
@@ -225,14 +251,15 @@ export function BusQuickView({
               })}
 
               <Text style={[styles.note, { color: theme.textMuted }]}>
-                Scheduled times from the transport timetable. Stops in between have no published time.
+                Route progress is calculated from the timetable, not tracked by GPS. Departure and arrival are
+                published; times marked ≈ are estimated evenly between them.
               </Text>
 
               {showLive && liveTrip ? (
                 <View style={[styles.liveRow, { borderColor: isLive ? theme.veg : theme.border }]}>
                   <View style={[styles.liveDot, { backgroundColor: isLive ? theme.veg : theme.textMuted }]} />
                   <Text style={[styles.liveText, { color: isLive ? theme.veg : theme.textMuted }]}>
-                    {isLive ? 'LIVE' : 'ESTIMATED'}
+                    {isLive ? 'UPDATED' : 'ESTIMATED'}
                   </Text>
                   <Text style={[styles.liveDetail, { color: theme.textMuted }]} numberOfLines={1}>
                     {[
@@ -390,6 +417,18 @@ const styles = StyleSheet.create({
     ...AppTypography.small,
     fontSize: 11,
     marginTop: AppSpacing.sm,
+  },
+  statusBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.sm,
+    borderRadius: AppRadius.md,
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: AppSpacing.sm,
+  },
+  statusBannerText: {
+    ...AppTypography.bodyHeader,
+    flex: 1,
   },
   liveRow: {
     flexDirection: 'row',

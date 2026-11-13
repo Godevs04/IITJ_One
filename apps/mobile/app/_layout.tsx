@@ -189,6 +189,16 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="search" options={{ headerShown: false }} />
         <Stack.Screen name="map" options={{ title: 'Campus Map' }} />
+        <Stack.Screen name="menu" options={{ title: 'Mess Menu' }} />
+        <Stack.Screen name="notices" options={{ title: 'Notices' }} />
+        <Stack.Screen name="more" options={{ title: 'More' }} />
+        <Stack.Screen name="reminders/index" options={{ title: 'Reminder' }} />
+        <Stack.Screen name="quick-links" options={{ title: 'Quick Link' }} />
+        <Stack.Screen name="events/index" options={{ title: 'All Events' }} />
+        <Stack.Screen name="events/saved" options={{ title: 'Saved Events' }} />
+        <Stack.Screen name="qr/index" options={{ title: 'My QR' }} />
+        <Stack.Screen name="qr/add" options={{ presentation: 'transparentModal', headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="reminders/new" options={{ title: 'New Reminder' }} />
         <Stack.Screen name="bus-routes" options={{ title: 'Bus Routes' }} />
         <Stack.Screen name="transport-alerts" options={{ title: 'Transport Alerts' }} />
         <Stack.Screen name="discover/index" options={{ title: 'Discover' }} />
@@ -208,7 +218,7 @@ function RootNavigator() {
         <Stack.Screen name="services" options={{ title: 'Campus Services' }} />
         <Stack.Screen name="laundry" options={{ title: 'Laundry' }} />
         <Stack.Screen name="e-rickshaw" options={{ title: 'E-Rickshaw' }} />
-        <Stack.Screen name="cabs-autos" options={{ title: 'Cabs & Autos' }} />
+        <Stack.Screen name="cabs-autos" options={{ title: 'Cab & Auto' }} />
         <Stack.Screen name="wifi" options={{ title: 'Internet & Wi-Fi' }} />
         <Stack.Screen name="health-center" options={{ title: 'Health Center' }} />
         <Stack.Screen name="about" options={{ title: 'About IITJ One' }} />

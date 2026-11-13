@@ -6,8 +6,8 @@ import type { TimedTrip } from './nextBus';
 export type BusDirection = 'departure' | 'arrival';
 
 export const DIRECTION_TITLES: Record<BusDirection, string> = {
-  departure: 'Leaving to city',
-  arrival: 'Return to campus',
+  departure: 'Leave to City',
+  arrival: 'Return to Campus',
 };
 
 /** The route group's direction is authoritative; older data without it falls back to the destination text. */

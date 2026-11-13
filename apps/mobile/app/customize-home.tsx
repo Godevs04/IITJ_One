@@ -4,29 +4,29 @@ import { Icon } from '@/components/Icon';
 import { useThemeColors } from '@/theme/ThemeProvider';
 import { AppRadius, AppSpacing, AppTypography } from '@/theme/tokens';
 import {
-  DEFAULT_HOME_LAYOUT,
-  HOME_SECTIONS,
-  saveHomeLayout,
-  useHomeLayout,
-  type HomeSectionKey,
-} from '@/services/homeLayout';
+  DEFAULT_HOME_SERVICES,
+  HOME_SERVICES,
+  saveHomeServices,
+  useHomeServices,
+  type HomeServiceKey,
+} from '@/services/homeServices';
 
 /** Rows are a fixed height so a drag distance maps straight to a target index. */
 const ROW_HEIGHT = 64;
 const ROW_GAP = AppSpacing.sm;
 const ROW_STRIDE = ROW_HEIGHT + ROW_GAP;
 
-const META = Object.fromEntries(HOME_SECTIONS.map((s) => [s.key, s])) as Record<
-  HomeSectionKey,
-  (typeof HOME_SECTIONS)[number]
+const META = Object.fromEntries(HOME_SERVICES.map((s) => [s.key, s])) as Record<
+  HomeServiceKey,
+  (typeof HOME_SERVICES)[number]
 >;
 
 export default function CustomizeHomeScreen() {
   const theme = useThemeColors();
-  const layout = useHomeLayout();
-  const [order, setOrder] = useState<HomeSectionKey[]>(layout.order);
+  const layout = useHomeServices();
+  const [order, setOrder] = useState<HomeServiceKey[]>(layout.order);
   const hidden = useMemo(() => new Set(layout.hidden), [layout.hidden]);
-  const [draggingKey, setDraggingKey] = useState<HomeSectionKey | null>(null);
+  const [draggingKey, setDraggingKey] = useState<HomeServiceKey | null>(null);
   const dragY = useRef(new Animated.Value(0)).current;
 
   // Latest values for the PanResponder callbacks, which are created once.
@@ -34,7 +34,7 @@ export default function CustomizeHomeScreen() {
   orderRef.current = order;
   const hiddenRef = useRef(layout.hidden);
   hiddenRef.current = layout.hidden;
-  const drag = useRef({ key: null as HomeSectionKey | null, startIndex: 0, index: 0 });
+  const drag = useRef({ key: null as HomeServiceKey | null, startIndex: 0, index: 0 });
 
   // Pick up the persisted layout once it loads (and after "Reset").
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function CustomizeHomeScreen() {
   }, [layout.order]);
 
   const responders = useMemo(() => {
-    const make = (key: HomeSectionKey) =>
+    const make = (key: HomeServiceKey) =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,
@@ -75,18 +75,18 @@ export default function CustomizeHomeScreen() {
       drag.current.key = null;
       setDraggingKey(null);
       Animated.spring(dragY, { toValue: 0, useNativeDriver: true, speed: 30 }).start();
-      void saveHomeLayout({ order: orderRef.current, hidden: hiddenRef.current });
+      void saveHomeServices({ order: orderRef.current, hidden: hiddenRef.current });
     };
 
-    return Object.fromEntries(HOME_SECTIONS.map((s) => [s.key, make(s.key)])) as Record<
-      HomeSectionKey,
+    return Object.fromEntries(HOME_SERVICES.map((s) => [s.key, make(s.key)])) as Record<
+      HomeServiceKey,
       ReturnType<typeof PanResponder.create>
     >;
   }, [dragY]);
 
-  const setVisible = (key: HomeSectionKey, visible: boolean) => {
+  const setVisible = (key: HomeServiceKey, visible: boolean) => {
     const nextHidden = visible ? layout.hidden.filter((k) => k !== key) : [...layout.hidden, key];
-    void saveHomeLayout({ order, hidden: nextHidden });
+    void saveHomeServices({ order, hidden: nextHidden });
   };
 
   return (
@@ -96,8 +96,8 @@ export default function CustomizeHomeScreen() {
       scrollEnabled={draggingKey === null}
     >
       <Text style={[styles.hint, { color: theme.textMuted }]}>
-        Drag <Icon name="reorder-three" size={14} color={theme.textMuted} /> to reorder your Home screen. Turn off
-        anything you don&apos;t use.
+        Turn on the services you want on your Home screen, and drag{' '}
+        <Icon name="reorder-three" size={14} color={theme.textMuted} /> to put them in order.
       </Text>
 
       <View style={{ gap: ROW_GAP }}>
@@ -147,7 +147,7 @@ export default function CustomizeHomeScreen() {
       </View>
 
       <Pressable
-        onPress={() => void saveHomeLayout(DEFAULT_HOME_LAYOUT)}
+        onPress={() => void saveHomeServices(DEFAULT_HOME_SERVICES)}
         style={({ pressed }) => [styles.reset, { borderColor: theme.border }, pressed && { opacity: 0.7 }]}
         accessibilityRole="button"
       >
